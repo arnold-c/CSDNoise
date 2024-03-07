@@ -1,6 +1,6 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using UnPack
 using JLD2

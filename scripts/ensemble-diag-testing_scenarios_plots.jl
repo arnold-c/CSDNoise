@@ -1,6 +1,6 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using ProgressMeter
 using FLoops

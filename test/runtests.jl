@@ -1,5 +1,5 @@
 using DrWatson, TestItemRunner
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using OutbreakDetection
 

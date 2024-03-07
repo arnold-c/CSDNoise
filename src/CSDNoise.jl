@@ -2,7 +2,7 @@
 Note that each file is a module that defines the exported functions.
 They are just listed here for convenience of sourcing one file.
 """
-module OutbreakDetection
+module CSDNoise
 
 # using Reexport
 include("DrWatson-helpers.jl")
@@ -40,13 +40,6 @@ include("cleaning-functions.jl")
 export create_sir_df, create_sir_beta_dfs, create_sir_sim_array!,
     create_sir_all_sim_quantiles, create_sir_all_sim_quantiles!
 # @reexport using .CleaningFunctions
-
-include("bifurcation-functions.jl")
-export birth_rate_bifurcation_simulation!, bifurcation_summary,
-    beta_force_bifurcation_simulation!,
-    birth_rate_beta_force_bifurcation_simulation!,
-    birth_rate_beta_force_bifurcation_annual_summary,
-    birth_rate_beta_force_bifurcation_cycle_summary
 
 include("detection-thresholds.jl")
 export create_inc_infec_arr,

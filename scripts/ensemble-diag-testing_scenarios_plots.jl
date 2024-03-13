@@ -6,7 +6,7 @@ using ProgressMeter
 using FLoops
 using NaNMath: NaNMath
 
-using OutbreakDetection
+using CSDNoise
 
 includet(srcdir("makie-plotting-setup.jl"))
 includet(srcdir("ensemble-parameters.jl"))

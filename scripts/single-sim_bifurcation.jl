@@ -5,7 +5,7 @@ using DrWatson
 using ProgressMeter
 using FLoops
 
-using OutbreakDetection
+using CSDNoise
 
 include(srcdir("makie-plotting-setup.jl"))
 

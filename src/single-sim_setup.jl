@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "CSDNoise"
 
 using JLD2
-using OutbreakDetection
+using CSDNoise
 
 singlesim_states_p = StateParameters(;
     N = 500_000,

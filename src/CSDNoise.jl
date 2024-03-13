@@ -51,6 +51,7 @@ include("diag-testing-functions.jl")
 export create_testing_arrs, create_testing_arrs!, calculate_tested!,
     calculate_positives!,
     calculate_true_positives!, calculate_noise_positives!,
+    infer_true_positives, calculate_test_positivity_rate,
     calculate_movingavg, calculate_movingavg!,
     detectoutbreak, detectoutbreak!, calculate_daily_detection_characteristics,
     calculate_noutbreaks, calculate_OutbreakThresholdChars,

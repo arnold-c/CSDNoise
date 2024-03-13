@@ -346,6 +346,143 @@ function detectoutbreak!(outbreakvec, infectionsvec, threshold)
     return nothing
 end
 
+function infer_true_positives(
+    test_positivity_rate_vec,
+    test_positive_vec,
+    total_test_vec,
+    total_clinic_visit_vec,
+    test_result_lag,
+)
+    inferred_positives = zeros(Float64, length(total_clinic_visit_vec))
+
+    if test_result_lag == 0
+        infer_true_positives!(
+            inferred_positives,
+            test_positivity_rate_vec,
+            test_positive_vec,
+            total_test_vec,
+            total_clinic_visit_vec,
+        )
+    else
+        infer_true_positives!(
+            inferred_positives,
+            test_positivity_rate_vec,
+            total_clinic_visit_vec
+        )
+    end
+
+    return inferred_positives
+end
+
+function infer_true_positives!(
+    inferred_positives,
+    test_positivity_rate_vec,
+    test_positive_vec,
+    total_test_vec,
+    total_clinic_visit_vec,
+)
+    @. inferred_positives =
+        test_positive_vec +
+        (total_clinic_visit_vec - total_test_vec) * test_positivity_rate_vec
+
+    return nothing
+end
+
+function infer_true_positives!(
+    inferred_positives,
+    test_positivity_rate_vec,
+    total_clinic_visit_vec
+)
+    @. inferred_positives = total_clinic_visit_vec * test_positivity_rate_vec
+end
+
+function calculate_test_positivity_rate(
+    test_positive_vec, total_test_vec, agg_days
+)
+    test_positivity_rate_vec = zeros(Float64, length(total_test_vec))
+
+    calculate_test_positivity_rate!(
+        test_positivity_rate_vec, test_positive_vec, total_test_vec, agg_days
+    )
+
+    return test_positivity_rate_vec
+end
+
+function calculate_test_positivity_rate!(
+    test_positivity_rate_vec, test_positive_vec, total_test_vec, agg_days
+)
+    for i in axes(test_positivity_rate_vec, 1)
+        if i < agg_days
+            test_positivity_rate_vec[i] =
+                sum(test_positive_vec[begin:i]) / sum(total_test_vec[begin:i])
+            continue
+        end
+
+        test_positivity_rate_vec[i] =
+            sum(test_positive_vec[(i - agg_days + 1):i]) /
+            sum(total_test_vec[(i - agg_days + 1):i])
+    end
+end
+
+@testitem "Inferred cases" begin
+    using CSDNoise, Statistics
+
+    daily_testpositives = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    daily_tested = repeat([10], length(daily_testpositives))
+
+    movingavg_testpositives = calculate_test_positivity_rate(
+        daily_testpositives,
+        daily_tested,
+        5
+    )
+
+    @test isequal(
+        movingavg_testpositives,
+        [
+            mean([1]) / 10,
+            mean([1, 2]) / 10,
+            mean([1, 2, 3]) / 10,
+            mean([1, 2, 3, 4]) / 10,
+            mean([1, 2, 3, 4, 5]) / 10,
+            mean([2, 3, 4, 5, 6]) / 10,
+            mean([3, 4, 5, 6, 7]) / 10,
+            mean([4, 5, 6, 7, 8]) / 10,
+            mean([5, 6, 7, 8, 9]) / 10,
+            mean([6, 7, 8, 9, 10]) / 10,
+        ],
+    )
+
+    @test length(movingavg_testpositives) == length(daily_testpositives)
+
+    daily_clinic_visits = repeat([100], length(daily_testpositives))
+
+    inferred_positives_no_lag = infer_true_positives(
+        movingavg_testpositives,
+        daily_testpositives,
+        daily_tested,
+        daily_clinic_visits,
+        0,
+    )
+
+    @test isequal(
+        inferred_positives_no_lag,
+        daily_testpositives + movingavg_testpositives .* (daily_clinic_visits - daily_tested)
+    )
+
+    inferred_positives_3d_lag = infer_true_positives(
+        movingavg_testpositives,
+        daily_testpositives,
+        daily_tested,
+        daily_clinic_visits,
+        3,
+    )
+
+    @test isequal(
+        inferred_positives_3d_lag,
+        movingavg_testpositives .* daily_clinic_visits
+    )
+end
+
 function calculate_test_positivity(
     true_positive_vec, total_test_vec, alert_vec, agg_days
 )

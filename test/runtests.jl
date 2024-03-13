@@ -1,7 +1,7 @@
 using DrWatson, TestItemRunner
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
-using OutbreakDetection
+using CSDNoise
 
 # Here you include files using `srcdir`
 # include(srcdir("file.jl"))
@@ -10,7 +10,7 @@ using OutbreakDetection
 println("Starting tests")
 ti = time()
 
-@run_package_tests
+@run_package_tests verbose = true
 
 ti = time() - ti
 println("\nTest took total time of:")

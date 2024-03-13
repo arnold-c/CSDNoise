@@ -1,14 +1,14 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using ProgressMeter
 using Chain
 
-using OutbreakDetection
+using CSDNoise
 
 # include("../src/OutbreakDetection.jl")
-# using .OutbreakDetection
+# using .CSDNoise
 
 #%%
 model_types_vec = [("seasonal-infectivity-import", "tau-leaping")]

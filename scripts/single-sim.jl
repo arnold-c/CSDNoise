@@ -1,11 +1,11 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using UnPack
 using JLD2
 
-using OutbreakDetection
+using CSDNoise
 
 #%%
 @unpack singlesim_states_p, singlesim_time_p, singlesim_dynamics_p = load(

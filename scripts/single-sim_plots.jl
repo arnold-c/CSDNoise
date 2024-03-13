@@ -1,12 +1,12 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using JLD2
 using DataFrames
 using DataFramesMeta
 
-using OutbreakDetection
+using CSDNoise
 
 include(srcdir("makie-plotting-setup.jl"))
 

@@ -1,11 +1,11 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using ProgressMeter
 using FLoops
 
-using OutbreakDetection
+using CSDNoise
 
 include(srcdir("makie-plotting-setup.jl"))
 

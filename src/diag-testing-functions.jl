@@ -163,7 +163,7 @@ function calculate_positives!(
 end
 
 @testitem "Moving average" begin
-    using OutbreakDetection, Statistics
+    using CSDNoise, Statistics
 
     daily_testpositives = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -284,7 +284,7 @@ function calculate_daily_movingavg_startday(day, avglag)
 end
 
 @testitem "Detect outbreak" begin
-    using OutbreakDetection
+    using CSDNoise
 
     incvec = [1, 3, 10, 15, 20, 3, 1]
     avgvec = calculate_movingavg(incvec, 3)
@@ -582,7 +582,7 @@ function calculate_delay_vec(first_matchedbounds)
 end
 
 @testitem "Matched bounds" begin
-    using OutbreakDetection
+    using CSDNoise
 
     matched_bounds = [
         10 60 5 15 600
@@ -621,7 +621,7 @@ function calculate_first_matched_bounds_index(matchedbounds)
 end
 
 @testitem "Cases before and after alert" begin
-    using OutbreakDetection
+    using CSDNoise
     @test begin
         incarr = [
             repeat([1], 9)...,
@@ -704,7 +704,7 @@ function calculate_cases_before_after_alert!(
 end
 
 @testitem "Outbreak detection characteristics" begin
-    using OutbreakDetection
+    using CSDNoise
     @test begin
         outbreakbounds = [
             2 4 500 100

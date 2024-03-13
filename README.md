@@ -1,7 +1,7 @@
-# OutbreakDetection
+# CSDNoise
 
 This code base is using the [Julia Language](https://julialang.org/) and [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/) to make a reproducible scientific project named
-> OutbreakDetection
+> CSDNoise
 
 ## Getting Started
 ### Installing dependencies
@@ -18,7 +18,7 @@ Notice that raw data are not included in the git-history and may need to be down
    julia> using Pkg
    julia> Pkg.add("DrWatson") # install globally, for using `quickactivate`
    julia> using DrWatson
-   julia> @quickactivate "OutbreakDetection"
+   julia> @quickactivate "CSDNoise"
    julia> Pkg.instantiate()
    ```
 
@@ -29,7 +29,7 @@ You may notice that most scripts start with the commands:
 
 ```julia
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 ```
 which auto-activate the project and enable local path handling from DrWatson.
 

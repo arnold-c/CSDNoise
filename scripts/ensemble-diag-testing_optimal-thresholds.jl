@@ -1,6 +1,6 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using ProgressMeter
 using FLoops
@@ -10,7 +10,7 @@ using DataFrames
 using DataFramesMeta
 using Statistics
 
-using OutbreakDetection
+using CSDNoise
 
 includet(srcdir("makie-plotting-setup.jl"))
 includet(srcdir("ensemble-parameters.jl"))

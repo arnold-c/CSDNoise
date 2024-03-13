@@ -2,7 +2,7 @@
 Note that each file is a module that defines the exported functions.
 They are just listed here for convenience of sourcing one file.
 """
-module OutbreakDetection
+module CSDNoise
 
 # using Reexport
 include("DrWatson-helpers.jl")
@@ -41,13 +41,6 @@ export create_sir_df, create_sir_beta_dfs, create_sir_sim_array!,
     create_sir_all_sim_quantiles, create_sir_all_sim_quantiles!
 # @reexport using .CleaningFunctions
 
-include("bifurcation-functions.jl")
-export birth_rate_bifurcation_simulation!, bifurcation_summary,
-    beta_force_bifurcation_simulation!,
-    birth_rate_beta_force_bifurcation_simulation!,
-    birth_rate_beta_force_bifurcation_annual_summary,
-    birth_rate_beta_force_bifurcation_cycle_summary
-
 include("detection-thresholds.jl")
 export create_inc_infec_arr,
     create_inc_infec_arr!,
@@ -58,6 +51,7 @@ include("diag-testing-functions.jl")
 export create_testing_arrs, create_testing_arrs!, calculate_tested!,
     calculate_positives!,
     calculate_true_positives!, calculate_noise_positives!,
+    infer_true_positives, calculate_test_positivity_rate,
     calculate_movingavg, calculate_movingavg!,
     detectoutbreak, detectoutbreak!, calculate_daily_detection_characteristics,
     calculate_noutbreaks, calculate_OutbreakThresholdChars,

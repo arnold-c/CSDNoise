@@ -1,11 +1,11 @@
 #%%
 using DrWatson
-@quickactivate "OutbreakDetection"
+@quickactivate "CSDNoise"
 
 using UnPack
 using ColorSchemes
 
-using OutbreakDetection
+using CSDNoise
 
 include(srcdir("makie-plotting-setup.jl"))
 includet(srcdir("ensemble-parameters.jl"))

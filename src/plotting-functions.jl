@@ -76,52 +76,6 @@ function draw_sir_plot(
     )
 end
 
-function bifurcation_plot(
-    x_vector,
-    annual_summary;
-    years,
-    xlabel = "Birth rate (per 1_000, per annum)",
-    ylabel = "Max. I",
-)
-    fig = Figure()
-    ax = Axis(fig[1, 1]; xlabel = xlabel, ylabel = ylabel)
-
-    for year in eachindex(years)
-        scatter!(
-            ax,
-            x_vector,
-            annual_summary[year, 2, :];
-            markersize = 4,
-            color = :black,
-        )
-    end
-
-    return fig
-end
-
-function bifurcation_heatmap(
-    birth_rate_vec,
-    beta_force_vec,
-    cycle_summary,
-)
-    fig, ax, hm = heatmap(
-        birth_rate_vec,
-        beta_force_vec,
-        cycle_summary,
-    )
-
-    Colorbar(
-        fig[:, end + 1],
-        hm;
-        label = "Periodicity",
-    )
-
-    ax.xlabel = "Birth rate (per 1_000, per annum)"
-    ax.ylabel = "beta_force (seasonality)"
-
-    return fig
-end
-
 function sir_quantiles_array_base_plot(
     sim_quantiles, lower_index, med_index, upper_index, timeparams, colors,
     labels,

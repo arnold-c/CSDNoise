@@ -131,7 +131,6 @@ If you want to force a re-run then you can delete the associated temporary file,
 │   ├── ensemble-sim_noise-visualizations.jl
 │   ├── ensemble-sim_single-scenario.jl
 │   ├── single-sim.jl
-│   ├── single-sim_bifurcation.jl
 │   └── single-sim_plots.jl
 ├── src
 │   ├── DrWatson-helpers.jl
@@ -139,7 +138,6 @@ If you want to force a re-run then you can delete the associated temporary file,
 │   ├── R
 │   │   └── app.R
 │   ├── SEIR-model.jl
-│   ├── bifurcation-functions.jl
 │   ├── cleaning-functions.jl
 │   ├── detection-thresholds.jl
 │   ├── diag-testing-functions.jl

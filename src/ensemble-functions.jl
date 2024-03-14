@@ -165,12 +165,6 @@ function run_jump_prob(ensemble_param_dict)
 
     ensemble_seir_arr = convert_svec_to_array(ensemble_seir_vecs)
 
-    quantile_param_dict = dict_list(
-        @dict(ensemble_spec, ensemble_seir_arr, quantiles = quantile_vec)
-    )
-
-    summarize_ensemble_jump_prob(quantile_param_dict)
-
     for dict in outbreak_spec_dict
         dict[:dirpath] = joinpath(
             ensemble_spec.dirpath, dict[:outbreak_spec].dirpath
@@ -186,49 +180,6 @@ function run_jump_prob(ensemble_param_dict)
     run_define_outbreaks(outbreak_spec_dict)
 
     return @strdict ensemble_seir_arr ensemble_spec
-end
-
-function summarize_ensemble_jump_prob(dict_of_ensemble_params)
-    @floop for ensemble_params in dict_of_ensemble_params
-        @produce_or_load(
-            jump_prob_summary,
-            ensemble_params,
-            "$(ensemble_params[:ensemble_spec].dirpath)";
-            filename = "ensemble-quantiles_$(ensemble_params[:quantiles])",
-            loadfile = false
-        )
-    end
-end
-
-"""
-    jump_prob_summary(param_dict)
-"""
-function jump_prob_summary(ensemble_param_dict)
-    @unpack ensemble_spec, ensemble_seir_arr, quantiles = ensemble_param_dict
-    @unpack state_parameters, dynamics_parameters, time_parameters, nsims =
-        ensemble_spec
-
-    @unpack beta_force, annual_births_per_k = dynamics_parameters
-    @unpack tstep, tlength, trange = time_parameters
-    @unpack init_states, init_state_props = state_parameters
-
-    N = init_states[:N]
-    S_init = init_states[:S]
-    I_init = init_states[:I]
-    R_init = init_states[:R]
-
-    qlow = round(0.5 - quantiles / 200; digits = 3)
-    qhigh = round(0.5 + quantiles / 200; digits = 3)
-
-    qs = [qlow, 0.5, qhigh]
-
-    ensemble_seir_summary = create_sir_all_sim_quantiles(
-        ensemble_seir_arr; quantiles = qs
-    )
-
-    caption = "nsims = $nsims, N = $N, S = $S_init, I = $I_init, R = $R_init, beta_force = $beta_force,\nbirths per k/annum = $annual_births_per_k, tstep = $(time_parameters.tstep), quantile int = $quantiles"
-
-    return @strdict ensemble_seir_summary caption quantiles
 end
 
 function run_define_outbreaks(dict_of_outbreak_spec_params)

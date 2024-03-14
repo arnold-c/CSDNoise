@@ -118,7 +118,7 @@ alertthreshold_vec = collect(10)
 moveavglag_vec = [7]
 perc_clinic_vec = [0.6]
 perc_clinic_test_vec = [collect(0.2)...]
-alert_method_vec = ["movingavg", "dailythreshold_movingavg"]
+alert_method_vec = ["movingavg", "inferred_movingavg"]
 
 outbreak_detection_spec_vec = create_combinations_vec(
     OutbreakDetectionSpecification,

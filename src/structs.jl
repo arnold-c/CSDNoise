@@ -275,7 +275,7 @@ struct AlertMethod{T1<:AbstractString}
     method_name::T1
     function AlertMethod(method_name::T1) where {T1<:AbstractString}
         available_test_methods = [
-            "dailythreshold", "movingavg", "dailythreshold_movingavg"
+            "dailythreshold", "movingavg", "dailythreshold_movingavg", "inferred_movingavg"
         ]
         if !in(method_name, available_test_methods)
             error(

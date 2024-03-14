@@ -17,21 +17,13 @@ includet(srcdir("ensemble-parameters.jl"))
 
 #%%
 optimal_threshold_test_spec_vec = [
-    IndividualTestSpecification(0.5, 0.5, 0),
-    IndividualTestSpecification(0.7, 0.7, 0),
-    IndividualTestSpecification(0.8, 0.8, 0),
-    IndividualTestSpecification(0.85, 0.85, 0),
-    IndividualTestSpecification(0.9, 0.9, 0),
-    CLINICAL_TEST_SPECS...,
     IndividualTestSpecification(1.0, 1.0, 0),
-    IndividualTestSpecification(1.0, 1.0, 3),
-    IndividualTestSpecification(1.0, 1.0, 7),
     IndividualTestSpecification(1.0, 1.0, 14),
 ]
 
-optimal_threshold_alertthreshold_vec = collect(1:1:15)
+optimal_threshold_alertthreshold_vec = collect(10:4:50)
 
-R_0_vec = collect(8.0:4.0:20.0)
+R_0_vec = collect(16.0)
 
 ensemble_dynamics_spec_vec = create_combinations_vec(
     DynamicsParameters,
@@ -57,7 +49,7 @@ ensemble_spec_vec = create_combinations_vec(
     ),
 )
 
-alert_method_vec = ["movingavg", "dailythreshold_movingavg"]
+alert_method_vec = ["inferred_movingavg"]
 
 #%%
 for (ensemble_noise_specification, ensemble_specification, alertmethod) in
@@ -86,10 +78,10 @@ for (ensemble_noise_specification, ensemble_specification, alertmethod) in
     noise_specification_path = getdirpath(ensemble_noise_specification)
     noisespec_alertmethod_path = joinpath(noise_specification_path, alertmethod)
 
-    if alertmethod != "dailythreshold"
+    if alertmethod == "inferred_movingavg"
         noisespec_alertmethod_path = joinpath(
             noisespec_alertmethod_path,
-            "moveavglag_$(ensemble_moving_avg_detection_lag)",
+            "inferred_movingavg_$(ensemble_moving_avg_detection_lag)",
         )
     end
 

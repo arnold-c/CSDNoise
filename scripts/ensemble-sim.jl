@@ -114,11 +114,11 @@ dynamical_noise_spec_vec = create_combinations_vec(
 noise_spec_vec = vcat(poisson_noise_spec_vec, dynamical_noise_spec_vec)
 
 #%%
-alertthreshold_vec = collect(10)
+alertthreshold_vec = collect(10:4:50)
 moveavglag_vec = [7]
 perc_clinic_vec = [0.6]
-perc_clinic_test_vec = [collect(0.2)...]
-alert_method_vec = ["movingavg", "inferred_movingavg"]
+perc_clinic_test_vec = [collect(0.1:0.1:0.6)..., 1.0]
+alert_method_vec = ["inferred_movingavg"]
 
 outbreak_detection_spec_vec = create_combinations_vec(
     OutbreakDetectionSpecification,

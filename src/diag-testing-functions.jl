@@ -29,12 +29,16 @@ function create_testing_arrs(
 )
     testarr = zeros(Int64, size(incarr, 1), 7, size(incarr, 3))
     test_movingavg_arr = zeros(Int64, size(incarr, 1), size(incarr, 3))
+    inferred_positives_arr = zeros(Float64, size(incarr, 1), size(incarr, 3))
     ntested_worker_vec = Vector{Int64}(undef, size(incarr, 1))
+    test_positivity_rate_worker_vec = Vector{Float64}(undef, size(incarr, 1))
 
     create_testing_arrs!(
         testarr,
         test_movingavg_arr,
+        inferred_positives_arr,
         ntested_worker_vec,
+        test_positivity_rate_worker_vec,
         incarr,
         noisearr,
         outbreak_detect_spec.alert_method.method_name,
@@ -46,13 +50,15 @@ function create_testing_arrs(
         individual_test_spec.specificity,
     )
 
-    return testarr, test_movingavg_arr
+    return testarr, test_movingavg_arr, inferred_positives_arr
 end
 
 function create_testing_arrs!(
     testarr,
     test_movingavg_arr,
+    inferred_positives_arr,
     ntested_worker_vec,
+    test_positivity_rate_worker_vec,
     incarr,
     noisearr,
     alert_method,
@@ -109,6 +115,22 @@ function create_testing_arrs!(
             moveavglag,
         )
 
+        calculate_test_positivity_rate!(
+            test_positivity_rate_worker_vec,
+            @view(testarr[:, 5, sim]),
+            ntested_worker_vec,
+            moveavglag
+        )
+
+        infer_true_positives!(
+            @view(inferred_positives_arr[:, sim]),
+            test_positivity_rate_worker_vec,
+            @view(testarr[:, 5, sim]),
+            ntested_worker_vec,
+            @view(incarr[:, 1, sim]) + @view(noisearr[:, sim]),
+            testlag,
+        )
+
         detectoutbreak_args = @match alert_method begin
             "movingavg" => (
                 @view(testarr[:, 6, sim]),
@@ -119,6 +141,11 @@ function create_testing_arrs!(
                 @view(testarr[:, 6, sim]),
                 @view(testarr[:, 5, sim]),
                 @view(test_movingavg_arr[:, sim]),
+                alertthreshold,
+            )
+            "inferred_movingavg" => (
+                @view(testarr[:, 6, sim]),
+                @view(inferred_positives_arr[:, sim]),
                 alertthreshold,
             )
         end
@@ -374,6 +401,32 @@ function infer_true_positives(
     return inferred_positives
 end
 
+function infer_true_positives!(
+    inferred_positives,
+    test_positivity_rate_vec,
+    test_positive_vec,
+    total_test_vec,
+    total_clinic_visit_vec,
+    test_result_lag,
+)
+    if test_result_lag == 0
+        infer_true_positives!(
+            inferred_positives,
+            test_positivity_rate_vec,
+            test_positive_vec,
+            total_test_vec,
+            total_clinic_visit_vec,
+        )
+    else
+        infer_true_positives!(
+            inferred_positives,
+            test_positivity_rate_vec,
+            total_clinic_visit_vec
+        )
+    end
+
+    return nothing
+end
 function infer_true_positives!(
     inferred_positives,
     test_positivity_rate_vec,

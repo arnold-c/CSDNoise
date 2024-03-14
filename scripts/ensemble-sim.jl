@@ -133,7 +133,11 @@ outbreak_detection_spec_vec = create_combinations_vec(
 
 #%%
 test_spec_vec = [
+    IndividualTestSpecification(0.85, 0.85, 0),
+    IndividualTestSpecification(0.9, 0.9, 0),
     IndividualTestSpecification(1.0, 1.0, 0),
+    IndividualTestSpecification(1.0, 1.0, 3),
+    IndividualTestSpecification(1.0, 1.0, 7),
     IndividualTestSpecification(1.0, 1.0, 14),
 ]
 

@@ -7,9 +7,6 @@ using Chain
 
 using CSDNoise
 
-# include("../src/OutbreakDetection.jl")
-# using .CSDNoise
-
 #%%
 model_types_vec = [("seasonal-infectivity-import", "tau-leaping")]
 

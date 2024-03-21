@@ -292,12 +292,12 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
         seed = seed,
     )
 
-    testarr, test_movingvg_arr, inferred_positives = create_testing_arrs(
+    testarr = create_testing_arrs(
         ensemble_inc_arr,
         noise_array,
         outbreak_detection_specification,
         individual_test_specification,
-    )
+    )[1]
 
     OT_chars = calculate_OutbreakThresholdChars(
         testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop

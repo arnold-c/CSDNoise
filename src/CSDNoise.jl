@@ -9,9 +9,9 @@ include("DrWatson-helpers.jl")
 export outdir
 
 include("transmission-functions.jl")
-export calculate_beta,
-    calculate_beta_amp, calculateR0, calculate_import_rate,
-    calculate_mu
+export calculate_beta, calculate_beta_amp,
+    calculateReffective, calculateReffective_t!, calculateR0,
+    calculate_import_rate, calculate_mu
 # @reexport using .TransmissionFunctions
 
 include("dynamics-constants.jl")

@@ -62,6 +62,46 @@ function calculate_beta_amp(beta_mean, beta_force, t; seasonality = cos)
 end
 
 """
+    calculateReffective_t!(Reff_vec, beta_vec, dynamics_params, contact_mat, pop_matrix, seir_arr)
+
+Calculate the effective reproduction number, R_eff, at each time step for a given set of parameters and contact matrix.
+"""
+function calculateReffective_t!(
+    Reff_vec, beta_vec, dynamics_params, contact_mat, seir_arr
+)
+    for i in eachindex(Reff_vec)
+        Reff_vec[i] = calculateReffective(
+            beta_vec[i],
+            dynamics_params,
+            contact_mat,
+            seir_arr[i, 1],
+            seir_arr[i, 5],
+        )
+    end
+
+    return nothing
+end
+
+"""
+    calculateReffective!(beta_t, dynamics_params, contact_mat, pop_matrix, S, N)
+
+Calculate the effective reproduction number, R_eff, for a given set of parameters and contact matrix.
+"""
+function calculateReffective(
+    beta_t, dynamics_params, contact_mat, S, N
+)
+    s_prop = S / N
+
+    Reff =
+        calculateR0(
+            beta_t, dynamics_params.gamma, dynamics_params.mu, contact_mat,
+            N
+        ) * s_prop
+
+    return Reff
+end
+
+"""
     calculateR0(beta, gamma, mu, contact_mat, pop_matrix)
 
 Calculate the basic reproduction number R_0 for a given set of parameters and contact matrix.

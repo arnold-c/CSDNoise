@@ -1,8 +1,6 @@
 # module TransmissionFunctions
 
 using LinearAlgebra
-using ModelingToolkit, DifferentialEquations
-using FLoops
 
 # export calculate_beta, calculateR0, calculate_import_rate
 
@@ -36,7 +34,7 @@ function calculate_beta(
     V = Diagonal(repeat([gamma + mu], size(contact_mat, 1)))
 
     FV⁻¹ = F * inv(V)
-    eigenvals, eigenvectors = eigen(FV⁻¹)
+    eigenvals = eigen(FV⁻¹).values
     beta = R_0 / maximum(real(eigenvals))
 
     return beta
@@ -52,58 +50,6 @@ function calculate_beta(R_0, gamma, mu, contact_mat, pop_matrix)
     )
 end
 
-function calculate_beta(
-    ode::S, nic::T, nac::T, R_0::U, param::Dict{Num,U}, contact_mat::Array{U},
-    pop_matrix::Array{U},
-) where {S<:ODESystem,T<:Int,U<:AbstractFloat}
-    if size(contact_mat, 1) == size(contact_mat, 2)
-        nothing
-    else
-        error("contact_mat must be square")
-    end
-    if size(contact_mat, 1) == size(pop_matrix, 1)
-        nothing
-    else
-        error("contact_mat and pop_matrix must have the same number of rows")
-    end
-
-    Jac = calculate_jacobian(ode)[(nac + 1):(nac + nic * nac),
-        (nac + 1):(nac + nic * nac)]
-
-    F = contact_mat .* pop_matrix
-    # F = substitute(Jac, Dict(gamma => 0.0, mu => 0.0))
-    V = substitute(Jac, Dict(beta => 0.0))
-    FV⁻¹ = F * -inv(V)
-    eigenvals =
-        convert.(
-            Float64,
-            Symbolics.value.(eigvals(eigen(substitute(FV⁻¹, Dict(param...))))),
-        )
-    beta = R_0 / maximum(real(Symbolics.value.(eigenvals)))
-
-    return beta
-end
-
-function calculate_beta(
-    ode::S, nic::T, nac::T, R_0::U, param::Vector{Pair{Num,U}},
-    contact_mat::Array{U},
-    pop_matrix::Array{U},
-) where {S<:ODESystem,T<:Int,U<:AbstractFloat}
-    return calculate_beta(
-        ode, nic, nac, R_0, Dict(param), contact_mat, pop_matrix
-    )
-end
-
-function calculate_beta(
-    ode::S, nic::T, nac::T, R_0::U, param::Dict{Num,U}, contact_mat::Array{U},
-    pop_matrix::Array{T},
-) where {S<:ODESystem,T<:Int,U<:AbstractFloat}
-    return calculate_beta(
-        ode, nic, nac, R_0, Dict(param), contact_mat,
-        convert.(Float64, pop_matrix),
-    )
-end
-
 """
     calculate_beta_amp(beta_mean, beta_force, t)
 
@@ -113,6 +59,46 @@ Calculate the amplitude of the transmission rate beta as a function of time.
 """
 function calculate_beta_amp(beta_mean, beta_force, t; seasonality = cos)
     return beta_mean * (1 + beta_force * seasonality(2pi * t / 365))
+end
+
+"""
+    calculateReffective_t!(Reff_vec, beta_vec, dynamics_params, contact_mat, pop_matrix, seir_arr)
+
+Calculate the effective reproduction number, R_eff, at each time step for a given set of parameters and contact matrix.
+"""
+function calculateReffective_t!(
+    Reff_vec, beta_vec, dynamics_params, contact_mat, seir_arr
+)
+    for i in eachindex(Reff_vec)
+        Reff_vec[i] = calculateReffective(
+            beta_vec[i],
+            dynamics_params,
+            contact_mat,
+            seir_arr[i, 1],
+            seir_arr[i, 5],
+        )
+    end
+
+    return nothing
+end
+
+"""
+    calculateReffective!(beta_t, dynamics_params, contact_mat, pop_matrix, S, N)
+
+Calculate the effective reproduction number, R_eff, for a given set of parameters and contact matrix.
+"""
+function calculateReffective(
+    beta_t, dynamics_params, contact_mat, S, N
+)
+    s_prop = S / N
+
+    Reff =
+        calculateR0(
+            beta_t, dynamics_params.gamma, dynamics_params.mu, contact_mat,
+            N
+        ) * s_prop
+
+    return Reff
 end
 
 """
@@ -151,7 +137,7 @@ function calculateR0(
     V = Diagonal(repeat([gamma + mu], size(contact_mat, 1)))
 
     FV⁻¹ = F * inv(V)
-    eigenvals, eigenvectors = eigen(FV⁻¹)
+    eigenvals = eigen(FV⁻¹).values
 
     R_0 = maximum(real(eigenvals))
 
@@ -165,35 +151,6 @@ function calculateR0(beta, gamma, mu, contact_mat, pop_matrix)
         convert(Float64, mu),
         convert(Array{Float64}, [contact_mat]),
         convert(Array{Float64}, [pop_matrix]),
-    )
-end
-
-function calculateR0(
-    ode::S, nic::T, nac::T, param::Dict{Num,U}, S⁺::U
-) where {S<:ODESystem,T<:Int,U<:AbstractFloat}
-    Jac = calculate_jacobian(ode)[(nac + 1):(nac + nic * nac),
-        (nac + 1):(nac + nic * nac)]
-
-    F = substitute(Jac, Dict(gamma => 0.0, mu => 0.0))
-    V = substitute(Jac, Dict(beta => 0.0))
-    FV⁻¹ = F * -inv(V)
-    all_eigenvals =
-        convert.(
-            Float64,
-            Symbolics.value.(
-                eigvals(eigen(substitute(FV⁻¹, Dict(S => S⁺, param...))))
-            ),
-        )
-    R0 = maximum(real(all_eigenvals))
-
-    return R0
-end
-
-function calculateR0(
-    ode::S, nic::T, nac::T, param::Vector{Pair{Num,U}}, S⁺::U
-) where {S<:ODESystem,T<:Int,U<:AbstractFloat}
-    return ngmR0(
-        ode, nic, nac, Dict(param), S⁺
     )
 end
 

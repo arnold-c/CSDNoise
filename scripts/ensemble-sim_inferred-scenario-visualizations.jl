@@ -28,6 +28,10 @@ ensemble_single_seir_arr = get_ensemble_file(
     ensemble_specification
 )["ensemble_seir_arr"]
 
+ensemble_single_Reff_arr = get_ensemble_file(
+    ensemble_specification
+)["ensemble_Reff_arr"]
+
 ensemble_single_scenario_inc_file = get_ensemble_file(
     ensemble_specification, ensemble_outbreak_specification
 )
@@ -51,6 +55,27 @@ save(
         "ensemble/single-scenario/ensemble_single_scenario_incidence_prevalence.png",
     ),
     ensemble_single_scenario_incidence_prevalence_plot,
+)
+
+ensemble_single_scenario_Reffective_plot = Figure();
+incax = Axis(
+    ensemble_single_scenario_Reffective_plot[1, 1]; ylabel = "Incidence"
+)
+reffax = Axis(ensemble_single_scenario_Reffective_plot[2, 1]; ylabel = "Reff")
+lines!(
+    incax, ensemble_time_specification.trange, ensemble_single_incarr[:, 1, 1]
+)
+lines!(
+    reffax, ensemble_time_specification.trange, ensemble_single_Reff_arr[:, 1]
+)
+hlines!(reffax, 1.0)
+ensemble_single_scenario_Reffective_plot
+
+save(
+    plotsdir(
+        "ensemble/single-scenario/ensemble_single_scenario_Reffective.png"
+    ),
+    ensemble_single_scenario_Reffective_plot,
 )
 
 #%%
@@ -100,8 +125,16 @@ testarr_lag, test_movingvg_arr_lag, inferred_positives_arr_lag = create_testing_
     ensemble_single_individual_test_spec_lag,
 )
 
-inferred_positive_no_lag_plot = lines(ensemble_time_specification.trange, ensemble_single_incarr[:, 1, 1]; color = :orange)
-lines!(ensemble_time_specification.trange, inferred_positives_arr_no_lag[:, 1]; color = :black)
+inferred_positive_no_lag_plot = lines(
+    ensemble_time_specification.trange,
+    ensemble_single_incarr[:, 1, 1];
+    color = :orange,
+)
+lines!(
+    ensemble_time_specification.trange,
+    inferred_positives_arr_no_lag[:, 1];
+    color = :black,
+)
 
 save(
     plotsdir(
@@ -110,8 +143,16 @@ save(
     inferred_positive_no_lag_plot,
 )
 
-inferred_positive_lag_plot = lines(ensemble_time_specification.trange, ensemble_single_incarr[:, 1, 1]; color = :orange)
-lines!(ensemble_time_specification.trange, inferred_positives_arr_lag[:, 1]; color = :black)
+inferred_positive_lag_plot = lines(
+    ensemble_time_specification.trange,
+    ensemble_single_incarr[:, 1, 1];
+    color = :orange,
+)
+lines!(
+    ensemble_time_specification.trange,
+    inferred_positives_arr_lag[:, 1];
+    color = :black,
+)
 
 save(
     plotsdir(
@@ -120,8 +161,16 @@ save(
     inferred_positive_lag_plot,
 )
 
-compare_inferred_positives_plot = lines(ensemble_time_specification.trange, inferred_positives_arr_no_lag[:, 1]; color = :orange)
-lines!(ensemble_time_specification.trange, inferred_positives_arr_lag[:, 1]; color = :black)
+compare_inferred_positives_plot = lines(
+    ensemble_time_specification.trange,
+    inferred_positives_arr_no_lag[:, 1];
+    color = :orange,
+)
+lines!(
+    ensemble_time_specification.trange,
+    inferred_positives_arr_lag[:, 1];
+    color = :black,
+)
 
 save(
     plotsdir(

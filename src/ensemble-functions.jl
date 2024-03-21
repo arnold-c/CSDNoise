@@ -149,6 +149,8 @@ function run_jump_prob(ensemble_param_dict)
 
     ensemble_beta_arr = zeros(Float64, tlength)
 
+    ensemble_Reff_arr = zeros(Float64, tlength, nsims)
+
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
 
@@ -165,6 +167,16 @@ function run_jump_prob(ensemble_param_dict)
 
     ensemble_seir_arr = convert_svec_to_array(ensemble_seir_vecs)
 
+    for sim in axes(ensemble_inc_vecs, 2)
+        calculateReffective_t!(
+            @view(ensemble_Reff_arr[:, sim]),
+            ensemble_beta_arr,
+            dynamics_parameters,
+            1,
+            @view(ensemble_seir_arr[:, :, sim]),
+        )
+    end
+
     for dict in outbreak_spec_dict
         dict[:dirpath] = joinpath(
             ensemble_spec.dirpath, dict[:outbreak_spec].dirpath
@@ -179,7 +191,7 @@ function run_jump_prob(ensemble_param_dict)
 
     run_define_outbreaks(outbreak_spec_dict)
 
-    return @strdict ensemble_seir_arr ensemble_spec
+    return @strdict ensemble_seir_arr ensemble_spec ensemble_Reff_arr
 end
 
 function run_define_outbreaks(dict_of_outbreak_spec_params)
@@ -292,12 +304,12 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
         seed = seed,
     )
 
-    testarr, test_movingvg_arr, inferred_positives = create_testing_arrs(
+    testarr = create_testing_arrs(
         ensemble_inc_arr,
         noise_array,
         outbreak_detection_specification,
         individual_test_specification,
-    )
+    )[1]
 
     OT_chars = calculate_OutbreakThresholdChars(
         testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop

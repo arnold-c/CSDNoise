@@ -63,15 +63,20 @@ export create_testing_arrs, create_testing_arrs!, calculate_tested!,
 include("ensemble-functions.jl")
 export create_combinations_vec, create_ensemble_spec_combinations,
     run_ensemble_jump_prob, run_jump_prob,
-    summarize_ensemble_jump_prob, jump_prob_summary,
     run_OutbreakThresholdChars_creation, OutbreakThresholdChars_creation,
     get_ensemble_file
-
 # @reexport using .EnsembleFunctions
 
 include("noise-functions.jl")
 export create_noise_arr, add_poisson_noise_arr!
 # @reexport using .NoiseFunctions
+
+include("ews-metrics.jl")
+export calculate_centered_mean, calculate_backward_mean,
+    calculate_autocorrelation,
+    calculate_coefficient_of_variation, calculate_index_of_dispersion,
+    calculate_kurtosis, calculate_skewness, calculate_variance
+# @reexport using .EWSMetrics
 
 include(
     "plotting-functions.jl"
@@ -85,7 +90,6 @@ export seircolors,
     N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR,
     PERC_OUTBREAKS_MISSED_COLOR, PERC_ALERTS_CORRECT_COLOR,
     PERC_ALERTS_FALSE_COLOR,
-    bifurcation_plot, bifurcation_heatmap,
     sir_quantiles_array_base_plot, create_sir_quantiles_plot,
     incidence_prevalence_plot, visualize_ensemble_noise, incidence_testing_plot,
     testing_plot, ensemble_outbreak_distribution_plot, ensemble_OTChars_plot,

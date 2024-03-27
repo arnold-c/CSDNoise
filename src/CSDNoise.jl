@@ -72,10 +72,13 @@ export create_noise_arr, add_poisson_noise_arr!
 # @reexport using .NoiseFunctions
 
 include("ews-metrics.jl")
-export calculate_mean,
+export calculate_mean, calculate_backward_mean!, calculate_centered_mean!,
+    calculate_centered_metric!, calculate_variance,
+    calculate_backward_variance!,
+    calculate_centered_variance!,
     calculate_autocorrelation,
     calculate_coefficient_of_variation, calculate_index_of_dispersion,
-    calculate_kurtosis, calculate_skewness, calculate_variance
+    calculate_kurtosis, calculate_skewness
 # @reexport using .EWSMetrics
 
 include(

@@ -113,6 +113,17 @@ function calculate_centered_variance!(
     return variance_vec
 end
 
+function calculate_backward_variance!(
+    variance_vec, timeseries, time_step, bandwidth
+)
+    avglag = bandwidth * time_step
+    @inbounds for i in eachindex(timeseries)
+        @inline moveavg_daystart = calculate_daily_movingavg_startday(i, avglag)
+        variance_vec[i] = var(@view(timeseries[moveavg_daystart:i]))
+    end
+    return nothing
+end
+
 @testitem "Variance" begin
     using CSDNoise
     using Statistics
@@ -136,6 +147,26 @@ end
             var([6, 7, 8, 9, 10]),
             var([8, 9, 10]),
             var([10]),
+        ],
+    )
+
+    backward_variance_testpositives = calculate_variance(
+        calculate_backward_variance!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        backward_variance_testpositives,
+        [
+            var([1]),
+            var([1, 2]),
+            var([1, 2, 3]),
+            var([2, 3, 4]),
+            var([3, 4, 5]),
+            var([4, 5, 6]),
+            var([5, 6, 7]),
+            var([6, 7, 8]),
+            var([7, 8, 9]),
+            var([8, 9, 10]),
         ],
     )
 end

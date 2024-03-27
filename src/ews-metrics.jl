@@ -10,22 +10,33 @@ function calculate_mean(mean_function, timeseries, time_step, bandwidth)
 end
 
 function calculate_centered_mean!(mean_vec, timeseries, time_step, bandwidth)
+    calculate_centered_metric!(
+        mean_vec, Statistics.mean, timeseries, time_step, bandwidth
+    )
+    return mean_vec
+end
+
+function calculate_centered_metric!(
+    metric_vec, metric_function, timeseries, time_step, bandwidth
+)
     delta = (bandwidth - 1) * time_step
     tlength = length(timeseries)
     for i in eachindex(timeseries)
         if i <= delta
-            mean_vec[i] = mean(@view(timeseries[begin:(2i - 1)]))
+            metric_vec[i] = metric_function(@view(timeseries[begin:(2i - 1)]))
             continue
         end
         if i > tlength - delta
-            mean_vec[i] = mean(@view(timeseries[(2i - tlength):end]))
+            metric_vec[i] = metric_function(
+                @view(timeseries[(2i - tlength):end])
+            )
             continue
         end
-        mean_vec[i] = mean(
+        metric_vec[i] = metric_function(
             @view(timeseries[(i - delta):(i + delta)])
         )
     end
-    return mean_vec
+    return metric_vec
 end
 
 function calculate_backward_mean!(mean_vec, timeseries, time_step, bandwidth)
@@ -95,21 +106,9 @@ end
 function calculate_centered_variance!(
     variance_vec, timeseries, time_step, bandwidth
 )
-    delta = (bandwidth - 1) * time_step
-    tlength = length(timeseries)
-    for i in eachindex(timeseries)
-        if i <= delta
-            variance_vec[i] = var(@view(timeseries[begin:(2i - 1)]))
-            continue
-        end
-        if i > tlength - delta
-            variance_vec[i] = var(@view(timeseries[(2i - tlength):end]))
-            continue
-        end
-        variance_vec[i] = var(
-            @view(timeseries[(i - delta):(i + delta)])
-        )
-    end
+    calculate_centered_metric!(
+        variance_vec, Statistics.var, timeseries, time_step, bandwidth
+    )
 
     return variance_vec
 end

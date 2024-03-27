@@ -80,21 +80,63 @@ end
     )
 end
 
+function calculate_variance(
+    variance_function, timeseries, time_step, bandwidth
+)
+    variance_vec = zeros(Float64, length(timeseries))
 
+    variance_function(
+        variance_vec, timeseries, time_step, bandwidth
+    )
 
+    return variance_vec
 end
 
+function calculate_centered_variance!(
+    variance_vec, timeseries, time_step, bandwidth
+)
+    delta = (bandwidth - 1) * time_step
+    tlength = length(timeseries)
+    for i in eachindex(timeseries)
+        if i <= delta
+            variance_vec[i] = var(@view(timeseries[begin:(2i - 1)]))
+            continue
+        end
+        if i > tlength - delta
+            variance_vec[i] = var(@view(timeseries[(2i - tlength):end]))
+            continue
+        end
+        variance_vec[i] = var(
+            @view(timeseries[(i - delta):(i + delta)])
+        )
+    end
+
+    return variance_vec
 end
 
+@testitem "Variance" begin
     using CSDNoise
     using Statistics
 
     daily_testpositives = collect(1:10)
 
+    centered_variance_testpositives = calculate_variance(
+        calculate_centered_variance!, daily_testpositives, 1, 3
     )
 
     @test isequal(
+        centered_variance_testpositives,
         [
+            var([1]),
+            var([1, 2, 3]),
+            var([1, 2, 3, 4, 5]),
+            var([2, 3, 4, 5, 6]),
+            var([3, 4, 5, 6, 7]),
+            var([4, 5, 6, 7, 8]),
+            var([5, 6, 7, 8, 9]),
+            var([6, 7, 8, 9, 10]),
+            var([8, 9, 10]),
+            var([10]),
         ],
     )
 end
@@ -112,7 +154,4 @@ function calculate_kurtosis()
 end
 
 function calculate_skewness()
-end
-
-function calculate_variance()
 end

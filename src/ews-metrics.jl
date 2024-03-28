@@ -479,29 +479,159 @@ end
 end
 
 #TODO: Implement
+function calculate_centered_autocovariance!(
+    autocovariance_vec, timeseries, time_step, bandwidth
+)
+    calculate_centered_metric!(
+        autocovariance_vec,
+        autocov([time_step]),
+        timeseries,
+        time_step,
+        bandwidth,
+    )
+    return nothing
+end
+
+#TODO: Implement
+function calculate_backward_autocovariance!(
+    autocovariance_vec, timeseries, time_step, bandwidth
+)
+    calculate_backward_metric!(
+        autocovariance_vec,
+        autocov([time_step]),
+        timeseries,
+        time_step,
+        bandwidth,
+    )
+    return nothing
+end
+
+function autocov(lags)
+    return Base.Fix2(autocov, lags)
+end
+
+function autocov(timeseries, lags)
+    if length(timeseries) == 1
+        return NaN
+    else
+        return StatsBase.autocov(timeseries, lags)[1]
+    end
+end
+
+@testitem "Autocovariance" begin
+    using CSDNoise
+    using StatsBase: StatsBase
+
+    daily_testpositives = collect(1:10)
+
+    @test isequal(
+        autocov([1])(@view(daily_testpositives[1:3])),
+        StatsBase.autocov(daily_testpositives[1:3], [1])[1],
+    )
+
+    @test isequal(autocov(daily_testpositives[1], [1]), NaN)
+    @test isequal(
+        autocov([1])(@view(daily_testpositives[1:3])),
+        autocov(daily_testpositives[1:3], [1]),
+    )
+
+    centered_autocovariance_testpostives = calculate_ews_metric(
+        calculate_centered_autocovariance!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        centered_autocovariance_testpostives,
+        [
+            NaN,
+            StatsBase.autocov([1, 2, 3], [1])[1],
+            StatsBase.autocov([1, 2, 3, 4, 5], [1])[1],
+            StatsBase.autocov([2, 3, 4, 5, 6], [1])[1],
+            StatsBase.autocov([3, 4, 5, 6, 7], [1])[1],
+            StatsBase.autocov([4, 5, 6, 7, 8], [1])[1],
+            StatsBase.autocov([5, 6, 7, 8, 9], [1])[1],
+            StatsBase.autocov([6, 7, 8, 9, 10], [1])[1],
+            StatsBase.autocov([8, 9, 10], [1])[1],
+            NaN,
+        ],
+    )
+
+    backward_autocovariance_testpostives = calculate_ews_metric(
+        calculate_backward_autocovariance!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        backward_autocovariance_testpostives,
+        [
+            NaN,
+            StatsBase.autocov([1, 2], [1])[1],
+            StatsBase.autocov([1, 2, 3], [1])[1],
+            StatsBase.autocov([2, 3, 4], [1])[1],
+            StatsBase.autocov([3, 4, 5], [1])[1],
+            StatsBase.autocov([4, 5, 6], [1])[1],
+            StatsBase.autocov([5, 6, 7], [1])[1],
+            StatsBase.autocov([6, 7, 8], [1])[1],
+            StatsBase.autocov([7, 8, 9], [1])[1],
+            StatsBase.autocov([8, 9, 10], [1])[1],
+        ],
+    )
+end
+
+#TODO: Implement
 function calculate_centered_autocorrelation!(
     autocorrelation_vec, timeseries, time_step, bandwidth
 )
+    calculate_centered_metric!(
+        autocorrelation_vec,
+        autocor([time_step]),
+        timeseries,
+        time_step,
+        bandwidth,
+    )
     return nothing
 end
 
 #TODO: Implement
 function calculate_backward_autocorrelation!(
-        autocorrelation_vec, timeseries, time_step, bandwidth
+    autocorrelation_vec, timeseries, time_step, bandwidth
 )
+    calculate_backward_metric!(
+        autocorrelation_vec,
+        autocor([time_step]),
+        timeseries,
+        time_step,
+        bandwidth,
+    )
     return nothing
 end
 
-#TODO: Implement
-function autocorrelation(v)
-    return nothing
+function autocor(lags)
+    return Base.Fix2(autocor, lags)
+end
+
+function autocor(timeseries, lags)
+    if length(timeseries) == 1
+        return NaN
+    else
+        return StatsBase.autocor(timeseries, lags)[1]
+    end
 end
 
 @testitem "Autocorrelation" begin
     using CSDNoise
-    using StatsBase
+    using StatsBase: StatsBase
 
     daily_testpositives = collect(1:10)
+
+    @test isequal(
+        autocor([1])(@view(daily_testpositives[1:3])),
+        StatsBase.autocor(daily_testpositives[1:3], [1])[1],
+    )
+
+    @test isequal(autocor(daily_testpositives[1], [1]), NaN)
+    @test isequal(
+        autocor([1])(@view(daily_testpositives[1:3])),
+        autocor(daily_testpositives[1:3], [1]),
+    )
 
     centered_autocorrelation_testpostives = calculate_ews_metric(
         calculate_centered_autocorrelation!, daily_testpositives, 1, 3
@@ -510,16 +640,16 @@ end
     @test isequal(
         centered_autocorrelation_testpostives,
         [
-            autocorrelation([1]),
-            autocorrelation([1, 2, 3]),
-            autocorrelation([1, 2, 3, 4, 5]),
-            autocorrelation([2, 3, 4, 5, 6]),
-            autocorrelation([3, 4, 5, 6, 7]),
-            autocorrelation([4, 5, 6, 7, 8]),
-            autocorrelation([5, 6, 7, 8, 9]),
-            autocorrelation([6, 7, 8, 9, 10]),
-            autocorrelation([8, 9, 10]),
-            autocorrelation([10]),
+            NaN,
+            StatsBase.autocor([1, 2, 3], [1])[1],
+            StatsBase.autocor([1, 2, 3, 4, 5], [1])[1],
+            StatsBase.autocor([2, 3, 4, 5, 6], [1])[1],
+            StatsBase.autocor([3, 4, 5, 6, 7], [1])[1],
+            StatsBase.autocor([4, 5, 6, 7, 8], [1])[1],
+            StatsBase.autocor([5, 6, 7, 8, 9], [1])[1],
+            StatsBase.autocor([6, 7, 8, 9, 10], [1])[1],
+            StatsBase.autocor([8, 9, 10], [1])[1],
+            NaN,
         ],
     )
 
@@ -530,16 +660,16 @@ end
     @test isequal(
         backward_autocorrelation_testpostives,
         [
-            autocorrelation([1]),
-            autocorrelation([1, 2]),
-            autocorrelation([1, 2, 3]),
-            autocorrelation([2, 3, 4]),
-            autocorrelation([3, 4, 5]),
-            autocorrelation([4, 5, 6]),
-            autocorrelation([5, 6, 7]),
-            autocorrelation([6, 7, 8]),
-            autocorrelation([7, 8, 9]),
-            autocorrelation([8, 9, 10]),
+            NaN,
+            StatsBase.autocor([1, 2], [1])[1],
+            StatsBase.autocor([1, 2, 3], [1])[1],
+            StatsBase.autocor([2, 3, 4], [1])[1],
+            StatsBase.autocor([3, 4, 5], [1])[1],
+            StatsBase.autocor([4, 5, 6], [1])[1],
+            StatsBase.autocor([5, 6, 7], [1])[1],
+            StatsBase.autocor([6, 7, 8], [1])[1],
+            StatsBase.autocor([7, 8, 9], [1])[1],
+            StatsBase.autocor([8, 9, 10], [1])[1],
         ],
     )
 end

@@ -40,9 +40,21 @@ function calculate_centered_metric!(
 end
 
 function calculate_backward_mean!(mean_vec, timeseries, time_step, bandwidth)
-    calculate_movingavg!(mean_vec, timeseries, bandwidth * time_step)
+    calculate_backward_metric!(mean_vec, StatsBase.mean, timeseries, bandwidth * time_step)
     return mean_vec
 end
+
+function calculate_backward_metric!(
+    metric_vec, metric_function, timeseries, time_step, bandwidth
+)
+    avglag = bandwidth * time_step
+    @inbounds for i in eachindex(timeseries)
+        @inline moveavg_daystart = calculate_daily_movingavg_startday(i, avglag)
+        metric_vec[i] = metric_function(@view(timeseries[moveavg_daystart:i]))
+    end
+    return nothing
+end
+
 
 @testitem "Mean" begin
     using CSDNoise
@@ -121,15 +133,7 @@ function calculate_backward_variance!(
     )
 end
 
-function calculate_backward_metric!(
-    metric_vec, metric_function, timeseries, time_step, bandwidth
 )
-    avglag = bandwidth * time_step
-    @inbounds for i in eachindex(timeseries)
-        @inline moveavg_daystart = calculate_daily_movingavg_startday(i, avglag)
-        metric_vec[i] = metric_function(@view(timeseries[moveavg_daystart:i]))
-    end
-    return nothing
 end
 
 @testitem "Variance" begin

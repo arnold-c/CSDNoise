@@ -37,8 +37,7 @@ export seir_mod, seir_mod!, seir_mod_loop!,
 # @reexport using .SEIRModel
 
 include("cleaning-functions.jl")
-export create_sir_df, create_sir_beta_dfs, create_sir_sim_array!,
-    create_sir_all_sim_quantiles, create_sir_all_sim_quantiles!
+export create_sir_df
 # @reexport using .CleaningFunctions
 
 include("detection-thresholds.jl")

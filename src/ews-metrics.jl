@@ -1,4 +1,4 @@
-using Statistics
+using StatsBase
 using TestItems
 
 function calculate_mean(mean_function, timeseries, time_step, bandwidth)
@@ -107,7 +107,7 @@ function calculate_centered_variance!(
     variance_vec, timeseries, time_step, bandwidth
 )
     calculate_centered_metric!(
-        variance_vec, Statistics.var, timeseries, time_step, bandwidth
+        variance_vec, var, timeseries, time_step, bandwidth
     )
 
     return variance_vec
@@ -116,10 +116,18 @@ end
 function calculate_backward_variance!(
     variance_vec, timeseries, time_step, bandwidth
 )
+    return calculate_backward_metric!(
+        variance_vec, var, timeseries, time_step, bandwidth
+    )
+end
+
+function calculate_backward_metric!(
+    metric_vec, metric_function, timeseries, time_step, bandwidth
+)
     avglag = bandwidth * time_step
     @inbounds for i in eachindex(timeseries)
         @inline moveavg_daystart = calculate_daily_movingavg_startday(i, avglag)
-        variance_vec[i] = var(@view(timeseries[moveavg_daystart:i]))
+        metric_vec[i] = metric_function(@view(timeseries[moveavg_daystart:i]))
     end
     return nothing
 end
@@ -172,17 +180,30 @@ end
 end
 
 function calculate_coefficient_of_variation(
-    mean_function, variance_function, timeseries, time_step, bandwidth
+    cov_function, timeseries, time_step, bandwidth
 )
-    mean_vec = calculate_mean(mean_function, timeseries, time_step, bandwidth)
-    sd_vec =
-        sqrt.(
-            calculate_variance(
-                variance_function, timeseries, time_step, bandwidth
-            )
-        )
+    cov_vec = zeros(Float64, length(timeseries))
 
-    return sd_vec ./ mean_vec
+    cov_function(cov_vec, timeseries, time_step, bandwidth)
+
+    return cov_vec
+end
+
+function calculate_centered_coefficient_of_variation!(
+    cov_vec, timeseries, time_step, bandwidth
+)
+    calculate_centered_metric!(
+        cov_vec, variation, timeseries, time_step, bandwidth
+    )
+    return cov_vec
+end
+
+function calculate_backward_coefficient_of_variation!(
+    cov_vec, timeseries, time_step, bandwidth
+)
+    return calculate_backward_metric!(
+        cov_vec, variation, timeseries, time_step, bandwidth
+    )
 end
 
 function calculate_index_of_dispersion(

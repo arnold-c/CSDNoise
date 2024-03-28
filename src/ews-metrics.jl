@@ -217,11 +217,33 @@ function calculate_index_of_dispersion(
     return variance_vec ./ mean_vec
 end
 
+function calculate_skewness(skew_function, timeseries, time_step, bandwidth)
+    skew_vec = zeros(Float64, length(timeseries))
+
+    skew_function(skew_vec, timeseries, time_step, bandwidth)
+
+    return skew_vec
+end
+
+function calculate_centered_skewness!(
+    skew_vec, timeseries, time_step, bandwidth
+)
+    calculate_centered_metric!(
+        skew_vec, skewness, timeseries, time_step, bandwidth
+    )
+    return skew_vec
+end
+
+function calculate_backward_skewness!(
+    skew_vec, timeseries, time_step, bandwidth
+)
+    return calculate_backward_metric!(
+        skew_vec, skewness, timeseries, time_step, bandwidth
+    )
+end
+
 function calculate_autocorrelation()
 end
 
 function calculate_kurtosis()
-end
-
-function calculate_skewness()
 end

@@ -171,10 +171,21 @@ end
     )
 end
 
-function calculate_autocorrelation()
+function calculate_coefficient_of_variation(
+    mean_function, variance_function, timeseries, time_step, bandwidth
+)
+    mean_vec = calculate_mean(mean_function, timeseries, time_step, bandwidth)
+    sd_vec =
+        sqrt.(
+            calculate_variance(
+                variance_function, timeseries, time_step, bandwidth
+            )
+        )
+
+    return sd_vec ./ mean_vec
 end
 
-function calculate_coefficient_of_variation()
+function calculate_autocorrelation()
 end
 
 function calculate_index_of_dispersion()

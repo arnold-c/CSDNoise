@@ -130,7 +130,7 @@ function calculate_backward_variance!(
     variance_vec, timeseries, time_step, bandwidth
 )
     return calculate_backward_metric!(
-        variance_vec, StatsBase.var, timeseries, time_step, bandwidth,)
+        variance_vec, StatsBase.var, timeseries, time_step, bandwidth)
 end
 
 @testitem "Variance" begin
@@ -207,17 +207,131 @@ function calculate_backward_coefficient_of_variation!(
     )
 end
 
-function calculate_index_of_dispersion(
-    mean_function, variance_function, timeseries, time_step, bandwidth
-)
-    mean_vec = calculate_mean(mean_function, timeseries, time_step, bandwidth)
-    variance_vec = calculate_variance(
-        variance_function, timeseries, time_step, bandwidth
+@testitem "Coefficient of Variation" begin
+    using CSDNoise
+    using StatsBase
+
+    daily_testpositives = collect(1:10)
+
+    centered_cov_testpostives = calculate_coefficient_of_variation(
+        calculate_centered_coefficient_of_variation!, daily_testpositives, 1, 3
     )
 
-    return variance_vec ./ mean_vec
+    @test isequal(
+        centered_cov_testpostives,
+        [
+            variation([1]),
+            variation([1, 2, 3]),
+            variation([1, 2, 3, 4, 5]),
+            variation([2, 3, 4, 5, 6]),
+            variation([3, 4, 5, 6, 7]),
+            variation([4, 5, 6, 7, 8]),
+            variation([5, 6, 7, 8, 9]),
+            variation([6, 7, 8, 9, 10]),
+            variation([8, 9, 10]),
+            variation([10]),
+        ],
+    )
+
+    backward_cov_testpostives = calculate_coefficient_of_variation(
+        calculate_backward_coefficient_of_variation!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        backward_cov_testpostives,
+        [
+            variation([1]),
+            variation([1, 2]),
+            variation([1, 2, 3]),
+            variation([2, 3, 4]),
+            variation([3, 4, 5]),
+            variation([4, 5, 6]),
+            variation([5, 6, 7]),
+            variation([6, 7, 8]),
+            variation([7, 8, 9]),
+            variation([8, 9, 10]),
+        ],
+    )
 end
 
+function calculate_index_of_dispersion(
+    iod_function, timeseries, time_step, bandwidth
+)
+    iod_vec = zeros(Float64, length(timeseries))
+    iod_function(iod_vec, timeseries, time_step, bandwidth)
+
+    return iod_vec
+end
+
+function calculate_centered_index_of_dispersion!(
+    index_of_dispersion_vec, timeseries, time_step, bandwidth
+)
+    calculate_centered_metric!(
+        index_of_dispersion_vec,
+        iod,
+        timeseries,
+        time_step,
+        bandwidth
+    )
+    return nothing
+end
+
+iod(vec) = StatsBase.var(vec) / StatsBase.mean(vec)
+
+function calculate_backward_index_of_dispersion!(
+    index_of_dispersion_vec, timeseries, time_step, bandwidth
+)
+    return calculate_backward_metric!(
+        index_of_dispersion_vec, iod, timeseries, time_step, bandwidth
+    )
+end
+
+@testitem "Index of Dispersion" begin
+    using CSDNoise
+    using StatsBase
+
+    daily_testpositives = collect(1:10)
+
+    centered_iod_testpostives = calculate_index_of_dispersion(
+        calculate_centered_index_of_dispersion!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        centered_iod_testpostives,
+        [
+            iod([1]),
+            iod([1, 2, 3]),
+            iod([1, 2, 3, 4, 5]),
+            iod([2, 3, 4, 5, 6]),
+            iod([3, 4, 5, 6, 7]),
+            iod([4, 5, 6, 7, 8]),
+            iod([5, 6, 7, 8, 9]),
+            iod([6, 7, 8, 9, 10]),
+            iod([8, 9, 10]),
+            iod([10]),
+        ],
+    )
+
+    backward_iod_testpostives = calculate_index_of_dispersion(
+        calculate_backward_index_of_dispersion!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        backward_iod_testpostives,
+        [
+            iod([1]),
+            iod([1, 2]),
+            iod([1, 2, 3]),
+            iod([2, 3, 4]),
+            iod([3, 4, 5]),
+            iod([4, 5, 6]),
+            iod([5, 6, 7]),
+            iod([6, 7, 8]),
+            iod([7, 8, 9]),
+            iod([8, 9, 10]),
+        ],
+    )
+end
 function calculate_skewness(skew_function, timeseries, time_step, bandwidth)
     skew_vec = zeros(Float64, length(timeseries))
 

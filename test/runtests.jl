@@ -3,14 +3,11 @@ using DrWatson, TestItemRunner
 
 using CSDNoise
 
-# Here you include files using `srcdir`
-# include(srcdir("file.jl"))
-
-# Run test suite
 println("Starting tests")
 ti = time()
 
-@run_package_tests verbose = true
+@run_package_tests filter = ti -> (occursin("CSDNoise", ti.filename)) verbose =
+    true
 
 ti = time() - ti
 println("\nTest took total time of:")

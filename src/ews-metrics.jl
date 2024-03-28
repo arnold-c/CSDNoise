@@ -1,4 +1,4 @@
-using StatsBase
+using StatsBase: StatsBase
 using TestItems
 
 function calculate_mean(mean_function, timeseries, time_step, bandwidth)
@@ -11,7 +11,7 @@ end
 
 function calculate_centered_mean!(mean_vec, timeseries, time_step, bandwidth)
     calculate_centered_metric!(
-        mean_vec, Statistics.mean, timeseries, time_step, bandwidth
+        mean_vec, StatsBase.mean, timeseries, time_step, bandwidth
     )
     return mean_vec
 end
@@ -40,7 +40,9 @@ function calculate_centered_metric!(
 end
 
 function calculate_backward_mean!(mean_vec, timeseries, time_step, bandwidth)
-    calculate_backward_metric!(mean_vec, StatsBase.mean, timeseries, bandwidth * time_step)
+    calculate_backward_metric!(
+        mean_vec, StatsBase.mean, timeseries, time_step, bandwidth
+    )
     return mean_vec
 end
 
@@ -54,7 +56,6 @@ function calculate_backward_metric!(
     end
     return nothing
 end
-
 
 @testitem "Mean" begin
     using CSDNoise
@@ -119,7 +120,7 @@ function calculate_centered_variance!(
     variance_vec, timeseries, time_step, bandwidth
 )
     calculate_centered_metric!(
-        variance_vec, var, timeseries, time_step, bandwidth
+        variance_vec, StatsBase.var, timeseries, time_step, bandwidth
     )
 
     return variance_vec
@@ -129,11 +130,7 @@ function calculate_backward_variance!(
     variance_vec, timeseries, time_step, bandwidth
 )
     return calculate_backward_metric!(
-        variance_vec, var, timeseries, time_step, bandwidth
-    )
-end
-
-)
+        variance_vec, StatsBase.var, timeseries, time_step, bandwidth,)
 end
 
 @testitem "Variance" begin
@@ -197,7 +194,7 @@ function calculate_centered_coefficient_of_variation!(
     cov_vec, timeseries, time_step, bandwidth
 )
     calculate_centered_metric!(
-        cov_vec, variation, timeseries, time_step, bandwidth
+        cov_vec, StatsBase.variation, timeseries, time_step, bandwidth
     )
     return cov_vec
 end
@@ -206,7 +203,7 @@ function calculate_backward_coefficient_of_variation!(
     cov_vec, timeseries, time_step, bandwidth
 )
     return calculate_backward_metric!(
-        cov_vec, variation, timeseries, time_step, bandwidth
+        cov_vec, StatsBase.variation, timeseries, time_step, bandwidth
     )
 end
 
@@ -233,7 +230,7 @@ function calculate_centered_skewness!(
     skew_vec, timeseries, time_step, bandwidth
 )
     calculate_centered_metric!(
-        skew_vec, skewness, timeseries, time_step, bandwidth
+        skew_vec, StatsBase.skewness, timeseries, time_step, bandwidth
     )
     return skew_vec
 end
@@ -242,7 +239,7 @@ function calculate_backward_skewness!(
     skew_vec, timeseries, time_step, bandwidth
 )
     return calculate_backward_metric!(
-        skew_vec, skewness, timeseries, time_step, bandwidth
+        skew_vec, StatsBase.skewness, timeseries, time_step, bandwidth
     )
 end
 
@@ -274,4 +271,3 @@ end
 
 function calculate_autocorrelation()
 end
-

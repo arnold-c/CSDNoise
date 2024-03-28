@@ -185,10 +185,18 @@ function calculate_coefficient_of_variation(
     return sd_vec ./ mean_vec
 end
 
-function calculate_autocorrelation()
+function calculate_index_of_dispersion(
+    mean_function, variance_function, timeseries, time_step, bandwidth
+)
+    mean_vec = calculate_mean(mean_function, timeseries, time_step, bandwidth)
+    variance_vec = calculate_variance(
+        variance_function, timeseries, time_step, bandwidth
+    )
+
+    return variance_vec ./ mean_vec
 end
 
-function calculate_index_of_dispersion()
+function calculate_autocorrelation()
 end
 
 function calculate_kurtosis()

@@ -13,7 +13,7 @@ function calculate_centered_mean!(mean_vec, timeseries, time_step, bandwidth)
     calculate_centered_metric!(
         mean_vec, StatsBase.mean, timeseries, time_step, bandwidth
     )
-    return mean_vec
+    return nothing
 end
 
 function calculate_centered_metric!(
@@ -36,14 +36,39 @@ function calculate_centered_metric!(
             @view(timeseries[(i - delta):(i + delta)])
         )
     end
-    return metric_vec
+    return nothing
+end
+
+function calculate_centered_metric!(
+    metric_vec, metric_function, timeseries, time_step, bandwidth, varargs...
+)
+    delta = (bandwidth - 1) * time_step
+    tlength = length(timeseries)
+    for i in eachindex(timeseries)
+        if i <= delta
+            metric_vec[i] = metric_function(@view(timeseries[begin:(2i - 1)]))
+            continue
+        end
+        if i > tlength - delta
+            metric_vec[i] = metric_function(
+                @view(timeseries[(2i - tlength):end]),
+                varargs...
+            )
+            continue
+        end
+        metric_vec[i] = metric_function(
+            @view(timeseries[(i - delta):(i + delta)]),
+            varargs...
+        )
+    end
+    return nothing
 end
 
 function calculate_backward_mean!(mean_vec, timeseries, time_step, bandwidth)
     calculate_backward_metric!(
         mean_vec, StatsBase.mean, timeseries, time_step, bandwidth
     )
-    return mean_vec
+    return nothing
 end
 
 function calculate_backward_metric!(
@@ -111,14 +136,16 @@ function calculate_centered_variance!(
         variance_vec, StatsBase.var, timeseries, time_step, bandwidth
     )
 
-    return variance_vec
+    return nothing
 end
 
 function calculate_backward_variance!(
     variance_vec, timeseries, time_step, bandwidth
 )
-    return calculate_backward_metric!(
-        variance_vec, StatsBase.var, timeseries, time_step, bandwidth)
+    calculate_backward_metric!(
+        variance_vec, StatsBase.var, timeseries, time_step, bandwidth
+    )
+    return nothing
 end
 
 @testitem "Variance" begin
@@ -174,15 +201,16 @@ function calculate_centered_coefficient_of_variation!(
     calculate_centered_metric!(
         cov_vec, StatsBase.variation, timeseries, time_step, bandwidth
     )
-    return cov_vec
+    return nothing
 end
 
 function calculate_backward_coefficient_of_variation!(
     cov_vec, timeseries, time_step, bandwidth
 )
-    return calculate_backward_metric!(
+    calculate_backward_metric!(
         cov_vec, StatsBase.variation, timeseries, time_step, bandwidth
     )
+    return nothing
 end
 
 @testitem "Coefficient of Variation" begin
@@ -250,9 +278,10 @@ iod(vec) = StatsBase.var(vec) / StatsBase.mean(vec)
 function calculate_backward_index_of_dispersion!(
     index_of_dispersion_vec, timeseries, time_step, bandwidth
 )
-    return calculate_backward_metric!(
+    calculate_backward_metric!(
         index_of_dispersion_vec, iod, timeseries, time_step, bandwidth
     )
+    return nothing
 end
 
 @testitem "Index of Dispersion" begin
@@ -308,15 +337,16 @@ function calculate_centered_skewness!(
     calculate_centered_metric!(
         skew_vec, StatsBase.skewness, timeseries, time_step, bandwidth
     )
-    return skew_vec
+    return nothing
 end
 
 function calculate_backward_skewness!(
     skew_vec, timeseries, time_step, bandwidth
 )
-    return calculate_backward_metric!(
+    calculate_backward_metric!(
         skew_vec, StatsBase.skewness, timeseries, time_step, bandwidth
     )
+    return nothing
 end
 
 @testitem "Skewness" begin
@@ -372,15 +402,17 @@ function calculate_centered_kurtosis!(
     calculate_centered_metric!(
         kurtosis_vec, kurtosis, timeseries, time_step, bandwidth
     )
-    return kurtosis_vec
+    return nothing
 end
 
 function calculate_backward_kurtosis!(
     kurtosis_vec, timeseries, time_step, bandwidth
 )
-    return calculate_backward_metric!(
+    calculate_backward_metric!(
         kurtosis_vec, kurtosis, timeseries, time_step, bandwidth
     )
+
+    return nothing
 end
 
 #TODO: Confirm equation

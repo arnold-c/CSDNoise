@@ -74,7 +74,7 @@ include("ews-metrics.jl")
 export calculate_ews_metric,
     calculate_backward_mean!, calculate_centered_mean!,
     calculate_centered_metric!, calculate_backward_metric!,
-     calculate_backward_variance!,
+    calculate_backward_variance!,
     calculate_centered_variance!,
     calculate_centered_coefficient_of_variation!,
     calculate_backward_coefficient_of_variation!,
@@ -84,8 +84,10 @@ export calculate_ews_metric,
     calculate_centered_skewness!, calculate_backward_skewness!,
     calculate_centered_kurtosis!, calculate_backward_kurtosis!,
     kurtosis,
+    calculate_centered_autocovariance!, calculate_backward_autocovariance!,
+    autocov,
     calculate_centered_autocorrelation!, calculate_backward_autocorrelation!,
-    autocorrelation
+    autocor
 # @reexport using .EWSMetrics
 
 include(

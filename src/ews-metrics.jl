@@ -1,12 +1,12 @@
 using StatsBase: StatsBase
 using TestItems
 
-function calculate_mean(mean_function, timeseries, time_step, bandwidth)
-    mean_vec = zeros(Float64, length(timeseries))
+function calculate_ews_metric(metric_function, timeseries, time_step, bandwidth)
+    metric_vec = zeros(Float64, length(timeseries))
 
-    mean_function(mean_vec, timeseries, time_step, bandwidth)
+    metric_function(metric_vec, timeseries, time_step, bandwidth)
 
-    return mean_vec
+    return metric_vec
 end
 
 function calculate_centered_mean!(mean_vec, timeseries, time_step, bandwidth)
@@ -63,7 +63,7 @@ end
 
     daily_testpositives = collect(1:10)
 
-    centered_mean_testpositives = calculate_mean(
+    centered_mean_testpositives = calculate_ews_metric(
         calculate_centered_mean!, daily_testpositives, 1, 3
     )
 
@@ -83,7 +83,7 @@ end
         ],
     )
 
-    backward_mean_testpositives = calculate_mean(
+    backward_mean_testpositives = calculate_ews_metric(
         calculate_backward_mean!, daily_testpositives, 1, 3
     )
 
@@ -102,18 +102,6 @@ end
             mean([8, 9, 10]),
         ],
     )
-end
-
-function calculate_variance(
-    variance_function, timeseries, time_step, bandwidth
-)
-    variance_vec = zeros(Float64, length(timeseries))
-
-    variance_function(
-        variance_vec, timeseries, time_step, bandwidth
-    )
-
-    return variance_vec
 end
 
 function calculate_centered_variance!(
@@ -139,7 +127,7 @@ end
 
     daily_testpositives = collect(1:10)
 
-    centered_variance_testpositives = calculate_variance(
+    centered_variance_testpositives = calculate_ews_metric(
         calculate_centered_variance!, daily_testpositives, 1, 3
     )
 
@@ -159,7 +147,7 @@ end
         ],
     )
 
-    backward_variance_testpositives = calculate_variance(
+    backward_variance_testpositives = calculate_ews_metric(
         calculate_backward_variance!, daily_testpositives, 1, 3
     )
 
@@ -178,16 +166,6 @@ end
             var([8, 9, 10]),
         ],
     )
-end
-
-function calculate_coefficient_of_variation(
-    cov_function, timeseries, time_step, bandwidth
-)
-    cov_vec = zeros(Float64, length(timeseries))
-
-    cov_function(cov_vec, timeseries, time_step, bandwidth)
-
-    return cov_vec
 end
 
 function calculate_centered_coefficient_of_variation!(
@@ -213,7 +191,7 @@ end
 
     daily_testpositives = collect(1:10)
 
-    centered_cov_testpostives = calculate_coefficient_of_variation(
+    centered_cov_testpostives = calculate_ews_metric(
         calculate_centered_coefficient_of_variation!, daily_testpositives, 1, 3
     )
 
@@ -233,7 +211,7 @@ end
         ],
     )
 
-    backward_cov_testpostives = calculate_coefficient_of_variation(
+    backward_cov_testpostives = calculate_ews_metric(
         calculate_backward_coefficient_of_variation!, daily_testpositives, 1, 3
     )
 
@@ -252,15 +230,6 @@ end
             variation([8, 9, 10]),
         ],
     )
-end
-
-function calculate_index_of_dispersion(
-    iod_function, timeseries, time_step, bandwidth
-)
-    iod_vec = zeros(Float64, length(timeseries))
-    iod_function(iod_vec, timeseries, time_step, bandwidth)
-
-    return iod_vec
 end
 
 function calculate_centered_index_of_dispersion!(
@@ -292,7 +261,7 @@ end
 
     daily_testpositives = collect(1:10)
 
-    centered_iod_testpostives = calculate_index_of_dispersion(
+    centered_iod_testpostives = calculate_ews_metric(
         calculate_centered_index_of_dispersion!, daily_testpositives, 1, 3
     )
 
@@ -312,7 +281,7 @@ end
         ],
     )
 
-    backward_iod_testpostives = calculate_index_of_dispersion(
+    backward_iod_testpostives = calculate_ews_metric(
         calculate_backward_index_of_dispersion!, daily_testpositives, 1, 3
     )
 
@@ -331,13 +300,6 @@ end
             iod([8, 9, 10]),
         ],
     )
-end
-function calculate_skewness(skew_function, timeseries, time_step, bandwidth)
-    skew_vec = zeros(Float64, length(timeseries))
-
-    skew_function(skew_vec, timeseries, time_step, bandwidth)
-
-    return skew_vec
 end
 
 function calculate_centered_skewness!(
@@ -382,6 +344,20 @@ function calculate_backward_kurtosis!(
     )
 end
 
+function kurtosis()
+    n = length(v)
+    cm2 = 0.0  # empirical 2nd centered moment (variance)
+    cm4 = 0.0  # empirical 4th centered moment
+    for i in 1:n
+        @inbounds z = v[i] - m
+        z2 = z * z
+        cm2 += z2
+        cm4 += z2 * z2
+    end
+    cm4 /= n
+    cm2 /= n
+    return (cm4 / (cm2 * cm2))
+end
 
 function calculate_autocorrelation()
 end

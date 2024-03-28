@@ -71,14 +71,13 @@ export create_noise_arr, add_poisson_noise_arr!
 # @reexport using .NoiseFunctions
 
 include("ews-metrics.jl")
-export calculate_mean, calculate_backward_mean!, calculate_centered_mean!,
+export calculate_ews_metric,
+    calculate_backward_mean!, calculate_centered_mean!,
     calculate_centered_metric!, calculate_backward_metric!,
-    calculate_variance, calculate_backward_variance!,
+     calculate_backward_variance!,
     calculate_centered_variance!,
-    calculate_coefficient_of_variation,
     calculate_centered_coefficient_of_variation!,
     calculate_backward_coefficient_of_variation!,
-    calculate_index_of_dispersion,
     calculate_centered_index_of_dispersion!,
     calculate_backward_index_of_dispersion!,
     iod,

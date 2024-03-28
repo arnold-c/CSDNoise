@@ -319,12 +319,51 @@ function calculate_backward_skewness!(
     )
 end
 
-function calculate_kurtosis()
-    kurtosis_vec = zeros(Float64, length(timeseries))
+@testitem "Skewness" begin
+    using CSDNoise
+    using StatsBase
 
-    kurtosis_function(kurtosis_vec, timeseries, time_step, bandwidth)
+    daily_testpositives = collect(1:10)
 
-    return kurtosis_vec
+    centered_skewness_testpostives = calculate_ews_metric(
+        calculate_centered_skewness!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        centered_skewness_testpostives,
+        [
+            StatsBase.skewness([1]),
+            StatsBase.skewness([1, 2, 3]),
+            StatsBase.skewness([1, 2, 3, 4, 5]),
+            StatsBase.skewness([2, 3, 4, 5, 6]),
+            StatsBase.skewness([3, 4, 5, 6, 7]),
+            StatsBase.skewness([4, 5, 6, 7, 8]),
+            StatsBase.skewness([5, 6, 7, 8, 9]),
+            StatsBase.skewness([6, 7, 8, 9, 10]),
+            StatsBase.skewness([8, 9, 10]),
+            StatsBase.skewness([10]),
+        ],
+    )
+
+    backward_skewness_testpostives = calculate_ews_metric(
+        calculate_backward_skewness!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        backward_skewness_testpostives,
+        [
+            StatsBase.skewness([1]),
+            StatsBase.skewness([1, 2]),
+            StatsBase.skewness([1, 2, 3]),
+            StatsBase.skewness([2, 3, 4]),
+            StatsBase.skewness([3, 4, 5]),
+            StatsBase.skewness([4, 5, 6]),
+            StatsBase.skewness([5, 6, 7]),
+            StatsBase.skewness([6, 7, 8]),
+            StatsBase.skewness([7, 8, 9]),
+            StatsBase.skewness([8, 9, 10]),
+        ],
+    )
 end
 
 function calculate_centered_kurtosis!(
@@ -344,7 +383,9 @@ function calculate_backward_kurtosis!(
     )
 end
 
-function kurtosis()
+#TODO: Confirm equation
+function kurtosis(v)
+    m = StatsBase.mean(v)
     n = length(v)
     cm2 = 0.0  # empirical 2nd centered moment (variance)
     cm4 = 0.0  # empirical 4th centered moment
@@ -359,5 +400,114 @@ function kurtosis()
     return (cm4 / (cm2 * cm2))
 end
 
-function calculate_autocorrelation()
+@testitem "Kurtosis" begin
+    using CSDNoise
+
+    daily_testpositives = collect(1:10)
+
+    centered_kurtosis_testpostives = calculate_ews_metric(
+        calculate_centered_kurtosis!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        centered_kurtosis_testpostives,
+        [
+            kurtosis([1]),
+            kurtosis([1, 2, 3]),
+            kurtosis([1, 2, 3, 4, 5]),
+            kurtosis([2, 3, 4, 5, 6]),
+            kurtosis([3, 4, 5, 6, 7]),
+            kurtosis([4, 5, 6, 7, 8]),
+            kurtosis([5, 6, 7, 8, 9]),
+            kurtosis([6, 7, 8, 9, 10]),
+            kurtosis([8, 9, 10]),
+            kurtosis([10]),
+        ],
+    )
+
+    backward_kurtosis_testpostives = calculate_ews_metric(
+        calculate_backward_kurtosis!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        backward_kurtosis_testpostives,
+        [
+            kurtosis([1]),
+            kurtosis([1, 2]),
+            kurtosis([1, 2, 3]),
+            kurtosis([2, 3, 4]),
+            kurtosis([3, 4, 5]),
+            kurtosis([4, 5, 6]),
+            kurtosis([5, 6, 7]),
+            kurtosis([6, 7, 8]),
+            kurtosis([7, 8, 9]),
+            kurtosis([8, 9, 10]),
+        ],
+    )
+end
+
+#TODO: Implement
+function calculate_centered_autocorrelation!(
+    autocorrelation_vec, timeseries, time_step, bandwidth
+)
+    return nothing
+end
+
+#TODO: Implement
+function calculate_backward_autocorrelation!(
+        autocorrelation_vec, timeseries, time_step, bandwidth
+)
+    return nothing
+end
+
+#TODO: Implement
+function autocorrelation(v)
+    return nothing
+end
+
+@testitem "Autocorrelation" begin
+    using CSDNoise
+    using StatsBase
+
+    daily_testpositives = collect(1:10)
+
+    centered_autocorrelation_testpostives = calculate_ews_metric(
+        calculate_centered_autocorrelation!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        centered_autocorrelation_testpostives,
+        [
+            autocorrelation([1]),
+            autocorrelation([1, 2, 3]),
+            autocorrelation([1, 2, 3, 4, 5]),
+            autocorrelation([2, 3, 4, 5, 6]),
+            autocorrelation([3, 4, 5, 6, 7]),
+            autocorrelation([4, 5, 6, 7, 8]),
+            autocorrelation([5, 6, 7, 8, 9]),
+            autocorrelation([6, 7, 8, 9, 10]),
+            autocorrelation([8, 9, 10]),
+            autocorrelation([10]),
+        ],
+    )
+
+    backward_autocorrelation_testpostives = calculate_ews_metric(
+        calculate_backward_autocorrelation!, daily_testpositives, 1, 3
+    )
+
+    @test isequal(
+        backward_autocorrelation_testpostives,
+        [
+            autocorrelation([1]),
+            autocorrelation([1, 2]),
+            autocorrelation([1, 2, 3]),
+            autocorrelation([2, 3, 4]),
+            autocorrelation([3, 4, 5]),
+            autocorrelation([4, 5, 6]),
+            autocorrelation([5, 6, 7]),
+            autocorrelation([6, 7, 8]),
+            autocorrelation([7, 8, 9]),
+            autocorrelation([8, 9, 10]),
+        ],
+    )
 end

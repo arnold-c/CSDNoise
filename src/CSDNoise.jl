@@ -81,8 +81,11 @@ export calculate_ews_metric,
     calculate_centered_index_of_dispersion!,
     calculate_backward_index_of_dispersion!,
     iod,
-    calculate_autocorrelation,
-    calculate_kurtosis, calculate_skewness
+    calculate_centered_skewness!, calculate_backward_skewness!,
+    calculate_centered_kurtosis!, calculate_backward_kurtosis!,
+    kurtosis,
+    calculate_centered_autocorrelation!, calculate_backward_autocorrelation!,
+    autocorrelation
 # @reexport using .EWSMetrics
 
 include(

@@ -242,8 +242,32 @@ function calculate_backward_skewness!(
     )
 end
 
+function calculate_kurtosis()
+    kurtosis_vec = zeros(Float64, length(timeseries))
+
+    kurtosis_function(kurtosis_vec, timeseries, time_step, bandwidth)
+
+    return kurtosis_vec
+end
+
+function calculate_centered_kurtosis!(
+    kurtosis_vec, timeseries, time_step, bandwidth
+)
+    calculate_centered_metric!(
+        kurtosis_vec, kurtosis, timeseries, time_step, bandwidth
+    )
+    return kurtosis_vec
+end
+
+function calculate_backward_kurtosis!(
+    kurtosis_vec, timeseries, time_step, bandwidth
+)
+    return calculate_backward_metric!(
+        kurtosis_vec, kurtosis, timeseries, time_step, bandwidth
+    )
+end
+
+
 function calculate_autocorrelation()
 end
 
-function calculate_kurtosis()
-end

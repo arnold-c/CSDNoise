@@ -1,6 +1,7 @@
-using DrWatson, TestItemRunner
+using DrWatson
 @quickactivate "CSDNoise"
 
+using TestItemRunner
 using CSDNoise
 
 println("Starting tests")

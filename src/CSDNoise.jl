@@ -19,13 +19,34 @@ export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
     LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K, VACCINATION_COVERAGE,
     MU, BETA_MEAN, BETA_FORCE, EPSILON
 
+include("ews-metrics.jl")
+export calculate_ews_metric,
+    calculate_backward_mean!, calculate_centered_mean!,
+    calculate_centered_metric!, calculate_backward_metric!,
+    calculate_backward_variance!,
+    calculate_centered_variance!,
+    calculate_centered_coefficient_of_variation!,
+    calculate_backward_coefficient_of_variation!,
+    calculate_centered_index_of_dispersion!,
+    calculate_backward_index_of_dispersion!,
+    iod,
+    calculate_centered_skewness!, calculate_backward_skewness!,
+    calculate_centered_kurtosis!, calculate_backward_kurtosis!,
+    kurtosis,
+    calculate_centered_autocovariance!, calculate_backward_autocovariance!,
+    autocov,
+    calculate_centered_autocorrelation!, calculate_backward_autocorrelation!,
+    autocor
+# @reexport using .EWSMetrics
+
 include("structs.jl")
 export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
     StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
     OutbreakSpecification, IndividualTestSpecification,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
     getdirpath,
-    ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics
+    ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics,
+    EWSMetrics
 # @reexport using .ODStructs
 
 include("test-constants.jl")
@@ -37,8 +58,7 @@ export seir_mod, seir_mod!, seir_mod_loop!,
 # @reexport using .SEIRModel
 
 include("cleaning-functions.jl")
-export create_sir_df, create_sir_beta_dfs, create_sir_sim_array!,
-    create_sir_all_sim_quantiles, create_sir_all_sim_quantiles!
+export create_sir_df
 # @reexport using .CleaningFunctions
 
 include("detection-thresholds.jl")
@@ -63,10 +83,8 @@ export create_testing_arrs, create_testing_arrs!, calculate_tested!,
 include("ensemble-functions.jl")
 export create_combinations_vec, create_ensemble_spec_combinations,
     run_ensemble_jump_prob, run_jump_prob,
-    summarize_ensemble_jump_prob, jump_prob_summary,
     run_OutbreakThresholdChars_creation, OutbreakThresholdChars_creation,
     get_ensemble_file
-
 # @reexport using .EnsembleFunctions
 
 include("noise-functions.jl")
@@ -85,7 +103,6 @@ export seircolors,
     N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR,
     PERC_OUTBREAKS_MISSED_COLOR, PERC_ALERTS_CORRECT_COLOR,
     PERC_ALERTS_FALSE_COLOR,
-    bifurcation_plot, bifurcation_heatmap,
     sir_quantiles_array_base_plot, create_sir_quantiles_plot,
     incidence_prevalence_plot, visualize_ensemble_noise, incidence_testing_plot,
     testing_plot, ensemble_outbreak_distribution_plot, ensemble_OTChars_plot,

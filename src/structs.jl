@@ -275,7 +275,8 @@ struct AlertMethod{T1<:AbstractString}
     method_name::T1
     function AlertMethod(method_name::T1) where {T1<:AbstractString}
         available_test_methods = [
-            "dailythreshold", "movingavg", "dailythreshold_movingavg", "inferred_movingavg"
+            "dailythreshold", "movingavg", "dailythreshold_movingavg",
+            "inferred_movingavg",
         ]
         if !in(method_name, available_test_methods)
             error(
@@ -455,5 +456,64 @@ struct OptimalThresholdCharacteristics{
     percent_clinic_tested::T4
     alert_threshold::T5
     accuracy::T4
+end
+
+struct EWSMetrics{
+    T1<:Integer,T2<:AbstractString,T3<:AbstractArray{<:AbstractFloat}
+}
+    timestep::T1
+    bandwidth::T1
+    method::T2
+    mean::T3
+    variance::T3
+    coefficient_of_variation::T3
+    index_of_dispersion::T3
+    skewness::T3
+    kurtosis::T3
+    autocovariance::T3
+    autocorrelation::T3
+end
+
+function EWSMetrics(
+    method, timeseries, time_step, bandwidth
+)
+    args = (timeseries, time_step, bandwidth)
+    @match method begin
+        "backward" => return EWSMetrics(
+            time_step,
+            bandwidth,
+            method,
+            calculate_ews_metric(
+                calculate_backward_mean!, args...
+            ),
+            calculate_ews_metric(calculate_backward_variance!, args...),
+            calculate_ews_metric(
+                calculate_backward_coefficient_of_variation!, args...
+            ),
+            calculate_ews_metric(
+                calculate_backward_index_of_dispersion!, args...
+            ),
+            calculate_ews_metric(calculate_backward_skewness!, args...),
+            calculate_ews_metric(calculate_backward_kurtosis!, args...),
+            calculate_ews_metric(calculate_backward_autocovariance!, args...),
+            calculate_ews_metric(calculate_backward_autocorrelation!, args...),
+        )
+        "centered" => return EWSMetrics(
+            time_step,
+            bandwidth,
+            method,
+            calculate_ews_metric(calculate_centered_mean!, args...),
+            calculate_ews_metric(calculate_centered_variance!, args...),
+            calculate_ews_metric(
+                calculate_centered_coefficient_of_variation!, args...
+            ),
+            calculate_ews_metric(
+                calculate_centered_index_of_dispersion!, args...
+            ),
+            calculate_ews_metric(calculate_centered_skewness!, args...),
+            calculate_ews_metric(calculate_centered_kurtosis!, args...),
+            calculate_ews_metric(calculate_centered_autocovariance!, args...),
+            calculate_ews_metric(calculate_centered_autocorrelation!, args...))
+    end
 end
 # end

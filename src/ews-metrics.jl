@@ -19,7 +19,7 @@ end
 function calculate_centered_metric!(
     metric_vec, metric_function, timeseries, time_step, bandwidth
 )
-    delta = (bandwidth - 1) * time_step
+    delta = convert(Int64, (bandwidth - 1) * time_step)
     tlength = length(timeseries)
     for i in eachindex(timeseries)
         if i <= delta
@@ -42,7 +42,7 @@ end
 function calculate_centered_metric!(
     metric_vec, metric_function, timeseries, time_step, bandwidth, varargs...
 )
-    delta = (bandwidth - 1) * time_step
+    delta = convert(Int64, (bandwidth - 1) * time_step)
     tlength = length(timeseries)
     for i in eachindex(timeseries)
         if i <= delta
@@ -74,7 +74,7 @@ end
 function calculate_backward_metric!(
     metric_vec, metric_function, timeseries, time_step, bandwidth
 )
-    avglag = bandwidth * time_step
+    avglag = convert(Int64, bandwidth * time_step)
     @inbounds for i in eachindex(timeseries)
         @inline moveavg_daystart = calculate_daily_movingavg_startday(i, avglag)
         metric_vec[i] = metric_function(@view(timeseries[moveavg_daystart:i]))

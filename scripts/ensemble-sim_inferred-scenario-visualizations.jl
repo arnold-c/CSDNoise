@@ -32,6 +32,10 @@ ensemble_single_Reff_arr = get_ensemble_file(
     ensemble_specification
 )["ensemble_Reff_arr"]
 
+ensemble_single_Reff_thresholds_vec = get_ensemble_file(
+    ensemble_specification
+)["ensemble_Reff_thresholds_vec"]
+
 ensemble_single_scenario_inc_file = get_ensemble_file(
     ensemble_specification, ensemble_outbreak_specification
 )
@@ -57,19 +61,14 @@ save(
     ensemble_single_scenario_incidence_prevalence_plot,
 )
 
-ensemble_single_scenario_Reffective_plot = Figure();
-incax = Axis(
-    ensemble_single_scenario_Reffective_plot[1, 1]; ylabel = "Incidence"
+#%%
+ensemble_single_scenario_Reffective_plot = Reff_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    ensemble_time_specification;
+    threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
-reffax = Axis(ensemble_single_scenario_Reffective_plot[2, 1]; ylabel = "Reff")
-lines!(
-    incax, ensemble_time_specification.trange, ensemble_single_incarr[:, 1, 1]
-)
-lines!(
-    reffax, ensemble_time_specification.trange, ensemble_single_Reff_arr[:, 1]
-)
-hlines!(reffax, 1.0)
-ensemble_single_scenario_Reffective_plot
 
 save(
     plotsdir(

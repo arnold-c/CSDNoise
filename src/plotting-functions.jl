@@ -158,6 +158,92 @@ function create_sir_quantiles_plot(
     )
 end
 
+function Reff_plot(
+    incidencearr,
+    Reffarr,
+    Reff_thresholds_vec,
+    timeparams;
+    outbreak_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
+    ],
+    Reff_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, PERC_ALERTS_CORRECT_COLOR
+    ],
+    threshold = 5,
+    kwargs...,
+)
+    @unpack trange = timeparams
+    times = collect(trange) ./ 365
+    kwargs_dict = Dict(kwargs)
+
+    Reff_dur_arr = zeros(Int64, length(times), 2)
+    for (lower, upper, duration) in
+        eachrow(Reff_thresholds_vec[1])
+        Reff_dur_arr[lower:upper, 1] .= duration
+        Reff_dur_arr[lower:upper, 2] .= 1
+    end
+
+    fig = Figure()
+    incax = Axis(
+        fig[1, 1]; ylabel = "Incidence"
+    )
+    reffax = Axis(
+        fig[2, 1]; ylabel = "Reff"
+    )
+    reff_sum_ax = Axis(
+        fig[3, 1]; ylabel = "Reff Duration"
+    )
+
+    lines!(
+        incax,
+        times,
+        incidencearr[:, 1, 1],
+    )
+    lines!(
+        reffax,
+        times,
+        Reffarr[:, 1],
+    )
+    hlines!(reffax, 1.0)
+    barplot!(
+        reff_sum_ax,
+        times,
+        Reff_dur_arr[:, 1];
+        color = Reff_dur_arr[:, 2],
+        colormap = Reff_colormap,
+    )
+
+    if haskey(kwargs_dict, :xlims)
+        map(
+            ax -> xlims!(ax, kwargs_dict[:xlims]),
+            [incax, reffax, reff_sum_ax],
+        )
+    end
+
+    if haskey(kwargs_dict, :ylims_Reffdur)
+        ylims!(reff_sum_ax, kwargs_dict[:ylims_Reffdur])
+    end
+
+    if haskey(kwargs_dict, :ylims_inc)
+        ylims!(incax, kwargs_dict[:ylims_inc])
+    end
+
+    Legend(
+        fig[1, 2],
+        [PolyElement(; color = col) for col in outbreak_colormap],
+        ["Not Outbreak", "Outbreak"],
+        "True\nOutbreak Status",
+    )
+
+    Legend(
+        fig[2:3, 2],
+        [PolyElement(; color = col) for col in Reff_colormap],
+        ["Reff < 1", "Reff >= 1"],
+        "Reff Status",
+    )
+    return fig
+end
+
 function incidence_prevalence_plot(
     incidencearr,
     ensemblearr,

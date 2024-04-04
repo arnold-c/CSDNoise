@@ -1,10 +1,12 @@
 using StatsBase: StatsBase
 using TestItems
 
-function calculate_ews_metric(metric_function, timeseries, time_step, bandwidth)
+function calculate_ews_metric(
+    metric_function, timeseries, time_step, bandwidth, varargs...
+)
     metric_vec = zeros(Float64, length(timeseries))
 
-    metric_function(metric_vec, timeseries, time_step, bandwidth)
+    metric_function(metric_vec, timeseries, time_step, bandwidth, varargs...)
 
     return metric_vec
 end
@@ -46,7 +48,10 @@ function calculate_centered_metric!(
     tlength = length(timeseries)
     for i in eachindex(timeseries)
         if i <= delta
-            metric_vec[i] = metric_function(timeseries[begin:(2i - 1)])
+            metric_vec[i] = metric_function(
+                timeseries[begin:(2i - 1)],
+                varargs...
+            )
             continue
         end
         if i > tlength - delta
@@ -480,28 +485,28 @@ end
 
 #TODO: Implement
 function calculate_centered_autocovariance!(
-    autocovariance_vec, timeseries, time_step, bandwidth
+    autocovariance_vec, timeseries, time_step, bandwidth, lags
 )
     calculate_centered_metric!(
         autocovariance_vec,
-        autocov([time_step]),
+        autocov([lags]),
         timeseries,
         time_step,
-        bandwidth,
+        bandwidth
     )
     return nothing
 end
 
 #TODO: Implement
 function calculate_backward_autocovariance!(
-    autocovariance_vec, timeseries, time_step, bandwidth
+    autocovariance_vec, timeseries, time_step, bandwidth, lags
 )
     calculate_backward_metric!(
         autocovariance_vec,
-        autocov([time_step]),
+        autocov([lags]),
         timeseries,
         time_step,
-        bandwidth,
+        bandwidth
     )
     return nothing
 end
@@ -511,7 +516,7 @@ function autocov(lags)
 end
 
 function autocov(timeseries, lags)
-    if length(timeseries) == 1
+    if length(timeseries) <= maximum(lags)
         return NaN
     else
         return StatsBase.autocov(timeseries, lags)[1]
@@ -578,28 +583,28 @@ end
 
 #TODO: Implement
 function calculate_centered_autocorrelation!(
-    autocorrelation_vec, timeseries, time_step, bandwidth
+    autocorrelation_vec, timeseries, time_step, bandwidth, lags
 )
     calculate_centered_metric!(
         autocorrelation_vec,
-        autocor([time_step]),
+        autocor([lags]),
         timeseries,
         time_step,
-        bandwidth,
+        bandwidth
     )
     return nothing
 end
 
 #TODO: Implement
 function calculate_backward_autocorrelation!(
-    autocorrelation_vec, timeseries, time_step, bandwidth
+    autocorrelation_vec, timeseries, time_step, bandwidth, lags
 )
     calculate_backward_metric!(
         autocorrelation_vec,
-        autocor([time_step]),
+        autocor([lags]),
         timeseries,
         time_step,
-        bandwidth,
+        bandwidth
     )
     return nothing
 end
@@ -609,7 +614,7 @@ function autocor(lags)
 end
 
 function autocor(timeseries, lags)
-    if length(timeseries) == 1
+    if length(timeseries) <= maximum(lags)
         return NaN
     else
         return StatsBase.autocor(timeseries, lags)[1]

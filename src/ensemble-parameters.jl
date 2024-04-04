@@ -1,6 +1,6 @@
 ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
 
-nyears = 100
+nyears = 10
 ensemble_time_specification = SimTimeParameters(;
     tmin = 0.0, tmax = 365.0 * nyears, tstep = 1.0
 )

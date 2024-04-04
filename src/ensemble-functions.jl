@@ -128,7 +128,8 @@ function run_jump_prob(ensemble_param_dict)
     outbreak_spec_dict,
     noise_spec_vec,
     outbreak_detection_spec_vec,
-    test_spec_vec = ensemble_param_dict
+    test_spec_vec,
+    ews_bandwidth_vec = ensemble_param_dict
 
     @unpack state_parameters, dynamics_parameters, time_parameters, nsims =
         ensemble_spec
@@ -193,6 +194,7 @@ function run_jump_prob(ensemble_param_dict)
         dict[:noise_spec_vec] = noise_spec_vec
         dict[:outbreak_detection_spec_vec] = outbreak_detection_spec_vec
         dict[:test_spec_vec] = test_spec_vec
+        dict[:ews_bandwidth_vec] = ews_bandwidth_vec
         dict[:seed] = seed
     end
 
@@ -220,7 +222,7 @@ function define_outbreaks(incidence_param_dict)
     outbreak_spec,
     noise_spec_vec,
     outbreak_detection_spec_vec,
-    test_spec_vec, seed =
+    test_spec_vec, ews_bandwidth_vec, seed =
         incidence_param_dict
 
     ensemble_inc_arr, ensemble_thresholds_vec = create_inc_infec_arr(
@@ -273,7 +275,8 @@ function define_outbreaks(incidence_param_dict)
             scenario_spec = ensemble_scenarios,
             ensemble_inc_arr,
             thresholds_vec = [ensemble_thresholds_vec],
-            seed = seed
+            seed = seed,
+            ews_bandwidth = ews_bandwidth_vec
         )
     )
 
@@ -297,7 +300,9 @@ function run_OutbreakThresholdChars_creation(
 end
 
 function OutbreakThresholdChars_creation(OT_chars_param_dict)
-    @unpack scenario_spec, ensemble_inc_arr, thresholds_vec, seed =
+    @unpack scenario_spec,
+    ensemble_inc_arr, thresholds_vec, seed,
+    ews_bandwidth =
         OT_chars_param_dict
     @unpack noise_specification,
     outbreak_specification,
@@ -327,7 +332,7 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
             "centered",
             @view(testarr[:, :, sim]),
             scenario_spec.ensemble_specification.time_parameters.tstep,
-            7,
+            ews_bandwidth,
         )
     end
 

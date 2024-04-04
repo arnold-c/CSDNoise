@@ -315,7 +315,7 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
     outbreak_specification,
     outbreak_detection_specification,
     individual_test_specification,
-    ews_specification = scenario_spec
+    ewsmetric_specification = scenario_spec
 
     noise_array, noise_rubella_prop = create_noise_arr(
         noise_specification,
@@ -330,7 +330,7 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
         outbreak_detection_specification,
         individual_test_specification,
         ensemble_specification.time_parameters,
-        ews_specification,
+        ewsmetric_specification,
     )[1:2]
 
     OT_chars = calculate_OutbreakThresholdChars(

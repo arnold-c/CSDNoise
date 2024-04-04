@@ -322,7 +322,16 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
         testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop
     )
 
-    return @strdict OT_chars
+    ews_vec = map(axes(testarr, 3)) do sim
+        EWSMetrics(
+            "centered",
+            @view(testarr[:, :, sim]),
+            scenario_spec.ensemble_specification.time_parameters.tstep,
+            7,
+        )
+    end
+
+    return @strdict OT_chars ews_vec
 end
 
 function get_ensemble_file() end

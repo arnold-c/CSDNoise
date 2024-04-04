@@ -472,7 +472,8 @@ struct OptimalThresholdCharacteristics{
 end
 
 struct EWSMetrics{
-    T1<:Integer,T2<:EWSMetricSpecification,T3<:AbstractArray{<:AbstractFloat}
+    T1<:AbstractFloat,T2<:EWSMetricSpecification,
+    T3<:AbstractArray{<:AbstractFloat},
 }
     timestep::T1
     ews_specification::T2

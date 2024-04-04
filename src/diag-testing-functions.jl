@@ -175,12 +175,11 @@ function create_testing_arrs!(
                 tstep
             )
 
-            "inferred_movingavg" =>
-                EWSMetrics(
-                    ews_specification,
-                    @view(inferred_positives_arr[:, sim]),
-                    tstep,
-                )
+            "inferred_movingavg" => EWSMetrics(
+                ews_specification,
+                @view(inferred_positives_arr[:, sim]),
+                tstep,
+            )
         end
 
         # Triggered outbreak equal to actual outbreak status

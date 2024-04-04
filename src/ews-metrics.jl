@@ -24,6 +24,10 @@ function calculate_centered_metric!(
     delta = convert(Int64, (bandwidth - 1) * time_step)
     tlength = length(timeseries)
     for i in eachindex(timeseries)
+        if i <= delta && 2i - 1 > length(timeseries)
+            metric_vec[i] = metric_function(timeseries[begin:end])
+            continue
+        end
         if i <= delta
             metric_vec[i] = metric_function(timeseries[begin:(2i - 1)])
             continue
@@ -47,6 +51,13 @@ function calculate_centered_metric!(
     delta = convert(Int64, (bandwidth - 1) * time_step)
     tlength = length(timeseries)
     for i in eachindex(timeseries)
+        if i <= delta && 2i - 1 > length(timeseries)
+            metric_vec[i] = metric_function(
+                timeseries[begin:end],
+                varargs...,
+            )
+            continue
+        end
         if i <= delta
             metric_vec[i] = metric_function(
                 timeseries[begin:(2i - 1)],

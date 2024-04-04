@@ -129,6 +129,7 @@ function run_jump_prob(ensemble_param_dict)
     noise_spec_vec,
     outbreak_detection_spec_vec,
     test_spec_vec,
+    ews_method_vec,
     ews_bandwidth_vec = ensemble_param_dict
 
     @unpack state_parameters, dynamics_parameters, time_parameters, nsims =
@@ -194,6 +195,7 @@ function run_jump_prob(ensemble_param_dict)
         dict[:noise_spec_vec] = noise_spec_vec
         dict[:outbreak_detection_spec_vec] = outbreak_detection_spec_vec
         dict[:test_spec_vec] = test_spec_vec
+        dict[:ews_method_vec] = ews_method_vec
         dict[:ews_bandwidth_vec] = ews_bandwidth_vec
         dict[:seed] = seed
     end
@@ -302,7 +304,7 @@ end
 function OutbreakThresholdChars_creation(OT_chars_param_dict)
     @unpack scenario_spec,
     ensemble_inc_arr, thresholds_vec, seed,
-    ews_bandwidth =
+    ews_method, ews_bandwidth =
         OT_chars_param_dict
     @unpack noise_specification,
     outbreak_specification,
@@ -316,27 +318,21 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
         seed = seed,
     )
 
-    testarr = create_testing_arrs(
+    testarr, ewsarr = create_testing_arrs(
         ensemble_inc_arr,
         noise_array,
         outbreak_detection_specification,
         individual_test_specification,
-    )[1]
+        scenario_spec.ensemble_specification.time_parameters,
+        ews_method,
+        ews_bandwidth,
+    )[1:2]
 
     OT_chars = calculate_OutbreakThresholdChars(
         testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop
     )
 
-    ews_vec = map(axes(testarr, 3)) do sim
-        EWSMetrics(
-            "centered",
-            @view(testarr[:, :, sim]),
-            scenario_spec.ensemble_specification.time_parameters.tstep,
-            ews_bandwidth,
-        )
-    end
-
-    return @strdict OT_chars ews_vec
+    return @strdict OT_chars ewsarr
 end
 
 function get_ensemble_file() end

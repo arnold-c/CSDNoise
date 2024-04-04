@@ -26,8 +26,12 @@ function create_testing_arrs(
     noisearr,
     outbreak_detect_spec::OutbreakDetectionSpecification,
     individual_test_spec::IndividualTestSpecification,
+    time_specification::SimTimeParameters,
+    ews_method,
+    ews_bandwidth,
 )
     testarr = zeros(Int64, size(incarr, 1), 7, size(incarr, 3))
+    ewsarr = Array{EWSMetrics}(undef, size(incarr, 1), size(incarr, 3))
     test_movingavg_arr = zeros(Int64, size(incarr, 1), size(incarr, 3))
     inferred_positives_arr = zeros(Float64, size(incarr, 1), size(incarr, 3))
     ntested_worker_vec = Vector{Int64}(undef, size(incarr, 1))
@@ -35,6 +39,7 @@ function create_testing_arrs(
 
     create_testing_arrs!(
         testarr,
+        ewsarr,
         test_movingavg_arr,
         inferred_positives_arr,
         ntested_worker_vec,
@@ -48,13 +53,17 @@ function create_testing_arrs(
         individual_test_spec.test_result_lag,
         individual_test_spec.sensitivity,
         individual_test_spec.specificity,
+        time_specification.tstep,
+        ews_method,
+        ews_bandwidth,
     )
 
-    return testarr, test_movingavg_arr, inferred_positives_arr
+    return testarr, ewsarr, test_movingavg_arr, inferred_positives_arr
 end
 
 function create_testing_arrs!(
     testarr,
+    ewsarr,
     test_movingavg_arr,
     inferred_positives_arr,
     ntested_worker_vec,
@@ -68,6 +77,9 @@ function create_testing_arrs!(
     testlag,
     testsens,
     testspec,
+    tstep,
+    ews_method,
+    ews_bandwidth,
 )
     tlength = size(testarr, 1)
 
@@ -152,6 +164,30 @@ function create_testing_arrs!(
 
         # TOTAL Test positive individuals trigger outbreak response
         detectoutbreak!(detectoutbreak_args...)
+
+        ewsarr[:, sim] .= @match alert_method begin
+            "movingavg" => EWSMetrics(
+                ews_method,
+                @view(test_movingavg_arr[:, sim]),
+                tstep,
+                ews_bandwidth,
+            )
+
+            "dailythreshold_movingavg" => EWSMetrics(
+                ews_method,
+                @view(test_movingavg_arr[:, sim]),
+                tstep,
+                ews_bandwidth,
+            )
+
+            "inferred_movingavg" =>
+                EWSMetrics(
+                    ews_method,
+                    @view(inferred_positives_arr[:, sim]),
+                    tstep,
+                    ews_bandwidth,
+                )
+        end
 
         # Triggered outbreak equal to actual outbreak status
         @. testarr[:, 7, sim] =

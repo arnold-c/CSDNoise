@@ -25,7 +25,7 @@ ensemble_state_p_vec = create_combinations_vec(
 tmin_vec = [0.0]
 tstep_vec = [1.0]
 nyears_vec = [10]
-tmax_vec = nyears_vec .* 365
+tmax_vec = nyears_vec .* 365.0
 
 time_p_vec = vec(
     map(

@@ -552,7 +552,7 @@ end
     )
 
     centered_autocovariance_testpostives = calculate_ews_metric(
-        calculate_centered_autocovariance!, daily_testpositives, 1, 3
+        calculate_centered_autocovariance!, daily_testpositives, 1, 3, 1
     )
 
     @test isequal(
@@ -572,7 +572,7 @@ end
     )
 
     backward_autocovariance_testpostives = calculate_ews_metric(
-        calculate_backward_autocovariance!, daily_testpositives, 1, 3
+        calculate_backward_autocovariance!, daily_testpositives, 1, 3, 1
     )
 
     @test isequal(
@@ -650,7 +650,7 @@ end
     )
 
     centered_autocorrelation_testpostives = calculate_ews_metric(
-        calculate_centered_autocorrelation!, daily_testpositives, 1, 3
+        calculate_centered_autocorrelation!, daily_testpositives, 1, 3, 1
     )
 
     @test isequal(
@@ -670,7 +670,7 @@ end
     )
 
     backward_autocorrelation_testpostives = calculate_ews_metric(
-        calculate_backward_autocorrelation!, daily_testpositives, 1, 3
+        calculate_backward_autocorrelation!, daily_testpositives, 1, 3, 1
     )
 
     @test isequal(

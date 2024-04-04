@@ -308,9 +308,7 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
     @unpack scenario_spec,
     ensemble_inc_arr,
     thresholds_vec,
-    seed,
-    ews_method,
-    ews_bandwidth = OT_chars_param_dict
+    seed = OT_chars_param_dict
 
     @unpack noise_specification,
     ensemble_specification,

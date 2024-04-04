@@ -30,7 +30,7 @@ function create_testing_arrs(
     ews_specification::EWSMetricSpecification,
 )
     testarr = zeros(Int64, size(incarr, 1), 7, size(incarr, 3))
-    ewsarr = Array{EWSMetrics}(undef, size(incarr, 1), size(incarr, 3))
+    ewsvec = Vector{EWSMetrics}(undef, size(incarr, 3))
     test_movingavg_arr = zeros(Int64, size(incarr, 1), size(incarr, 3))
     inferred_positives_arr = zeros(Float64, size(incarr, 1), size(incarr, 3))
     ntested_worker_vec = Vector{Int64}(undef, size(incarr, 1))
@@ -38,7 +38,7 @@ function create_testing_arrs(
 
     create_testing_arrs!(
         testarr,
-        ewsarr,
+        ewsvec,
         test_movingavg_arr,
         inferred_positives_arr,
         ntested_worker_vec,
@@ -56,12 +56,12 @@ function create_testing_arrs(
         ews_specification,
     )
 
-    return testarr, ewsarr, test_movingavg_arr, inferred_positives_arr
+    return testarr, ewsvec, test_movingavg_arr, inferred_positives_arr
 end
 
 function create_testing_arrs!(
     testarr,
-    ewsarr,
+    ewsvec,
     test_movingavg_arr,
     inferred_positives_arr,
     ntested_worker_vec,
@@ -162,7 +162,7 @@ function create_testing_arrs!(
         # TOTAL Test positive individuals trigger outbreak response
         detectoutbreak!(detectoutbreak_args...)
 
-        ewsarr[:, sim] .= @match alert_method begin
+        ewsvec[sim] = @match alert_method begin
             "movingavg" => EWSMetrics(
                 ews_specification,
                 @view(test_movingavg_arr[:, sim]),

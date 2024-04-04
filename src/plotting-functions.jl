@@ -162,6 +162,7 @@ function Reff_plot(
     incidencearr,
     Reffarr,
     Reff_thresholds_vec,
+    thresholdsarr,
     timeparams;
     outbreak_colormap = [
         N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
@@ -175,6 +176,13 @@ function Reff_plot(
     @unpack trange = timeparams
     times = collect(trange) ./ 365
     kwargs_dict = Dict(kwargs)
+
+    period_sum_arr = zeros(Int64, length(times), 2)
+    for (lower, upper, periodsum, outbreakstatus) in
+        eachrow(thresholdsarr[1])
+        period_sum_arr[lower:upper, 1] .= periodsum
+        period_sum_arr[lower:upper, 2] .= outbreakstatus
+    end
 
     Reff_dur_arr = zeros(Int64, length(times), 2)
     for (lower, upper, duration) in
@@ -197,14 +205,31 @@ function Reff_plot(
     lines!(
         incax,
         times,
-        incidencearr[:, 1, 1],
+        incidencearr[:, 1, 1];
+        color = period_sum_arr[:, 2],
+        colormap = outbreak_colormap,
+    )
+    hlines!(
+        incax,
+        threshold;
+        color = :black,
+        linestyle = :dash,
+        linewidth = 2,
     )
     lines!(
         reffax,
         times,
-        Reffarr[:, 1],
+        Reffarr[:, 1];
+        color = Reff_dur_arr[:, 2],
+        colormap = Reff_colormap,
     )
-    hlines!(reffax, 1.0)
+    hlines!(
+        reffax,
+        1.0;
+        color = :black,
+        linestyle = :dash,
+        linewidth = 2,
+    )
     barplot!(
         reff_sum_ax,
         times,
@@ -227,6 +252,8 @@ function Reff_plot(
     if haskey(kwargs_dict, :ylims_inc)
         ylims!(incax, kwargs_dict[:ylims_inc])
     end
+
+    map(hidexdecorations!, [incax, reffax, reff_sum_ax])
 
     Legend(
         fig[1, 2],

@@ -66,6 +66,7 @@ ensemble_single_scenario_Reffective_plot = Reff_plot(
     ensemble_single_incarr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
+    ensemble_single_periodsum_vecs,
     ensemble_time_specification;
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )

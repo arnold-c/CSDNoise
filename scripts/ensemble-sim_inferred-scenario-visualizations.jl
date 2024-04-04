@@ -62,21 +62,24 @@ save(
 )
 
 #%%
-ensemble_single_scenario_Reffective_plot = Reff_plot(
-    ensemble_single_incarr,
-    ensemble_single_Reff_arr,
-    ensemble_single_Reff_thresholds_vec,
-    ensemble_single_periodsum_vecs,
-    ensemble_time_specification;
-    threshold = ensemble_outbreak_specification.outbreak_threshold,
-)
+for sim_num in [10, 20, 55]
+    ensemble_single_scenario_Reffective_plot = Reff_plot(
+        ensemble_single_incarr,
+        ensemble_single_Reff_arr,
+        ensemble_single_Reff_thresholds_vec,
+        ensemble_single_periodsum_vecs,
+        ensemble_time_specification;
+        sim = sim_num,
+        threshold = ensemble_outbreak_specification.outbreak_threshold,
+    )
 
-save(
-    plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_Reffective.png"
-    ),
-    ensemble_single_scenario_Reffective_plot,
-)
+    save(
+        plotsdir(
+            "ensemble/single-scenario/ensemble_single_scenario_Reffective_sim_$(sim_num).png",
+        ),
+        ensemble_single_scenario_Reffective_plot,
+    )
+end
 
 #%%
 noise_specification = ensemble_noise_specification_vec[1]

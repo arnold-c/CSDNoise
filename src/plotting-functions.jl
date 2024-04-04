@@ -164,11 +164,12 @@ function Reff_plot(
     Reff_thresholds_vec,
     thresholdsarr,
     timeparams;
+    sim = 1,
     outbreak_colormap = [
         N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
     ],
     Reff_colormap = [
-        N_MISSED_OUTBREAKS_COLOR, PERC_ALERTS_CORRECT_COLOR
+        N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
     ],
     threshold = 5,
     kwargs...,
@@ -179,14 +180,14 @@ function Reff_plot(
 
     period_sum_arr = zeros(Int64, length(times), 2)
     for (lower, upper, periodsum, outbreakstatus) in
-        eachrow(thresholdsarr[1])
+        eachrow(thresholdsarr[sim])
         period_sum_arr[lower:upper, 1] .= periodsum
         period_sum_arr[lower:upper, 2] .= outbreakstatus
     end
 
     Reff_dur_arr = zeros(Int64, length(times), 2)
     for (lower, upper, duration) in
-        eachrow(Reff_thresholds_vec[1])
+        eachrow(Reff_thresholds_vec[sim])
         Reff_dur_arr[lower:upper, 1] .= duration
         Reff_dur_arr[lower:upper, 2] .= 1
     end
@@ -199,13 +200,15 @@ function Reff_plot(
         fig[2, 1]; ylabel = "Reff"
     )
     reff_sum_ax = Axis(
-        fig[3, 1]; ylabel = "Reff Duration"
+        fig[3, 1]; xlabel = "Time (years)", ylabel = "Reff Duration"
     )
+
+    linkxaxes!(incax, reffax, reff_sum_ax)
 
     lines!(
         incax,
         times,
-        incidencearr[:, 1, 1];
+        incidencearr[:, 1, sim];
         color = period_sum_arr[:, 2],
         colormap = outbreak_colormap,
     )
@@ -219,9 +222,10 @@ function Reff_plot(
     lines!(
         reffax,
         times,
-        Reffarr[:, 1];
+        Reffarr[:, sim];
         color = Reff_dur_arr[:, 2],
         colormap = Reff_colormap,
+        linewidth = 3,
     )
     hlines!(
         reffax,
@@ -230,12 +234,13 @@ function Reff_plot(
         linestyle = :dash,
         linewidth = 2,
     )
-    barplot!(
+    lines!(
         reff_sum_ax,
         times,
         Reff_dur_arr[:, 1];
         color = Reff_dur_arr[:, 2],
         colormap = Reff_colormap,
+        linewidth = 3,
     )
 
     if haskey(kwargs_dict, :xlims)
@@ -253,7 +258,7 @@ function Reff_plot(
         ylims!(incax, kwargs_dict[:ylims_inc])
     end
 
-    map(hidexdecorations!, [incax, reffax, reff_sum_ax])
+    map(hidexdecorations!, [incax, reffax])
 
     Legend(
         fig[1, 2],

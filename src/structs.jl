@@ -376,20 +376,27 @@ function getdirpath(spec::NoiseSpecification)
     )
 end
 
+struct EWSMetricSpecification{T1<:AbstractString,T2<:Integer}
+    method::T1
+    bandwidth::T2
+end
+
 struct ScenarioSpecification{
     T1<:EnsembleSpecification,
     T2<:OutbreakSpecification,
     T3<:NoiseSpecification,
     T4<:OutbreakDetectionSpecification,
     T5<:IndividualTestSpecification,
-    T6<:AbstractString,
+    T6<:EWSMetricSpecification,
+    T7<:AbstractString,
 }
     ensemble_specification::T1
     outbreak_specification::T2
     noise_specification::T3
     outbreak_detection_specification::T4
     individual_test_specification::T5
-    dirpath::T6
+    ewsmetric_specification::T6
+    dirpath::T7
 end
 
 function ScenarioSpecification(
@@ -398,6 +405,7 @@ function ScenarioSpecification(
     noise_specification::NoiseSpecification,
     outbreak_detection_specification::OutbreakDetectionSpecification,
     individual_test_specification::IndividualTestSpecification,
+    ewsmetric_specification::EWSMetricSpecification,
 )
     dirpath = joinpath(
         ensemble_specification.dirpath,
@@ -407,6 +415,8 @@ function ScenarioSpecification(
         "testsens_$(individual_test_specification.sensitivity)",
         "testspec_$(individual_test_specification.specificity)",
         "testlag_$(individual_test_specification.test_result_lag)",
+        "ewsmethod_$(ewsmetric_specification.method)",
+        "ewsbw_$(ewsmetric_specification.bandwidth)",
     )
 
     return ScenarioSpecification(
@@ -415,6 +425,7 @@ function ScenarioSpecification(
         noise_specification,
         outbreak_detection_specification,
         individual_test_specification,
+        ewsmetric_specification,
         dirpath,
     )
 end

@@ -45,6 +45,7 @@ export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
     OutbreakSpecification, IndividualTestSpecification,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
     getdirpath,
+    EWSMetricSpecification,
     ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics,
     EWSMetrics
 # @reexport using .ODStructs

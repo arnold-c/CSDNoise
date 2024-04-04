@@ -27,8 +27,7 @@ function create_testing_arrs(
     outbreak_detect_spec::OutbreakDetectionSpecification,
     individual_test_spec::IndividualTestSpecification,
     time_specification::SimTimeParameters,
-    ews_method,
-    ews_bandwidth,
+    ews_specification::EWSMetricSpecification,
 )
     testarr = zeros(Int64, size(incarr, 1), 7, size(incarr, 3))
     ewsarr = Array{EWSMetrics}(undef, size(incarr, 1), size(incarr, 3))
@@ -54,8 +53,8 @@ function create_testing_arrs(
         individual_test_spec.sensitivity,
         individual_test_spec.specificity,
         time_specification.tstep,
-        ews_method,
-        ews_bandwidth,
+        ews_specification.method,
+        ews_specification.bandwidth,
     )
 
     return testarr, ewsarr, test_movingavg_arr, inferred_positives_arr

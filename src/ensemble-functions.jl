@@ -129,8 +129,7 @@ function run_jump_prob(ensemble_param_dict)
     noise_spec_vec,
     outbreak_detection_spec_vec,
     test_spec_vec,
-    ews_method_vec,
-    ews_bandwidth_vec = ensemble_param_dict
+    ews_spec_vec = ensemble_param_dict
 
     @unpack state_parameters, dynamics_parameters, time_parameters, nsims =
         ensemble_spec
@@ -195,8 +194,7 @@ function run_jump_prob(ensemble_param_dict)
         dict[:noise_spec_vec] = noise_spec_vec
         dict[:outbreak_detection_spec_vec] = outbreak_detection_spec_vec
         dict[:test_spec_vec] = test_spec_vec
-        dict[:ews_method_vec] = ews_method_vec
-        dict[:ews_bandwidth_vec] = ews_bandwidth_vec
+        dict[:ews_spec_vec] = ews_spec_vec
         dict[:seed] = seed
     end
 
@@ -224,7 +222,7 @@ function define_outbreaks(incidence_param_dict)
     outbreak_spec,
     noise_spec_vec,
     outbreak_detection_spec_vec,
-    test_spec_vec, ews_bandwidth_vec, seed =
+    test_spec_vec, ews_spec_vec, seed =
         incidence_param_dict
 
     ensemble_inc_arr, ensemble_thresholds_vec = create_inc_infec_arr(
@@ -249,6 +247,7 @@ function define_outbreaks(incidence_param_dict)
             noise_spec_vec,
             non_clinical_case_outbreak_detection_spec_vec,
             non_clinical_case_test_spec_vec,
+            ews_spec_vec,
         ),
     )
 
@@ -265,6 +264,7 @@ function define_outbreaks(incidence_param_dict)
             noise_spec_vec,
             clinical_case_outbreak_detection_spec_vec,
             CLINICAL_TEST_SPECS,
+            ews_spec_vec,
         ),
     )
 
@@ -278,7 +278,6 @@ function define_outbreaks(incidence_param_dict)
             ensemble_inc_arr,
             thresholds_vec = [ensemble_thresholds_vec],
             seed = seed,
-            ews_bandwidth = ews_bandwidth_vec
         )
     )
 
@@ -303,13 +302,18 @@ end
 
 function OutbreakThresholdChars_creation(OT_chars_param_dict)
     @unpack scenario_spec,
-    ensemble_inc_arr, thresholds_vec, seed,
-    ews_method, ews_bandwidth =
-        OT_chars_param_dict
+    ensemble_inc_arr,
+    thresholds_vec,
+    seed,
+    ews_method,
+    ews_bandwidth = OT_chars_param_dict
+
     @unpack noise_specification,
+    ensemble_specification,
     outbreak_specification,
     outbreak_detection_specification,
-    individual_test_specification = scenario_spec
+    individual_test_specification,
+    ews_specification = scenario_spec
 
     noise_array, noise_rubella_prop = create_noise_arr(
         noise_specification,
@@ -323,9 +327,8 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
         noise_array,
         outbreak_detection_specification,
         individual_test_specification,
-        scenario_spec.ensemble_specification.time_parameters,
-        ews_method,
-        ews_bandwidth,
+        ensemble_specification.time_parameters,
+        ews_specification,
     )[1:2]
 
     OT_chars = calculate_OutbreakThresholdChars(

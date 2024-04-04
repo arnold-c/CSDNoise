@@ -143,6 +143,11 @@ test_spec_vec = [
 ews_method_vec = ["centered", "backward"]
 ews_bandwidth_vec = collect(7:1:7)
 
+ews_spec_vec = create_combinations_vec(
+    EWSMetricSpecification,
+    (ews_method_vec, ews_bandwidth_vec)
+)
+
 #%%
 base_param_dict = @dict(
     ensemble_spec = ensemble_spec_vec,
@@ -159,8 +164,7 @@ for dict in sol_param_dict
     dict[:noise_spec_vec] = noise_spec_vec
     dict[:outbreak_detection_spec_vec] = outbreak_detection_spec_vec
     dict[:test_spec_vec] = test_spec_vec
-    dict[:ews_method_vec] = ews_method_vec
-    dict[:ews_bandwidth_vec] = ews_bandwidth_vec
+    dict[:ews_spec_vec] = ews_spec_vec
 end
 
 #%%

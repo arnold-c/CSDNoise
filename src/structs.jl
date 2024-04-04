@@ -379,6 +379,7 @@ end
 struct EWSMetricSpecification{T1<:AbstractString,T2<:Integer}
     method::T1
     bandwidth::T2
+    lag::T2
 end
 
 struct ScenarioSpecification{
@@ -417,6 +418,7 @@ function ScenarioSpecification(
         "testlag_$(individual_test_specification.test_result_lag)",
         "ewsmethod_$(ewsmetric_specification.method)",
         "ewsbw_$(ewsmetric_specification.bandwidth)",
+        "ewslag_$(ewsmetric_specification.lag)",
     )
 
     return ScenarioSpecification(
@@ -486,7 +488,7 @@ struct EWSMetrics{
 end
 
 function EWSMetrics(
-    method, timeseries, time_step, bandwidth
+    method, timeseries, time_step, bandwidth, lag
 )
     args = (timeseries, time_step, bandwidth)
     @match method begin
@@ -506,8 +508,12 @@ function EWSMetrics(
             ),
             calculate_ews_metric(calculate_backward_skewness!, args...),
             calculate_ews_metric(calculate_backward_kurtosis!, args...),
-            calculate_ews_metric(calculate_backward_autocovariance!, args...),
-            calculate_ews_metric(calculate_backward_autocorrelation!, args...),
+            calculate_ews_metric(
+                calculate_backward_autocovariance!, args..., lag
+            ),
+            calculate_ews_metric(
+                calculate_backward_autocorrelation!, args..., lag
+            ),
         )
         "centered" => return EWSMetrics(
             time_step,
@@ -523,8 +529,13 @@ function EWSMetrics(
             ),
             calculate_ews_metric(calculate_centered_skewness!, args...),
             calculate_ews_metric(calculate_centered_kurtosis!, args...),
-            calculate_ews_metric(calculate_centered_autocovariance!, args...),
-            calculate_ews_metric(calculate_centered_autocorrelation!, args...))
+            calculate_ews_metric(
+                calculate_centered_autocovariance!, args..., lag
+            ),
+            calculate_ews_metric(
+                calculate_centered_autocorrelation!, args..., lag
+            ),
+        )
     end
 end
 # end

@@ -142,7 +142,7 @@ test_spec_vec = [
 
 #%%
 ews_method_vec = ["centered", "backward"]
-ews_bandwidth_vec = collect(7:1:7)
+ews_bandwidth_vec = [30]
 
 ews_spec_vec = create_combinations_vec(
     EWSMetricSpecification,

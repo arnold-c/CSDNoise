@@ -124,6 +124,7 @@ end
 function run_jump_prob(ensemble_param_dict)
     @unpack ensemble_spec,
     seed,
+    executor,
     quantile_vec,
     outbreak_spec_dict,
     noise_spec_vec,
@@ -196,6 +197,7 @@ function run_jump_prob(ensemble_param_dict)
         dict[:test_spec_vec] = test_spec_vec
         dict[:ews_spec_vec] = ews_spec_vec
         dict[:seed] = seed
+        dict[:executor] = executor
     end
 
     run_define_outbreaks(outbreak_spec_dict)
@@ -222,7 +224,7 @@ function define_outbreaks(incidence_param_dict)
     outbreak_spec,
     noise_spec_vec,
     outbreak_detection_spec_vec,
-    test_spec_vec, ews_spec_vec, seed =
+    test_spec_vec, ews_spec_vec, seed, executor =
         incidence_param_dict
 
     ensemble_inc_arr, ensemble_thresholds_vec = create_inc_infec_arr(
@@ -281,15 +283,17 @@ function define_outbreaks(incidence_param_dict)
         )
     )
 
-    run_OutbreakThresholdChars_creation(scenario_param_dict)
+    run_OutbreakThresholdChars_creation(
+        scenario_param_dict; executor = executor
+    )
 
     return @strdict ensemble_inc_arr ensemble_thresholds_vec
 end
 
 function run_OutbreakThresholdChars_creation(
-    dict_of_OTchars_params
+    dict_of_OTchars_params; executor = ThreadedEx()
 )
-    @floop for OTChars_params in dict_of_OTchars_params
+    @floop executor for OTChars_params in dict_of_OTchars_params
         @produce_or_load(
             OutbreakThresholdChars_creation,
             OTChars_params,

@@ -4,6 +4,7 @@ using DrWatson
 
 using ProgressMeter
 using Chain
+using FLoops: FLoops
 
 using CSDNoise
 
@@ -152,6 +153,7 @@ ews_spec_vec = create_combinations_vec(
 base_param_dict = @dict(
     ensemble_spec = ensemble_spec_vec,
     seed = seed,
+    executor = FLoops.SequentialEx(),
 )
 
 sol_param_dict = dict_list(

@@ -53,8 +53,7 @@ function create_testing_arrs(
         individual_test_spec.sensitivity,
         individual_test_spec.specificity,
         time_specification.tstep,
-        ews_specification.method,
-        ews_specification.bandwidth,
+        ews_specification,
     )
 
     return testarr, ewsarr, test_movingavg_arr, inferred_positives_arr
@@ -77,8 +76,7 @@ function create_testing_arrs!(
     testsens,
     testspec,
     tstep,
-    ews_method,
-    ews_bandwidth,
+    ews_specification,
 )
     tlength = size(testarr, 1)
 
@@ -166,25 +164,22 @@ function create_testing_arrs!(
 
         ewsarr[:, sim] .= @match alert_method begin
             "movingavg" => EWSMetrics(
-                ews_method,
+                ews_specification,
                 @view(test_movingavg_arr[:, sim]),
-                tstep,
-                ews_bandwidth,
+                tstep
             )
 
             "dailythreshold_movingavg" => EWSMetrics(
-                ews_method,
+                ews_specification,
                 @view(test_movingavg_arr[:, sim]),
-                tstep,
-                ews_bandwidth,
+                tstep
             )
 
             "inferred_movingavg" =>
                 EWSMetrics(
-                    ews_method,
+                    ews_specification,
                     @view(inferred_positives_arr[:, sim]),
                     tstep,
-                    ews_bandwidth,
                 )
         end
 

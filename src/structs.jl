@@ -472,11 +472,10 @@ struct OptimalThresholdCharacteristics{
 end
 
 struct EWSMetrics{
-    T1<:Integer,T2<:AbstractString,T3<:AbstractArray{<:AbstractFloat}
+    T1<:Integer,T2<:EWSMetricSpecification,T3<:AbstractArray{<:AbstractFloat}
 }
     timestep::T1
-    bandwidth::T1
-    method::T2
+    ews_specification::T2
     mean::T3
     variance::T3
     coefficient_of_variation::T3
@@ -488,14 +487,13 @@ struct EWSMetrics{
 end
 
 function EWSMetrics(
-    method, timeseries, time_step, bandwidth, lag
+    ews_spec::EWSMetricSpecification, timeseries, time_step
 )
-    args = (timeseries, time_step, bandwidth)
-    @match method begin
+    args = (timeseries, time_step, ews_spec.bandwidth)
+    @match ews_spec.method begin
         "backward" => return EWSMetrics(
             time_step,
-            bandwidth,
-            method,
+            ews_spec,
             calculate_ews_metric(
                 calculate_backward_mean!, args...
             ),
@@ -509,16 +507,15 @@ function EWSMetrics(
             calculate_ews_metric(calculate_backward_skewness!, args...),
             calculate_ews_metric(calculate_backward_kurtosis!, args...),
             calculate_ews_metric(
-                calculate_backward_autocovariance!, args..., lag
+                calculate_backward_autocovariance!, args..., ews_spec.lag
             ),
             calculate_ews_metric(
-                calculate_backward_autocorrelation!, args..., lag
+                calculate_backward_autocorrelation!, args..., ews_spec.lag
             ),
         )
         "centered" => return EWSMetrics(
             time_step,
-            bandwidth,
-            method,
+            ews_spec,
             calculate_ews_metric(calculate_centered_mean!, args...),
             calculate_ews_metric(calculate_centered_variance!, args...),
             calculate_ews_metric(
@@ -530,10 +527,10 @@ function EWSMetrics(
             calculate_ews_metric(calculate_centered_skewness!, args...),
             calculate_ews_metric(calculate_centered_kurtosis!, args...),
             calculate_ews_metric(
-                calculate_centered_autocovariance!, args..., lag
+                calculate_centered_autocovariance!, args..., ews_spec.lag
             ),
             calculate_ews_metric(
-                calculate_centered_autocorrelation!, args..., lag
+                calculate_centered_autocorrelation!, args..., ews_spec.lag
             ),
         )
     end

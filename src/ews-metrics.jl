@@ -23,17 +23,17 @@ function calculate_centered_metric!(
     tlength = length(timeseries)
     for i in eachindex(timeseries)
         if i <= delta
-            metric_vec[i] = metric_function(@view(timeseries[begin:(2i - 1)]))
+            metric_vec[i] = metric_function(timeseries[begin:(2i - 1)])
             continue
         end
         if i > tlength - delta
             metric_vec[i] = metric_function(
-                @view(timeseries[(2i - tlength):end])
+                timeseries[(2i - tlength):end]
             )
             continue
         end
         metric_vec[i] = metric_function(
-            @view(timeseries[(i - delta):(i + delta)])
+            timeseries[(i - delta):(i + delta)]
         )
     end
     return nothing
@@ -46,18 +46,18 @@ function calculate_centered_metric!(
     tlength = length(timeseries)
     for i in eachindex(timeseries)
         if i <= delta
-            metric_vec[i] = metric_function(@view(timeseries[begin:(2i - 1)]))
+            metric_vec[i] = metric_function(timeseries[begin:(2i - 1)])
             continue
         end
         if i > tlength - delta
             metric_vec[i] = metric_function(
-                @view(timeseries[(2i - tlength):end]),
+                timeseries[(2i - tlength):end],
                 varargs...
             )
             continue
         end
         metric_vec[i] = metric_function(
-            @view(timeseries[(i - delta):(i + delta)]),
+            timeseries[(i - delta):(i + delta)],
             varargs...
         )
     end

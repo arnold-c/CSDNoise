@@ -175,6 +175,8 @@ function run_jump_prob(ensemble_param_dict)
             1,
             @view(ensemble_seir_arr[:, :, sim]),
         )
+
+        Reff_ge_than_one(@view(ensemble_Reff_arr[:, sim]))
     end
 
     for dict in outbreak_spec_dict

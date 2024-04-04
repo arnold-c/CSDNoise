@@ -64,7 +64,8 @@ export create_sir_df
 include("detection-thresholds.jl")
 export create_inc_infec_arr,
     create_inc_infec_arr!,
-    calculate_outbreak_thresholds
+    calculate_outbreak_thresholds,
+    Reff_ge_than_one
 # @reexport using .DetectionThresholds
 
 include("diag-testing-functions.jl")

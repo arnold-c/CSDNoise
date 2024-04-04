@@ -4,7 +4,7 @@
 
 using ProgressMeter
 using FLoops
-using StatsBase
+using Statistics
 using UnPack
 using LoopVectorization
 

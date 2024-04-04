@@ -8,7 +8,7 @@ imports. All jumps are manually defined.
 """
 
 using Statistics
-using Distributions
+using Distributions: Poisson, Binomial
 using Random
 using UnPack
 using LoopVectorization

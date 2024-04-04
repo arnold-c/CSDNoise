@@ -35,7 +35,7 @@ time_p_vec = vec(
 )
 
 #%%
-beta_force_vec = [0.2]
+beta_force_vec = [0.0]
 annual_births_per_k_vec = [27]
 seed = 1234
 

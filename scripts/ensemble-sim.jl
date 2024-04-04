@@ -154,7 +154,7 @@ ews_spec_vec = create_combinations_vec(
 base_param_dict = @dict(
     ensemble_spec = ensemble_spec_vec,
     seed = seed,
-    executor = FLoops.SequentialEx(),
+    executor = FLoops.ThreadedEx(),
 )
 
 sol_param_dict = dict_list(

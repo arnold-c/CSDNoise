@@ -4,7 +4,7 @@
 
 using ProgressMeter
 using FLoops
-using StatsBase
+using StatsBase: rle
 using UnPack
 using LoopVectorization
 
@@ -127,5 +127,20 @@ function classify_outbreak(
         return 1
     end
     return 0
+end
+
+function Reff_ge_than_one(Reff_vec; ncols = 3)
+    @assert ncols >= 3 "ncols must be at least 3"
+
+    Reff_rle = rle(Reff_vec .>= 1)
+    Reff_rle_bounds = calculate_outbreak_thresholds(
+        Reff_rle; ncols = ncols
+    )
+
+    # Amount of time with Reff greater than 1
+    @views Reff_rle_bounds[:, 3] .=
+        Reff_rle_bounds[:, 2] .- Reff_rle_bounds[:, 1] .+ 1
+
+    return Reff_rle_bounds
 end
 # end

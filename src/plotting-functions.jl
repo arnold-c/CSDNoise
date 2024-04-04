@@ -158,6 +158,124 @@ function create_sir_quantiles_plot(
     )
 end
 
+function Reff_plot(
+    incidencearr,
+    Reffarr,
+    Reff_thresholds_vec,
+    thresholdsarr,
+    timeparams;
+    sim = 1,
+    outbreak_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
+    ],
+    Reff_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
+    ],
+    threshold = 5,
+    kwargs...,
+)
+    @unpack trange = timeparams
+    times = collect(trange) ./ 365
+    kwargs_dict = Dict(kwargs)
+
+    period_sum_arr = zeros(Int64, length(times), 2)
+    for (lower, upper, periodsum, outbreakstatus) in
+        eachrow(thresholdsarr[sim])
+        period_sum_arr[lower:upper, 1] .= periodsum
+        period_sum_arr[lower:upper, 2] .= outbreakstatus
+    end
+
+    Reff_dur_arr = zeros(Int64, length(times), 2)
+    for (lower, upper, duration) in
+        eachrow(Reff_thresholds_vec[sim])
+        Reff_dur_arr[lower:upper, 1] .= duration
+        Reff_dur_arr[lower:upper, 2] .= 1
+    end
+
+    fig = Figure()
+    incax = Axis(
+        fig[1, 1]; ylabel = "Incidence"
+    )
+    reffax = Axis(
+        fig[2, 1]; ylabel = "Reff"
+    )
+    reff_sum_ax = Axis(
+        fig[3, 1]; xlabel = "Time (years)", ylabel = "Reff Duration"
+    )
+
+    linkxaxes!(incax, reffax, reff_sum_ax)
+
+    lines!(
+        incax,
+        times,
+        incidencearr[:, 1, sim];
+        color = period_sum_arr[:, 2],
+        colormap = outbreak_colormap,
+    )
+    hlines!(
+        incax,
+        threshold;
+        color = :black,
+        linestyle = :dash,
+        linewidth = 2,
+    )
+    lines!(
+        reffax,
+        times,
+        Reffarr[:, sim];
+        color = Reff_dur_arr[:, 2],
+        colormap = Reff_colormap,
+        linewidth = 3,
+    )
+    hlines!(
+        reffax,
+        1.0;
+        color = :black,
+        linestyle = :dash,
+        linewidth = 2,
+    )
+    lines!(
+        reff_sum_ax,
+        times,
+        Reff_dur_arr[:, 1];
+        color = Reff_dur_arr[:, 2],
+        colormap = Reff_colormap,
+        linewidth = 3,
+    )
+
+    if haskey(kwargs_dict, :xlims)
+        map(
+            ax -> xlims!(ax, kwargs_dict[:xlims]),
+            [incax, reffax, reff_sum_ax],
+        )
+    end
+
+    if haskey(kwargs_dict, :ylims_Reffdur)
+        ylims!(reff_sum_ax, kwargs_dict[:ylims_Reffdur])
+    end
+
+    if haskey(kwargs_dict, :ylims_inc)
+        ylims!(incax, kwargs_dict[:ylims_inc])
+    end
+
+    map(hidexdecorations!, [incax, reffax])
+
+    Legend(
+        fig[1, 2],
+        [PolyElement(; color = col) for col in outbreak_colormap],
+        ["Not Outbreak", "Outbreak"],
+        "True\nOutbreak Status",
+    )
+
+    Legend(
+        fig[2:3, 2],
+        [PolyElement(; color = col) for col in Reff_colormap],
+        ["Reff < 1", "Reff >= 1"],
+        "Reff Status",
+    )
+    return fig
+end
+
 function incidence_prevalence_plot(
     incidencearr,
     ensemblearr,

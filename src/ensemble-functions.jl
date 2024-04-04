@@ -150,6 +150,9 @@ function run_jump_prob(ensemble_param_dict)
     ensemble_beta_arr = zeros(Float64, tlength)
 
     ensemble_Reff_arr = zeros(Float64, tlength, nsims)
+    ensemble_Reff_thresholds_vec = Vector{Array{Int64,2}}(
+        undef, size(ensemble_inc_vecs, 2)
+    )
 
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
@@ -175,6 +178,10 @@ function run_jump_prob(ensemble_param_dict)
             1,
             @view(ensemble_seir_arr[:, :, sim]),
         )
+
+        ensemble_Reff_thresholds_vec[sim] = Reff_ge_than_one(
+            @view(ensemble_Reff_arr[:, sim])
+        )
     end
 
     for dict in outbreak_spec_dict
@@ -191,7 +198,7 @@ function run_jump_prob(ensemble_param_dict)
 
     run_define_outbreaks(outbreak_spec_dict)
 
-    return @strdict ensemble_seir_arr ensemble_spec ensemble_Reff_arr
+    return @strdict ensemble_seir_arr ensemble_spec ensemble_Reff_arr ensemble_Reff_thresholds_vec
 end
 
 function run_define_outbreaks(dict_of_outbreak_spec_params)

@@ -7,7 +7,7 @@
 #     run_OutbreakThresholdChars_creation, OutbreakThresholdChars_creation
 
 using DrWatson
-using StatsBase
+using Statistics
 using FreqTables
 using ThreadsX
 using FLoops

@@ -13,7 +13,7 @@ ensemble_state_specification = StateParameters(
 ensemble_dynamics_specification = DynamicsParameters(
     ensemble_state_specification.init_states.N,
     27,
-    0.2,
+    0.0,
     SIGMA,
     GAMMA,
     16.0,

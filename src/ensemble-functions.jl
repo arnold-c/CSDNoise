@@ -7,6 +7,7 @@ using DrWatson
 using UnPack
 using FLoops
 using ProgressMeter
+using StructArrays
 
 # include("transmission-functions.jl")
 # # using .TransmissionFunctions
@@ -337,7 +338,7 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
         testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop
     )
 
-    return @strdict OT_chars ewsarr
+    return @strdict OT_chars StructArray(ewsarr)
 end
 
 function get_ensemble_file() end

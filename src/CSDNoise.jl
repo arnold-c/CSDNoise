@@ -114,7 +114,8 @@ export seircolors,
     compare_ensemble_OTchars_plots,
     compare_optimal_thresholds_chars_plot, create_optimal_thresholds_chars_plot,
     compare_optimal_thresholds_test_chars_plot,
-    create_optimal_thresholds_test_chars_plot
+    create_optimal_thresholds_test_chars_plot,
+    Reff_ews_plot
 # @reexport using .PlottingFunctions
 
 include("ensemble-sim_single-scenario_plots.jl")

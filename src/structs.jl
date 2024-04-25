@@ -380,6 +380,20 @@ struct EWSMetricSpecification{T1<:AbstractString,T2<:Integer}
     method::T1
     bandwidth::T2
     lag::T2
+    dirpath::T1
+end
+
+function EWSMetricSpecification(
+    method::T1, bandwidth::T2, lag::T2
+) where {T1<:AbstractString,T2<:Integer}
+    return EWSMetricSpecification(
+        method,
+        bandwidth,
+        lag,
+        joinpath(
+            "ewsmethod_$(method)", "ewsbandwidth_$(bandwidth)", "ewslag_$(lag)"
+        ),
+    )
 end
 
 struct ScenarioSpecification{
@@ -416,9 +430,7 @@ function ScenarioSpecification(
         "testsens_$(individual_test_specification.sensitivity)",
         "testspec_$(individual_test_specification.specificity)",
         "testlag_$(individual_test_specification.test_result_lag)",
-        "ewsmethod_$(ewsmetric_specification.method)",
-        "ewsbw_$(ewsmetric_specification.bandwidth)",
-        "ewslag_$(ewsmetric_specification.lag)",
+        ewsmetric_specification.dirpath,
     )
 
     return ScenarioSpecification(

@@ -288,7 +288,49 @@ function define_outbreaks(incidence_param_dict)
         scenario_param_dict; executor = executor
     )
 
+    inc_ews_param_dict = dict_list(
+        @dict(
+            dirpath = incidence_param_dict[:dirpath],
+            tstep = ensemble_spec.time_parameters.tstep,
+            ews_specification = ews_spec_vec,
+        )
+    )
+
+    run_incidence_ews_metrics(
+        inc_ews_param_dict; executor = executor
+    )
+
     return @strdict ensemble_inc_arr ensemble_thresholds_vec
+end
+
+function run_incidence_ews_metrics(
+    dict_of_inc_ews_params; executor = ThreadedEx()
+)
+    @floop executor for inc_ews_params in dict_of_inc_ews_params
+        @produce_or_load(
+            incidence_ews_metrics,
+            inc_ews_params,
+            "$(inc_ews_params[:dirpath])";
+            filename = "incidence-ews-metrics",
+            loadfile = false
+        )
+    end
+end
+
+function incidence_ews_metrics(inc_ews_params)
+    @unpack ensemble_inc_arr, ews_specification, tstep = inc_ews_params
+
+    inc_ewsmetrics = Vector{EWSMetrics}(undef, size(ensemble_inc_arr, 3))
+
+    for sim in eachindex(inc_ewsmetrics)
+        inc_ewsmetrics[sim] = EWSMetrics(
+            ews_specification,
+            @view(ensemble_inc_arr[:, :, sim]),
+            tstep
+        )
+    end
+
+    return @strdict StructArray(inc_ewsmetrics)
 end
 
 function run_OutbreakThresholdChars_creation(

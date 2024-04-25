@@ -4,6 +4,8 @@ using DrWatson
 
 using UnPack
 using ColorSchemes
+using CSV: CSV
+using DataFrames: DataFrames
 
 using CSDNoise
 
@@ -198,6 +200,14 @@ save(
 
 #%%
 sim_num = 1
+
+CSV.write(
+    outdir("incidence-array_sim-$(sim_num).csv"),
+    DataFrames.DataFrame(
+        ensemble_single_incarr[:, :, sim_num],
+        [:incidence, :above_threshold, :outbreak],
+    ),
+)
 
 ewsmetrics = [
     :autocorrelation,

@@ -437,3 +437,6 @@ profile.pb.gz
 tmp
 scripts/debugging.jl
 *.zip
+/renv/activate.R
+/renv/settings.json
+/renv

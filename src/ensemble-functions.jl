@@ -290,7 +290,7 @@ function define_outbreaks(incidence_param_dict)
 
     inc_ews_param_dict = dict_list(
         @dict(
-            dirpath = incidence_param_dict[:dirpath],
+            basedirpath = incidence_param_dict[:dirpath],
             tstep = ensemble_spec.time_parameters.tstep,
             ews_specification = ews_spec_vec,
         )
@@ -310,7 +310,7 @@ function run_incidence_ews_metrics(
         @produce_or_load(
             incidence_ews_metrics,
             inc_ews_params,
-            "$(inc_ews_params[:dirpath])";
+            "$(joinpath(inc_ews_params[:basedirpath], inc_ews_params[:ews_specification].dirpath))";
             filename = "incidence-ews-metrics",
             loadfile = false
         )

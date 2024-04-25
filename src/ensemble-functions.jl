@@ -329,7 +329,8 @@ function incidence_ews_metrics(inc_ews_params)
             tstep
         )
     end
-    return @strdict StructArray(inc_ewsmetrics)
+    inc_ewsmetrics = StructArray(inc_ewsmetrics_vec)
+    return @strdict inc_ewsmetrics
 end
 
 function run_OutbreakThresholdChars_creation(
@@ -378,8 +379,8 @@ function OutbreakThresholdChars_creation(OT_chars_param_dict)
     OT_chars = calculate_OutbreakThresholdChars(
         testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop
     )
-
-    return @strdict OT_chars StructArray(ewsarr)
+    test_ewsmetrics = StructArray(ewsarr)
+    return @strdict OT_chars test_ewsmetrics
 end
 
 function get_ensemble_file() end

@@ -293,6 +293,7 @@ function define_outbreaks(incidence_param_dict)
             basedirpath = incidence_param_dict[:dirpath],
             tstep = ensemble_spec.time_parameters.tstep,
             ews_specification = ews_spec_vec,
+            ensemble_inc_arr = ensemble_inc_arr
         )
     )
 
@@ -320,16 +321,14 @@ end
 function incidence_ews_metrics(inc_ews_params)
     @unpack ensemble_inc_arr, ews_specification, tstep = inc_ews_params
 
-    inc_ewsmetrics = Vector{EWSMetrics}(undef, size(ensemble_inc_arr, 3))
-
-    for sim in eachindex(inc_ewsmetrics)
-        inc_ewsmetrics[sim] = EWSMetrics(
+    inc_ewsmetrics_vec = Vector{EWSMetrics}(undef, size(ensemble_inc_arr, 3))
+    for sim in eachindex(inc_ewsmetrics_vec)
+        inc_ewsmetrics_vec[sim] = EWSMetrics(
             ews_specification,
-            @view(ensemble_inc_arr[:, :, sim]),
+            @view(ensemble_inc_arr[:, 1, sim]),
             tstep
         )
     end
-
     return @strdict StructArray(inc_ewsmetrics)
 end
 

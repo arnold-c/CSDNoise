@@ -105,23 +105,23 @@ scenario_specification_no_lag = ScenarioSpecification(
     ews_metric_specification,
 )
 
-scenario_specification_lag = ScenarioSpecification(
-    ensemble_specification,
-    ensemble_outbreak_specification,
-    noise_specification,
-    ensemble_single_outbreak_detection_spec,
-    ensemble_single_individual_test_spec_lag,
-    ews_metric_specification,
-)
+# scenario_specification_lag = ScenarioSpecification(
+#     ensemble_specification,
+#     ensemble_outbreak_specification,
+#     noise_specification,
+#     ensemble_single_outbreak_detection_spec,
+#     ensemble_single_individual_test_spec_lag,
+#     ews_metric_specification,
+# )
 
 ensemble_solution_dict_no_lag = get_ensemble_file(scenario_specification_no_lag)
-ensemble_solution_dict_lag = get_ensemble_file(scenario_specification_lag)
+# ensemble_solution_dict_lag = get_ensemble_file(scenario_specification_lag)
 
 OT_chars_no_lag = ensemble_solution_dict_no_lag["OT_chars"]
-OT_chars_lag = ensemble_solution_dict_lag["OT_chars"]
+# OT_chars_lag = ensemble_solution_dict_lag["OT_chars"]
 
 ewsmetrics_no_lag = ensemble_solution_dict_no_lag["test_ewsmetrics"]
-ewsmetrics_lag = ensemble_solution_dict_lag["test_ewsmetrics"]
+# ewsmetrics_lag = ensemble_solution_dict_lag["test_ewsmetrics"]
 
 noisearr, poisson_noise_prop = create_noise_arr(
     noise_specification,
@@ -140,14 +140,14 @@ testarr_no_lag, test_movingvg_arr_no_lag, inferred_positives_arr_no_lag = create
     ews_metric_specification,
 )[[1, 3, 4]]
 
-testarr_lag, test_movingvg_arr_lag, inferred_positives_arr_lag = create_testing_arrs(
-    ensemble_single_incarr,
-    noisearr,
-    ensemble_single_outbreak_detection_spec,
-    ensemble_single_individual_test_spec_lag,
-    ensemble_time_specification,
-    ews_metric_specification,
-)[[1, 3, 4]]
+# testarr_lag, test_movingvg_arr_lag, inferred_positives_arr_lag = create_testing_arrs(
+#     ensemble_single_incarr,
+#     noisearr,
+#     ensemble_single_outbreak_detection_spec,
+#     ensemble_single_individual_test_spec_lag,
+#     ensemble_time_specification,
+#     ews_metric_specification,
+# )[[1, 3, 4]]
 
 #%%
 inferred_positive_no_lag_plot = lines(
@@ -169,46 +169,49 @@ save(
 )
 
 #%%
-inferred_positive_lag_plot = lines(
-    ensemble_time_specification.trange,
-    ensemble_single_incarr[:, 1, 1];
-    color = :orange,
-)
-lines!(
-    ensemble_time_specification.trange,
-    inferred_positives_arr_lag[:, 1];
-    color = :black,
-)
-
-save(
-    plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_inferred_positives_lag.png",
-    ),
-    inferred_positive_lag_plot,
-)
+# inferred_positive_lag_plot = lines(
+#     ensemble_time_specification.trange,
+#     ensemble_single_incarr[:, 1, 1];
+#     color = :orange,
+# )
+# lines!(
+#     ensemble_time_specification.trange,
+#     inferred_positives_arr_lag[:, 1];
+#     color = :black,
+# )
+#
+# save(
+#     plotsdir(
+#         "ensemble/single-scenario/ensemble_single_scenario_inferred_positives_lag.png",
+#     ),
+#     inferred_positive_lag_plot,
+# )
 
 #%%
-compare_inferred_positives_plot = lines(
-    ensemble_time_specification.trange,
-    inferred_positives_arr_no_lag[:, 1];
-    color = :orange,
-)
-lines!(
-    ensemble_time_specification.trange,
-    inferred_positives_arr_lag[:, 1];
-    color = :black,
-)
-
-save(
-    plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_compare_inferred_positives.png",
-    ),
-    compare_inferred_positives_plot,
-)
+# compare_inferred_positives_plot = lines(
+#     ensemble_time_specification.trange,
+#     inferred_positives_arr_no_lag[:, 1];
+#     color = :orange,
+# )
+# lines!(
+#     ensemble_time_specification.trange,
+#     inferred_positives_arr_lag[:, 1];
+#     color = :black,
+# )
+#
+# save(
+#     plotsdir(
+#         "ensemble/single-scenario/ensemble_single_scenario_compare_inferred_positives.png",
+#     ),
+#     compare_inferred_positives_plot,
+# )
 
 #%%
 sim_num = 1
 
+#%%
+# Can use RCall to @rput, but write to csv so can put R code in own file
+# that can be run independently (as well as provide linting etc)
 CSV.write(
     outdir("incidence-array_sim-$(sim_num).csv"),
     DataFrames.DataFrame(

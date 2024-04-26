@@ -145,7 +145,7 @@ test_spec_vec = [
 #%%
 # ews_method_vec = ["centered", "backward"]
 ews_method_vec = ["centered"]
-ews_bandwidth_vec = [30]
+ews_bandwidth_vec = [35]
 ews_lag_vec = [1]
 
 ews_spec_vec = create_combinations_vec(

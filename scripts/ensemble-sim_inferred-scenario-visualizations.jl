@@ -27,7 +27,7 @@ ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
     10, 7, 0.6, 0.2, "inferred_movingavg"
 )
 
-ews_metric_specification = EWSMetricSpecification("centered", 35, 1)
+ews_metric_specification = EWSMetricSpecification("backward", 35, 1)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(

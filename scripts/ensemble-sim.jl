@@ -143,8 +143,8 @@ test_spec_vec = [
 ]
 
 #%%
-# ews_method_vec = ["centered", "backward"]
-ews_method_vec = ["centered"]
+ews_method_vec = ["centered", "backward"]
+# ews_method_vec = ["centered"]
 ews_bandwidth_vec = [35]
 ews_lag_vec = [1]
 

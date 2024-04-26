@@ -401,6 +401,21 @@ function get_ensemble_file(spec::EnsembleSpecification, quantile::Int64)
     return load(collect_ensemble_file("quantiles_$(quantile)", spec.dirpath)...)
 end
 
+function get_ensemble_file(
+    ensemble_spec::EnsembleSpecification,
+    outbreak_spec::OutbreakSpecification,
+    ews_spec::EWSMetricSpecification,
+)
+    return load(
+        collect_ensemble_file(
+            "incidence-ews-metrics",
+            joinpath(
+                ensemble_spec.dirpath, outbreak_spec.dirpath, ews_spec.dirpath
+            ),
+        )...,
+    )
+end
+
 function get_ensemble_file(spec::ScenarioSpecification)
     return load(collect_ensemble_file("scenario", spec.dirpath)...)
 end

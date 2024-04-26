@@ -6,6 +6,8 @@ using UnPack
 using ColorSchemes
 using CSV: CSV
 using DataFrames: DataFrames
+using RCall
+using StructArrays
 
 using CSDNoise
 
@@ -24,6 +26,8 @@ ensemble_single_individual_test_spec_lag = IndividualTestSpecification(
 ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
     10, 7, 0.6, 0.2, "inferred_movingavg"
 )
+
+ews_metric_specification = EWSMetricSpecification("centered", 30, 1)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(
@@ -44,6 +48,12 @@ ensemble_single_scenario_inc_file = get_ensemble_file(
 
 ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
 ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+
+ensemble_single_inc_ews = get_ensemble_file(
+    ensemble_specification,
+    ensemble_outbreak_specification,
+    ews_metric_specification,
+)["inc_ewsmetrics"]
 
 #%%
 mkpath(plotsdir("ensemble/single-scenario"))
@@ -86,8 +96,6 @@ end
 #%%
 noise_specification = ensemble_noise_specification_vec[1]
 
-ews_metric_specification = EWSMetricSpecification("centered", 30, 1)
-
 scenario_specification_no_lag = ScenarioSpecification(
     ensemble_specification,
     ensemble_outbreak_specification,
@@ -112,8 +120,8 @@ ensemble_solution_dict_lag = get_ensemble_file(scenario_specification_lag)
 OT_chars_no_lag = ensemble_solution_dict_no_lag["OT_chars"]
 OT_chars_lag = ensemble_solution_dict_lag["OT_chars"]
 
-ewsmetrics_no_lag = ensemble_solution_dict_no_lag["ewsarr"]
-ewsmetrics_lag = ensemble_solution_dict_lag["ewsarr"]
+ewsmetrics_no_lag = ensemble_solution_dict_no_lag["test_ewsmetrics"]
+ewsmetrics_lag = ensemble_solution_dict_lag["test_ewsmetrics"]
 
 noisearr, poisson_noise_prop = create_noise_arr(
     noise_specification,
@@ -209,6 +217,58 @@ CSV.write(
     ),
 )
 
+#%%
+R"""
+library(spaero)
+library(tidyverse)
+
+inc_array <- read_csv(here::here("out", "incidence-array_sim-1.csv"))
+
+spaero_inc_ews_stats <- get_stats(inc_array[, "incidence"],
+  center_kernel = "uniform",
+  center_trend = "local_constant", center_bandwidth = 30,
+  stat_bandwidth = 30
+)
+
+spaero_ensemble_single_inc_ews_arr <-
+  spaero_inc_ews_stats$stats %>%
+  as_tibble() %>%
+  mutate(time = row_number()) %>%
+  select(time, everything())
+  # pivot_longer(cols = c(everything(), -time))
+"""
+
+@rget spaero_ensemble_single_inc_ews_arr
+
+#%%
+spaero_ensemble_single_inc_ews = StructArray([
+    EWSMetrics(
+        ensemble_time_specification.tstep,
+        ews_metric_specification,
+        spaero_ensemble_single_inc_ews_arr.mean,
+        spaero_ensemble_single_inc_ews_arr.variance,
+        spaero_ensemble_single_inc_ews_arr.coefficient_of_variation,
+        spaero_ensemble_single_inc_ews_arr.index_of_dispersion,
+        spaero_ensemble_single_inc_ews_arr.skewness,
+        spaero_ensemble_single_inc_ews_arr.kurtosis,
+        convert(
+            Vector{Float64},
+            replace!(
+                spaero_ensemble_single_inc_ews_arr.autocovariance,
+                missing => NaN,
+            ),
+        ),
+        convert(
+            Vector{Float64},
+            replace!(
+                spaero_ensemble_single_inc_ews_arr.autocorrelation,
+                missing => NaN,
+            ),
+        ),
+    ),
+])
+
+#%%
 ewsmetrics = [
     :autocorrelation,
     :autocovariance,
@@ -220,10 +280,60 @@ ewsmetrics = [
     :variance,
 ]
 
-for (ewsmetric_sa, lag_label) in
-    zip((ewsmetrics_lag, ewsmetrics_no_lag), ("lag", "no_lag"))
-    for ewsmetric in ewsmetrics
-        ews_metric_plot = Reff_ews_plot(
+mkpath(plotsdir("ensemble/single-scenario/ewsmetrics/testpositive"))
+mkpath(plotsdir("ensemble/single-scenario/ewsmetrics/incidence"))
+
+for ewsmetric in ewsmetrics
+    inc_ews_metric_plot = Reff_ews_plot(
+        ensemble_single_incarr,
+        ensemble_single_Reff_arr,
+        ensemble_single_Reff_thresholds_vec,
+        ensemble_single_inc_ews,
+        ewsmetric,
+        ensemble_single_periodsum_vecs,
+        ensemble_time_specification;
+        sim = sim_num,
+        threshold = ensemble_outbreak_specification.outbreak_threshold,
+        plottitle = "Incidence $(ewsmetric)",
+    )
+
+    save(
+        plotsdir(
+            "ensemble/single-scenario/ewsmetrics/incidence/ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
+        ),
+        inc_ews_metric_plot,
+    )
+
+    spaero_inc_ews_metric_plot = Reff_ews_plot(
+        ensemble_single_incarr,
+        ensemble_single_Reff_arr,
+        ensemble_single_Reff_thresholds_vec,
+        spaero_ensemble_single_inc_ews,
+        ewsmetric,
+        ensemble_single_periodsum_vecs,
+        ensemble_time_specification;
+        sim = sim_num,
+        threshold = ensemble_outbreak_specification.outbreak_threshold,
+        plottitle = "SPAERO Incidence $(ewsmetric)",
+        metric_color = Makie.wong_colors()[3],
+    )
+
+    save(
+        plotsdir(
+            "ensemble/single-scenario/ewsmetrics/incidence/ensemble_single_scenario_spaero-incidence_metric_$(String(ewsmetric)).png",
+        ),
+        spaero_inc_ews_metric_plot,
+    )
+
+    for (ewsmetric_sa, lag_label) in
+        zip((
+        # ewsmetrics_lag,
+        [ewsmetrics_no_lag]
+    ), (
+        # "lag",
+        ["no_lag"]
+    ))
+        test_ews_metric_plot = Reff_ews_plot(
             ensemble_single_incarr,
             ensemble_single_Reff_arr,
             ensemble_single_Reff_thresholds_vec,
@@ -233,17 +343,18 @@ for (ewsmetric_sa, lag_label) in
             ensemble_time_specification;
             sim = sim_num,
             threshold = ensemble_outbreak_specification.outbreak_threshold,
-            plottitle = "$(ewsmetric)\t$(lag_label)",
+            plottitle = "Test Positive $(ewsmetric)\t$(lag_label)",
         )
 
         save(
             plotsdir(
-                "ensemble/single-scenario/ensemble_single_scenario_metric_$(String(ewsmetric))_$lag_label.png",
+                "ensemble/single-scenario/ewsmetrics/testpositive/ensemble_single_scenario_testpositive_metric_$(String(ewsmetric))_$lag_label.png",
             ),
-            ews_metric_plot,
+            test_ews_metric_plot,
         )
     end
 end
+
 # plot_all_single_scenarios(
 #     noisearr,
 #     poisson_noise_prop,

@@ -1360,6 +1360,7 @@ function Reff_ews_plot(
         N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
     ],
     threshold = 5,
+    metric_color = Makie.wong_colors()[1],
     kwargs...,
 ) where {T<:StructArray,S<:Symbol}
     @unpack trange = timeparams
@@ -1427,6 +1428,7 @@ function Reff_ews_plot(
         metric_ax,
         times,
         ewsmetric_vec;
+        color = metric_color,
         linewidth = 3,
     )
 

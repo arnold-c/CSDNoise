@@ -27,7 +27,7 @@ ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
     10, 7, 0.6, 0.2, "inferred_movingavg"
 )
 
-ews_metric_specification = EWSMetricSpecification("centered", 30, 1)
+ews_metric_specification = EWSMetricSpecification("centered", 35, 1)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(
@@ -267,8 +267,15 @@ ewsmetrics = [
     :variance,
 ]
 
-mkpath(plotsdir("ensemble/single-scenario/ewsmetrics/testpositive"))
-mkpath(plotsdir("ensemble/single-scenario/ewsmetrics/incidence"))
+basedir = plotsdir(
+    "ensemble/single-scenario/ewsmetrics/$(ews_metric_specification.dirpath)"
+)
+mkpath(basedir)
+testdir = joinpath(basedir, "test")
+mkpath(testdir)
+incdir = joinpath(basedir, "incidence")
+spaero_comparison_dir = joinpath(incdir, "spaero-comparison")
+mkpath(spaero_comparison_dir)
 
 for ewsmetric in ewsmetrics
     inc_ews_metric_plot = Reff_ews_plot(
@@ -285,31 +292,33 @@ for ewsmetric in ewsmetrics
     )
 
     save(
-        plotsdir(
-            "ensemble/single-scenario/ewsmetrics/incidence/ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
+        joinpath(
+            incdir,
+            "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
         ),
         inc_ews_metric_plot,
     )
 
-    spaero_inc_ews_metric_plot = Reff_ews_plot(
+    spaero_comparison_inc_ews_metric_plot = Reff_ews_plot(
         ensemble_single_incarr,
         ensemble_single_Reff_arr,
         ensemble_single_Reff_thresholds_vec,
+        ensemble_single_inc_ews,
         spaero_ensemble_single_inc_ews,
         ewsmetric,
         ensemble_single_periodsum_vecs,
         ensemble_time_specification;
         sim = sim_num,
         threshold = ensemble_outbreak_specification.outbreak_threshold,
-        plottitle = "SPAERO Incidence $(ewsmetric)",
-        metric_color = Makie.wong_colors()[3],
+        plottitle = "Incidence $(ewsmetric)",
     )
 
     save(
-        plotsdir(
-            "ensemble/single-scenario/ewsmetrics/incidence/ensemble_single_scenario_spaero-incidence_metric_$(String(ewsmetric)).png",
+        joinpath(
+            spaero_comparison_dir,
+            "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
         ),
-        spaero_inc_ews_metric_plot,
+        spaero_comparison_inc_ews_metric_plot,
     )
 
     for (ewsmetric_sa, lag_label) in
@@ -334,8 +343,9 @@ for ewsmetric in ewsmetrics
         )
 
         save(
-            plotsdir(
-                "ensemble/single-scenario/ewsmetrics/testpositive/ensemble_single_scenario_testpositive_metric_$(String(ewsmetric))_$lag_label.png",
+            joinpath(
+                testdir,
+                "ensemble_single_scenario_testpositive_metric_$(String(ewsmetric))_$lag_label.png",
             ),
             test_ews_metric_plot,
         )

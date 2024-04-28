@@ -227,6 +227,104 @@ source(here::here("scripts","spaero-ews.R"))
 
 @rget spaero_ews_backward spaero_ews_centered
 
+#%%
+function centered_mean(timeseries, bw)
+    tlength = length(timeseries)
+    mean_vec = zeros(Float64, tlength)
+    for i in eachindex(timeseries)
+        if i < bw
+            start_ind = 1
+            end_ind = i + bw - 1
+        elseif i + bw > tlength
+            start_ind = i - bw + 1
+            end_ind = tlength
+        else
+            start_ind = i - bw + 1
+            end_ind = i + bw - 1
+        end
+        mean_vec[i] = mean(@view(timeseries[start_ind:end_ind]))
+    end
+    return mean_vec
+end
+
+function centered_moment(timeseries, moment, bw)
+    return centered_moment(
+        timeseries, centered_mean(timeseries, bw), moment, bw
+    )
+end
+
+function centered_moment(timeseries, mean_timeseries, moment, bw)
+    diff = (timeseries .- mean_timeseries) .^ moment
+    return centered_mean(diff, bw)
+end
+
+function compare_against_spaero(spaero_ews, my_ews)
+    df = DataFrames.DataFrame([spaero_ews my_ews], [:spaero, :mine])
+    df.absdiff = abs.(df.spaero .- df.mine)
+    return df
+end
+
+function filter_spaero_comparison(spaero_ews, my_ews; tolerance = 1e-13)
+    df = compare_against_spaero(spaero_ews, my_ews)
+    return filter_spaero_comparison(df; tolerance = tolerance)
+end
+
+function filter_spaero_comparison(df; tolerance = 1e-13)
+    return DataFrames.subset(df, :absdiff => x -> x .> tolerance)
+end
+
+testinc = ensemble_single_incarr[:, 1, sim_num]
+
+#%%
+mean_df_centered = compare_against_spaero(
+    spaero_ews_centered.mean, centered_mean(testinc, 30)
+)
+filter_spaero_comparison(mean_df_centered)
+
+var_df_centered = compare_against_spaero(
+    spaero_ews_centered.variance, centered_moment(testinc, 2, 30)
+)
+filter_spaero_comparison(var_df_centered)
+
+#%%
+function backward_mean(timeseries, bw)
+    tlength = length(timeseries)
+    mean_vec = zeros(Float64, tlength)
+    for i in eachindex(timeseries)
+        if i < bw
+            start_ind = 1
+            end_ind = i
+        else
+            start_ind = i - bw + 1
+            end_ind = i
+        end
+        mean_vec[i] = mean(@view(timeseries[start_ind:end_ind]))
+    end
+    return mean_vec
+end
+
+function backward_moment(timeseries, moment, bw)
+    return backward_moment(
+        timeseries, backward_mean(timeseries, bw), moment, bw
+    )
+end
+
+function backward_moment(timeseries, mean_timeseries, moment, bw)
+    diff = (timeseries .- mean_timeseries) .^ moment
+    return backward_mean(diff, bw)
+end
+
+mean_df_backward = compare_against_spaero(
+    spaero_ews_backward.mean,
+    backward_mean(testinc, 30)
+)
+filter_spaero_comparison(mean_df_backward)
+
+var_df_backward = compare_against_spaero(
+    spaero_ews_backward.variance,
+    centered_moment(testinc, 2, 30)
+)
+filter_spaero_comparison(var_df_backward)
 
 #%%
 spaero_ensemble_single_inc_ews = StructArray([

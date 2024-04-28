@@ -222,10 +222,11 @@ CSV.write(
 
 #%%
 R"""
-source(here::here("scripts","R-ews.R"))
+source(here::here("scripts","spaero-ews.R"))
 """
 
-@rget spaero_ensemble_single_inc_ews_arr
+@rget spaero_ews_backward spaero_ews_centered
+
 
 #%%
 spaero_ensemble_single_inc_ews = StructArray([

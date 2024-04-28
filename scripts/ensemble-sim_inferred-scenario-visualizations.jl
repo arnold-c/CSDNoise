@@ -288,7 +288,7 @@ for ewsmetric in ewsmetrics
         ensemble_time_specification;
         sim = sim_num,
         threshold = ensemble_outbreak_specification.outbreak_threshold,
-        plottitle = "Incidence $(ewsmetric)",
+        plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
     )
 
     save(
@@ -310,7 +310,7 @@ for ewsmetric in ewsmetrics
         ensemble_time_specification;
         sim = sim_num,
         threshold = ensemble_outbreak_specification.outbreak_threshold,
-        plottitle = "Incidence $(ewsmetric)",
+        plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
     )
 
     save(
@@ -339,7 +339,7 @@ for ewsmetric in ewsmetrics
             ensemble_time_specification;
             sim = sim_num,
             threshold = ensemble_outbreak_specification.outbreak_threshold,
-            plottitle = "Test Positive $(ewsmetric)\t$(lag_label)",
+            plottitle = "Test Positive $(ewsmetric)\t$(lag_label): $(ews_metric_specification.method)",
         )
 
         save(

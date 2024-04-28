@@ -256,6 +256,34 @@ spaero_ensemble_single_inc_ews = StructArray([
 ])
 
 #%%
+mean_df = DataFrames.DataFrame(
+    [
+        ensemble_single_inc_ews[1].mean,
+        spaero_ensemble_single_inc_ews[1].mean,
+    ],
+    [:mine, :spaero],
+)
+
+mean_df.diff = mean_df.mine .- mean_df.spaero;
+mean_df
+
+lines(mean_df.diff)
+
+#%%
+var_df = DataFrames.DataFrame(
+    [
+        ensemble_single_inc_ews[1].variance,
+        spaero_ensemble_single_inc_ews[1].variance,
+    ],
+    [:mine, :spaero],
+)
+
+var_df.diff = var_df.mine .- var_df.spaero;
+var_df
+
+lines(var_df.diff)
+
+#%%
 ewsmetrics = [
     :autocorrelation,
     :autocovariance,

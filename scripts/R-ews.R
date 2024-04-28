@@ -12,6 +12,8 @@ spaero_inc_ews_stats <- get_stats(
   center_kernel = "uniform",
   stat_kernel = "uniform",
   lag = 1,
+  # backward_only = FALSE
+  backward_only = TRUE
 )$stats
 
 spaero_ensemble_single_inc_ews_arr <- spaero_inc_ews_stats %>%

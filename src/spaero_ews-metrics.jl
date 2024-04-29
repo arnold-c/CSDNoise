@@ -105,31 +105,31 @@ function spaero_kurtosis(method::EWSMethod, timeseries, bandwidth)
     return m4 ./ var .^ 2
 end
 
-function spaero_autocov(method::EWSMethod, timeseries, bandwidth)
+function spaero_autocov(method::EWSMethod, timeseries, bandwidth; lag = 1)
     mean_vec = spaero_mean(method, timeseries, bandwidth)
     meandiff = timeseries .- mean_vec
     worker = zeros(Float64, length(timeseries))
     @inbounds for i in eachindex(timeseries)
-        if i == 1
+        if i <= lag
             continue
         end
-        worker[i] = meandiff[i] * meandiff[i - 1]
+        worker[i] = meandiff[i] * meandiff[i - lag]
     end
     worker = spaero_mean(method, worker, bandwidth)
-    worker[1] = NaN
+    worker[begin:lag] .= NaN
     return worker
 end
 
-function spaero_autocor(method::EWSMethod, timeseries, bandwidth)
+function spaero_autocor(method::EWSMethod, timeseries, bandwidth; lag = 1)
     var = spaero_var(method, timeseries, bandwidth)
     sd = sqrt.(var)
     lagged_sd = zeros(Float64, length(timeseries))
     @inbounds for i in eachindex(timeseries)
-        if i == 1
+        if i <= 1
             lagged_sd[i] = NaN
             continue
         end
-        lagged_sd[i] = sd[i - 1]
+        lagged_sd[i] = sd[i - lag]
     end
     return spaero_autocov(method, timeseries, bandwidth) ./ (sd .* lagged_sd)
 end

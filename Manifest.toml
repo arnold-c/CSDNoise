@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "02b2658d06beb85d21c0cafe61c29c7ee3c88a51"
+project_hash = "4e875e022bcc3e7d759fe44f17c9948e53037ac4"
 
 [[deps.ATK_jll]]
 deps = ["Artifacts", "Glib_jll", "JLLWrappers", "Libdl"]
@@ -2105,6 +2105,12 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 deps = ["Artifacts", "Libdl", "libblastrampoline_jll"]
 uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
 version = "7.2.1+1"
+
+[[deps.SumTypes]]
+deps = ["MacroTools", "PrecompileTools"]
+git-tree-sha1 = "73dbf987e33aeae99a488348780693b758367dd6"
+uuid = "8e1ec7a9-0e02-4297-b0fe-6433085c89f2"
+version = "0.5.6"
 
 [[deps.SymbolicIndexingInterface]]
 deps = ["Accessors", "ArrayInterface", "MacroTools", "RuntimeGeneratedFunctions", "StaticArraysCore"]

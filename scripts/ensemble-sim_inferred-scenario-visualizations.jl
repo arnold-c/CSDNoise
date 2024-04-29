@@ -8,6 +8,7 @@ using CSV: CSV
 using DataFrames: DataFrames
 using RCall
 using StructArrays
+using SumTypes
 
 using CSDNoise
 
@@ -230,33 +231,33 @@ source(here::here("scripts","spaero-ews.R"))
 #%%
 function centered_mean(timeseries, bw)
     tlength = length(timeseries)
-    mean_vec = zeros(Float64, tlength)
-    for i in eachindex(timeseries)
-        if i < bw
-            start_ind = 1
-            end_ind = i + bw - 1
-        elseif i + bw > tlength
-            start_ind = i - bw + 1
-            end_ind = tlength
-        else
-            start_ind = i - bw + 1
-            end_ind = i + bw - 1
-        end
-        mean_vec[i] = mean(@view(timeseries[start_ind:end_ind]))
-    end
+    mean_vec = zeros(Float64, length(timeseries))
+    centered_mean!(mean_vec, tlength, timeseries, bw)
     return mean_vec
+end
+function centered_mean!(mean_vec, tlength, timeseries, bw)
+    @inbounds for i in eachindex(timeseries)
+        if i < bw
+            mean_vec[i] = mean(@view(timeseries[begin:(i + bw - 1)]))
+        elseif i + bw > tlength
+            mean_vec[i] = mean(@view(timeseries[(i - bw + 1):end]))
+        else
+            mean_vec[i] = mean(@view(timeseries[(i - bw + 1):(i + bw - 1)]))
+        end
+    end
+    return nothing
 end
 
 function centered_moment(timeseries, moment, bw)
     return centered_moment(
-        timeseries, centered_mean(timeseries, bw), moment, bw
+        centered_mean(timeseries, bw), timeseries, moment, bw
     )
 end
-
-function centered_moment(timeseries, mean_timeseries, moment, bw)
+function centered_moment(mean_timeseries, timeseries, moment, bw)
     diff = (timeseries .- mean_timeseries) .^ moment
     return centered_mean(diff, bw)
 end
+@benchmark centered_moment(testinc, 2, 30)
 
 function compare_against_spaero(spaero_ews, my_ews)
     df = DataFrames.DataFrame([spaero_ews my_ews], [:spaero, :mine])
@@ -270,7 +271,9 @@ function filter_spaero_comparison(spaero_ews, my_ews; tolerance = 1e-13)
 end
 
 function filter_spaero_comparison(df; tolerance = 1e-13)
-    return DataFrames.subset(df, :absdiff => x -> x .> tolerance)
+    return DataFrames.subset(
+        df, :absdiff => x -> x .> tolerance; skipmissing = true
+    )
 end
 
 testinc = ensemble_single_incarr[:, 1, sim_num]
@@ -290,15 +293,12 @@ filter_spaero_comparison(var_df_centered)
 function backward_mean(timeseries, bw)
     tlength = length(timeseries)
     mean_vec = zeros(Float64, tlength)
-    for i in eachindex(timeseries)
+    @inbounds for i in eachindex(timeseries)
         if i < bw
-            start_ind = 1
-            end_ind = i
+            mean_vec[i] = mean(@view(timeseries[begin:i]))
         else
-            start_ind = i - bw + 1
-            end_ind = i
+            mean_vec[i] = mean(@view(timeseries[(i - bw + 1):i]))
         end
-        mean_vec[i] = mean(@view(timeseries[start_ind:end_ind]))
     end
     return mean_vec
 end
@@ -325,6 +325,136 @@ var_df_backward = compare_against_spaero(
     centered_moment(testinc, 2, 30)
 )
 filter_spaero_comparison(var_df_backward)
+
+#%%
+function cov(mean_func, moment_func, timeseries, bandwidth)
+    return sqrt.(moment_func(timeseries, 2, bandwidth)) ./
+           mean_func(timeseries, bandwidth)
+end
+@benchmark cov(centered_mean, centered_moment, testinc, 30)
+
+@sum_type EWSMethod begin
+    Backward
+    Centered
+end
+
+function window_functions(
+    method::EWSMethod
+)::Tuple{
+    Union{typeof(centered_mean),typeof(backward_mean)},
+    Union{typeof(centered_moment),typeof(backward_moment)},
+}
+    mean_func = @cases method begin
+        Backward => backward_mean
+        Centered => centered_mean
+    end
+    moment_func = @cases method begin
+        Backward => backward_moment
+        Centered => centered_moment
+    end
+    return mean_func, moment_func
+end
+
+@report_opt window_functions(Backward)
+@code_warntype window_functions(Backward)
+
+function cov(method::EWSMethod, timeseries, bandwidth)
+    mean_func, moment_func = window_functions(method)
+    return sqrt.(moment_func(timeseries, 2, bandwidth)) ./
+           mean_func(timeseries, bandwidth)
+end
+
+@benchmark cov(Centered, testinc, 30)
+
+cov_df_centered = compare_against_spaero(
+    spaero_ews_centered.coefficient_of_variation,
+    cov(Centered, testinc, 30)
+)
+filter_spaero_comparison(cov_df_centered)
+
+#%%
+function iod(method::EWSMethod, timeseries, bandwidth)
+    mean_func, moment_func = window_functions(method)
+    return (moment_func(timeseries, 2, bandwidth)) ./
+           mean_func(timeseries, bandwidth)
+end
+
+@benchmark iod(Centered, testinc, 30)
+
+iod_df_centered = compare_against_spaero(
+    spaero_ews_centered.index_of_dispersion,
+    iod(Centered, testinc, 30)
+)
+filter_spaero_comparison(iod_df_centered)
+
+#%%
+function skew(method::EWSMethod, timeseries, bandwidth)
+    moment_func = window_functions(method)[2]
+    return moment_func(timeseries, 3, bandwidth) ./
+           moment_func(timeseries, 2, bandwidth) .^ 1.5
+end
+
+skew_df_centered = compare_against_spaero(
+    spaero_ews_centered.skewness,
+    skew(Centered, testinc, 30)
+)
+filter_spaero_comparison(skew_df_centered)
+
+#%%
+function kurtosis(method::EWSMethod, timeseries, bandwidth)
+    moment_func = window_functions(method)[2]
+    return moment_func(timeseries, 4, bandwidth) ./
+           moment_func(timeseries, 2, bandwidth) .^ 2
+end
+
+kurtosis_df_centered = compare_against_spaero(
+    spaero_ews_centered.kurtosis,
+    kurtosis(Centered, testinc, 30)
+)
+filter_spaero_comparison(kurtosis_df_centered; tolerance = 1e-10)
+
+#%%
+function autocov(method::EWSMethod, timeseries, bandwidth)
+    mean_func = window_functions(method)[1]
+    meandiff = timeseries .- mean_func(timeseries, bandwidth)
+    worker = zeros(Float64, length(timeseries))
+    @inbounds for i in eachindex(timeseries)
+        if i == 1
+            continue
+        end
+        worker[i] = meandiff[i] * meandiff[i - 1]
+    end
+    worker = mean_func(worker, bandwidth)
+    worker[1] = NaN
+    return worker
+end
+
+autocov_df_centered = compare_against_spaero(
+    spaero_ews_centered.autocovariance,
+    autocov(Centered, testinc, 30)
+)
+filter_spaero_comparison(autocov_df_centered; tolerance = 1e-10)
+
+#%%
+function autocor(method::EWSMethod, timeseries, bandwidth)
+    mean_func, moment_func = window_functions(method)
+    sd = sqrt.(moment_func(timeseries, 2, bandwidth))
+    lagged_sd = zeros(Float64, length(timeseries))
+    @inbounds for i in eachindex(timeseries)
+        if i == 1
+            lagged_sd[i] = NaN
+            continue
+        end
+        lagged_sd[i] = sd[i - 1]
+    end
+    return autocov(method, timeseries, bandwidth) ./ (sd .* lagged_sd)
+end
+
+autocor_df_centered = compare_against_spaero(
+    spaero_ews_centered.autocorrelation,
+    autocor(Centered, testinc, 30)
+)
+filter_spaero_comparison(autocor_df_centered; tolerance = 1e-10)
 
 #%%
 spaero_ensemble_single_inc_ews = StructArray([

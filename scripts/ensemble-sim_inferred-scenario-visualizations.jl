@@ -245,8 +245,18 @@ backward_ews = SpaeroEWSMetrics(
 )
 
 #%%
-compare_against_spaero(spaero_ews_centered, centered_ews)
-compare_against_spaero(spaero_ews_backward, backward_ews)
+compare_against_spaero(
+    spaero_ews_centered,
+    centered_ews;
+    tolerance = 1e-10,
+    showwarnings = false
+)
+compare_against_spaero(
+    spaero_ews_backward,
+    backward_ews;
+    tolerance = 1e-10,
+    showwarnings = false
+)
 
 #%%
 

@@ -233,110 +233,23 @@ testinc = ensemble_single_incarr[:, 1, sim_num]
 emptyvec = zeros(Float64, length(testinc))
 
 #%%
-mean_df_centered = compare_against_spaero(
-    spaero_ews_centered.mean,
-    spaero_mean(Centered, testinc, 30)
-);
-filter_spaero_comparison(mean_df_centered)
-
-mean_df_backward = compare_against_spaero(
-    spaero_ews_backward.mean,
-    spaero_mean(Backward, testinc, 30)
-);
-filter_spaero_comparison(mean_df_backward)
-
-#%%
-var_df_centered = compare_against_spaero(
-    spaero_ews_centered.variance,
-    spaero_var(Centered, testinc, 30)
-);
-filter_spaero_comparison(var_df_centered)
-
-var_df_backward = compare_against_spaero(
-    spaero_ews_backward.variance,
-    spaero_var(Backward, testinc, 30)
-);
-filter_spaero_comparison(var_df_backward)
+centered_ews = SpaeroEWSMetrics(
+    SpaeroEWSMetricSpecification(Centered, 30, 1),
+    testinc,
+    1.0
+)
+backward_ews = SpaeroEWSMetrics(
+    SpaeroEWSMetricSpecification(Backward, 30, 1),
+    testinc,
+    1.0
+)
 
 #%%
-cov_df_centered = compare_against_spaero(
-    spaero_ews_centered.coefficient_of_variation,
-    spaero_cov(Centered, testinc, 30),
-);
-filter_spaero_comparison(cov_df_centered)
-
-cov_df_backward = compare_against_spaero(
-    spaero_ews_backward.coefficient_of_variation,
-    spaero_cov(Backward, testinc, 30),
-);
-filter_spaero_comparison(cov_df_centered)
+compare_against_spaero(spaero_ews_centered, centered_ews)
+compare_against_spaero(spaero_ews_backward, backward_ews)
 
 #%%
-iod_df_centered = compare_against_spaero(
-    spaero_ews_centered.index_of_dispersion,
-    spaero_iod(Centered, testinc, 30)
-);
-filter_spaero_comparison(iod_df_centered)
 
-iod_df_backward = compare_against_spaero(
-    spaero_ews_backward.index_of_dispersion,
-    spaero_iod(Backward, testinc, 30)
-);
-filter_spaero_comparison(iod_df_backward)
-
-#%%
-skew_df_centered = compare_against_spaero(
-    spaero_ews_centered.skewness,
-    spaero_skew(Centered, testinc, 30)
-);
-filter_spaero_comparison(skew_df_centered)
-
-skew_df_backward = compare_against_spaero(
-    spaero_ews_backward.skewness,
-    spaero_skew(Backward, testinc, 30)
-);
-filter_spaero_comparison(skew_df_backward)
-
-#%%
-kurtosis_df_centered = compare_against_spaero(
-    spaero_ews_centered.kurtosis,
-    spaero_kurtosis(Centered, testinc, 30)
-);
-filter_spaero_comparison(kurtosis_df_centered; tolerance = 1e-10)
-
-kurtosis_df_backward = compare_against_spaero(
-    spaero_ews_backward.kurtosis,
-    spaero_kurtosis(Backward, testinc, 30)
-);
-filter_spaero_comparison(kurtosis_df_backward; tolerance = 1e-10)
-
-#%%
-autocov_df_centered = compare_against_spaero(
-    spaero_ews_centered.autocovariance,
-    spaero_autocov(Centered, testinc, 30)
-);
-filter_spaero_comparison(autocov_df_centered)
-
-autocov_df_backward = compare_against_spaero(
-    spaero_ews_backward.autocovariance,
-    spaero_autocov(Backward, testinc, 30)
-);
-filter_spaero_comparison(autocov_df_backward)
-
-#%%
-autocor_df_centered = compare_against_spaero(
-    spaero_ews_centered.autocorrelation,
-    spaero_autocor(Centered, testinc, 30)
-);
-filter_spaero_comparison(autocor_df_centered)
-
-autocor_df_backward = compare_against_spaero(
-    spaero_ews_backward.autocorrelation,
-    spaero_autocor(Backward, testinc, 30)
-);
-filter_spaero_comparison(autocor_df_backward)
-
-#%%
 # iod_df_centered = compare_against_spaero(
 #     spaero_ews_centered.index_of_dispersion,
 #     spaero_iod(Centered, testinc, 30)

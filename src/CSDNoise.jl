@@ -49,7 +49,8 @@ export spaero_mean, spaero_mean!,
     spaero_autocov,
     spaero_autocor,
     EWSMethod, Backward, Centered,
-    compare_against_spaero, filter_spaero_comparison
+    compare_against_spaero, filter_spaero_comparison,
+    SpaeroEWSMetricSpecification, SpaeroEWSMetrics
 
 include("structs.jl")
 export SimTimeParameters, EnsembleSpecification, DynamicsParameters,

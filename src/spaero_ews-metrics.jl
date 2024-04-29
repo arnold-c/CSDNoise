@@ -5,6 +5,55 @@ using SumTypes
     Centered
 end
 
+struct SpaeroEWSMetricSpecification
+    method::EWSMethod
+    bandwidth::Int
+    lag::Int
+end
+
+struct SpaeroEWSMetrics{
+    T1<:AbstractFloat,T2<:SpaeroEWSMetricSpecification,
+    T3<:AbstractArray{<:AbstractFloat},
+}
+    timestep::T1
+    ews_specification::T2
+    mean::T3
+    variance::T3
+    coefficient_of_variation::T3
+    index_of_dispersion::T3
+    skewness::T3
+    kurtosis::T3
+    autocovariance::T3
+    autocorrelation::T3
+end
+
+function SpaeroEWSMetrics(
+    ews_spec::SpaeroEWSMetricSpecification, timeseries, time_step
+)
+    return SpaeroEWSMetrics(
+        time_step,
+        ews_spec,
+        spaero_mean(ews_spec.method, timeseries, ews_spec.bandwidth),
+        spaero_var(ews_spec.method, timeseries, ews_spec.bandwidth),
+        spaero_cov(ews_spec.method, timeseries, ews_spec.bandwidth),
+        spaero_iod(ews_spec.method, timeseries, ews_spec.bandwidth),
+        spaero_skew(ews_spec.method, timeseries, ews_spec.bandwidth),
+        spaero_kurtosis(ews_spec.method, timeseries, ews_spec.bandwidth),
+        spaero_autocov(
+            ews_spec.method,
+            timeseries,
+            ews_spec.bandwidth;
+            lag = ews_spec.lag
+        ),
+        spaero_autocor(
+            ews_spec.method,
+            timeseries,
+            ews_spec.bandwidth;
+            lag = ews_spec.lag
+        ),
+    )
+end
+
 function spaero_mean(method::EWSMethod, timeseries, bandwidth)
     mean_vec = zeros(Float64, length(timeseries))
     spaero_mean!(mean_vec, method, timeseries, bandwidth)
@@ -134,6 +183,47 @@ function spaero_autocor(method::EWSMethod, timeseries, bandwidth; lag = 1)
     return spaero_autocov(method, timeseries, bandwidth) ./ (sd .* lagged_sd)
 end
 
+function compare_against_spaero(
+    spaero_ews::T1, my_ews::T2;
+    ews = [
+        :autocorrelation,
+        :autocovariance,
+        :coefficient_of_variation,
+        :index_of_dispersion,
+        :kurtosis,
+        :mean,
+        :skewness,
+        :variance,
+    ],
+    tolerance = 1e-13,
+    show = true,
+) where {T1<:DataFrame,T2<:SpaeroEWSMetrics}
+    for metric in ews
+        spaero = getproperty(spaero_ews, metric)
+        my = getproperty(my_ews, metric)
+
+        diff = abs.(spaero .- my)
+
+        filtered_diff = filter(x -> x > tolerance, skipmissing(diff))
+
+        if length(filtered_diff) > 0
+            println()
+            @warn "There are differences in the spaero and my implementation of the $metric EWS."
+            if show
+                println(
+                    filter_spaero_comparison(
+                        DataFrames.DataFrame(
+                            [spaero, my, diff], [:spaero, :mine, :absdiff]
+                        );
+                        tolerance = tolerance,
+                        warn = false,
+                    ),
+                )
+            end
+        end
+    end
+end
+
 function compare_against_spaero(spaero_ews, my_ews)
     df = DataFrames.DataFrame([spaero_ews my_ews], [:spaero, :mine])
     df.absdiff = abs.(df.spaero .- df.mine)
@@ -145,11 +235,11 @@ function filter_spaero_comparison(spaero_ews, my_ews; tolerance = 1e-13)
     return filter_spaero_comparison(df; tolerance = tolerance)
 end
 
-function filter_spaero_comparison(df; tolerance = 1e-13)
+function filter_spaero_comparison(df; tolerance = 1e-13, warn = true)
     subsetted = DataFrames.subset(
         df, :absdiff => x -> x .> tolerance; skipmissing = true
     )
-    if DataFrames.nrow(subsetted) > 0
+    if DataFrames.nrow(subsetted) > 0 && warn
         println()
         @warn "There are differences in the metrics between spaero and my implementation of EWS."
     end

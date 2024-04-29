@@ -40,13 +40,16 @@ export calculate_ews_metric,
 # @reexport using .EWSMetrics
 
 include("spaero_ews-metrics.jl")
-export spaero_centered_mean, spaero_centered_mean!,
-    spaero_centered_moment,
-    compare_against_spaero, filter_spaero_comparison,
-    spaero_backward_mean, spaero_backward_moment,
-    spaero_cov, spaero_iod, spaero_skew, spaero_kurtosis,
-    spaero_autocor, spaero_autocov,
-    window_functions, EWSMethod, Backward, Centered
+export spaero_mean, spaero_mean!,
+    spaero_var,
+    spaero_cov,
+    spaero_iod,
+    spaero_skew,
+    spaero_kurtosis,
+    spaero_autocov,
+    spaero_autocor,
+    EWSMethod, Backward, Centered,
+    compare_against_spaero, filter_spaero_comparison
 
 include("structs.jl")
 export SimTimeParameters, EnsembleSpecification, DynamicsParameters,

@@ -11,7 +11,6 @@ using Statistics
 using Distributions: Poisson, Binomial
 using Random
 using UnPack
-using LoopVectorization
 using StaticArrays
 
 """

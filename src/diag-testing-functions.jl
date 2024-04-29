@@ -92,7 +92,7 @@ function create_testing_arrs!(
         )
 
         # Number of TOTAL individuals tested
-        @turbo @. @views ntested_worker_vec .=
+        @. @views ntested_worker_vec .=
             testarr[:, 1, sim] + testarr[:, 2, sim]
 
         # Number of test positive INFECTED individuals

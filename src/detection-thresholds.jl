@@ -6,7 +6,6 @@ using ProgressMeter
 using FLoops
 using StatsBase: rle
 using UnPack
-using LoopVectorization
 
 function create_inc_infec_arr(
     ensemble_inc_vecs, outbreak_specification::OutbreakSpecification

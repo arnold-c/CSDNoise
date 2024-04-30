@@ -1,5 +1,8 @@
 using SumTypes
 using DataFrames: DataFrames
+using Bumper
+using StrideArrays
+using AllocCheck
 
 @sum_type EWSMethod begin
     Backward
@@ -35,7 +38,9 @@ function SpaeroEWSMetrics(
     var_vec = spaero_var(
         ews_spec.method, mean_vec, timeseries, ews_spec.bandwidth
     )
+    var2_vec = var_vec .^ 2
     sd_vec = sqrt.(var_vec)
+    sd3_vec = sd_vec .^ 3
     m3_vec = _spaero_moment(
         ews_spec.method, mean_vec, timeseries, 3, ews_spec.bandwidth
     )
@@ -54,10 +59,10 @@ function SpaeroEWSMetrics(
         ews_spec,
         mean_vec,
         var_vec,
-        spaero_cov(var_vec, mean_vec),
+        spaero_cov(sd_vec, mean_vec),
         spaero_iod(var_vec, mean_vec),
-        spaero_skew(m3_vec, sd_vec),
-        spaero_kurtosis(m4_vec, var_vec),
+        spaero_skew(m3_vec, sd3_vec),
+        spaero_kurtosis(m4_vec, var2_vec),
         autocov_vec,
         spaero_autocor(autocov_vec, sd_vec),
     )
@@ -111,9 +116,14 @@ function _spaero_backward_mean!(
     return nothing
 end
 
-function _spaero_moment(method::EWSMethod, timeseries, moment, bandwidth)
+function _spaero_moment(
+    method::EWSMethod, timeseries, moment, bandwidth
+)
     return _spaero_moment(
-        spaero_mean(method, timeseries, bandwidth), timeseries, moment,
+        method,
+        spaero_mean(method, timeseries, bandwidth),
+        timeseries,
+        moment,
         bandwidth,
     )
 end
@@ -121,8 +131,11 @@ end
 function _spaero_moment(
     method::EWSMethod, mean_timeseries, timeseries, moment, bandwidth
 )
-    diff = (timeseries .- mean_timeseries) .^ moment
-    return spaero_mean(method, diff, bandwidth)
+    @no_escape begin
+        diff = @alloc(Float64, length(timeseries))
+        diff .= (timeseries .- mean_timeseries) .^ moment
+        spaero_mean(method, diff, bandwidth)
+    end
 end
 
 function spaero_var(method::EWSMethod, timeseries, bandwidth)
@@ -135,13 +148,19 @@ function spaero_var(method::EWSMethod, mean_vec, timeseries, bandwidth)
 end
 
 function spaero_cov(method::EWSMethod, timeseries, bandwidth)
-    var_vec = spaero_var(method, timeseries, bandwidth)
-    mean_vec = spaero_mean(method, timeseries, bandwidth)
-    return spaero_cov(var_vec, mean_vec)
+    @no_escape begin
+        mean_vec = @alloc(Float64, length(timeseries))
+        var_vec = @alloc(Float64, length(timeseries))
+        mean_vec = spaero_mean(method, timeseries, bandwidth)
+        var_vec = spaero_var(method, mean_vec, timeseries, bandwidth)
+        sd_vec = @alloc(Float64, length(var_vec))
+        sd_vec .= sqrt.(var_vec)
+        spaero_cov(sd_vec, mean_vec)
+    end
 end
 
-function spaero_cov(var_vec, mean_vec)
-    return sqrt.(var_vec) ./ mean_vec
+function spaero_cov(sd_vec, mean_vec)
+    return sd_vec ./ mean_vec
 end
 
 function spaero_iod(method::EWSMethod, timeseries, bandwidth)
@@ -155,33 +174,47 @@ function spaero_iod(var_vec, mean_vec)
 end
 
 function spaero_skew(method::EWSMethod, timeseries, bandwidth)
-    mean_vec = spaero_mean(method, timeseries, bandwidth)
-    m3_vec = _spaero_moment(method, mean_vec, timeseries, 3, bandwidth)
-    var_vec = spaero_var(method, timeseries, bandwidth)
-    return spaero_skew(m3_vec, sqrt.(var_vec))
+    @no_escape begin
+        # use for both mean and sd vec as only one needed at a time
+        worker_vec = @alloc(Float64, length(timeseries))
+        m3_vec = @alloc(Float64, length(timeseries))
+        sd3_vec = @alloc(Float64, length(timeseries))
+        worker_vec .= spaero_mean(method, timeseries, bandwidth)
+        m3_vec .= _spaero_moment(method, worker_vec, timeseries, 3, bandwidth)
+        sd3_vec .=
+            sqrt.(spaero_var(method, worker_vec, timeseries, bandwidth)) .^ 3
+        spaero_skew(m3_vec, sd3_vec)
+    end
 end
 
-function spaero_skew(m3_vec, sd_vec)
-    return m3_vec ./ sd_vec .^ 3
+function spaero_skew(m3_vec, sd3_vec)
+    return m3_vec ./ sd3_vec
 end
 
 function spaero_kurtosis(method::EWSMethod, timeseries, bandwidth)
-    mean_vec = spaero_mean(method, timeseries, bandwidth)
-    m4_vec = _spaero_moment(method, mean_vec, timeseries, 4, bandwidth)
-    var_vec = spaero_var(method, timeseries, bandwidth)
-    return spaero_kurtosis(m4_vec, var_vec)
+    @no_escape begin
+        mean_vec = @alloc(Float64, length(timeseries))
+        m4_vec = @alloc(Float64, length(timeseries))
+        var2_vec = @alloc(Float64, length(timeseries))
+        mean_vec .= spaero_mean(method, timeseries, bandwidth)
+        m4_vec .= _spaero_moment(method, mean_vec, timeseries, 4, bandwidth)
+        var2_vec .= spaero_var(method, mean_vec, timeseries, bandwidth) .^ 2
+        spaero_kurtosis(m4_vec, var2_vec)
+    end
 end
 
-function spaero_kurtosis(m4_vec, var_vec)
-    return m4_vec ./ var_vec .^ 2
+function spaero_kurtosis(m4_vec, var2_vec)
+    return m4_vec ./ var2_vec
 end
 
 function spaero_autocov(method::EWSMethod, timeseries, bandwidth; lag = 1)
-    mean_vec = spaero_mean(method, timeseries, bandwidth)
-    autocov_vec = spaero_autocov(
-        method, mean_vec, timeseries, bandwidth; lag = lag
-    )
-    return autocov_vec
+    @no_escape begin
+        mean_vec = @alloc(Float64, length(timeseries))
+        mean_vec .= spaero_mean(method, timeseries, bandwidth)
+        spaero_autocov(
+            method, mean_vec, timeseries, bandwidth; lag = lag
+        )
+    end
 end
 
 function spaero_autocov(
@@ -205,22 +238,40 @@ function spaero_autocov(
 end
 
 function spaero_autocor(method::EWSMethod, timeseries, bandwidth; lag = 1)
-    var_vec = spaero_var(method, timeseries, bandwidth)
-    sd_vec = sqrt.(var_vec)
-    autocov_vec = spaero_autocov(method, timeseries, bandwidth; lag = lag)
-    return spaero_autocor(autocov_vec, sd_vec; lag = lag)
+    sd2 = zeros(Float64, length(timeseries))
+    @no_escape begin
+        var_vec = @alloc(Float64, length(timeseries))
+        sd_vec = @alloc(Float64, length(timeseries))
+        autocov_vec = @alloc(Float64, length(timeseries))
+        var_vec .= spaero_var(method, timeseries, bandwidth)
+        sd_vec .= sqrt.(var_vec)
+        autocov_vec .= spaero_autocov(method, timeseries, bandwidth; lag = lag)
+        lagged_sd = @alloc(Float64, length(sd_vec))
+        _lagged_vector(lagged_sd, sd_vec, lag)
+        sd2 .= sd_vec .* lagged_sd
+    end
+    return autocov_vec ./ sd2
 end
 
 function spaero_autocor(autocov_vec, sd_vec; lag = 1)
-    lagged_sd = zeros(Float64, length(sd_vec))
-    @inbounds for i in eachindex(sd_vec)
+    sd2 = zeros(Float64, length(sd_vec))
+    @no_escape begin
+        lagged_sd = @alloc(Float64, length(sd_vec))
+        _lagged_vector(lagged_sd, sd_vec, lag)
+        sd2 .= sd_vec .* lagged_sd
+    end
+    return autocov_vec ./ sd2
+end
+
+function _lagged_vector(lagged_vec, vec, lag)
+    @inbounds for i in eachindex(lagged_vec)
         if i <= lag
-            lagged_sd[i] = NaN
+            lagged_vec[i] = NaN
             continue
         end
-        lagged_sd[i] = sd_vec[i - lag]
+        lagged_vec[i] = vec[i - lag]
     end
-    return autocov_vec ./ (sd_vec .* lagged_sd)
+    return nothing
 end
 
 function compare_against_spaero(
@@ -237,7 +288,7 @@ function compare_against_spaero(
     ],
     tolerance = 1e-13,
     showwarnings = true,
-    showdiffs = true,
+    showdiffs = false,
 ) where {T1<:DataFrames.DataFrame,T2<:SpaeroEWSMetrics}
     warnings = 0
     for metric in ews
@@ -269,7 +320,7 @@ function compare_against_spaero(
     end
     println()
     if warnings > 0
-        @warn "🟡 There were warnings in $warnings metrics 🟡"
+        @warn "🟡 There were warnings in $warnings metrics for the $(my_ews.ews_specification.method) 🟡"
     else
         @info "✅ There were no warnings - all metrics are within tolerance ✅"
     end

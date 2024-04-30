@@ -251,6 +251,7 @@ compare_against_spaero(
     tolerance = 1e-10,
     showwarnings = false
 )
+
 compare_against_spaero(
     spaero_ews_backward,
     backward_ews;

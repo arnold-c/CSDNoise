@@ -166,19 +166,16 @@ function create_testing_arrs!(
             "movingavg" => EWSMetrics(
                 ews_specification,
                 @view(test_movingavg_arr[:, sim]),
-                tstep
             )
 
             "dailythreshold_movingavg" => EWSMetrics(
                 ews_specification,
                 @view(test_movingavg_arr[:, sim]),
-                tstep
             )
 
             "inferred_movingavg" => EWSMetrics(
                 ews_specification,
                 @view(inferred_positives_arr[:, sim]),
-                tstep,
             )
         end
 
@@ -252,7 +249,7 @@ end
     calculate_movingavg!(
         @view(daily_testpositives[:, 2]),
         @view(daily_testpositives[:, 1]),
-        5
+        5,
     )
 
     @test isequal(
@@ -415,7 +412,7 @@ function infer_true_positives(
         infer_true_positives!(
             inferred_positives,
             test_positivity_rate_vec,
-            total_clinic_visit_vec
+            total_clinic_visit_vec,
         )
     end
 
@@ -442,7 +439,7 @@ function infer_true_positives!(
         infer_true_positives!(
             inferred_positives,
             test_positivity_rate_vec,
-            total_clinic_visit_vec
+            total_clinic_visit_vec,
         )
     end
 
@@ -465,7 +462,7 @@ end
 function infer_true_positives!(
     inferred_positives,
     test_positivity_rate_vec,
-    total_clinic_visit_vec
+    total_clinic_visit_vec,
 )
     @. inferred_positives = total_clinic_visit_vec * test_positivity_rate_vec
 end
@@ -507,7 +504,7 @@ end
     movingavg_testpositives = calculate_test_positivity_rate(
         daily_testpositives,
         daily_tested,
-        5
+        5,
     )
 
     @test isequal(

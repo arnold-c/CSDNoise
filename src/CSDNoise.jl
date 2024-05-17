@@ -34,7 +34,8 @@ export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
 # @reexport using .ODStructs
 
 include("ews-metrics.jl")
-export spaero_mean, spaero_mean!,
+export aggregate_timeseries,
+    spaero_mean, spaero_mean!,
     spaero_var,
     spaero_cov,
     spaero_iod,

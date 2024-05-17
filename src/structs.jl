@@ -16,7 +16,7 @@ struct SimTimeParameters{
     T1<:AbstractFloat,
     T2<:StepRangeLen,
     T3<:Tuple{T1,T1},
-    T4<:Int
+    T4<:Int,
 }
     tmin::T1
     tmax::T1
@@ -147,7 +147,7 @@ function StateParameters(;
         s_prop = s_prop,
         e_prop = e_prop,
         i_prop = i_prop,
-        r_prop = r_prop
+        r_prop = r_prop,
     )
 
     return StateParameters(
@@ -280,7 +280,7 @@ struct AlertMethod{T1<:AbstractString}
         ]
         if !in(method_name, available_test_methods)
             error(
-                "$(method_name) is not a valid test method. It must be one of $(available_test_methods)",
+                "$(method_name) is not a valid test method. It must be one of $(available_test_methods)"
             )
         end
         return new{T1}(method_name)
@@ -322,7 +322,7 @@ function OutbreakDetectionSpecification(
         _ => joinpath(
             alertdirpath,
             "moveavglag_$(moving_average_lag)",
-            testingdirpath
+            testingdirpath,
         )
     end
 
@@ -372,7 +372,7 @@ function getdirpath(spec::NoiseSpecification)
         map(
             p -> "$(p)_$(getproperty(spec, p))",
             propertynames(spec),
-        )
+        ),
     )
 end
 
@@ -483,69 +483,4 @@ struct OptimalThresholdCharacteristics{
     accuracy::T4
 end
 
-struct EWSMetrics{
-    T1<:AbstractFloat,T2<:EWSMetricSpecification,
-    T3<:AbstractArray{<:AbstractFloat},
-}
-    timestep::T1
-    ews_specification::T2
-    mean::T3
-    variance::T3
-    coefficient_of_variation::T3
-    index_of_dispersion::T3
-    skewness::T3
-    kurtosis::T3
-    autocovariance::T3
-    autocorrelation::T3
-end
-
-function EWSMetrics(
-    ews_spec::EWSMetricSpecification, timeseries, time_step
-)
-    args = (timeseries, time_step, ews_spec.bandwidth)
-    @match ews_spec.method begin
-        "backward" => return EWSMetrics(
-            time_step,
-            ews_spec,
-            calculate_ews_metric(
-                calculate_backward_mean!, args...
-            ),
-            calculate_ews_metric(calculate_backward_variance!, args...),
-            calculate_ews_metric(
-                calculate_backward_coefficient_of_variation!, args...
-            ),
-            calculate_ews_metric(
-                calculate_backward_index_of_dispersion!, args...
-            ),
-            calculate_ews_metric(calculate_backward_skewness!, args...),
-            calculate_ews_metric(calculate_backward_kurtosis!, args...),
-            calculate_ews_metric(
-                calculate_backward_autocovariance!, args..., ews_spec.lag
-            ),
-            calculate_ews_metric(
-                calculate_backward_autocorrelation!, args..., ews_spec.lag
-            ),
-        )
-        "centered" => return EWSMetrics(
-            time_step,
-            ews_spec,
-            calculate_ews_metric(calculate_centered_mean!, args...),
-            calculate_ews_metric(calculate_centered_variance!, args...),
-            calculate_ews_metric(
-                calculate_centered_coefficient_of_variation!, args...
-            ),
-            calculate_ews_metric(
-                calculate_centered_index_of_dispersion!, args...
-            ),
-            calculate_ews_metric(calculate_centered_skewness!, args...),
-            calculate_ews_metric(calculate_centered_kurtosis!, args...),
-            calculate_ews_metric(
-                calculate_centered_autocovariance!, args..., ews_spec.lag
-            ),
-            calculate_ews_metric(
-                calculate_centered_autocorrelation!, args..., ews_spec.lag
-            ),
-        )
-    end
-end
 # end

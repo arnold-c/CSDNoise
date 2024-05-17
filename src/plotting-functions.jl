@@ -1343,5 +1343,304 @@ function create_optimal_thresholds_test_chars_plot(
 
     return fig
 end
-# end
-#
+
+function Reff_ews_plot(
+    incidencearr,
+    Reffarr,
+    Reff_thresholds_vec,
+    ewsmetric_sa::T,
+    ewsmetric::S,
+    thresholdsarr,
+    timeparams;
+    sim = 1,
+    outbreak_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
+    ],
+    Reff_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
+    ],
+    threshold = 5,
+    metric_color = Makie.wong_colors()[1],
+    kwargs...,
+) where {T<:StructArray,S<:Symbol}
+    @unpack trange = timeparams
+    times = collect(trange) ./ 365
+
+    kwargs_dict = Dict(kwargs)
+
+    period_sum_arr = zeros(Int64, length(times), 2)
+    for (lower, upper, periodsum, outbreakstatus) in
+        eachrow(thresholdsarr[sim])
+        period_sum_arr[lower:upper, 1] .= periodsum
+        period_sum_arr[lower:upper, 2] .= outbreakstatus
+    end
+
+    Reff_above_one = zeros(Int64, length(times))
+    for (lower, upper, _) in
+        eachrow(Reff_thresholds_vec[sim])
+        Reff_above_one[lower:upper] .= 1
+    end
+
+    ewsmetric_vec = getproperty(ewsmetric_sa, ewsmetric)[sim]
+
+    fig = Figure()
+    reffax = Axis(
+        fig[1, 1]; ylabel = "Reff"
+    )
+    incax = Axis(
+        fig[2, 1]; ylabel = "Incidence"
+    )
+    metric_ax = Axis(
+        fig[3, 1]; xlabel = "Time (years)", ylabel = String(ewsmetric)
+    )
+
+    linkxaxes!(incax, reffax, metric_ax)
+
+    line_and_hline!(
+        reffax,
+        times,
+        @view(Reffarr[:, sim]),
+        1;
+        color = Reff_above_one,
+        colormap = Reff_colormap,
+    )
+
+    line_and_hline!(
+        incax,
+        times,
+        @view(incidencearr[:, 1, sim]),
+        threshold;
+        color = @view(period_sum_arr[:, 2]),
+        colormap = outbreak_colormap,
+    )
+
+    lines!(
+        metric_ax,
+        times,
+        ewsmetric_vec;
+        color = metric_color,
+        linewidth = 3,
+    )
+
+    if haskey(kwargs_dict, :xlims)
+        map(
+            ax -> xlims!(ax, kwargs_dict[:xlims]),
+            [incax, reffax, metric_ax],
+        )
+    end
+
+    if haskey(kwargs_dict, :ylims_metric)
+        ylims!(metric_ax, kwargs_dict[:ylims_metric])
+    end
+
+    if haskey(kwargs_dict, :ylims_inc)
+        ylims!(incax, kwargs_dict[:ylims_inc])
+    end
+
+    map(hidexdecorations!, [incax, reffax])
+
+    if haskey(kwargs_dict, :plottitle)
+        Label(
+            fig[0, :, Top()],
+            kwargs_dict[:plottitle],
+        )
+    end
+    Legend(
+        fig[1, 2],
+        [PolyElement(; color = col) for col in Reff_colormap],
+        ["Reff < 1", "Reff >= 1"],
+        "Reff Status",
+    )
+
+    Legend(
+        fig[2, 2],
+        [PolyElement(; color = col) for col in outbreak_colormap],
+        ["Not Outbreak", "Outbreak"],
+        "True\nOutbreak Status",
+    )
+
+    rowsize!(fig.layout, 0, Relative(0.05))
+
+    return fig
+end
+
+function Reff_ews_plot(
+    incidencearr,
+    Reffarr,
+    Reff_thresholds_vec,
+    ewsmetric_sa::T1,
+    spaero_ewsmetric_sa::T2,
+    ewsmetric::S,
+    thresholdsarr,
+    timeparams;
+    sim = 1,
+    outbreak_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
+    ],
+    Reff_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
+    ],
+    threshold = 5,
+    metric_color = Makie.wong_colors()[1],
+    spaero_metric_color = Makie.wong_colors()[3],
+    linewidth = 3,
+    hlinewidth = 2,
+    kwargs...,
+) where {T1<:StructArray,T2<:StructArray,S<:Symbol}
+    @unpack trange = timeparams
+    times = collect(trange) ./ 365
+
+    kwargs_dict = Dict(kwargs)
+
+    period_sum_arr = zeros(Int64, length(times), 2)
+    for (lower, upper, periodsum, outbreakstatus) in
+        eachrow(thresholdsarr[sim])
+        period_sum_arr[lower:upper, 1] .= periodsum
+        period_sum_arr[lower:upper, 2] .= outbreakstatus
+    end
+
+    Reff_above_one = zeros(Int64, length(times))
+    for (lower, upper, _) in
+        eachrow(Reff_thresholds_vec[sim])
+        Reff_above_one[lower:upper] .= 1
+    end
+
+    ewsmetric_vec = getproperty(ewsmetric_sa, ewsmetric)[sim]
+    replace!(ewsmetric_vec, Inf => NaN)
+    spaero_ewsmetric_vec = getproperty(spaero_ewsmetric_sa, ewsmetric)[sim]
+    replace!(spaero_ewsmetric_vec, Inf => NaN)
+
+    fig = Figure()
+    reffax = Axis(
+        fig[1, 1]; ylabel = "Reff"
+    )
+    incax = Axis(
+        fig[2, 1]; ylabel = "Incidence"
+    )
+    metric_ax = Axis(
+        fig[3, 1]; xlabel = "Time (years)", ylabel = String(ewsmetric)
+    )
+    spaero_ax = Axis(
+        fig[4, 1]; xlabel = "Time (years)",
+        ylabel = "SPAERO " * String(ewsmetric),
+    )
+
+    linkxaxes!(incax, reffax, metric_ax, spaero_ax)
+
+    line_and_hline!(
+        reffax,
+        times,
+        @view(Reffarr[:, sim]),
+        1;
+        color = Reff_above_one,
+        colormap = Reff_colormap,
+        linewidth = linewidth,
+        hlinewidth = hlinewidth,
+    )
+
+    line_and_hline!(
+        incax,
+        times,
+        @view(incidencearr[:, 1, sim]),
+        threshold;
+        color = @view(period_sum_arr[:, 2]),
+        colormap = outbreak_colormap,
+        linewidth = linewidth,
+        hlinewidth = hlinewidth,
+    )
+
+    lines!(
+        metric_ax,
+        times,
+        ewsmetric_vec;
+        color = metric_color,
+        linewidth = linewidth,
+    )
+
+    lines!(
+        spaero_ax,
+        times,
+        spaero_ewsmetric_vec;
+        color = spaero_metric_color,
+        linewidth = linewidth,
+    )
+
+    if haskey(kwargs_dict, :xlims)
+        map(
+            ax -> xlims!(ax, kwargs_dict[:xlims]),
+            [incax, reffax, metric_ax],
+        )
+    end
+
+    if haskey(kwargs_dict, :ylims_metric)
+        ylims!(metric_ax, kwargs_dict[:ylims_metric])
+    end
+
+    if haskey(kwargs_dict, :ylims_inc)
+        ylims!(incax, kwargs_dict[:ylims_inc])
+    end
+
+    map(hidexdecorations!, [incax, reffax])
+
+    if haskey(kwargs_dict, :plottitle)
+        Label(
+            fig[0, :, Top()],
+            kwargs_dict[:plottitle],
+        )
+    end
+    Legend(
+        fig[1, 2],
+        [PolyElement(; color = col) for col in Reff_colormap],
+        ["Reff < 1", "Reff >= 1"],
+        "Reff Status",
+    )
+
+    Legend(
+        fig[2, 2],
+        [PolyElement(; color = col) for col in outbreak_colormap],
+        ["Not Outbreak", "Outbreak"],
+        "True\nOutbreak Status",
+    )
+
+    rowsize!(fig.layout, 0, Relative(0.05))
+
+    return fig
+end
+
+function line_and_hline!(
+    ax,
+    times,
+    yvec,
+    hlinevec;
+    linewidth = 3,
+    hlinecolor = :black,
+    hlinewidth = 2,
+    hlinestyle = :dash,
+    kwargs...,
+)
+    kwargs_dict = Dict(kwargs)
+
+    color_keys = [:color, :colormap]
+
+    if sum(k -> haskey(kwargs_dict, k), color_keys) != length(color_keys)
+        error(
+            "Must provide both $color_keys for the `lines!` function. You have only specified one of these. $(keys(kwargs_dict))",
+        )
+    end
+
+    lines!(
+        ax,
+        times,
+        yvec;
+        linewidth = linewidth,
+        kwargs...,
+    )
+    hlines!(
+        ax,
+        hlinevec;
+        color = hlinecolor,
+        linewidth = hlinewidth,
+        linestyle = hlinestyle,
+    )
+    return nothing
+end

@@ -12,6 +12,4 @@ source("renv/activate.R")
 #   source(file.path(Sys.getenv(if (.Platform$OS.type == "windows") "USERPROFILE" else "HOME"), ".vscode-R", "init.R"))
 # }
 
-paint::mask_print()
-options(paint_max_width = 100)
-options(vsc.rstudioapi = TRUE)
+# paint::mask_print()

@@ -69,7 +69,7 @@ ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
 
 save(
     plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_incidence_prevalence.png",
+        "ensemble/single-scenario/ensemble_single_scenario_incidence_prevalence.png"
     ),
     ensemble_single_scenario_incidence_prevalence_plot,
 )
@@ -88,7 +88,7 @@ for sim_num in [10, 20, 55]
 
     save(
         plotsdir(
-            "ensemble/single-scenario/ensemble_single_scenario_Reffective_sim_$(sim_num).png",
+            "ensemble/single-scenario/ensemble_single_scenario_Reffective_sim_$(sim_num).png"
         ),
         ensemble_single_scenario_Reffective_plot,
     )
@@ -164,7 +164,7 @@ lines!(
 
 save(
     plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_inferred_positives_no_lag.png",
+        "ensemble/single-scenario/ensemble_single_scenario_inferred_positives_no_lag.png"
     ),
     inferred_positive_no_lag_plot,
 )
@@ -229,238 +229,154 @@ source(here::here("scripts","spaero-ews.R"))
 @rget spaero_ews_backward spaero_ews_centered
 
 #%%
-testinc = ensemble_single_incarr[:, 1, sim_num]
-emptyvec = zeros(Float64, length(testinc))
+centered_ews = StructArray(
+    SpaeroEWSMetrics[
+        SpaeroEWSMetrics(
+            SpaeroEWSMetricSpecification(Centered, 30, 1),
+            ensemble_single_incarr[:, 1, sim],
+            1.0,
+        ) for sim in axes(ensemble_single_incarr, 3)
+    ],
+)
+
+backward_ews = StructArray(
+    SpaeroEWSMetrics[
+        SpaeroEWSMetrics(
+            SpaeroEWSMetricSpecification(Backward, 30, 1),
+            ensemble_single_incarr[:, 1, sim],
+            1.0,
+        ) for sim in axes(ensemble_single_incarr, 3)
+    ],
+)
 
 #%%
-centered_ews = SpaeroEWSMetrics(
-    SpaeroEWSMetricSpecification(Centered, 30, 1),
-    testinc,
-    1.0
-)
-backward_ews = SpaeroEWSMetrics(
-    SpaeroEWSMetricSpecification(Backward, 30, 1),
-    testinc,
-    1.0
-)
+ewsmetrics = [
+    :autocorrelation,
+    :autocovariance,
+    :coefficient_of_variation,
+    :index_of_dispersion,
+    :kurtosis,
+    :mean,
+    :skewness,
+    :variance,
+]
 
 #%%
 compare_against_spaero(
     spaero_ews_centered,
-    centered_ews;
+    centered_ews[sim_num];
     tolerance = 1e-10,
-    showwarnings = false
+    showwarnings = false,
+    ews = ewsmetrics,
 )
 
 compare_against_spaero(
     spaero_ews_backward,
-    backward_ews;
+    backward_ews[sim_num];
     tolerance = 1e-10,
-    showwarnings = false
+    showwarnings = false,
+    ews = ewsmetrics,
 )
 
 #%%
+basedir = plotsdir(
+    "ensemble/single-scenario/ewsmetrics/$(ews_metric_specification.dirpath)"
+)
+mkpath(basedir)
+testdir = joinpath(basedir, "test")
+mkpath(testdir)
+incdir = joinpath(basedir, "incidence")
+spaero_comparison_dir = joinpath(incdir, "spaero-comparison")
+mkpath(spaero_comparison_dir)
 
-# iod_df_centered = compare_against_spaero(
-#     spaero_ews_centered.index_of_dispersion,
-#     spaero_iod(Centered, testinc, 30)
+for ewsmetric in ewsmetrics
+    inc_ews_metric_plot = Reff_ews_plot(
+        ensemble_single_incarr,
+        ensemble_single_Reff_arr,
+        ensemble_single_Reff_thresholds_vec,
+        ensemble_single_inc_ews,
+        ewsmetric,
+        ensemble_single_periodsum_vecs,
+        ensemble_time_specification;
+        sim = sim_num,
+        threshold = ensemble_outbreak_specification.outbreak_threshold,
+        plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
+    )
+
+    save(
+        joinpath(
+            incdir,
+            "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
+        ),
+        inc_ews_metric_plot,
+    )
+
+    spaero_comparison_inc_ews_metric_plot = Reff_ews_plot(
+        ensemble_single_incarr,
+        ensemble_single_Reff_arr,
+        ensemble_single_Reff_thresholds_vec,
+        ensemble_single_inc_ews,
+        centered_ews,
+        ewsmetric,
+        ensemble_single_periodsum_vecs,
+        ensemble_time_specification;
+        sim = sim_num,
+        threshold = ensemble_outbreak_specification.outbreak_threshold,
+        plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
+    )
+
+    save(
+        joinpath(
+            spaero_comparison_dir,
+            "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
+        ),
+        spaero_comparison_inc_ews_metric_plot,
+    )
+
+    for (ewsmetric_sa, lag_label) in
+        zip((
+        # ewsmetrics_lag,
+        [ewsmetrics_no_lag]
+    ), (
+        # "lag",
+        ["no_lag"]
+    ))
+        test_ews_metric_plot = Reff_ews_plot(
+            ensemble_single_incarr,
+            ensemble_single_Reff_arr,
+            ensemble_single_Reff_thresholds_vec,
+            ewsmetric_sa,
+            ewsmetric,
+            ensemble_single_periodsum_vecs,
+            ensemble_time_specification;
+            sim = sim_num,
+            threshold = ensemble_outbreak_specification.outbreak_threshold,
+            plottitle = "Test Positive $(ewsmetric)\t$(lag_label): $(ews_metric_specification.method)",
+        )
+
+        save(
+            joinpath(
+                testdir,
+                "ensemble_single_scenario_testpositive_metric_$(String(ewsmetric))_$lag_label.png",
+            ),
+            test_ews_metric_plot,
+        )
+    end
+end
+
+# plot_all_single_scenarios(
+#     noisearr,
+#     poisson_noise_prop,
+#     noisedir,
+#     OT_chars,
+#     ensemble_single_incarr,
+#     testarr,
+#     test_movingvg_arr,
+#     ensemble_single_individual_test_spec_no_lag,
+#     ensemble_single_outbreak_detection_spec,
+#     ensemble_time_specification,
 # )
-# filter_spaero_comparison(iod_df_centered)
-#
-# #%%
-# skew_df_centered = compare_against_spaero(
-#     spaero_ews_centered.skewness,
-#     spaero_skew(Centered, testinc, 30)
-# )
-# filter_spaero_comparison(skew_df_centered)
-#
-# #%%
-# kurtosis_df_centered = compare_against_spaero(
-#     spaero_ews_centered.kurtosis,
-#     spaero_kurtosis(Centered, testinc, 30)
-# )
-# filter_spaero_comparison(kurtosis_df_centered; tolerance = 1e-10)
-#
-# #%%
-# autocov_df_centered = compare_against_spaero(
-#     spaero_ews_centered.autocovariance,
-#     spaero_autocov(Centered, testinc, 30)
-# )
-# filter_spaero_comparison(autocov_df_centered; tolerance = 1e-10)
-#
-# #%%
-# autocor_df_centered = compare_against_spaero(
-#     spaero_ews_centered.autocorrelation,
-#     spaero_autocor(Centered, testinc, 30)
-# )
-# filter_spaero_comparison(autocor_df_centered; tolerance = 1e-10)
-#
-# #%%
-# spaero_ensemble_single_inc_ews = StructArray([
-#     EWSMetrics(
-#         ensemble_time_specification.tstep,
-#         ews_metric_specification,
-#         spaero_ensemble_single_inc_ews_arr.mean,
-#         spaero_ensemble_single_inc_ews_arr.variance,
-#         spaero_ensemble_single_inc_ews_arr.coefficient_of_variation,
-#         spaero_ensemble_single_inc_ews_arr.index_of_dispersion,
-#         spaero_ensemble_single_inc_ews_arr.skewness,
-#         spaero_ensemble_single_inc_ews_arr.kurtosis,
-#         convert(
-#             Vector{Float64},
-#             replace!(
-#                 spaero_ensemble_single_inc_ews_arr.autocovariance,
-#                 missing => NaN,
-#             ),
-#         ),
-#         convert(
-#             Vector{Float64},
-#             replace!(
-#                 spaero_ensemble_single_inc_ews_arr.autocorrelation,
-#                 missing => NaN,
-#             ),
-#         ),
-#     ),
-# ])
-#
-# #%%
-# mean_df = DataFrames.DataFrame(
-#     [
-#         ensemble_single_inc_ews[1].mean,
-#         spaero_ensemble_single_inc_ews[1].mean,
-#     ],
-#     [:mine, :spaero],
-# )
-#
-# mean_df.diff = mean_df.mine .- mean_df.spaero;
-# mean_df
-#
-# lines(mean_df.diff)
-#
-# #%%
-# var_df = DataFrames.DataFrame(
-#     [
-#         ensemble_single_inc_ews[1].variance,
-#         spaero_ensemble_single_inc_ews[1].variance,
-#     ],
-#     [:mine, :spaero],
-# )
-#
-# var_df.diff = var_df.mine .- var_df.spaero;
-# var_df
-#
-# lines(var_df.diff)
-#
-# #%%
-# ewsmetrics = [
-#     :autocorrelation,
-#     :autocovariance,
-#     :coefficient_of_variation,
-#     :index_of_dispersion,
-#     :kurtosis,
-#     :mean,
-#     :skewness,
-#     :variance,
-# ]
-#
-# basedir = plotsdir(
-#     "ensemble/single-scenario/ewsmetrics/$(ews_metric_specification.dirpath)"
-# )
-# mkpath(basedir)
-# testdir = joinpath(basedir, "test")
-# mkpath(testdir)
-# incdir = joinpath(basedir, "incidence")
-# spaero_comparison_dir = joinpath(incdir, "spaero-comparison")
-# mkpath(spaero_comparison_dir)
-#
-# for ewsmetric in ewsmetrics
-#     inc_ews_metric_plot = Reff_ews_plot(
-#         ensemble_single_incarr,
-#         ensemble_single_Reff_arr,
-#         ensemble_single_Reff_thresholds_vec,
-#         ensemble_single_inc_ews,
-#         ewsmetric,
-#         ensemble_single_periodsum_vecs,
-#         ensemble_time_specification;
-#         sim = sim_num,
-#         threshold = ensemble_outbreak_specification.outbreak_threshold,
-#         plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
-#     )
-#
-#     save(
-#         joinpath(
-#             incdir,
-#             "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
-#         ),
-#         inc_ews_metric_plot,
-#     )
-#
-#     spaero_comparison_inc_ews_metric_plot = Reff_ews_plot(
-#         ensemble_single_incarr,
-#         ensemble_single_Reff_arr,
-#         ensemble_single_Reff_thresholds_vec,
-#         ensemble_single_inc_ews,
-#         spaero_ensemble_single_inc_ews,
-#         ewsmetric,
-#         ensemble_single_periodsum_vecs,
-#         ensemble_time_specification;
-#         sim = sim_num,
-#         threshold = ensemble_outbreak_specification.outbreak_threshold,
-#         plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
-#     )
-#
-#     save(
-#         joinpath(
-#             spaero_comparison_dir,
-#             "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
-#         ),
-#         spaero_comparison_inc_ews_metric_plot,
-#     )
-#
-#     for (ewsmetric_sa, lag_label) in
-#         zip((
-#         # ewsmetrics_lag,
-#         [ewsmetrics_no_lag]
-#     ), (
-#         # "lag",
-#         ["no_lag"]
-#     ))
-#         test_ews_metric_plot = Reff_ews_plot(
-#             ensemble_single_incarr,
-#             ensemble_single_Reff_arr,
-#             ensemble_single_Reff_thresholds_vec,
-#             ewsmetric_sa,
-#             ewsmetric,
-#             ensemble_single_periodsum_vecs,
-#             ensemble_time_specification;
-#             sim = sim_num,
-#             threshold = ensemble_outbreak_specification.outbreak_threshold,
-#             plottitle = "Test Positive $(ewsmetric)\t$(lag_label): $(ews_metric_specification.method)",
-#         )
-#
-#         save(
-#             joinpath(
-#                 testdir,
-#                 "ensemble_single_scenario_testpositive_metric_$(String(ewsmetric))_$lag_label.png",
-#             ),
-#             test_ews_metric_plot,
-#         )
-#     end
-# end
-#
-# # plot_all_single_scenarios(
-# #     noisearr,
-# #     poisson_noise_prop,
-# #     noisedir,
-# #     OT_chars,
-# #     ensemble_single_incarr,
-# #     testarr,
-# #     test_movingvg_arr,
-# #     ensemble_single_individual_test_spec_no_lag,
-# #     ensemble_single_outbreak_detection_spec,
-# #     ensemble_time_specification,
-# # )
-#
-# # GC.gc(true)
-# # @info "Finished plotting the single scenario for $(noisedir)"
-# # println("=================================================================")
+
+# GC.gc(true)
+# @info "Finished plotting the single scenario for $(noisedir)"
+# println("=================================================================")

@@ -3,6 +3,7 @@ using DataFrames: DataFrames
 using Bumper
 using StrideArrays
 using AllocCheck
+using Printf: @sprintf
 
 function EWSMetrics(
     ews_spec::EWSMetricSpecification, timeseries, time_step
@@ -264,6 +265,8 @@ function compare_against_spaero(
     showdiffs = false,
 ) where {T1<:DataFrames.DataFrame,T2<:EWSMetrics}
     warnings = 0
+    maxabsdiff = 0.0
+    warning_metric = :none
     for metric in ews
         spaero = getproperty(spaero_ews, metric)
         my = getproperty(my_ews, metric)
@@ -274,6 +277,10 @@ function compare_against_spaero(
 
         if length(filtered_diff) > 0
             warnings += 1
+            if maximum(filtered_diff) > maxabsdiff
+                maxabsdiff = maximum(filtered_diff)
+                warning_metric = metric
+            end
             if showwarnings
                 println()
                 @warn "There are differences in the spaero and my implementation of the $metric EWS."
@@ -293,7 +300,8 @@ function compare_against_spaero(
     end
     println()
     if warnings > 0
-        @warn "🟡 There were warnings in $warnings metrics for the $(my_ews.ews_specification.method) 🟡"
+        maxabsdiff = @sprintf("%.4E", maxabsdiff)
+        @warn "🟡 There were warnings in $warnings metrics for the $(my_ews.ews_specification.method) 🟡\n The max absolute difference was $maxabsdiff and occured in $warning_metric"
     else
         @info "✅ There were no warnings - all metrics are within tolerance ✅"
     end

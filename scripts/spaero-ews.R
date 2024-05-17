@@ -3,7 +3,7 @@ library(tidyverse)
 
 inc_array <- read_csv(here::here("out", "incidence-array_sim-1.csv"))
 
-get_stats_wrapper <- function(incvec, bandwidth = 30, backward_only = FALSE) {
+get_stats_wrapper <- function(incvec, bandwidth = 35, backward_only = FALSE) {
   get_stats(
     incvec,
     center_bandwidth = bandwidth,

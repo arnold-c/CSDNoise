@@ -232,7 +232,7 @@ source(here::here("scripts","spaero-ews.R"))
 backward_ews = StructArray(
     EWSMetrics[
         EWSMetrics(
-            EWSMetricSpecification(Backward, 30, 1),
+            EWSMetricSpecification(Backward, 35, 1),
             ensemble_single_incarr[:, 1, sim],
             1.0,
         ) for sim in axes(ensemble_single_incarr, 3)
@@ -257,7 +257,7 @@ compare_against_spaero(
     ensemble_single_inc_ews[sim_num];
     tolerance = 1e-10,
     showwarnings = false,
-    ews = ewsmetrics,
+    ews = [:mean],
 )
 
 compare_against_spaero(
@@ -299,28 +299,6 @@ for ewsmetric in ewsmetrics
             "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
         ),
         inc_ews_metric_plot,
-    )
-
-    spaero_comparison_inc_ews_metric_plot = Reff_ews_plot(
-        ensemble_single_incarr,
-        ensemble_single_Reff_arr,
-        ensemble_single_Reff_thresholds_vec,
-        ensemble_single_inc_ews,
-        centered_ews,
-        ewsmetric,
-        ensemble_single_periodsum_vecs,
-        ensemble_time_specification;
-        sim = sim_num,
-        threshold = ensemble_outbreak_specification.outbreak_threshold,
-        plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
-    )
-
-    save(
-        joinpath(
-            spaero_comparison_dir,
-            "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
-        ),
-        spaero_comparison_inc_ews_metric_plot,
     )
 
     for (ewsmetric_sa, lag_label) in

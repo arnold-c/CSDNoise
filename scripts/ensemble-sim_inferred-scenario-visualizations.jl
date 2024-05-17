@@ -28,7 +28,7 @@ ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
     10, 7, 0.6, 0.2, "inferred_movingavg"
 )
 
-ews_metric_specification = EWSMetricSpecification("backward", 35, 1)
+ews_metric_specification = EWSMetricSpecification(Centered, 35, 1)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(
@@ -229,20 +229,10 @@ source(here::here("scripts","spaero-ews.R"))
 @rget spaero_ews_backward spaero_ews_centered
 
 #%%
-centered_ews = StructArray(
-    SpaeroEWSMetrics[
-        SpaeroEWSMetrics(
-            SpaeroEWSMetricSpecification(Centered, 30, 1),
-            ensemble_single_incarr[:, 1, sim],
-            1.0,
-        ) for sim in axes(ensemble_single_incarr, 3)
-    ],
-)
-
 backward_ews = StructArray(
-    SpaeroEWSMetrics[
-        SpaeroEWSMetrics(
-            SpaeroEWSMetricSpecification(Backward, 30, 1),
+    EWSMetrics[
+        EWSMetrics(
+            EWSMetricSpecification(Backward, 30, 1),
             ensemble_single_incarr[:, 1, sim],
             1.0,
         ) for sim in axes(ensemble_single_incarr, 3)
@@ -264,7 +254,7 @@ ewsmetrics = [
 #%%
 compare_against_spaero(
     spaero_ews_centered,
-    centered_ews[sim_num];
+    ensemble_single_inc_ews[sim_num];
     tolerance = 1e-10,
     showwarnings = false,
     ews = ewsmetrics,

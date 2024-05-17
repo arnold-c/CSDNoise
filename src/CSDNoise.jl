@@ -19,27 +19,21 @@ export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
     LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K, VACCINATION_COVERAGE,
     MU, BETA_MEAN, BETA_FORCE, EPSILON
 
-include("ews-metrics.jl")
-export calculate_ews_metric,
-    calculate_backward_mean!, calculate_centered_mean!,
-    calculate_centered_metric!, calculate_backward_metric!,
-    calculate_backward_variance!,
-    calculate_centered_variance!,
-    calculate_centered_coefficient_of_variation!,
-    calculate_backward_coefficient_of_variation!,
-    calculate_centered_index_of_dispersion!,
-    calculate_backward_index_of_dispersion!,
-    iod,
-    calculate_centered_skewness!, calculate_backward_skewness!,
-    calculate_centered_kurtosis!, calculate_backward_kurtosis!,
-    kurtosis,
-    calculate_centered_autocovariance!, calculate_backward_autocovariance!,
-    autocov,
-    calculate_centered_autocorrelation!, calculate_backward_autocorrelation!,
-    autocor
 # @reexport using .EWSMetrics
 
-include("spaero_ews-metrics.jl")
+include("structs.jl")
+export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
+    StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
+    OutbreakSpecification, IndividualTestSpecification,
+    PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
+    getdirpath,
+    EWSMethod, Backward, Centered,
+    EWSMetricSpecification,
+    ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics,
+    EWSMetrics
+# @reexport using .ODStructs
+
+include("ews-metrics.jl")
 export spaero_mean, spaero_mean!,
     spaero_var,
     spaero_cov,
@@ -48,20 +42,8 @@ export spaero_mean, spaero_mean!,
     spaero_kurtosis,
     spaero_autocov,
     spaero_autocor,
-    EWSMethod, Backward, Centered,
     compare_against_spaero, filter_spaero_comparison,
-    SpaeroEWSMetricSpecification, SpaeroEWSMetrics
-
-include("structs.jl")
-export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
-    StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
-    OutbreakSpecification, IndividualTestSpecification,
-    PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
-    getdirpath,
-    EWSMetricSpecification,
-    ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics,
-    EWSMetrics
-# @reexport using .ODStructs
+    EWSMetricSpecification, EWSMetrics
 
 include("test-constants.jl")
 export CLINICAL_CASE_TEST_SPEC, EPI_LINKED_CASE_TEST_SPEC, CLINICAL_TEST_SPECS

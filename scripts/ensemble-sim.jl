@@ -90,7 +90,7 @@ poisson_noise_mean_scaling_vec = [8.0]
 
 poisson_noise_spec_vec = create_combinations_vec(
     PoissonNoiseSpecification,
-    (["poisson"], poisson_noise_mean_scaling_vec)
+    (["poisson"], poisson_noise_mean_scaling_vec),
 )
 
 dynamical_noise_R0 = [5.0]
@@ -143,14 +143,14 @@ test_spec_vec = [
 ]
 
 #%%
-ews_method_vec = ["centered", "backward"]
+ews_method_vec = [Centered, Backward]
 # ews_method_vec = ["centered"]
 ews_bandwidth_vec = [35]
 ews_lag_vec = [1]
 
 ews_spec_vec = create_combinations_vec(
     EWSMetricSpecification,
-    (ews_method_vec, ews_bandwidth_vec, ews_lag_vec)
+    (ews_method_vec, ews_bandwidth_vec, ews_lag_vec),
 )
 
 #%%

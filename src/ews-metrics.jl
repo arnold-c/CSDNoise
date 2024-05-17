@@ -4,35 +4,8 @@ using Bumper
 using StrideArrays
 using AllocCheck
 
-@sum_type EWSMethod begin
-    Backward
-    Centered
-end
-
-struct SpaeroEWSMetricSpecification
-    method::EWSMethod
-    bandwidth::Int
-    lag::Int
-end
-
-struct SpaeroEWSMetrics{
-    T1<:AbstractFloat,T2<:SpaeroEWSMetricSpecification,
-    T3<:AbstractArray{<:AbstractFloat},
-}
-    timestep::T1
-    ews_specification::T2
-    mean::T3
-    variance::T3
-    coefficient_of_variation::T3
-    index_of_dispersion::T3
-    skewness::T3
-    kurtosis::T3
-    autocovariance::T3
-    autocorrelation::T3
-end
-
-function SpaeroEWSMetrics(
-    ews_spec::SpaeroEWSMetricSpecification, timeseries, time_step
+function EWSMetrics(
+    ews_spec::EWSMetricSpecification, timeseries, time_step
 )
     mean_vec = spaero_mean(ews_spec.method, timeseries, ews_spec.bandwidth)
     var_vec = spaero_var(
@@ -54,7 +27,7 @@ function SpaeroEWSMetrics(
         ews_spec.bandwidth;
         lag = ews_spec.lag,
     )
-    return SpaeroEWSMetrics(
+    return EWSMetrics(
         time_step,
         ews_spec,
         mean_vec,
@@ -222,7 +195,7 @@ function spaero_autocov(
     mean_vec,
     timeseries,
     bandwidth;
-    lag = 1
+    lag = 1,
 )
     meandiff = timeseries .- mean_vec
     autocov_vec = zeros(Float64, length(timeseries))
@@ -289,7 +262,7 @@ function compare_against_spaero(
     tolerance = 1e-13,
     showwarnings = true,
     showdiffs = false,
-) where {T1<:DataFrames.DataFrame,T2<:SpaeroEWSMetrics}
+) where {T1<:DataFrames.DataFrame,T2<:EWSMetrics}
     warnings = 0
     for metric in ews
         spaero = getproperty(spaero_ews, metric)

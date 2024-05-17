@@ -8,6 +8,7 @@ using StaticArrays
 using LabelledArrays
 using StructArrays
 using Match
+using SumTypes
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -376,24 +377,49 @@ function getdirpath(spec::NoiseSpecification)
     )
 end
 
-struct EWSMetricSpecification{T1<:AbstractString,T2<:Integer}
-    method::T1
-    bandwidth::T2
-    lag::T2
-    dirpath::T1
+@sum_type EWSMethod begin
+    Backward
+    Centered
+end
+
+struct EWSMetricSpecification{T1<:Integer,T2<:AbstractString}
+    method::EWSMethod
+    bandwidth::T1
+    lag::T1
+    dirpath::T2
 end
 
 function EWSMetricSpecification(
-    method::T1, bandwidth::T2, lag::T2
-) where {T1<:AbstractString,T2<:Integer}
+    method::EWSMethod, bandwidth::T1, lag::T1
+) where {T1<:Integer}
     return EWSMetricSpecification(
         method,
         bandwidth,
         lag,
         joinpath(
-            "ewsmethod_$(method)", "ewsbandwidth_$(bandwidth)", "ewslag_$(lag)"
+            "ewsmethod_$(method_string(method))",
+            "ewsbandwidth_$(bandwidth)",
+            "ewslag_$(lag)",
         ),
     )
+end
+
+method_string(method::EWSMethod) = lowercase(split(string(method), "::")[1])
+
+struct EWSMetrics{
+    T1<:AbstractFloat,T2<:EWSMetricSpecification,
+    T3<:AbstractArray{<:AbstractFloat},
+}
+    timestep::T1
+    ews_specification::T2
+    mean::T3
+    variance::T3
+    coefficient_of_variation::T3
+    index_of_dispersion::T3
+    skewness::T3
+    kurtosis::T3
+    autocovariance::T3
+    autocorrelation::T3
 end
 
 struct ScenarioSpecification{

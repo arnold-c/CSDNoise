@@ -131,4 +131,8 @@ export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
     save_xlsx_optimal_threshold_summaries,
     create_and_save_xlsx_optimal_threshold_summaries
 
+@static if false
+    include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
+end
+
 end

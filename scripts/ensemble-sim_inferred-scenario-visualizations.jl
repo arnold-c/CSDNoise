@@ -5,6 +5,7 @@ using DrWatson
 using UnPack
 using ColorSchemes
 using CSV: CSV
+using DelimitedFiles: DelimitedFiles
 using DataFrames: DataFrames
 using RCall
 using StructArrays
@@ -28,7 +29,8 @@ ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
     10, 7, 0.6, 0.2, "inferred_movingavg"
 )
 
-ews_metric_specification = EWSMetricSpecification(Centered, 1, 35, 1)
+ews_metric_specification_1d = EWSMetricSpecification(Centered, 1, 35, 1)
+ews_metric_specification_30d = EWSMetricSpecification(Centered, 30, 35, 1)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(
@@ -50,10 +52,16 @@ ensemble_single_scenario_inc_file = get_ensemble_file(
 ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
 ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
 
-ensemble_single_inc_ews = get_ensemble_file(
+ensemble_single_inc_ews_1d = get_ensemble_file(
     ensemble_specification,
     ensemble_outbreak_specification,
-    ews_metric_specification,
+    ews_metric_specification_1d,
+)["inc_ewsmetrics"]
+
+ensemble_single_inc_ews_30d = get_ensemble_file(
+    ensemble_specification,
+    ensemble_outbreak_specification,
+    ews_metric_specification_30d,
 )["inc_ewsmetrics"]
 
 #%%
@@ -103,7 +111,7 @@ scenario_specification_no_lag = ScenarioSpecification(
     noise_specification,
     ensemble_single_outbreak_detection_spec,
     ensemble_single_individual_test_spec_no_lag,
-    ews_metric_specification,
+    ews_metric_specification_1d,
 )
 
 # scenario_specification_lag = ScenarioSpecification(
@@ -138,7 +146,7 @@ testarr_no_lag, test_movingvg_arr_no_lag, inferred_positives_arr_no_lag = create
     ensemble_single_outbreak_detection_spec,
     ensemble_single_individual_test_spec_no_lag,
     ensemble_time_specification,
-    ews_metric_specification,
+    ews_metric_specification_1d,
 )[[1, 3, 4]]
 
 # testarr_lag, test_movingvg_arr_lag, inferred_positives_arr_lag = create_testing_arrs(
@@ -213,12 +221,16 @@ sim_num = 1
 #%%
 # Can use RCall to @rput, but write to csv so can put R code in own file
 # that can be run independently (as well as provide linting etc)
-CSV.write(
-    outdir("incidence-array_sim-$(sim_num).csv"),
-    DataFrames.DataFrame(
-        ensemble_single_incarr[:, :, sim_num],
-        [:incidence, :above_threshold, :outbreak],
-    ),
+DelimitedFiles.writedlm(
+    outdir("incidence-array_1d_sim-$(sim_num).csv"),
+    ensemble_single_incarr[:, 1, sim_num],
+    ',',
+)
+
+DelimitedFiles.writedlm(
+    outdir("incidence-array_30d_sim-$(sim_num).csv"),
+    CSDNoise.aggregate_timeseries(ensemble_single_incarr[:, 1, sim_num], 30),
+    ',',
 )
 
 #%%
@@ -226,15 +238,23 @@ R"""
 source(here::here("scripts","spaero-ews.R"))
 """
 
-@rget spaero_ews_backward spaero_ews_centered
+@rget spaero_ews_backward_1d spaero_ews_backward_30d spaero_ews_centered_1d spaero_ews_centered_30d
 
 #%%
-backward_ews = StructArray(
+backward_ews_1d = StructArray(
     EWSMetrics[
         EWSMetrics(
-            EWSMetricSpecification(Backward, 35, 1),
+            EWSMetricSpecification(Backward, 1, 35, 1),
             ensemble_single_incarr[:, 1, sim],
-            1.0,
+        ) for sim in axes(ensemble_single_incarr, 3)
+    ],
+)
+
+backward_ews_30d = StructArray(
+    EWSMetrics[
+        EWSMetrics(
+            EWSMetricSpecification(Backward, 30, 35, 1),
+            ensemble_single_incarr[:, 1, sim],
         ) for sim in axes(ensemble_single_incarr, 3)
     ],
 )
@@ -253,53 +273,127 @@ ewsmetrics = [
 
 #%%
 compare_against_spaero(
-    spaero_ews_centered,
-    ensemble_single_inc_ews[sim_num];
+    spaero_ews_centered_1d,
+    ensemble_single_inc_ews_1d[sim_num];
     tolerance = 1e-10,
     showwarnings = false,
     ews = [:mean],
 )
 
 compare_against_spaero(
-    spaero_ews_backward,
-    backward_ews[sim_num];
+    spaero_ews_backward_1d,
+    backward_ews_1d[sim_num];
     tolerance = 1e-10,
-    showwarnings = false,
+    showdiffs = true,
+    ews = ewsmetrics,
+)
+
+compare_against_spaero(
+    spaero_ews_backward_30d,
+    backward_ews_30d[sim_num];
+    tolerance = 1e-10,
+    showdiffs = true,
     ews = ewsmetrics,
 )
 
 #%%
-basedir = plotsdir(
-    "ensemble/single-scenario/ewsmetrics/$(ews_metric_specification.dirpath)"
+Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    backward_ews_1d,
+    spaero_ews_backward_1d,
+    :autocorrelation,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
 )
-mkpath(basedir)
-testdir = joinpath(basedir, "test")
-mkpath(testdir)
-incdir = joinpath(basedir, "incidence")
-spaero_comparison_dir = joinpath(incdir, "spaero-comparison")
-mkpath(spaero_comparison_dir)
 
+Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    backward_ews_1d,
+    spaero_ews_backward_1d,
+    :autocovariance,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+)
+
+#%%
+Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    backward_ews_30d,
+    spaero_ews_backward_30d,
+    :autocorrelation,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+    aggregation = 30,
+)
+
+#%%
+Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    backward_ews_30d,
+    spaero_ews_backward_30d,
+    :autocovariance,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+    aggregation = 30,
+)
+
+#%%
+Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    backward_ews_1d,
+    spaero_ews_backward_1d,
+    :autocorrelation,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+)
+
+#%%
 for ewsmetric in ewsmetrics
-    inc_ews_metric_plot = Reff_ews_plot(
-        ensemble_single_incarr,
-        ensemble_single_Reff_arr,
-        ensemble_single_Reff_thresholds_vec,
-        ensemble_single_inc_ews,
-        ewsmetric,
-        ensemble_single_periodsum_vecs,
-        ensemble_time_specification;
-        sim = sim_num,
-        threshold = ensemble_outbreak_specification.outbreak_threshold,
-        plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
+    for (ews_metric_specification, inc_ews) in zip(
+        [ews_metric_specification_1d, ews_metric_specification_30d],
+        [ensemble_single_inc_ews_1d, ensemble_single_inc_ews_30d],
     )
+        basedir = plotsdir(
+            "ensemble/single-scenario/ewsmetrics/$(ews_metric_specification.dirpath)"
+        )
+        mkpath(basedir)
+        testdir = joinpath(basedir, "test")
+        mkpath(testdir)
+        incdir = joinpath(basedir, "incidence")
+        spaero_comparison_dir = joinpath(incdir, "spaero-comparison")
+        mkpath(spaero_comparison_dir)
 
-    save(
-        joinpath(
-            incdir,
-            "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
-        ),
-        inc_ews_metric_plot,
-    )
+        inc_ews_metric_plot = Reff_ews_plot(
+            ensemble_single_incarr,
+            ensemble_single_Reff_arr,
+            ensemble_single_Reff_thresholds_vec,
+            inc_ews,
+            ewsmetric,
+            ensemble_single_periodsum_vecs,
+            ensemble_time_specification;
+            sim = sim_num,
+            threshold = ensemble_outbreak_specification.outbreak_threshold,
+            plottitle = "Incidence $(ewsmetric): $(ews_metric_specification.method)",
+        )
+
+        save(
+            joinpath(
+                incdir,
+                "ensemble_single_scenario_incidence_metric_$(String(ewsmetric)).png",
+            ),
+            inc_ews_metric_plot,
+        )
+    end
 
     for (ewsmetric_sa, lag_label) in
         zip((

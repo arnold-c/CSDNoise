@@ -321,20 +321,23 @@ function compare_against_spaero(
                 maxabsdiff = maximum(filtered_diff)
                 warning_metric = metric
             end
+            if showdiffs
+                println()
+                @warn "There are differences in the spaero and my implementation of the $metric EWS."
+                println(
+                    filter_spaero_comparison(
+                        DataFrames.DataFrame(
+                            [spaero, my, diff], [:spaero, :mine, :absdiff]
+                        );
+                        tolerance = tolerance,
+                        warn = false,
+                    ),
+                )
+                showwarnings = false
+            end
             if showwarnings
                 println()
                 @warn "There are differences in the spaero and my implementation of the $metric EWS."
-                if showdiffs
-                    println(
-                        filter_spaero_comparison(
-                            DataFrames.DataFrame(
-                                [spaero, my, diff], [:spaero, :mine, :absdiff]
-                            );
-                            tolerance = tolerance,
-                            warn = false,
-                        ),
-                    )
-                end
             end
         end
     end

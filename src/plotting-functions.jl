@@ -709,7 +709,7 @@ function ensemble_outbreak_detect_diff_plot(OT_chars; binwidth = 1)
         mean(difference);
         color = :black,
         linestyle = :dash,
-        linewidth = 4
+        linewidth = 4,
     )
 
     return fig
@@ -900,7 +900,7 @@ function calculate_comparison_plot_facet_dims(
         Set(
             getfield.(
                 getfield.(char_struct_vec, :outbreak_detect_spec),
-                facetchar
+                facetchar,
             ),
         ),
     )
@@ -952,7 +952,7 @@ function construct_single_OTchars_facet!(
                 charmean;
                 color = :black,
                 linestyle = :dash,
-                linewidth = 4
+                linewidth = 4,
             )
         end
         if meanlabels
@@ -1088,7 +1088,7 @@ function compare_optimal_thresholds_chars_plot(
             plot = create_optimal_thresholds_chars_plot(
                 optimal_thresholds_chars,
                 plottingchars;
-                kwargs...
+                kwargs...,
             )
 
             save(
@@ -1118,7 +1118,7 @@ end
 function create_optimal_thresholds_chars_plot(
     optimal_thresholds_chars,
     plottingchars;
-    kwargs...
+    kwargs...,
 )
     number_tests = length(optimal_thresholds_chars)
     number_plotting_chars = length(plottingchars)
@@ -1232,7 +1232,7 @@ function compare_optimal_thresholds_test_chars_plot(
             plot = create_optimal_thresholds_test_chars_plot(
                 optimal_thresholds_chars,
                 plottingchars;
-                kwargs...
+                kwargs...,
             )
 
             save(
@@ -1261,7 +1261,7 @@ end
 function create_optimal_thresholds_test_chars_plot(
     optimal_thresholds_chars,
     plottingchars;
-    kwargs...
+    kwargs...,
 )
     number_clinic_testing_rates = length(optimal_thresholds_chars)
     number_plotting_chars = length(plottingchars)
@@ -1607,6 +1607,155 @@ function Reff_ews_plot(
     return fig
 end
 
+function Reff_ews_plot(
+    incidencearr,
+    Reffarr,
+    Reff_thresholds_vec,
+    ewsmetric_sa::T1,
+    spaero_ewsmetric_sa::T2,
+    ewsmetric::S,
+    thresholdsarr,
+    timeparams;
+    sim = 1,
+    outbreak_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
+    ],
+    Reff_colormap = [
+        N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
+    ],
+    threshold = 5,
+    metric_color = Makie.wong_colors()[1],
+    spaero_metric_color = Makie.wong_colors()[3],
+    linewidth = 3,
+    hlinewidth = 2,
+    aggregation = 1,
+    kwargs...,
+) where {T1<:StructArray,T2<:DataFrames.DataFrame,S<:Symbol}
+    @unpack trange = timeparams
+    times = collect(trange) ./ 365
+
+    kwargs_dict = Dict(kwargs)
+
+    Reff_above_one = zeros(Int64, length(times))
+    for (lower, upper, _) in
+        eachrow(Reff_thresholds_vec[sim])
+        Reff_above_one[lower:upper] .= 1
+    end
+    Reff_above_one = aggregate_timeseries(Reff_above_one, aggregation)
+
+    ewsmetric_vec = getproperty(ewsmetric_sa, ewsmetric)[sim]
+    replace!(ewsmetric_vec, Inf => NaN)
+    spaero_ewsmetric_vec = getproperty(spaero_ewsmetric_sa, ewsmetric)
+    replace!(spaero_ewsmetric_vec, Inf => NaN)
+
+    fig = Figure()
+    reffax = Axis(
+        fig[1, 1]; ylabel = "Reff"
+    )
+    incax = Axis(
+        fig[2, 1]; ylabel = "Incidence"
+    )
+    metric_ax = Axis(
+        fig[3, 1]; xlabel = "Time (years)", ylabel = String(ewsmetric)
+    )
+    diff_ax = Axis(
+        fig[4, 1]; xlabel = "Time (years)", ylabel = "Diff between CSD & SPAERO"
+    )
+
+    linkxaxes!(incax, reffax, metric_ax, diff_ax)
+    aggregated_vec_length = size(Reffarr, 1) ÷ aggregation * aggregation
+    times = times[1:aggregation:aggregated_vec_length]
+
+    line_and_hline!(
+        reffax,
+        times,
+        @view(
+            Reffarr[
+                1:aggregation:aggregated_vec_length,
+                sim,
+            ]
+        ),
+        1;
+        linewidth = linewidth,
+        hlinewidth = hlinewidth,
+    )
+
+    line_and_hline!(
+        incax,
+        times,
+        aggregate_timeseries(@view(incidencearr[:, 1, sim]), aggregation),
+        threshold;
+        linewidth = linewidth,
+        hlinewidth = hlinewidth,
+    )
+
+    lines!(
+        metric_ax,
+        times,
+        ewsmetric_vec;
+        color = metric_color,
+        linewidth = linewidth,
+    )
+
+    lines!(
+        metric_ax,
+        times,
+        spaero_ewsmetric_vec;
+        color = spaero_metric_color,
+        linewidth = linewidth,
+    )
+
+    lines!(
+        diff_ax,
+        times,
+        ewsmetric_vec .- spaero_ewsmetric_vec;
+        color = :black,
+        linewidth = linewidth,
+    )
+
+    if haskey(kwargs_dict, :xlims)
+        map(
+            ax -> xlims!(ax, kwargs_dict[:xlims]),
+            [incax, reffax, metric_ax],
+        )
+    end
+
+    if haskey(kwargs_dict, :ylims_metric)
+        ylims!(metric_ax, kwargs_dict[:ylims_metric])
+    end
+
+    if haskey(kwargs_dict, :ylims_inc)
+        ylims!(incax, kwargs_dict[:ylims_inc])
+    end
+
+    map(hidexdecorations!, [incax, reffax])
+
+    if haskey(kwargs_dict, :plottitle)
+        Label(
+            fig[0, :, Top()],
+            kwargs_dict[:plottitle],
+        )
+    end
+
+    Legend(
+        fig[3, 2],
+        [
+            PolyElement(; color = col) for
+            col in [metric_color, spaero_metric_color]
+        ],
+        ["CSD Noise Metric", "SPAERO CSD Noise Metric"],
+        "CSD Noise Metric",
+    )
+
+    Legend(
+        fig[4, 2],
+        [PolyElement(; color = :black)],
+        ["Diff between CSD & SPAERO"],
+        "Diff between CSD & SPAERO",
+    )
+
+    return fig
+end
 function line_and_hline!(
     ax,
     times,
@@ -1622,9 +1771,11 @@ function line_and_hline!(
 
     color_keys = [:color, :colormap]
 
-    if sum(k -> haskey(kwargs_dict, k), color_keys) != length(color_keys)
+    if !(
+        sum(k -> haskey(kwargs_dict, k), color_keys) in (0, length(color_keys))
+    )
         error(
-            "Must provide both $color_keys for the `lines!` function. You have only specified one of these. $(keys(kwargs_dict))",
+            "Must provide both $color_keys for the `lines!` function, or none. You have specified: $(keys(kwargs_dict))"
         )
     end
 

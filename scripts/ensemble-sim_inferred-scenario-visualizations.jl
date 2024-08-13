@@ -26,7 +26,7 @@ ensemble_single_individual_test_spec_lag = IndividualTestSpecification(
 )
 
 ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
-    10, 7, 0.6, 0.2, "inferred_movingavg"
+    10, 7, 1.0, 1.0, "inferred_movingavg"
 )
 
 ews_metric_specification_1d = EWSMetricSpecification(Centered, 1, 35, 1)
@@ -259,6 +259,24 @@ backward_ews_30d = StructArray(
     ],
 )
 
+centered_ews_1d = StructArray(
+    EWSMetrics[
+        EWSMetrics(
+            EWSMetricSpecification(Centered, 1, 35, 1),
+            ensemble_single_incarr[:, 1, sim],
+        ) for sim in axes(ensemble_single_incarr, 3)
+    ],
+)
+
+centered_ews_30d = StructArray(
+    EWSMetrics[
+        EWSMetrics(
+            EWSMetricSpecification(Centered, 30, 35, 1),
+            ensemble_single_incarr[:, 1, sim],
+        ) for sim in axes(ensemble_single_incarr, 3)
+    ],
+)
+
 #%%
 ewsmetrics = [
     :autocorrelation,
@@ -308,7 +326,8 @@ Reff_ews_plot(
     ensemble_time_specification;
 )
 
-Reff_ews_plot(
+#%%
+autocov_backward_1d = Reff_ews_plot(
     ensemble_single_incarr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
@@ -317,6 +336,36 @@ Reff_ews_plot(
     :autocovariance,
     ensemble_single_periodsum_vecs,
     ensemble_time_specification;
+    plottitle = "Backward 1d Autocovariance",
+    ylims_metric = (0, 0.5),
+)
+
+save(
+    plotsdir(
+        "ensemble/single-scenario/ewsmetrics/ensemble_single_scenario_autocovar_backward_1d.png"
+    ),
+    autocov_backward_1d,
+)
+#%%
+
+autocov_centered_1d = Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    centered_ews_1d,
+    spaero_ews_centered_1d,
+    :autocovariance,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+    plottitle = "centered 1d Autocovariance",
+    ylims_metric = (0, 0.5),
+)
+
+save(
+    plotsdir(
+        "ensemble/single-scenario/ewsmetrics/ensemble_single_scenario_autocovar_centered_1d.png"
+    ),
+    autocov_centered_1d,
 )
 
 #%%
@@ -340,6 +389,75 @@ Reff_ews_plot(
     backward_ews_30d,
     spaero_ews_backward_30d,
     :autocovariance,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+    aggregation = 30,
+)
+
+#%%
+var_backward_30d = Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    backward_ews_30d,
+    spaero_ews_backward_30d,
+    :autocovariance,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+    aggregation = 30,
+    plottitle = "Backward 30d Autocovariance",
+    ylims_metric = (0, 100),
+)
+
+save(
+    plotsdir(
+        "ensemble/single-scenario/ewsmetrics/ensemble_single_scenario_autocovar_backward_30d.png"
+    ),
+    var_backward_30d,
+)
+
+#%%
+var_centered_30d = Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    centered_ews_30d,
+    spaero_ews_centered_30d,
+    :autocovariance,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+    aggregation = 30,
+    plottitle = "Centered 30d Autocovariance",
+)
+
+save(
+    plotsdir(
+        "ensemble/single-scenario/ewsmetrics/ensemble_single_scenario_autocovar_centered_30d.png"
+    ),
+    var_centered_30d,
+)
+
+#%%
+Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    centered_ews_30d,
+    spaero_ews_centered_30d,
+    :autocovariance,
+    ensemble_single_periodsum_vecs,
+    ensemble_time_specification;
+    aggregation = 30,
+)
+
+#%%
+Reff_ews_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    centered_ews_30d,
+    spaero_ews_centered_30d,
+    :coefficient_of_variation,
     ensemble_single_periodsum_vecs,
     ensemble_time_specification;
     aggregation = 30,

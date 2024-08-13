@@ -144,13 +144,14 @@ test_spec_vec = [
 
 #%%
 ews_method_vec = [Centered, Backward]
+ews_aggregation_vec = [1, 30]
 # ews_method_vec = ["centered"]
 ews_bandwidth_vec = [35]
 ews_lag_vec = [1]
 
 ews_spec_vec = create_combinations_vec(
     EWSMetricSpecification,
-    (ews_method_vec, ews_bandwidth_vec, ews_lag_vec),
+    (ews_method_vec, ews_aggregation_vec, ews_bandwidth_vec, ews_lag_vec),
 )
 
 #%%

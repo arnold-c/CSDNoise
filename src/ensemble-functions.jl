@@ -141,7 +141,7 @@ function run_jump_prob(ensemble_param_dict)
     ensemble_seir_vecs = Array{typeof(state_parameters.init_states),2}(
         undef,
         tlength,
-        nsims
+        nsims,
     )
 
     ensemble_inc_vecs = Array{typeof(SVector(0)),2}(
@@ -234,12 +234,12 @@ function define_outbreaks(incidence_param_dict)
 
     non_clinical_case_test_spec_vec = filter(
         spec -> !(spec in CLINICAL_TEST_SPECS),
-        test_spec_vec
+        test_spec_vec,
     )
 
     non_clinical_case_outbreak_detection_spec_vec = filter(
         spec -> spec.percent_clinic_tested !== 1.0,
-        outbreak_detection_spec_vec
+        outbreak_detection_spec_vec,
     )
 
     non_clinical_case_ensemble_scenarios = create_combinations_vec(
@@ -256,7 +256,7 @@ function define_outbreaks(incidence_param_dict)
 
     clinical_case_outbreak_detection_spec_vec = filter(
         spec -> spec.percent_clinic_tested == 1.0,
-        outbreak_detection_spec_vec
+        outbreak_detection_spec_vec,
     )
 
     clinical_case_ensemble_scenarios = create_combinations_vec(
@@ -325,8 +325,7 @@ function incidence_ews_metrics(inc_ews_params)
     for sim in eachindex(inc_ewsmetrics_vec)
         inc_ewsmetrics_vec[sim] = EWSMetrics(
             ews_specification,
-            @view(ensemble_inc_arr[:, 1, sim]),
-            tstep
+            @view(ensemble_inc_arr[:, 1, sim])
         )
     end
     inc_ewsmetrics = StructArray(inc_ewsmetrics_vec)

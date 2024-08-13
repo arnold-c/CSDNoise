@@ -4,32 +4,38 @@ using Bumper
 using StrideArrays
 using AllocCheck
 using Printf: @sprintf
+using TestItems
 
 function EWSMetrics(
-    ews_spec::EWSMetricSpecification, timeseries, time_step
+    ews_spec::EWSMetricSpecification, timeseries
 )
-    mean_vec = spaero_mean(ews_spec.method, timeseries, ews_spec.bandwidth)
+    aggregated_timeseries = aggregate_timeseries(
+        timeseries, ews_spec.aggregation
+    )
+
+    mean_vec = spaero_mean(
+        ews_spec.method, aggregated_timeseries, ews_spec.bandwidth
+    )
     var_vec = spaero_var(
-        ews_spec.method, mean_vec, timeseries, ews_spec.bandwidth
+        ews_spec.method, mean_vec, aggregated_timeseries, ews_spec.bandwidth
     )
     var2_vec = var_vec .^ 2
     sd_vec = sqrt.(var_vec)
     sd3_vec = sd_vec .^ 3
     m3_vec = _spaero_moment(
-        ews_spec.method, mean_vec, timeseries, 3, ews_spec.bandwidth
+        ews_spec.method, mean_vec, aggregated_timeseries, 3, ews_spec.bandwidth
     )
     m4_vec = _spaero_moment(
-        ews_spec.method, mean_vec, timeseries, 4, ews_spec.bandwidth
+        ews_spec.method, mean_vec, aggregated_timeseries, 4, ews_spec.bandwidth
     )
     autocov_vec = spaero_autocov(
         ews_spec.method,
         mean_vec,
-        timeseries,
+        aggregated_timeseries,
         ews_spec.bandwidth;
         lag = ews_spec.lag,
     )
     return EWSMetrics(
-        time_step,
         ews_spec,
         mean_vec,
         var_vec,
@@ -39,6 +45,40 @@ function EWSMetrics(
         spaero_kurtosis(m4_vec, var2_vec),
         autocov_vec,
         spaero_autocor(autocov_vec, sd_vec),
+    )
+end
+
+function aggregate_timeseries(timeseries, aggregation)
+    if aggregation == 1
+        return timeseries
+    end
+    return _aggregate_timeseries(timeseries, aggregation)
+end
+
+function _aggregate_timeseries(timeseries, aggregation)
+    aggregate_timeseries = zeros(
+        eltype(timeseries), length(timeseries) ÷ aggregation
+    )
+    for i in eachindex(aggregate_timeseries)
+        aggregate_timeseries[i] = sum(
+            @view(timeseries[((i - 1) * aggregation + 1):(i * aggregation)])
+        )
+    end
+    return aggregate_timeseries
+end
+
+@testitem "Timeseries aggregation" begin
+    using CSDNoise
+
+    testvec = collect(1:10)
+    @test isequal(aggregate_timeseries(testvec, 1), testvec)
+    @test isequal(
+        aggregate_timeseries(testvec, 2),
+        [sum(1:2), sum(3:4), sum(5:6), sum(7:8), sum(9:10)],
+    )
+    @test isequal(
+        aggregate_timeseries(testvec, 3),
+        [sum(1:3), sum(4:6), sum(7:9)],
     )
 end
 
@@ -281,20 +321,23 @@ function compare_against_spaero(
                 maxabsdiff = maximum(filtered_diff)
                 warning_metric = metric
             end
+            if showdiffs
+                println()
+                @warn "There are differences in the spaero and my implementation of the $metric EWS."
+                println(
+                    filter_spaero_comparison(
+                        DataFrames.DataFrame(
+                            [spaero, my, diff], [:spaero, :mine, :absdiff]
+                        );
+                        tolerance = tolerance,
+                        warn = false,
+                    ),
+                )
+                showwarnings = false
+            end
             if showwarnings
                 println()
                 @warn "There are differences in the spaero and my implementation of the $metric EWS."
-                if showdiffs
-                    println(
-                        filter_spaero_comparison(
-                            DataFrames.DataFrame(
-                                [spaero, my, diff], [:spaero, :mine, :absdiff]
-                            );
-                            tolerance = tolerance,
-                            warn = false,
-                        ),
-                    )
-                end
             end
         end
     end

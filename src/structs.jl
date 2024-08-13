@@ -384,20 +384,23 @@ end
 
 struct EWSMetricSpecification{T1<:Integer,T2<:AbstractString}
     method::EWSMethod
+    aggregation::T1
     bandwidth::T1
     lag::T1
     dirpath::T2
 end
 
 function EWSMetricSpecification(
-    method::EWSMethod, bandwidth::T1, lag::T1
+    method::EWSMethod, aggregation::T1, bandwidth::T1, lag::T1
 ) where {T1<:Integer}
     return EWSMetricSpecification(
         method,
+        aggregation,
         bandwidth,
         lag,
         joinpath(
             "ewsmethod_$(method_string(method))",
+            "ewsaggregationdays_$(aggregation)",
             "ewsbandwidth_$(bandwidth)",
             "ewslag_$(lag)",
         ),
@@ -407,19 +410,18 @@ end
 method_string(method::EWSMethod) = lowercase(split(string(method), "::")[1])
 
 struct EWSMetrics{
-    T1<:AbstractFloat,T2<:EWSMetricSpecification,
-    T3<:AbstractArray{<:AbstractFloat},
+    T1<:EWSMetricSpecification,
+    T2<:AbstractArray{<:AbstractFloat},
 }
-    timestep::T1
-    ews_specification::T2
-    mean::T3
-    variance::T3
-    coefficient_of_variation::T3
-    index_of_dispersion::T3
-    skewness::T3
-    kurtosis::T3
-    autocovariance::T3
-    autocorrelation::T3
+    ews_specification::T1
+    mean::T2
+    variance::T2
+    coefficient_of_variation::T2
+    index_of_dispersion::T2
+    skewness::T2
+    kurtosis::T2
+    autocovariance::T2
+    autocorrelation::T2
 end
 
 struct ScenarioSpecification{

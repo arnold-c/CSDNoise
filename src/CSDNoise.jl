@@ -34,7 +34,8 @@ export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
 # @reexport using .ODStructs
 
 include("ews-metrics.jl")
-export spaero_mean, spaero_mean!,
+export aggregate_timeseries,
+    spaero_mean, spaero_mean!,
     spaero_var,
     spaero_cov,
     spaero_iod,
@@ -129,5 +130,9 @@ export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
     create_all_wide_optimal_threshold_summary_dfs,
     save_xlsx_optimal_threshold_summaries,
     create_and_save_xlsx_optimal_threshold_summaries
+
+@static if false
+    include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
+end
 
 end

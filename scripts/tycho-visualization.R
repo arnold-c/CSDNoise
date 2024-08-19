@@ -13,6 +13,7 @@ library(latex2exp) # used to include LaTeX expressions in plot text
 library(pomp) # required by spaero
 library(spaero) # model simulation and statistics
 library(here)
+library(tidyverse)
 
 ## Additional packages for managing real data
 library(lubridate)
@@ -219,6 +220,37 @@ tychoL1.measles.CA.cases.imp.zoo.plotwindow <- window(tychoL1.measles.CA.cases.i
 tychoL1.measles.CA.cases.imp.zoo.plotwindow.2wk <- tmpfcn(tychoL1.measles.CA.cases.imp.zoo.plotwindow,2)
 tychoL1.measles.CA.cases.imp.zoo.plotwindow.4wk <- tmpfcn(tychoL1.measles.CA.cases.imp.zoo.plotwindow,4)
 
+# %%
+zoo_to_tibble <- function(zoo_vec, agg_weeks=1) {
+		tibble(date = index(zoo_vec),
+					aggregation_weeks = agg_weeks,
+					 cases = as.numeric(zoo_vec))
+}
+
+ tycho_CA_measles_long_plotdata <- bind_rows(
+	zoo_to_tibble(tychoL1.measles.CA.cases.imp.zoo.plotwindow),
+	zoo_to_tibble(tychoL1.measles.CA.cases.imp.zoo.plotwindow.2wk, agg_weeks = 2),
+	zoo_to_tibble(tychoL1.measles.CA.cases.imp.zoo.plotwindow.4wk, agg_weeks = 4)
+)
+
+tycho_CA_measles_wide_plotdata  <- tycho_CA_measles_long_plotdata %>%
+	pivot_wider(
+		names_from = aggregation_weeks,
+		values_from = cases,
+		names_glue = "{.value}_{aggregation_weeks}wk"
+	)
+
+write_csv(tycho_CA_measles_long_plotdata, here::here("out", "tycho_CA_measles_long_plotdata.csv"))
+write_csv(tycho_CA_measles_wide_plotdata, here::here("out", "tycho_CA_measles_wide_plotdata.csv"))
+
+tycho_CA_measles_long_statsdata <- tycho_CA_measles_long_plotdata %>%
+	filter(date <= obsdate)
+
+tycho_CA_measles_wide_statsdata <- tycho_CA_measles_wide_plotdata %>%
+	filter(date <= obsdate)
+
+write_csv(tycho_CA_measles_long_statsdata, here::here("out", "tycho_CA_measles_long_statsdata.csv"))
+write_csv(tycho_CA_measles_wide_statsdata, here::here("out", "tycho_CA_measles_wide_statsdata.csv"))
 
 # Window aggregated data for analysis -------------------------------------
 

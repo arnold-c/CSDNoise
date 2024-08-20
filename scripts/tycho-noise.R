@@ -2,7 +2,53 @@
 library(spaero)
 library(tidyverse)
 library(here)
+library(patchwork)
 
+# %%
+
+## CDC Epiweek to Dates
+## returns the start date of the CDC epiweek
+cdcweekToDate <- function(epiweek, weekday = 0, year = NULL, week = NULL) {
+  if(missing(epiweek)) {
+    year <- year
+    week <- week
+  }else{
+    year <- epiweek %/% 1e2
+    week <- epiweek %% 1e2
+  }
+  jan1 <- as.Date(ISOdate(year,1,1))
+  jan1.wday <- as.POSIXlt(jan1)$wday
+  if (jan1.wday < 4) {
+    origin <- jan1 - jan1.wday
+  }else{
+    origin <- jan1 + (7-jan1.wday)
+  }
+  date <- origin+(week-1)*7+weekday
+  return(date)
+}
+
+analysis <- function(data,params){
+  get_stats(
+    data,
+    center_trend = params$center_trend,
+    stat_trend = params$stat_trend,
+    center_kernel = params$center_kernel,
+    stat_kernel = params$stat_kernel,
+    center_bandwidth = params$center_bandwidth,
+    stat_bandwidth = params$stat_bandwidth,
+    lag = params$lag)
+}
+
+bandwidth_weeks <- 52
+bandwidth <- bandwidth_weeks * 7 # days
+
+obsdate <- cdcweekToDate(year=1990, week=34-31, weekday=6)
+plotxmin.year <- 1984
+plotxmin <- cdcweekToDate(year=plotxmin.year, week=1, weekday=6)
+plotxmax.year <- 1992
+plotxmax <- cdcweekToDate(year=plotxmax.year, week=1, weekday=6) + bandwidth
+
+# %%
 tychoL1 <- read.csv(here::here("data", "Project_Tycho___Level_1_Data_20240813.csv"))
 
 tycho_CA_measles_long_plotdata <- read_csv(here::here("out", "tycho_CA_measles_long_plotdata.csv"))
@@ -44,7 +90,7 @@ filled_aggregate_statsdata <- fill_aggregate_cases(tycho_CA_measles_wide_statsda
 # Recreate incidence plot with ggplot2
 plot_colors <- c("1wk" = "gray20", "2wk" = "blue", "4wk" = "darkred")
 
-filled_aggregate_plotdata %>%
+incidence_plot <- filled_aggregate_plotdata %>%
   pivot_longer(
     cols = contains("cases"),
     names_to = "aggregation",
@@ -55,13 +101,16 @@ filled_aggregate_plotdata %>%
   ggplot(
     aes(x = date, y = cases, color = aggregation, fill = aggregation)
   ) +
+  annotate("rect", xmin = obsdate, xmax = plotxmax, ymin = 0, ymax = Inf, alpha = 0.1, fill = "red") +
   geom_line() +
   scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
   geom_area(aes(alpha = aggregation), position = "identity") +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-  labs(x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation") +
+  labs(title = "Actual Incidence", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation") +
   theme_minimal()
+
+incidence_plot
 
 # %%
 add_noise <- function(incidence_df, mean_incidence_df = NULL, aggregation_weeks = 1, noise_pc = 100) {
@@ -160,7 +209,7 @@ sum(filled_perfect_test_df$test_neg_4wk == filled_perfect_test_df$noise_4wk) == 
 sum(filled_perfect_test_df$total_tested_4wk == filled_perfect_test_df$obs_4wk) == nrow(filled_perfect_test_df)
 
 # %%
-filled_perfect_test_df <- filled_perfect_test_df %>%
+filled_perfect_test_long_df <- filled_perfect_test_df %>%
   pivot_longer(
     cols = c(-date),
     names_to = c("type", "aggregation"),
@@ -170,7 +219,7 @@ filled_perfect_test_df <- filled_perfect_test_df %>%
   mutate(aggregation = factor(aggregation, levels = c("4wk", "2wk", "1wk")))
 
 # %%
-filled_perfect_test_df %>%
+filled_perfect_test_long_df %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
   ) +
@@ -215,21 +264,6 @@ filled_rdt_8080_test_long_df %>%
   theme_minimal()
 
 # %%
-analysis <- function(data,params){
-  get_stats(
-    data,
-    center_trend = params$center_trend,
-    stat_trend = params$stat_trend,
-    center_kernel = params$center_kernel,
-    stat_kernel = params$stat_kernel,
-    center_bandwidth = params$center_bandwidth,
-    stat_bandwidth = params$stat_bandwidth,
-    lag = params$lag)
-}
-
-bandwidth_weeks <- 52
-bandwidth <- bandwidth_weeks * 7 # days
-
 analysis_params_1w <- list(
   center_trend = "local_constant",
   stat_trend = "local_constant",
@@ -244,40 +278,170 @@ analysis_params_4w <- analysis_params_2w <- analysis_params_1w
 analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- bandwidth_weeks/2
 analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks/4
 
-## CDC Epiweek to Dates
-## returns the start date of the CDC epiweek
-cdcweekToDate <- function(epiweek, weekday = 0, year = NULL, week = NULL) {
-  if(missing(epiweek)) {
-    year <- year
-    week <- week
-  }else{
-    year <- epiweek %/% 1e2
-    week <- epiweek %% 1e2
-  }
-  jan1 <- as.Date(ISOdate(year,1,1))
-  jan1.wday <- as.POSIXlt(jan1)$wday
-  if (jan1.wday < 4) {
-    origin <- jan1 - jan1.wday
-  }else{
-    origin <- jan1 + (7-jan1.wday)
-  }
-  date <- origin+(week-1)*7+weekday
-  return(date)
-}
-
-obsdate <- cdcweekToDate(year=1990, week=34-31, weekday=6)
-
+# %%
 filter_statdata <- function(data, aggregation_weeks = 1, obsdate, analysis_params){
   test_pos_col <- paste0("test_pos_", aggregation_weeks, "wk")
   statdata <- filter(data, date <= obsdate) %>%
-    select(test_pos_col) %>%
-    drop_na() %>%
-    .[[test_pos_col]]
-  return(analysis(statdata, analysis_params))
+    select(date, test_pos_col) %>%
+    drop_na()
+
+  return(list(dates = statdata$date, ews = analysis(statdata[[test_pos_col]], analysis_params)))
 }
 
-agg_stats <- map2(
-  list(1, 2, 4),
+agg_stats <- list(1, 2, 4) %>%
+  set_names() %>%
+  map2(
+    .,
   list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
   ~filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, obsdate = obsdate, analysis_params = .y)
 )
+
+# %%
+rdt_8080_test_pos_plot <- filled_rdt_8080_test_long_df %>%
+  filter(type == "test_pos") %>%
+  ggplot(
+    aes(x = date, y = values, color = aggregation, fill = aggregation)
+  ) +
+  annotate("rect", xmin = obsdate, xmax = plotxmax, ymin = 0, ymax = Inf, alpha = 0.1, fill = "red") +
+  geom_line() +
+  scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
+  geom_area(aes(alpha = aggregation), position = "identity") +
+  scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
+  scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
+  labs(title = "Test Positive: RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation") +
+  theme_minimal()
+
+rdt_8080_test_pos_plot
+
+# %%
+rdt_8080_test_pos_plot / incidence_plot
+
+# %%
+extract_ews_to_df <- function(ews_list, aggregation_weeks = 1) {
+  bind_cols(
+    date = agg_stats[[paste0(aggregation_weeks)]]$dates,
+    as_tibble(agg_stats[[paste0(aggregation_weeks)]]$ews$stats)
+  ) %>%
+    rename_with(
+    .cols = -date,
+    .fn = ~paste0(.x, "_", aggregation_weeks, "wk")
+  )
+}
+
+rdt_8080_ews_df <- left_join(
+    extract_ews_to_df(agg_stats[[1]]),
+    extract_ews_to_df(agg_stats[[2]], aggregation_weeks = 2),
+    by = "date"
+  ) %>%
+  left_join(.,
+    extract_ews_to_df(agg_stats[[3]], aggregation_weeks = 4),
+    by = "date"
+  )
+
+rdt_8080_ews_long_df <- rdt_8080_ews_df %>%
+  pivot_longer(
+    cols = -date,
+    names_to = c("statistic", "aggregation"),
+    names_pattern = "(.+)_(.+)",
+    values_to = "value"
+  )
+
+# %%
+# rdt_8080_ews_tau
+
+extract_tau <- function(ews_list, aggregation_weeks = 1) {
+  tibble(
+    aggregation = paste0(aggregation_weeks, "wk"),
+    statistic = names(ews_list$ews$taus),
+    value = as.numeric(ews_list$ews$taus)
+  )
+}
+
+rdt_8080_ews_tau_df <- map2_dfr(
+  names(agg_stats),
+  agg_stats,
+  function(.x, .y) {
+    num <- as.numeric(.x)
+    extract_tau(.y, aggregation_weeks = num)
+  }
+)
+
+# %%
+ews_plot <- function(ews_df, tau_df, ews = variance) {
+  plot <- ews_df %>%
+    filter(statistic == {{ews}}) %>%
+    drop_na() %>%
+    ggplot(
+      aes(x = date, y = value, color = aggregation)
+    ) +
+    geom_line(aes(group = aggregation), na.rm = TRUE) +
+    scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
+    scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
+    labs(title = "Test Positive Variance: RDT 80/80, 100% Testing", x = "Date", y = "Variance", color = "Aggregation") +
+    theme_minimal()
+
+  tau_label_df <- ews_df %>%
+    filter(statistic == {{ews}}) %>%
+    drop_na() %>%
+    group_by(aggregation) %>%
+    filter(date == last(date)) %>%
+    transmute(
+      date = date + weeks(4),
+      y = value,
+      aggregation = aggregation
+    )
+
+  taus <- tau_df %>%
+    filter(statistic == {{ews}}) %>%
+    left_join(
+      .,
+      tau_label_df,
+      by = "aggregation"
+    )
+
+  plot <- plot +
+    geom_text(
+      data = taus,
+      aes(
+        x = date,
+        y = y,
+        label = TeX(sprintf("$\\tau = $ %.2f", value), output = "character")
+      ),
+      parse = TRUE,
+      hjust = "left",
+      show.legend = FALSE
+    )
+
+  return(plot)
+}
+
+ews_plot(rdt_8080_ews_long_df, rdt_8080_ews_tau_df, ews = "variance")
+
+# %%
+filter(rdt_8080_ews_long_df, statistic == "variance") %>%
+  drop_na() %>%
+  group_by(aggregation) %>%
+  filter(date == last(date))
+
+# %%
+rdt_8080_ews_plot <- rdt_8080_ews_long_df %>%
+  filter(statistic == "variance") %>%
+  drop_na() %>%
+  ggplot(
+    aes(x = date, y = value, color = aggregation)
+  ) +
+  geom_line(aes(group = aggregation), na.rm = TRUE) +
+  scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
+  scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
+  labs(title = "Test Positive Variance: RDT 80/80, 100% Testing", x = "Date", y = "Variance", color = "Aggregation") +
+  theme_minimal()
+
+rdt_8080_ews_plot
+
+# %%
+rdt_8080_ews_plot / rdt_8080_test_pos_plot
+
+# %%
+rdt_8080_ews_df %>%
+  select(date, starts_with("variance"), -contains("first")) %>%
+    print(n = 100)

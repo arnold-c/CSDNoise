@@ -85,11 +85,13 @@ set.seed(1234)
 
 noise_df <- add_noise(tycho_CA_measles_wide_plotdata, average_incidence, aggregation_weeks = 1, noise_pc = 100) %>%
   add_noise(average_incidence, aggregation_weeks = 2, noise_pc = 100) %>%
-  add_noise(average_incidence, aggregation_weeks = 4, noise_pc = 100) %>%
-  fill_aggregate_cases()
+  add_noise(average_incidence, aggregation_weeks = 4, noise_pc = 100)
+
+
+filled_noise_df <- fill_aggregate_cases(noise_df)
 
 # %%
-noise_long_df <- noise_df %>%
+filled_noise_long_df <- filled_noise_df %>%
   pivot_longer(
     cols = c(-date),
     names_to = c("type", "aggregation"),
@@ -98,10 +100,10 @@ noise_long_df <- noise_df %>%
   ) %>%
   mutate(aggregation = factor(aggregation, levels = c("4wk", "2wk", "1wk")))
 
-noise_long_df
+filled_noise_long_df
 
 # %%
-noise_long_df %>%
+filled_noise_long_df %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
   ) +
@@ -142,22 +144,23 @@ calculate_test_characteristics <- function(inc_noise_df, aggregation_weeks = 1, 
 perfect_test_chars <- list(prop_tested = 1.0, sensitivity = 1.0, specificity = 1.0)
 perfect_test_df <- calculate_test_characteristics(noise_df, aggregation_weeks = 1, perfect_test_chars) %>%
   calculate_test_characteristics(aggregation_weeks = 2, perfect_test_chars) %>%
-  calculate_test_characteristics(aggregation_weeks = 4, perfect_test_chars) %>%
-  fill_aggregate_cases()
+  calculate_test_characteristics(aggregation_weeks = 4, perfect_test_chars)
+
+filled_perfect_test_df <- fill_aggregate_cases(perfect_test_df)
 
 # Quickly check things are being calculated as expected
-sum(perfect_test_df$test_pos_1wk == perfect_test_df$cases_1wk) == nrow(perfect_test_df)
-sum(perfect_test_df$test_neg_1wk == perfect_test_df$noise_1wk) == nrow(perfect_test_df)
-sum(perfect_test_df$total_tested_1wk == perfect_test_df$obs_1wk) == nrow(perfect_test_df)
-sum(perfect_test_df$test_pos_2wk == perfect_test_df$cases_2wk) == nrow(perfect_test_df)
-sum(perfect_test_df$test_neg_2wk == perfect_test_df$noise_2wk) == nrow(perfect_test_df)
-sum(perfect_test_df$total_tested_2wk == perfect_test_df$obs_2wk) == nrow(perfect_test_df)
-sum(perfect_test_df$test_pos_4wk == perfect_test_df$cases_4wk) == nrow(perfect_test_df)
-sum(perfect_test_df$test_neg_4wk == perfect_test_df$noise_4wk) == nrow(perfect_test_df)
-sum(perfect_test_df$total_tested_4wk == perfect_test_df$obs_4wk) == nrow(perfect_test_df)
+sum(filled_perfect_test_df$test_pos_1wk == filled_perfect_test_df$cases_1wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$test_neg_1wk == filled_perfect_test_df$noise_1wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$total_tested_1wk == filled_perfect_test_df$obs_1wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$test_pos_2wk == filled_perfect_test_df$cases_2wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$test_neg_2wk == filled_perfect_test_df$noise_2wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$total_tested_2wk == filled_perfect_test_df$obs_2wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$test_pos_4wk == filled_perfect_test_df$cases_4wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$test_neg_4wk == filled_perfect_test_df$noise_4wk) == nrow(filled_perfect_test_df)
+sum(filled_perfect_test_df$total_tested_4wk == filled_perfect_test_df$obs_4wk) == nrow(filled_perfect_test_df)
 
 # %%
-perfect_test_long_df <- perfect_test_df %>%
+filled_perfect_test_df <- filled_perfect_test_df %>%
   pivot_longer(
     cols = c(-date),
     names_to = c("type", "aggregation"),
@@ -167,7 +170,7 @@ perfect_test_long_df <- perfect_test_df %>%
   mutate(aggregation = factor(aggregation, levels = c("4wk", "2wk", "1wk")))
 
 # %%
-perfect_test_long_df %>%
+filled_perfect_test_df %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
   ) +
@@ -185,11 +188,12 @@ perfect_test_long_df %>%
 rdt_8080_test_chars <- list(prop_tested = 1.0, sensitivity = 0.8, specificity = 0.8)
 rdt_8080_test_df <- calculate_test_characteristics(noise_df, aggregation_weeks = 1, rdt_8080_test_chars) %>%
   calculate_test_characteristics(aggregation_weeks = 2, rdt_8080_test_chars) %>%
-  calculate_test_characteristics(aggregation_weeks = 4, rdt_8080_test_chars) %>%
-  fill_aggregate_cases()
+  calculate_test_characteristics(aggregation_weeks = 4, rdt_8080_test_chars)
+
+filled_rdt_8080_test_df <- fill_aggregate_cases(rdt_8080_test_df)
 
 # %%
-rdt_8080_test_long_df <- rdt_8080_test_df %>%
+filled_rdt_8080_test_long_df <- filled_rdt_8080_test_df %>%
   pivot_longer(
     cols = c(-date),
     names_to = c("type", "aggregation"),
@@ -199,7 +203,7 @@ rdt_8080_test_long_df <- rdt_8080_test_df %>%
   mutate(aggregation = factor(aggregation, levels = c("4wk", "2wk", "1wk")))
 
 # %%
-rdt_8080_test_long_df %>%
+filled_rdt_8080_test_long_df %>%
   filter(type %in% c("total_tested", "test_pos", "test_neg", "cases")) %>%
   ggplot(
     aes(x = date, y = values, color = type)
@@ -210,3 +214,70 @@ rdt_8080_test_long_df %>%
   labs(x = "Date", y = "Incidence", color = "Type") +
   theme_minimal()
 
+# %%
+analysis <- function(data,params){
+  get_stats(
+    data,
+    center_trend = params$center_trend,
+    stat_trend = params$stat_trend,
+    center_kernel = params$center_kernel,
+    stat_kernel = params$stat_kernel,
+    center_bandwidth = params$center_bandwidth,
+    stat_bandwidth = params$stat_bandwidth,
+    lag = params$lag)
+}
+
+bandwidth_weeks <- 52
+bandwidth <- bandwidth_weeks * 7 # days
+
+analysis_params_1w <- list(
+  center_trend = "local_constant",
+  stat_trend = "local_constant",
+  center_kernel = "uniform",
+  stat_kernel = "uniform" ,
+  center_bandwidth = bandwidth_weeks,
+  stat_bandwidth = bandwidth_weeks,
+  lag = 1
+)
+
+analysis_params_4w <- analysis_params_2w <- analysis_params_1w
+analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- bandwidth_weeks/2
+analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks/4
+
+## CDC Epiweek to Dates
+## returns the start date of the CDC epiweek
+cdcweekToDate <- function(epiweek, weekday = 0, year = NULL, week = NULL) {
+  if(missing(epiweek)) {
+    year <- year
+    week <- week
+  }else{
+    year <- epiweek %/% 1e2
+    week <- epiweek %% 1e2
+  }
+  jan1 <- as.Date(ISOdate(year,1,1))
+  jan1.wday <- as.POSIXlt(jan1)$wday
+  if (jan1.wday < 4) {
+    origin <- jan1 - jan1.wday
+  }else{
+    origin <- jan1 + (7-jan1.wday)
+  }
+  date <- origin+(week-1)*7+weekday
+  return(date)
+}
+
+obsdate <- cdcweekToDate(year=1990, week=34-31, weekday=6)
+
+filter_statdata <- function(data, aggregation_weeks = 1, obsdate, analysis_params){
+  test_pos_col <- paste0("test_pos_", aggregation_weeks, "wk")
+  statdata <- filter(data, date <= obsdate) %>%
+    select(test_pos_col) %>%
+    drop_na() %>%
+    .[[test_pos_col]]
+  return(analysis(statdata, analysis_params))
+}
+
+agg_stats <- map2(
+  list(1, 2, 4),
+  list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
+  ~filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, obsdate = obsdate, analysis_params = .y)
+)

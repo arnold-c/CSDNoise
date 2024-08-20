@@ -366,8 +366,15 @@ rdt_8080_ews_tau_df <- map2_dfr(
   }
 )
 
+
 # %%
-ews_plot <- function(ews_df, tau_df, ews = variance) {
+filter(rdt_8080_ews_long_df, statistic == "variance") %>%
+  drop_na() %>%
+  group_by(aggregation) %>%
+  filter(date == last(date))
+
+# %%
+ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive", test_type = "RDT 80/80, 100% Testing") {
   plot <- ews_df %>%
     filter(statistic == {{ews}}) %>%
     drop_na() %>%
@@ -377,7 +384,12 @@ ews_plot <- function(ews_df, tau_df, ews = variance) {
     geom_line(aes(group = aggregation), na.rm = TRUE) +
     scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
     scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
-    labs(title = "Test Positive Variance: RDT 80/80, 100% Testing", x = "Date", y = "Variance", color = "Aggregation") +
+    labs(
+      title = paste0(str_to_title(ews_type), " ", str_to_title(ews), ": ", str_to_title(test_type)),
+      x = "Date",
+      y = str_to_title(ews),
+      color = "Aggregation"
+    ) +
     theme_minimal()
 
   tau_label_df <- ews_df %>%
@@ -415,31 +427,12 @@ ews_plot <- function(ews_df, tau_df, ews = variance) {
   return(plot)
 }
 
-ews_plot(rdt_8080_ews_long_df, rdt_8080_ews_tau_df, ews = "variance")
+rdt_8080_var_plot <- ews_plot(rdt_8080_ews_long_df, rdt_8080_ews_tau_df, ews = "variance")
+rdt_8080_var_plot
+
 
 # %%
-filter(rdt_8080_ews_long_df, statistic == "variance") %>%
-  drop_na() %>%
-  group_by(aggregation) %>%
-  filter(date == last(date))
-
-# %%
-rdt_8080_ews_plot <- rdt_8080_ews_long_df %>%
-  filter(statistic == "variance") %>%
-  drop_na() %>%
-  ggplot(
-    aes(x = date, y = value, color = aggregation)
-  ) +
-  geom_line(aes(group = aggregation), na.rm = TRUE) +
-  scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
-  scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
-  labs(title = "Test Positive Variance: RDT 80/80, 100% Testing", x = "Date", y = "Variance", color = "Aggregation") +
-  theme_minimal()
-
-rdt_8080_ews_plot
-
-# %%
-rdt_8080_ews_plot / rdt_8080_test_pos_plot
+rdt_8080_var_plot / rdt_8080_test_pos_plot
 
 # %%
 rdt_8080_ews_df %>%

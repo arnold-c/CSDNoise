@@ -279,22 +279,31 @@ analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- band
 analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks/4
 
 # %%
-filter_statdata <- function(data, aggregation_weeks = 1, obsdate, analysis_params){
-  test_pos_col <- paste0("test_pos_", aggregation_weeks, "wk")
+filter_statdata <- function(data, aggregation_weeks = 1, inc_var = "test_pos", obsdate, analysis_params){
+  inc_col <- paste0(inc_var, "_", aggregation_weeks, "wk")
   statdata <- filter(data, date <= obsdate) %>%
-    select(date, test_pos_col) %>%
+    select(date, inc_col) %>%
     drop_na()
 
-  return(list(dates = statdata$date, ews = analysis(statdata[[test_pos_col]], analysis_params)))
+  return(list(dates = statdata$date, ews = analysis(statdata[[inc_col]], analysis_params)))
 }
 
-agg_stats <- list(1, 2, 4) %>%
+rdt_8080_test_pos_stats <- list(1, 2, 4) %>%
   set_names() %>%
   map2(
     .,
   list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
   ~filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, obsdate = obsdate, analysis_params = .y)
 )
+
+cases_stats <- list(1, 2, 4) %>%
+  set_names() %>%
+  map2(
+    .,
+  list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
+  ~filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, inc_var = "cases", obsdate = obsdate, analysis_params = .y)
+)
+
 
 # %%
 rdt_8080_test_pos_plot <- filled_rdt_8080_test_long_df %>%
@@ -319,8 +328,8 @@ rdt_8080_test_pos_plot / incidence_plot
 # %%
 extract_ews_to_df <- function(ews_list, aggregation_weeks = 1) {
   bind_cols(
-    date = agg_stats[[paste0(aggregation_weeks)]]$dates,
-    as_tibble(agg_stats[[paste0(aggregation_weeks)]]$ews$stats)
+    date = rdt_8080_test_pos_stats[[paste0(aggregation_weeks)]]$dates,
+    as_tibble(rdt_8080_test_pos_stats[[paste0(aggregation_weeks)]]$ews$stats)
   ) %>%
     rename_with(
     .cols = -date,
@@ -329,12 +338,12 @@ extract_ews_to_df <- function(ews_list, aggregation_weeks = 1) {
 }
 
 rdt_8080_ews_df <- left_join(
-    extract_ews_to_df(agg_stats[[1]]),
-    extract_ews_to_df(agg_stats[[2]], aggregation_weeks = 2),
+    extract_ews_to_df(rdt_8080_test_pos_stats[[1]]),
+    extract_ews_to_df(rdt_8080_test_pos_stats[[2]], aggregation_weeks = 2),
     by = "date"
   ) %>%
   left_join(.,
-    extract_ews_to_df(agg_stats[[3]], aggregation_weeks = 4),
+    extract_ews_to_df(rdt_8080_test_pos_stats[[3]], aggregation_weeks = 4),
     by = "date"
   )
 
@@ -346,9 +355,25 @@ rdt_8080_ews_long_df <- rdt_8080_ews_df %>%
     values_to = "value"
   )
 
-# %%
-# rdt_8080_ews_tau
+cases_ews_df <- left_join(
+  extract_ews_to_df(cases_stats[[1]]),
+  extract_ews_to_df(cases_stats[[2]], aggregation_weeks = 2),
+  by = "date"
+) %>%
+  left_join(.,
+    extract_ews_to_df(cases_stats[[3]], aggregation_weeks = 4),
+    by = "date"
+  )
 
+cases_ews_long_df <- cases_ews_df %>%
+  pivot_longer(
+    cols = -date,
+    names_to = c("statistic", "aggregation"),
+    names_pattern = "(.+)_(.+)",
+    values_to = "value"
+  )
+
+# %%
 extract_tau <- function(ews_list, aggregation_weeks = 1) {
   tibble(
     aggregation = paste0(aggregation_weeks, "wk"),
@@ -358,8 +383,17 @@ extract_tau <- function(ews_list, aggregation_weeks = 1) {
 }
 
 rdt_8080_ews_tau_df <- map2_dfr(
-  names(agg_stats),
-  agg_stats,
+  names(rdt_8080_test_pos_stats),
+  rdt_8080_test_pos_stats,
+  function(.x, .y) {
+    num <- as.numeric(.x)
+    extract_tau(.y, aggregation_weeks = num)
+  }
+)
+
+cases_ews_tau_df <- map2_dfr(
+  names(cases_stats),
+  cases_stats,
   function(.x, .y) {
     num <- as.numeric(.x)
     extract_tau(.y, aggregation_weeks = num)
@@ -368,13 +402,8 @@ rdt_8080_ews_tau_df <- map2_dfr(
 
 
 # %%
-filter(rdt_8080_ews_long_df, statistic == "variance") %>%
-  drop_na() %>%
-  group_by(aggregation) %>%
-  filter(date == last(date))
-
-# %%
 ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive", test_type = "RDT 80/80, 100% Testing") {
+  test_title <- ifelse(is.null(test_type), "", paste0(": ", str_to_title(test_type)))
   plot <- ews_df %>%
     filter(statistic == {{ews}}) %>%
     drop_na() %>%
@@ -385,7 +414,7 @@ ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive",
     scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
     scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
     labs(
-      title = paste0(str_to_title(ews_type), " ", str_to_title(ews), ": ", str_to_title(test_type)),
+      title = paste0(str_to_title(ews_type), " ", str_to_title(ews), test_title),
       x = "Date",
       y = str_to_title(ews),
       color = "Aggregation"
@@ -427,14 +456,16 @@ ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive",
   return(plot)
 }
 
+# %%
 rdt_8080_var_plot <- ews_plot(rdt_8080_ews_long_df, rdt_8080_ews_tau_df, ews = "variance")
 rdt_8080_var_plot
-
 
 # %%
 rdt_8080_var_plot / rdt_8080_test_pos_plot
 
 # %%
-rdt_8080_ews_df %>%
-  select(date, starts_with("variance"), -contains("first")) %>%
-    print(n = 100)
+cases_var_plot <- ews_plot(cases_ews_long_df, cases_ews_tau_df, ews = "variance", ews_type = "Actual Incidence", test_type = NULL)
+cases_var_plot
+
+# %%
+cases_var_plot / incidence_plot

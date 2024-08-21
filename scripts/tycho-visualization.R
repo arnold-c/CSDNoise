@@ -281,7 +281,7 @@ tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk <- window(tychoL1.measles.CA.ca
 # Get Stats ---------------------------------------------------------------
 
 # %%
-analysis_params <- list(
+analysis_params_1wk <- list(
   center_trend = "local_constant",
   stat_trend = "local_constant",
   center_kernel = "uniform",
@@ -293,19 +293,25 @@ analysis_params <- list(
 
 # %%
 # weekly reports
-analysis_params$center_bandwidth <- analysis_params$stat_bandwidth <- bandwidth_weeks
-tychoL1.measles.CA.cases.imp.zoo.statswindow.stats <- analysis(tychoL1.measles.CA.cases.imp.zoo.statswindow, analysis_params)
+analysis_params_1wk$center_bandwidth <- analysis_params_1wk$stat_bandwidth <- bandwidth_weeks
+tychoL1.measles.CA.cases.imp.zoo.statswindow.stats <- analysis(tychoL1.measles.CA.cases.imp.zoo.statswindow, analysis_params_1wk)
 
 # %%
 # bi-weekly reports
-analysis_params$center_bandwidth <- analysis_params$stat_bandwidth <- bandwidth_weeks / 2
-tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk.stats <- analysis(tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk, analysis_params)
+analysis_params_2wk <- analysis_params_1wk
+analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- bandwidth_weeks / 2
+tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk.stats <- analysis(tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk, analysis_params_2w)
 
 # %%
 # four-weekly reports
-analysis_params$center_bandwidth <- analysis_params$stat_bandwidth <- bandwidth_weeks / 4
-tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk.stats <- analysis(tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk, analysis_params)
+analysis_params_4wk <- analysis_params_1wk
+analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks / 4
+tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk.stats <- analysis(tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk, analysis_params_4w)
 
+# %%
+saveRDS(tychoL1.measles.CA.cases.imp.zoo.statswindow.stats, here::here("out", "tycho_CA_measles_stats_1wk.rds"))
+saveRDS(tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk.stats, here::here("out", "tycho_CA_measles_stats_2wk.rds"))
+saveRDS(tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk.stats, here::here("out", "tycho_CA_measles_stats_4wk.rds"))
 
 # Set Y ranges ------------------------------------------------------------
 
@@ -325,7 +331,7 @@ var.max.actual <- max(
   tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk.stats$stats$variance,
   tychoL1.measles.CA.cases.imp.zoo.statswindow.stats$stats$variance
 )
-var.max <- 10000 # manually set plot limit
+var.max <- 20000 # manually set plot limit
 
 var.tick.interval <- 2000
 var.ticks <- seq(from = var.min, to = var.max, by = var.tick.interval)
@@ -405,25 +411,25 @@ rect(obsdate, var.min, plotxmax + bandwidth, var.max, border = F, col = color.om
 abline(h = var.ticks, col = "grey")
 
 ## weekly reports
-tmp.zoo <- zoo(
+var_1wk <- zoo(
   tychoL1.measles.CA.cases.imp.zoo.statswindow.stats$stats$variance,
   time(tychoL1.measles.CA.cases.imp.zoo.statswindow)
 )
-lines(tmp.zoo, col = color.1wk, lwd = lwd.1wk)
+lines(var_1wk, col = color.1wk, lwd = lwd.1wk)
 
 ## bi-weekly reports
-tmp.zoo <- zoo(
+var_2wk <- zoo(
   tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk.stats$stats$variance,
   time(tychoL1.measles.CA.cases.imp.zoo.statswindow.2wk)
 )
-lines(tmp.zoo, col = color.2wk, lwd = lwd.2wk)
+lines(var_2wk, col = color.2wk, lwd = lwd.2wk)
 
 ## four-weekly reports
-tmp.zoo <- zoo(
+var_4wk <- zoo(
   tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk.stats$stats$variance,
   time(tychoL1.measles.CA.cases.imp.zoo.statswindow.4wk)
 )
-lines(tmp.zoo, col = color.4wk, lwd = lwd.4wk)
+lines(var_4wk, col = color.4wk, lwd = lwd.4wk)
 
 ## Axes
 
@@ -565,6 +571,7 @@ title(xlab = "Year", line = 2.5)
 
 # Close PDF ---------------------------------------------------------------
 
+# %%
 invisible(dev.off())
 
 

@@ -4,6 +4,14 @@ library(tidyverse)
 library(here)
 library(patchwork)
 
+theme_set(
+  theme_minimal() +
+    theme(
+      title = element_text(face = "bold"),
+      plot.title = element_text(hjust = 0.5)
+    )
+)
+
 # %%
 source(here::here("src", "tycho-functions.R"))
 
@@ -24,6 +32,10 @@ tycho_CA_measles_wide_plotdata <- read_csv(here::here("out", "tycho_CA_measles_w
 
 tycho_CA_measles_long_statsdata <- read_csv(here::here("out", "tycho_CA_measles_long_statsdata.csv"))
 tycho_CA_measles_wide_statsdata <- read_csv(here::here("out", "tycho_CA_measles_wide_statsdata.csv"))
+
+# %%
+# confirm all data is weekly aggregated
+unique(diff(tycho_CA_measles_wide_plotdata$date)) == 7
 
 # %%
 average_incidence <- tycho_CA_measles_wide_plotdata %>%
@@ -75,13 +87,12 @@ incidence_plot <- filled_aggregate_plotdata %>%
   geom_area(aes(alpha = aggregation), position = "identity") +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-  labs(title = "Actual Incidence", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation") +
-  theme_minimal()
+  labs(title = "Actual Incidence", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 incidence_plot
 
 # %%
-add_noise <- function(incidence_df, mean_incidence_df = NULL, aggregation_weeks = 1, noise_pc = 100) {
+add_noise <- function(incidence_df, mean_incidence_df, mean_incidence = NULL, aggregation_weeks = 1, noise_pc = 100) {
   cases_col <- paste0("cases_", aggregation_weeks, "wk")
   noise_col <- paste0("noise_", aggregation_weeks, "wk")
   obs_col <- paste0("obs_", aggregation_weeks, "wk")
@@ -98,6 +109,7 @@ add_noise <- function(incidence_df, mean_incidence_df = NULL, aggregation_weeks 
   return(incidence_df)
 }
 
+# %%
 set.seed(1234)
 
 noise_df <- add_noise(tycho_CA_measles_wide_plotdata, average_incidence, aggregation_weeks = 1, noise_pc = 100) %>%
@@ -121,6 +133,7 @@ filled_noise_long_df
 
 # %%
 filled_noise_long_df %>%
+  mutate(type = factor(type, levels = c("obs", "noise", "cases"))) %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
   ) +
@@ -130,8 +143,7 @@ filled_noise_long_df %>%
   facet_wrap(~type, scales = "free_y", ncol = 1) +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-  labs(x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation") +
-  theme_minimal()
+  labs(x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 # %%
 calculate_test_characteristics <- function(inc_noise_df, aggregation_weeks = 1, test_chars = list(prop_tested = 1.0, sensitivity = 1.0, specificity = 1.0)) {
@@ -188,6 +200,12 @@ filled_perfect_test_long_df <- filled_perfect_test_df %>%
 
 # %%
 filled_perfect_test_long_df %>%
+  mutate(
+    type = factor(
+      type,
+      levels = c("test_pos", "test_neg", "total_tested", "obs", "noise", "cases")
+    )
+  ) %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
   ) +
@@ -197,9 +215,7 @@ filled_perfect_test_long_df %>%
   facet_wrap(~type, scales = "free_y", ncol = 1) +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-  labs(x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation") +
-  theme_minimal()
-
+  labs(title = "Perfect Test Characteristics", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 # %%
 rdt_8080_test_chars <- list(prop_tested = 1.0, sensitivity = 0.8, specificity = 0.8)
@@ -222,14 +238,17 @@ filled_rdt_8080_test_long_df <- filled_rdt_8080_test_df %>%
 # %%
 filled_rdt_8080_test_long_df %>%
   filter(type %in% c("total_tested", "test_pos", "test_neg", "cases")) %>%
+  mutate(type = factor(type, levels = c("test_pos", "test_neg", "total_tested", "cases"))) %>%
   ggplot(
-    aes(x = date, y = values, color = type)
+    aes(x = date, y = values, color = aggregation, fill = aggregation)
   ) +
   geom_line() +
+  scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
+  geom_area(aes(alpha = aggregation), position = "identity") +
+  scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-  facet_wrap(~aggregation, scales = "free_y", ncol = 1) +
-  labs(x = "Date", y = "Incidence", color = "Type") +
-  theme_minimal()
+  facet_wrap(~type, scales = "free_y", ncol = 1) +
+  labs(title = "RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 # %%
 analysis_params_1w <- list(
@@ -247,31 +266,46 @@ analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- band
 analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks / 4
 
 # %%
-filter_statdata <- function(data, aggregation_weeks = 1, inc_var = "test_pos", obsdate, analysis_params) {
-  inc_col <- paste0(inc_var, "_", aggregation_weeks, "wk")
+filter_statdata <- function(data, aggregation_wks = 1, inc_var = "test_pos", obsdate) {
+  analysis_params <- list(
+    center_trend = "local_constant",
+    stat_trend = "local_constant",
+    center_kernel = "uniform",
+    stat_kernel = "uniform",
+    center_bandwidth = bandwidth_weeks / aggregation_wks,
+    stat_bandwidth = bandwidth_weeks / aggregation_wks,
+    lag = 1
+  )
+
+  inc_col <- paste0(inc_var, "_", aggregation_wks, "wk")
   statdata <- filter(data, date <= obsdate) %>%
     select(date, inc_col) %>%
     drop_na()
 
-  return(list(dates = statdata$date, ews = analysis(statdata[[inc_col]], analysis_params)))
+  return(list(dates = statdata$date, analysis_params = analysis_params, ews = analysis(statdata[[inc_col]], analysis_params)))
 }
 
-rdt_8080_test_pos_stats <- list(1, 2, 4) %>%
-  set_names() %>%
-  map2(
+rdt_8080_test_pos_stats <- c(1, 2, 4) %>%
+  rlang::set_names(., paste0, "wk") %>%
+  purrr::map(
     .,
-    list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
-    ~ filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, obsdate = obsdate, analysis_params = .y)
+    ~ filter_statdata(rdt_8080_test_df, aggregation_wks = .x, obsdate = obsdate)
   )
 
-cases_stats <- list(1, 2, 4) %>%
-  set_names() %>%
-  map2(
+cases_stats <- c(1, 2, 4) %>%
+  rlang::set_names(., paste0, "wk") %>%
+  purrr::map(
     .,
-    list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
-    ~ filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, inc_var = "cases", obsdate = obsdate, analysis_params = .y)
+    ~ filter_statdata(rdt_8080_test_df, aggregation_wks = .x, inc_var = "cases", obsdate = obsdate)
   )
 
+# %%
+# Check stats
+tycho_CA_measles_stats_1wk <- readRDS(here::here("out", "tycho_CA_measles_stats_1wk.rds" ))
+tycho_CA_measles_stats_2wk <- readRDS(here::here("out", "tycho_CA_measles_stats_2wk.rds" ))
+tycho_CA_measles_stats_4wk <- readRDS(here::here("out", "tycho_CA_measles_stats_4wk.rds" ))
+
+sum(tycho_CA_measles_stats_1wk$stats$variance == cases_stats[["1wk"]]$ews$stats$variance) == length(tycho_CA_measles_stats_1wk$stats$variance)
 
 # %%
 rdt_8080_test_pos_plot <- filled_rdt_8080_test_long_df %>%
@@ -285,8 +319,7 @@ rdt_8080_test_pos_plot <- filled_rdt_8080_test_long_df %>%
   geom_area(aes(alpha = aggregation), position = "identity") +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-  labs(title = "Test Positive: RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation") +
-  theme_minimal()
+  labs(title = "Test Positive: RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 rdt_8080_test_pos_plot
 
@@ -295,25 +328,24 @@ rdt_8080_test_pos_plot / incidence_plot
 
 # %%
 extract_ews_to_df <- function(ews_list, aggregation_weeks = 1) {
+  aggregation <- paste0(aggregation_weeks, "wk")
   bind_cols(
-    date = rdt_8080_test_pos_stats[[paste0(aggregation_weeks)]]$dates,
-    as_tibble(rdt_8080_test_pos_stats[[paste0(aggregation_weeks)]]$ews$stats)
+    date = ews_list[[aggregation]]$dates,
+    as_tibble(ews_list[[aggregation]]$ews$stats)
   ) %>%
-    rename_with(
-      .cols = -date,
-      .fn = ~ paste0(.x, "_", aggregation_weeks, "wk")
-    )
+     rename_with(
+       .cols = -date,
+       .fn = ~ paste0(.x, "_", aggregation)
+     )
 }
 
-rdt_8080_ews_df <- left_join(
-  extract_ews_to_df(rdt_8080_test_pos_stats[[1]]),
-  extract_ews_to_df(rdt_8080_test_pos_stats[[2]], aggregation_weeks = 2),
-  by = "date"
+
+# %%
+rdt_8080_ews_df <- purrr::map(
+  c(1, 2, 4),
+  ~ extract_ews_to_df(rdt_8080_test_pos_stats, aggregation_weeks = .x)
 ) %>%
-  left_join(.,
-    extract_ews_to_df(rdt_8080_test_pos_stats[[3]], aggregation_weeks = 4),
-    by = "date"
-  )
+  reduce(left_join, by = "date")
 
 rdt_8080_ews_long_df <- rdt_8080_ews_df %>%
   pivot_longer(
@@ -323,15 +355,12 @@ rdt_8080_ews_long_df <- rdt_8080_ews_df %>%
     values_to = "value"
   )
 
-cases_ews_df <- left_join(
-  extract_ews_to_df(cases_stats[[1]]),
-  extract_ews_to_df(cases_stats[[2]], aggregation_weeks = 2),
-  by = "date"
+# %%
+cases_ews_df <- purrr::map(
+  c(1, 2, 4),
+  ~ extract_ews_to_df(cases_stats, aggregation_weeks = .x)
 ) %>%
-  left_join(.,
-    extract_ews_to_df(cases_stats[[3]], aggregation_weeks = 4),
-    by = "date"
-  )
+  reduce(left_join, by = "date")
 
 cases_ews_long_df <- cases_ews_df %>%
   pivot_longer(
@@ -342,9 +371,20 @@ cases_ews_long_df <- cases_ews_df %>%
   )
 
 # %%
-extract_tau <- function(ews_list, aggregation_weeks = 1) {
+# check stats df
+sum(tycho_CA_measles_stats_1wk$stats$variance == cases_ews_df$variance_1wk) == length(tycho_CA_measles_stats_1wk$stats$variance)
+sum(cases_stats[["1wk"]]$ews$stats$variance == cases_ews_df$variance_1wk) == length(cases_stats[["1wk"]]$ews$stats$variance)
+
+sum(tycho_CA_measles_stats_2wk$stats$variance == cases_ews_df$variance_2wk[!is.na(cases_ews_df$variance_2wk)]) == length(tycho_CA_measles_stats_2wk$stats$variance)
+sum(cases_stats[["2wk"]]$ews$stats$variance == cases_ews_df$variance_2wk[!is.na(cases_ews_df$variance_2wk)]) == length(cases_stats[["2wk"]]$ews$stats$variance)
+
+sum(tycho_CA_measles_stats_4wk$stats$variance == cases_ews_df$variance_4wk[!is.na(cases_ews_df$variance_4wk)]) == length(tycho_CA_measles_stats_4wk$stats$variance)
+sum(cases_stats[["4wk"]]$ews$stats$variance == cases_ews_df$variance_4wk[!is.na(cases_ews_df$variance_4wk)]) == length(cases_stats[["4wk"]]$ews$stats$variance)
+
+# %%
+extract_tau <- function(ews_list, aggregation = "1wk") {
   tibble(
-    aggregation = paste0(aggregation_weeks, "wk"),
+    aggregation = aggregation,
     statistic = names(ews_list$ews$taus),
     value = as.numeric(ews_list$ews$taus)
   )
@@ -354,8 +394,7 @@ rdt_8080_ews_tau_df <- map2_dfr(
   names(rdt_8080_test_pos_stats),
   rdt_8080_test_pos_stats,
   function(.x, .y) {
-    num <- as.numeric(.x)
-    extract_tau(.y, aggregation_weeks = num)
+    extract_tau(.y, aggregation = .x)
   }
 )
 
@@ -363,11 +402,15 @@ cases_ews_tau_df <- map2_dfr(
   names(cases_stats),
   cases_stats,
   function(.x, .y) {
-    num <- as.numeric(.x)
-    extract_tau(.y, aggregation_weeks = num)
+    extract_tau(.y, aggregation = .x)
   }
 )
 
+# %%
+# check tau values
+tycho_CA_measles_stats_1wk$taus$variance == filter(cases_ews_tau_df, aggregation == "1wk", statistic == "variance")$value
+tycho_CA_measles_stats_2wk$taus$variance == filter(cases_ews_tau_df, aggregation == "2wk", statistic == "variance")$value
+tycho_CA_measles_stats_4wk$taus$variance == filter(cases_ews_tau_df, aggregation == "4wk", statistic == "variance")$value
 
 # %%
 ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive", test_type = "RDT 80/80, 100% Testing") {
@@ -386,8 +429,7 @@ ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive",
       x = "Date",
       y = str_to_title(ews),
       color = "Aggregation"
-    ) +
-    theme_minimal()
+    )
 
   tau_label_df <- ews_df %>%
     filter(statistic == {{ ews }}) %>%
@@ -443,5 +485,7 @@ cases_var_plot
 cases_var_incidence_plot <- cases_var_plot / incidence_plot
 
 cases_var_incidence_plot
+
+ggsave(cases_var_incidence_plot, filename = here::here("plots", "tycho", "cases_var_incidence_plot.png"), width = 10, height = 5, dpi = 600)
 
 ggsave(cases_var_incidence_plot, filename = here::here("plots", "tycho", "cases_var_incidence_plot.png"), width = 10, height = 5, dpi = 600)

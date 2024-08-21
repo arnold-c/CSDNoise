@@ -5,48 +5,16 @@ library(here)
 library(patchwork)
 
 # %%
-
-## CDC Epiweek to Dates
-## returns the start date of the CDC epiweek
-cdcweekToDate <- function(epiweek, weekday = 0, year = NULL, week = NULL) {
-  if(missing(epiweek)) {
-    year <- year
-    week <- week
-  }else{
-    year <- epiweek %/% 1e2
-    week <- epiweek %% 1e2
-  }
-  jan1 <- as.Date(ISOdate(year,1,1))
-  jan1.wday <- as.POSIXlt(jan1)$wday
-  if (jan1.wday < 4) {
-    origin <- jan1 - jan1.wday
-  }else{
-    origin <- jan1 + (7-jan1.wday)
-  }
-  date <- origin+(week-1)*7+weekday
-  return(date)
-}
-
-analysis <- function(data,params){
-  get_stats(
-    data,
-    center_trend = params$center_trend,
-    stat_trend = params$stat_trend,
-    center_kernel = params$center_kernel,
-    stat_kernel = params$stat_kernel,
-    center_bandwidth = params$center_bandwidth,
-    stat_bandwidth = params$stat_bandwidth,
-    lag = params$lag)
-}
+source(here::here("src", "tycho-functions.R"))
 
 bandwidth_weeks <- 52
 bandwidth <- bandwidth_weeks * 7 # days
 
-obsdate <- cdcweekToDate(year=1990, week=34-31, weekday=6)
+obsdate <- cdcweekToDate(year = 1990, week = 34 - 31, weekday = 6)
 plotxmin.year <- 1984
-plotxmin <- cdcweekToDate(year=plotxmin.year, week=1, weekday=6)
+plotxmin <- cdcweekToDate(year = plotxmin.year, week = 1, weekday = 6)
 plotxmax.year <- 1992
-plotxmax <- cdcweekToDate(year=plotxmax.year, week=1, weekday=6) + bandwidth
+plotxmax <- cdcweekToDate(year = plotxmax.year, week = 1, weekday = 6) + bandwidth
 
 # %%
 tychoL1 <- read.csv(here::here("data", "Project_Tycho___Level_1_Data_20240813.csv"))
@@ -59,17 +27,17 @@ tycho_CA_measles_wide_statsdata <- read_csv(here::here("out", "tycho_CA_measles_
 
 # %%
 average_incidence <- tycho_CA_measles_wide_plotdata %>%
-    summarize(across(.cols = contains("cases"), .fns = ~mean(.x, na.rm = TRUE)))
+  summarize(across(.cols = contains("cases"), .fns = ~ mean(.x, na.rm = TRUE)))
 
 # %%
 mean_inc_noise <- tycho_CA_measles_long_plotdata %>%
   group_by(aggregation_weeks) %>%
-    summarize(mean_cases = mean(cases, na.rm = TRUE)) %>%
-    mutate(
-      noise_10pc = round(mean_cases * 0.1, 0),
-      noise_25pc = round(mean_cases * 0.25, 0),
-      noise_50pc = round(mean_cases * 0.5, 0)
-    )
+  summarize(mean_cases = mean(cases, na.rm = TRUE)) %>%
+  mutate(
+    noise_10pc = round(mean_cases * 0.1, 0),
+    noise_25pc = round(mean_cases * 0.25, 0),
+    noise_50pc = round(mean_cases * 0.5, 0)
+  )
 
 # %%
 fill_aggregate_cases <- function(data) {
@@ -79,8 +47,8 @@ fill_aggregate_cases <- function(data) {
   tibble(
     date = seq.Date(from = start_date, to = end_date, by = 1)
   ) %>%
-  left_join(data, by = "date") %>%
-  fill(c(-date), .direction = "down")
+    left_join(data, by = "date") %>%
+    fill(c(-date), .direction = "down")
 }
 
 filled_aggregate_plotdata <- fill_aggregate_cases(tycho_CA_measles_wide_plotdata)
@@ -177,7 +145,7 @@ calculate_test_characteristics <- function(inc_noise_df, aggregation_weeks = 1, 
   noise_tested <- round(inc_noise_df[[noise_col]] * test_chars$prop_tested, 0)
 
   true_positives <- round(cases_tested * test_chars$sensitivity, 0)
-  false_positive <- round(noise_tested * (1-test_chars$specificity), 0)
+  false_positive <- round(noise_tested * (1 - test_chars$specificity), 0)
 
   false_negatives <- cases_tested - true_positives
   true_negatives <- noise_tested - false_positive
@@ -268,18 +236,18 @@ analysis_params_1w <- list(
   center_trend = "local_constant",
   stat_trend = "local_constant",
   center_kernel = "uniform",
-  stat_kernel = "uniform" ,
+  stat_kernel = "uniform",
   center_bandwidth = bandwidth_weeks,
   stat_bandwidth = bandwidth_weeks,
   lag = 1
 )
 
 analysis_params_4w <- analysis_params_2w <- analysis_params_1w
-analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- bandwidth_weeks/2
-analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks/4
+analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- bandwidth_weeks / 2
+analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks / 4
 
 # %%
-filter_statdata <- function(data, aggregation_weeks = 1, inc_var = "test_pos", obsdate, analysis_params){
+filter_statdata <- function(data, aggregation_weeks = 1, inc_var = "test_pos", obsdate, analysis_params) {
   inc_col <- paste0(inc_var, "_", aggregation_weeks, "wk")
   statdata <- filter(data, date <= obsdate) %>%
     select(date, inc_col) %>%
@@ -292,17 +260,17 @@ rdt_8080_test_pos_stats <- list(1, 2, 4) %>%
   set_names() %>%
   map2(
     .,
-  list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
-  ~filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, obsdate = obsdate, analysis_params = .y)
-)
+    list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
+    ~ filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, obsdate = obsdate, analysis_params = .y)
+  )
 
 cases_stats <- list(1, 2, 4) %>%
   set_names() %>%
   map2(
     .,
-  list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
-  ~filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, inc_var = "cases", obsdate = obsdate, analysis_params = .y)
-)
+    list(analysis_params_1w, analysis_params_2w, analysis_params_4w),
+    ~ filter_statdata(rdt_8080_test_df, aggregation_weeks = .x, inc_var = "cases", obsdate = obsdate, analysis_params = .y)
+  )
 
 
 # %%
@@ -332,16 +300,16 @@ extract_ews_to_df <- function(ews_list, aggregation_weeks = 1) {
     as_tibble(rdt_8080_test_pos_stats[[paste0(aggregation_weeks)]]$ews$stats)
   ) %>%
     rename_with(
-    .cols = -date,
-    .fn = ~paste0(.x, "_", aggregation_weeks, "wk")
-  )
+      .cols = -date,
+      .fn = ~ paste0(.x, "_", aggregation_weeks, "wk")
+    )
 }
 
 rdt_8080_ews_df <- left_join(
-    extract_ews_to_df(rdt_8080_test_pos_stats[[1]]),
-    extract_ews_to_df(rdt_8080_test_pos_stats[[2]], aggregation_weeks = 2),
-    by = "date"
-  ) %>%
+  extract_ews_to_df(rdt_8080_test_pos_stats[[1]]),
+  extract_ews_to_df(rdt_8080_test_pos_stats[[2]], aggregation_weeks = 2),
+  by = "date"
+) %>%
   left_join(.,
     extract_ews_to_df(rdt_8080_test_pos_stats[[3]], aggregation_weeks = 4),
     by = "date"
@@ -405,7 +373,7 @@ cases_ews_tau_df <- map2_dfr(
 ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive", test_type = "RDT 80/80, 100% Testing") {
   test_title <- ifelse(is.null(test_type), "", paste0(": ", str_to_title(test_type)))
   plot <- ews_df %>%
-    filter(statistic == {{ews}}) %>%
+    filter(statistic == {{ ews }}) %>%
     drop_na() %>%
     ggplot(
       aes(x = date, y = value, color = aggregation)
@@ -422,7 +390,7 @@ ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive",
     theme_minimal()
 
   tau_label_df <- ews_df %>%
-    filter(statistic == {{ews}}) %>%
+    filter(statistic == {{ ews }}) %>%
     drop_na() %>%
     group_by(aggregation) %>%
     filter(date == last(date)) %>%
@@ -433,7 +401,7 @@ ews_plot <- function(ews_df, tau_df, ews = variance, ews_type = "Test Positive",
     )
 
   taus <- tau_df %>%
-    filter(statistic == {{ews}}) %>%
+    filter(statistic == {{ ews }}) %>%
     left_join(
       .,
       tau_label_df,
@@ -461,11 +429,19 @@ rdt_8080_var_plot <- ews_plot(rdt_8080_ews_long_df, rdt_8080_ews_tau_df, ews = "
 rdt_8080_var_plot
 
 # %%
-rdt_8080_var_plot / rdt_8080_test_pos_plot
+rdt_8080_var_test_pos_plot <- rdt_8080_var_plot / rdt_8080_test_pos_plot
+
+rdt_8080_var_test_pos_plot
+
+ggsave(rdt_8080_var_test_pos_plot, filename = here::here("plots", "tycho", "rdt_8080_var_test_pos_plot.png"), width = 10, height = 5, dpi = 600)
 
 # %%
 cases_var_plot <- ews_plot(cases_ews_long_df, cases_ews_tau_df, ews = "variance", ews_type = "Actual Incidence", test_type = NULL)
 cases_var_plot
 
 # %%
-cases_var_plot / incidence_plot
+cases_var_incidence_plot <- cases_var_plot / incidence_plot
+
+cases_var_incidence_plot
+
+ggsave(cases_var_incidence_plot, filename = here::here("plots", "tycho", "cases_var_incidence_plot.png"), width = 10, height = 5, dpi = 600)

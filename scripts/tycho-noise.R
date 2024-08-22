@@ -253,21 +253,6 @@ filled_rdt_8080_test_long_df %>%
   labs(title = "RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 # %%
-analysis_params_1w <- list(
-  center_trend = "local_constant",
-  stat_trend = "local_constant",
-  center_kernel = "uniform",
-  stat_kernel = "uniform",
-  center_bandwidth = bandwidth_weeks,
-  stat_bandwidth = bandwidth_weeks,
-  lag = 1
-)
-
-analysis_params_4w <- analysis_params_2w <- analysis_params_1w
-analysis_params_2w$center_bandwidth <- analysis_params_2w$stat_bandwidth <- bandwidth_weeks / 2
-analysis_params_4w$center_bandwidth <- analysis_params_4w$stat_bandwidth <- bandwidth_weeks / 4
-
-# %%
 filter_statdata <- function(data, aggregation_wks = 1, inc_var = "test_pos", obsdate) {
   analysis_params <- list(
     center_trend = "local_constant",

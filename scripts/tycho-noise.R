@@ -86,7 +86,7 @@ incidence_plot <- filled_aggregate_plotdata %>%
   scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
   geom_area(aes(alpha = aggregation), position = "identity") +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
-  scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
+  scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
   labs(title = "Actual Incidence", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 incidence_plot
@@ -214,7 +214,7 @@ filled_perfect_test_long_df %>%
   geom_area(aes(alpha = aggregation), position = "identity") +
   facet_wrap(~type, scales = "free_y", ncol = 1) +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
-  scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
+  scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
   labs(title = "Perfect Test Characteristics", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 # %%
@@ -318,7 +318,7 @@ rdt_8080_test_pos_plot <- filled_rdt_8080_test_long_df %>%
   scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
   geom_area(aes(alpha = aggregation), position = "identity") +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
-  scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
+  scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
   labs(title = "Test Positive: RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 rdt_8080_test_pos_plot
@@ -471,7 +471,7 @@ rdt_8080_var_plot <- ews_plot(rdt_8080_ews_long_df, rdt_8080_ews_tau_df, ews = "
 rdt_8080_var_plot
 
 # %%
-rdt_8080_var_test_pos_plot <- rdt_8080_var_plot / rdt_8080_test_pos_plot
+rdt_8080_var_test_pos_plot <- rdt_8080_var_plot / rdt_8080_test_pos_plot + plot_layout(axes = "collect")
 
 rdt_8080_var_test_pos_plot
 
@@ -482,7 +482,7 @@ cases_var_plot <- ews_plot(cases_ews_long_df, cases_ews_tau_df, ews = "variance"
 cases_var_plot
 
 # %%
-cases_var_incidence_plot <- cases_var_plot / incidence_plot
+cases_var_incidence_plot <- cases_var_plot / incidence_plot + plot_layout(axes = "collect")
 
 cases_var_incidence_plot
 

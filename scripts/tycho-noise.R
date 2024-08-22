@@ -476,3 +476,168 @@ cases_var_incidence_plot
 ggsave(cases_var_incidence_plot, filename = here::here("plots", "tycho", "cases_var_incidence_plot.png"), width = 10, height = 5, dpi = 600)
 
 ggsave(cases_var_incidence_plot, filename = here::here("plots", "tycho", "cases_var_incidence_plot.png"), width = 10, height = 5, dpi = 600)
+
+# %%
+simulate_and_collect_ews <- function(
+  data,
+  test_chars = list(prop_tested = 1.0, sensitivity = 1.0, specificity = 1.0),
+  nsims = 100,
+  noise_pc = 100,
+  aggregation_weeks = 1,
+  ews = "variance",
+  obsdate = obsdate
+) {
+  filtered_data <- filter(data, date <= obsdate) %>%
+    select(date, paste0("cases_", aggregation_weeks, "wk")) %>%
+    drop_na()
+
+  set.seed(1234)
+
+  observed_data_list <- purrr::map(
+    seq(1, nsims),
+    ~add_noise(
+      filtered_data,
+      # average_incidence,
+      aggregation_weeks = aggregation_weeks,
+      noise_pc = noise_pc
+    )
+  )
+
+  test_df_list <- purrr::map(
+    observed_data_list,
+    ~calculate_test_characteristics(.x, aggregation_weeks = aggregation_weeks, test_chars = test_chars)
+  )
+
+  # test_df <- bind_rows(
+  #   test_df_list,
+  #   .id = "sim"
+  # )
+
+  analysis_params <- list(
+    center_trend = "local_constant",
+    stat_trend = "local_constant",
+    center_kernel = "uniform",
+    stat_kernel = "uniform",
+    center_bandwidth = bandwidth_weeks / aggregation_weeks,
+    stat_bandwidth = bandwidth_weeks / aggregation_weeks,
+    lag = 1
+  )
+
+  stats <- purrr::map(
+    test_df_list,
+    function(.x) {
+      res <- analysis(.x[[paste0("test_pos_", aggregation_weeks, "wk")]], analysis_params)
+
+      return(list2(!!ews := res$stats[[ews]], tau = res$tau[[ews]]))
+    }
+  )
+
+  tau_df <- bind_rows(
+    purrr::map(
+      stats,
+      ~return(tibble(tau = pluck(.x, "tau")))
+    ),
+    .id = "sim"
+  )
+
+  ews_df <- bind_rows(
+      purrr::map(
+        stats,
+        function(.x) {
+          ews_vec <- pluck(.x, ews)
+          return(tibble(date = filtered_data$date, !!ews := ews_vec))
+        }
+      ),
+      .id = "sim"
+    )
+
+  return(list2(
+    # obs_df = filtered_data,
+    # test_df_list = test_df_list,
+    # test_df = test_df,
+    # stats = stats,
+    tau_df = tau_df,
+    !!paste0(ews, "_df") := ews_df
+  ))
+
+}
+
+# %%
+stats <- simulate_and_collect_ews(
+  tycho_CA_measles_wide_plotdata,
+  test_chars = list(prop_tested = 1.0, sensitivity = 0.8, specificity = 0.8),
+  nsims = 1000,
+  noise_pc = 100,
+  aggregation_weeks = 4,
+  ews = "variance",
+  obsdate = obsdate
+)
+
+# sum(filter(stats$test_df, sim == 1)$total_tested_4wk == filter(stats$test_df, sim == 2)$total_tested_4wk) == length(filter(stats$test_df, sim == 1)$total_tested_4wk)
+
+stats
+
+sum(filter(stats$variance_df, sim == 1)$variance == filter(stats$variance_df, sim == 20)$variance) == length(filter(stats$variance_df, sim == 1)$variance)
+
+# %%
+variance_mean <- stats$variance_df %>%
+  group_by(date) %>%
+  summarise(variance = mean(variance)) %>%
+  mutate(sim = "mean")
+
+ensemble_variance_plot <- stats$variance_df %>%
+  bind_rows(
+    transmute(
+      drop_na(filter(
+        cases_ews_long_df,
+        aggregation == "4wk",
+        statistic == "variance"
+      )),
+      date = date,
+      sim = "actual",
+      variance = value
+    ),
+    variance_mean
+  ) %>%
+  mutate(
+    color = factor(case_when(
+      sim == "actual" ~ "darkgreen",
+      sim == "mean" ~ "grey20",
+      .default = "darkorange"
+    ), levels = c("darkgreen", "grey20", "darkorange"))
+  ) %>%
+  ggplot(aes(x = date, y = variance, color = color, alpha = color, group = sim)) +
+    geom_line() +
+    scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
+    scale_color_identity(guide = "legend", labels = c("Actual", "Mean", "Simulation")) +
+    scale_alpha_manual(values = c(1.0, 1.0, 0.5), labels = c("Actual", "Mean", "Simulation")) +
+    labs(title = "Test Positive vs Incidence Tau: RDT 80/80, 100% Testing, 4wk Aggregation", x = "Date", y = "Variance", color = "", alpha = "")
+
+ensemble_variance_plot / incidence_plot + plot_layout(axes = "collect")
+
+# %%
+cases_variance_tau <- filter(cases_ews_tau_df, aggregation == "4wk", statistic == "variance")$value
+variance_tau_mean <- mean(stats$tau_df$tau)
+
+ensemble_variance_tau_plot <- stats$tau_df %>%
+  # bind_rows(
+  #   tibble(sim = "actual", tau = filter(cases_ews_tau_df, aggregation == "4wk", statistic == "variance")$value),
+  #   tibble(sim = "mean", tau = mean(stats$tau_df$tau))
+  # ) %>%
+  ggplot(aes(x = tau)) +
+    geom_histogram(color = "gray20", fill = "cornsilk") +
+    geom_vline(
+      xintercept = cases_variance_tau,
+      color = "darkred",
+      linewidth = 2
+    ) +
+    geom_vline(
+      xintercept = variance_tau_mean,
+      color = "navy",
+      linewidth = 2
+    ) +
+    annotate("label", x = cases_variance_tau + 0.002, y = 1000/10, label = "Actual", color = "darkred") +
+    annotate("label", x = variance_tau_mean - 0.002, y = 1000/10, label = "Mean", color = "navy") +
+    labs(title = "Test Positive Tau: RDT 80/80, 100% Testing, 4wk Aggregation", x = "Tau", y = "Count")
+
+ensemble_variance_tau_plot

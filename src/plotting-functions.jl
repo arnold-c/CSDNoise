@@ -13,6 +13,7 @@ using DataFrames
 using FLoops
 using LaTeXStrings
 using NaNMath: NaNMath
+using Dates
 
 seircolors = ["dodgerblue4", "green", "firebrick3", "chocolate2", "purple"]
 seir_state_labels = ["S", "E", "I", "R", "N"]
@@ -1756,6 +1757,7 @@ function Reff_ews_plot(
 
     return fig
 end
+
 function line_and_hline!(
     ax,
     times,
@@ -1794,4 +1796,131 @@ function line_and_hline!(
         linestyle = hlinestyle,
     )
     return nothing
+end
+
+function tycho_epicurve(
+    plot_dates,
+    weekly_cases,
+    biweekly_cases,
+    monthly_cases;
+    plottitle = "",
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+)
+    xticks = calculate_xticks(plot_dates)
+
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        title = plottitle,
+        xlabel = "Date",
+        ylabel = "Number of Cases",
+        xticks = xticks,
+    )
+
+    tycho_epicurve!(
+        ax,
+        plot_dates,
+        weekly_cases,
+        biweekly_cases,
+        monthly_cases;
+        obsdate = obsdate,
+    )
+
+    Legend(fig[1, 2], ax, "Aggregation (wks)")
+
+    return fig
+end
+
+function calculate_xticks(plot_dates)
+    unique_years = unique(Dates.year.(plot_dates))
+    year_indices = map(
+        x -> findfirst(==(x), Dates.year.(plot_dates)), unique_years
+    )
+
+    return (year_indices, string.(unique_years))
+end
+
+function tycho_epicurve!(
+    ax,
+    plot_dates,
+    weekly_cases,
+    biweekly_cases,
+    monthly_cases;
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+)
+    xaxes = 1:length(plot_dates)
+
+    obsdate_indices = findfirst(x -> x == obsdate, plot_dates)
+    vspan!(ax, obsdate_indices, maximum(xaxes); color = (:black, 0.1))
+
+    lines!(ax, xaxes, monthly_cases; color = :darkred, label = "Monthly")
+    band!(
+        ax, xaxes, 0, biweekly_cases; color = (:blue, 0.2), label = "Biweekly"
+    )
+    lines!(ax, xaxes, biweekly_cases; color = :blue)
+    band!(ax, xaxes, 0, weekly_cases; color = :black, label = "Weekly")
+
+    return nothing
+end
+
+function tycho_noise_epicurve(
+    plot_dates,
+    cases_tuple,
+    noise_tuple;
+    plottitle = "",
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+)
+    weekly_cases, biweekly_cases, monthly_cases = cases_tuple
+    weekly_noise, biweekly_noise, monthly_noise = noise_tuple
+
+    xticks = calculate_xticks(plot_dates)
+
+    fig = Figure()
+    gl = fig[1, 1] = GridLayout()
+
+    obsax = Axis(gl[1, 1]; title = "Observed", xlabel = "Date")
+    tycho_epicurve!(
+        obsax,
+        plot_dates,
+        weekly_cases .+ weekly_noise,
+        biweekly_cases .+ biweekly_noise,
+        monthly_cases .+ monthly_noise;
+        obsdate = obsdate,
+    )
+
+    noiseax = Axis(gl[2, 1]; title = "Noise", xlabel = "Date")
+    tycho_epicurve!(
+        noiseax,
+        plot_dates,
+        weekly_noise,
+        biweekly_noise,
+        monthly_noise;
+        obsdate = obsdate,
+    )
+
+    incax = Axis(
+        gl[3, 1];
+        title = "Incidence",
+        xlabel = "Date",
+        xticks = xticks,
+    )
+
+    tycho_epicurve!(
+        incax,
+        plot_dates,
+        weekly_cases,
+        biweekly_cases,
+        monthly_cases;
+        obsdate = obsdate,
+    )
+
+    map(ax -> hidexdecorations!(ax), (obsax, noiseax))
+    linkxaxes!(incax, noiseax, obsax)
+
+    Legend(fig[1, 2], incax, "Aggregation (wks)")
+
+    Label(fig[0, :], plottitle)
+    rowsize!(fig.layout, 0, Relative(0.03))
+
+    return fig
 end

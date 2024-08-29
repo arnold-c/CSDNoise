@@ -46,6 +46,12 @@ export aggregate_timeseries,
     compare_against_spaero, filter_spaero_comparison,
     EWSMetricSpecification, EWSMetrics
 
+include("ews-functions.jl")
+
+include("tycho-cleaning.jl")
+export cdc_week_to_date, calculate_aggregation_cases, fill_aggregation_values,
+    fill_aggregation_values!
+
 include("test-constants.jl")
 export CLINICAL_CASE_TEST_SPEC, EPI_LINKED_CASE_TEST_SPEC, CLINICAL_TEST_SPECS
 
@@ -111,7 +117,7 @@ export seircolors,
     compare_optimal_thresholds_chars_plot, create_optimal_thresholds_chars_plot,
     compare_optimal_thresholds_test_chars_plot,
     create_optimal_thresholds_test_chars_plot,
-    Reff_ews_plot
+    Reff_ews_plot, tycho_epicurve, tycho_noise_epicurve
 # @reexport using .PlottingFunctions
 
 include("ensemble-sim_single-scenario_plots.jl")
@@ -133,6 +139,7 @@ export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
 
 @static if false
     include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
+    include("scripts/tycho-visualizations.jl")
 end
 
 end

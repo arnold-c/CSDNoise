@@ -115,8 +115,8 @@ add_noise <- function(incidence_df, mean_incidence_df = NULL, aggregation_weeks 
 set.seed(1234)
 
 noise_100pc_df <- add_noise(tycho_CA_measles_wide_plotdata, average_incidence, aggregation_weeks = 1, noise_pc = 100) %>%
-  add_noise(average_incidence, aggregation_weeks = 2, noise_pc = 800) %>%
-  add_noise(average_incidence, aggregation_weeks = 4, noise_pc = 800)
+  add_noise(average_incidence, aggregation_weeks = 2, noise_pc = 100) %>%
+  add_noise(average_incidence, aggregation_weeks = 4, noise_pc = 100)
 
 
 filled_noise_100pc_df <- fill_aggregate_cases(noise_100pc_df)
@@ -165,7 +165,22 @@ filled_noise_long_100pc_df %>%
   facet_wrap(~type, scales = "free_y", ncol = 1) +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-  labs(x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
+  labs(title = "100% Poisson Noise", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
+
+# %%
+filled_noise_long_800pc_df %>%
+  mutate(type = factor(type, levels = c("obs", "noise", "cases"))) %>%
+  ggplot(
+    aes(x = date, y = values, color = aggregation, fill = aggregation)
+  ) +
+  geom_line() +
+  scale_color_manual(values = plot_colors, aesthetics = c("color", "fill")) +
+  geom_area(aes(alpha = aggregation), position = "identity") +
+  facet_wrap(~type, scales = "free_y", ncol = 1) +
+  scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
+  scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
+  labs(title = "800% Poisson Noise", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
+
 
 # %%
 calculate_test_characteristics <- function(inc_noise_df, aggregation_weeks = 1, test_chars = list(prop_tested = 1.0, sensitivity = 1.0, specificity = 1.0)) {

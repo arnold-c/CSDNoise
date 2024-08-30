@@ -285,7 +285,7 @@ filled_rdt_8080_test_100pc_noise_long_df %>%
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
   facet_wrap(~type, scales = "free_y", ncol = 1) +
-  labs(title = "RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
+  labs(title = "RDT 80/80, 100% Testing, 100% Noise", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 # %%
 filter_statdata <- function(data, aggregation_wks = 1, inc_var = "test_pos", obsdate) {
@@ -311,15 +311,15 @@ filter_statdata <- function(data, aggregation_wks = 1, inc_var = "test_pos", obs
 rdt_8080_test_pos_100pc_noise_stats <- c(1, 2, 4) %>%
   rlang::set_names(., paste0, "wk") %>%
   purrr::map(
-    .,rdt_8080_test_100pc_noise_df
-    ~ filter_statdata(rdt_8080_test_df, aggregation_wks = .x, obsdate = obsdate)
+    .,
+    ~ filter_statdata(rdt_8080_test_100pc_noise_df, aggregation_wks = .x, obsdate = obsdate)
   )
 
 cases_stats <- c(1, 2, 4) %>%
   rlang::set_names(., paste0, "wk") %>%
   purrr::map(
-    .,rdt_8080_test_100pc_noise_df
-    ~ filter_statdata(rdt_8080_test_df, aggregation_wks = .x, inc_var = "cases", obsdate = obsdate)
+    .,
+    ~ filter_statdata(rdt_8080_test_100pc_noise_df, aggregation_wks = .x, inc_var = "cases", obsdate = obsdate)
   )
 
 # %%
@@ -331,7 +331,7 @@ tycho_CA_measles_stats_4wk <- readRDS(here::here("out", "tycho_CA_measles_stats_
 sum(tycho_CA_measles_stats_1wk$stats$variance == cases_stats[["1wk"]]$ews$stats$variance) == length(tycho_CA_measles_stats_1wk$stats$variance)
 
 # %%filled_rdt_8080_test_100pc_noise_long_df
-rdt_8080_100pc_noise_test_pos_plot <- filled_rdt_8080_test_long_df %>%
+rdt_8080_100pc_noise_test_pos_plot <- filled_rdt_8080_test_100pc_noise_long_df %>%
   filter(type == "test_pos") %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
@@ -342,7 +342,7 @@ rdt_8080_100pc_noise_test_pos_plot <- filled_rdt_8080_test_long_df %>%
   geom_area(aes(alpha = aggregation), position = "identity") +
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
-  labs(title = "Test Positive: RDT 80/80, 100% Testing", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
+  labs(title = "Test Positive: RDT 80/80, 100% Testing, 100% Noise", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 rdt_8080_100pc_noise_test_pos_plot
 

@@ -7,6 +7,7 @@ using Dates
 using CSV
 using DataFrames
 using GLMakie
+using StatsBase
 
 include(srcdir("makie-plotting-setup.jl"))
 
@@ -14,7 +15,7 @@ include(srcdir("makie-plotting-setup.jl"))
 bandwidth_weeks = 52
 bandwidth = bandwidth_weeks * 7
 
-obsdate = cdc_week_to_date(1990, 34; weekday = 6)
+obsdate = cdc_week_to_date(1990, 3; weekday = 6)
 plotxmin_year = 1984
 plotxmin = cdc_week_to_date(plotxmin_year, 1; weekday = 6)
 plotxmax_year = 1992
@@ -291,4 +292,91 @@ tycho_test_positive_components_epicurve(
         filled_monthly_100pc_rdt_8080_noise_800pc_test_arr[:, :, 1],
     );
     plottitle = "RDT 80/80 (100% Testing), Noise (800% Poisson) Epicurves",
+)
+
+#%%
+weekly_obs_index = calculate_ews_enddate(
+    tycho_CA_measles_long_plotdata;
+    week_aggregation = 1,
+    obsdate = obsdate,
+)
+
+biweekly_obs_index = calculate_ews_enddate(
+    tycho_CA_measles_long_plotdata;
+    week_aggregation = 2,
+    obsdate = obsdate,
+)
+
+monthly_obs_index = calculate_ews_enddate(
+    tycho_CA_measles_long_plotdata;
+    week_aggregation = 4,
+    obsdate = obsdate,
+)
+
+weekly_cases_ewsmetrics = EWSMetrics(
+    EWSMetricSpecification(
+        Centered,
+        1,
+        52,
+        1,
+    ),
+    weekly_cases[1:weekly_obs_index],
+)
+
+biweekly_cases_ewsmetrics = EWSMetrics(
+    EWSMetricSpecification(
+        Centered,
+        1,
+        Int(52 / 2),
+        1,
+    ),
+    biweekly_cases[1:biweekly_obs_index],
+)
+
+monthly_cases_ewsmetrics = EWSMetrics(
+    EWSMetricSpecification(
+        Centered,
+        1,
+        Int(52 / 4),
+        1,
+    ),
+    monthly_cases[1:monthly_obs_index],
+)
+
+#%%
+# Compare against R version
+tycho_spaero_cases_ews_df = CSV.read(
+    projectdir("out", "cases_ews_df.csv"), DataFrame
+)
+tycho_spaero_cases_ews_tau_df = CSV.read(
+    projectdir("out", "cases_ews_tau_df.csv"), DataFrame
+)
+
+isapprox(
+    tycho_spaero_cases_ews_df.variance_1wk,
+    weekly_cases_ewsmetrics.variance;
+    atol = 1e-5,
+)
+
+isapprox(
+    parse.(
+        Float64,
+        String.(
+            filter(x -> !(x .== "NA"), tycho_spaero_cases_ews_df.variance_4wk)
+        ),
+    ),
+    monthly_cases_ewsmetrics.variance;
+    atol = 1e-5,
+)
+
+isapprox(
+    subset(tycho_spaero_cases_ews_tau_df, :aggregation => x -> x .== "1wk") |>
+    df -> subset(df, :statistic => x -> x .== "variance")[1, :value],
+    weekly_cases_ewsmetrics.variance_tau,
+)
+
+isapprox(
+    subset(tycho_spaero_cases_ews_tau_df, :aggregation => x -> x .== "4wk") |>
+    df -> subset(df, :statistic => x -> x .== "variance")[1, :value],
+    monthly_cases_ewsmetrics.variance_tau,
 )

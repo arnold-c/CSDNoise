@@ -384,6 +384,8 @@ cases_ews_df <- purrr::map(
 ) %>%
   reduce(left_join, by = "date")
 
+write_csv(cases_ews_df, here::here("out", "cases_ews_df.csv"))
+
 cases_ews_long_df <- cases_ews_df %>%
   pivot_longer(
     cols = -date,
@@ -391,6 +393,8 @@ cases_ews_long_df <- cases_ews_df %>%
     names_pattern = "(.+)_(.+)",
     values_to = "value"
   )
+
+write_csv(cases_ews_df, here::here("out", "cases_ews_df.csv"))
 
 # %%
 # check stats df
@@ -429,6 +433,8 @@ cases_ews_tau_df <- map2_dfr(
     extract_tau(.y, aggregation = .x)
   }
 )
+
+write_csv(cases_ews_tau_df, here::here("out", "cases_ews_tau_df.csv"))
 
 # %%
 # check tau values

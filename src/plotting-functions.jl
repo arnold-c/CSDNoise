@@ -1804,6 +1804,7 @@ function tycho_epicurve(
     biweekly_cases,
     monthly_cases;
     plottitle = "",
+    subtitle = "",
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
 )
     xticks = calculate_xticks(plot_dates)
@@ -1812,6 +1813,7 @@ function tycho_epicurve(
     ax = Axis(
         fig[1, 1];
         title = plottitle,
+        subtitle = subtitle,
         xlabel = "Date",
         ylabel = "Number of Cases",
         xticks = xticks,
@@ -1863,7 +1865,7 @@ function tycho_epicurve!(
     return nothing
 end
 
-function tycho_noise_epicurve(
+function tycho_noise_components_epicurve(
     plot_dates,
     cases_tuple,
     noise_tuple;
@@ -1916,6 +1918,88 @@ function tycho_noise_epicurve(
 
     map(ax -> hidexdecorations!(ax), (obsax, noiseax))
     linkxaxes!(incax, noiseax, obsax)
+
+    Legend(fig[1, 2], incax, "Aggregation (wks)")
+
+    Label(fig[0, :], plottitle)
+    rowsize!(fig.layout, 0, Relative(0.03))
+
+    return fig
+end
+
+function tycho_test_positive_components_epicurve(
+    plot_dates,
+    inc_vec_tuple,
+    test_arr_tuple;
+    plottitle = "",
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+)
+    weekly_cases, biweekly_cases, monthly_cases = inc_vec_tuple
+    test_weekly_cases_arr, test_biweekly_cases_arr, test_monthly_cases_arr =
+        test_arr_tuple
+
+    xticks = calculate_xticks(plot_dates)
+
+    fig = Figure()
+    gl = fig[1, 1] = GridLayout()
+
+    trueposax = Axis(gl[1, 1]; title = "True Positives", xlabel = "Date")
+    tycho_epicurve!(
+        trueposax,
+        plot_dates,
+        test_weekly_cases_arr[:, 3],
+        test_biweekly_cases_arr[:, 3],
+        test_monthly_cases_arr[:, 3];
+    )
+
+    falseposax = Axis(gl[2, 1]; title = "False Positives", xlabel = "Date")
+    tycho_epicurve!(
+        falseposax,
+        plot_dates,
+        test_weekly_cases_arr[:, 4],
+        test_biweekly_cases_arr[:, 4],
+        test_monthly_cases_arr[:, 4];
+    )
+
+    testposax = Axis(gl[3, 1]; title = "Test Positive", xlabel = "Date")
+    tycho_epicurve!(
+        testposax,
+        plot_dates,
+        test_weekly_cases_arr[:, 5],
+        test_biweekly_cases_arr[:, 5],
+        test_monthly_cases_arr[:, 5];
+    )
+
+    ntestedax = Axis(gl[4, 1]; title = "Total Tested", xlabel = "Date")
+    tycho_epicurve!(
+        ntestedax,
+        plot_dates,
+        test_weekly_cases_arr[:, 1] .+ test_weekly_cases_arr[:, 2],
+        test_biweekly_cases_arr[:, 1] .+ test_biweekly_cases_arr[:, 2],
+        test_monthly_cases_arr[:, 1] .+ test_monthly_cases_arr[:, 2];
+    )
+
+    incax = Axis(
+        gl[5, 1];
+        title = "Incidence",
+        xlabel = "Date",
+        xticks = xticks,
+    )
+
+    tycho_epicurve!(
+        incax,
+        plot_dates,
+        weekly_cases,
+        biweekly_cases,
+        monthly_cases;
+        obsdate = obsdate,
+    )
+
+    map(
+        ax -> hidexdecorations!(ax),
+        (trueposax, falseposax, testposax, ntestedax),
+    )
+    linkxaxes!(incax, trueposax, falseposax, testposax, ntestedax)
 
     Legend(fig[1, 2], incax, "Aggregation (wks)")
 

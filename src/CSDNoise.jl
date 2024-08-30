@@ -117,7 +117,8 @@ export seircolors,
     compare_optimal_thresholds_chars_plot, create_optimal_thresholds_chars_plot,
     compare_optimal_thresholds_test_chars_plot,
     create_optimal_thresholds_test_chars_plot,
-    Reff_ews_plot, tycho_epicurve, tycho_noise_epicurve
+    Reff_ews_plot, tycho_epicurve, tycho_noise_components_epicurve,
+    tycho_test_positive_components_epicurve
 # @reexport using .PlottingFunctions
 
 include("ensemble-sim_single-scenario_plots.jl")

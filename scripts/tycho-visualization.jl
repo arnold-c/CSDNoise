@@ -131,3 +131,164 @@ tycho_noise_components_epicurve(
     );
     plottitle = "Noise (100% Poisson) Epicurve",
 )
+
+#%%
+weekly_100pc_perfect_test_noise_100pc_test_arr = create_testing_arrs(
+    weekly_cases_arr,
+    weekly_noise_100pc_arr,
+    1.0,
+    IndividualTestSpecification(1.0, 1.0, 0),
+)
+
+filled_weekly_100pc_perfect_test_noise_100pc_test_arr = fill_aggregation_values(
+    weekly_100pc_perfect_test_noise_100pc_test_arr
+)
+
+biweekly_100pc_perfect_test_noise_100pc_test_arr = create_testing_arrs(
+    biweekly_cases_arr,
+    biweekly_noise_100pc_arr,
+    1.0,
+    IndividualTestSpecification(1.0, 1.0, 0),
+)
+
+filled_biweekly_100pc_perfect_test_noise_100pc_test_arr = fill_aggregation_values(
+    biweekly_100pc_perfect_test_noise_100pc_test_arr; week_aggregation = 2
+)
+
+monthly_100pc_perfect_test_noise_100pc_test_arr = create_testing_arrs(
+    monthly_cases_arr,
+    monthly_noise_100pc_arr,
+    1.0,
+    IndividualTestSpecification(1.0, 1.0, 0),
+)
+
+filled_monthly_100pc_perfect_test_noise_100pc_test_arr =
+    fill_aggregation_values(
+        monthly_100pc_perfect_test_noise_100pc_test_arr; week_aggregation = 4
+    ) |>
+    x -> x[1:length(plot_dates), :, :]
+
+#%%
+tycho_epicurve(
+    plot_dates,
+    filled_weekly_100pc_perfect_test_noise_100pc_test_arr[:, 5, 1],
+    filled_biweekly_100pc_perfect_test_noise_100pc_test_arr[:, 5, 1],
+    filled_monthly_100pc_perfect_test_noise_100pc_test_arr[:, 5, 1];
+    plottitle = "Test Positives",
+    subtitle = "Perfect Tests (100% Testing), Noise (100% Poisson) Epicurve",
+)
+
+#%%
+weekly_100pc_rdt_8080_noise_100pc_test_arr = create_testing_arrs(
+    weekly_cases_arr,
+    weekly_noise_100pc_arr,
+    1.0,
+    IndividualTestSpecification(0.8, 0.8, 0),
+)
+
+filled_weekly_100pc_rdt_8080_noise_100pc_test_arr = fill_aggregation_values(
+    weekly_100pc_rdt_8080_noise_100pc_test_arr
+)
+
+weekly_100pc_rdt_8080_noise_800pc_test_arr = create_testing_arrs(
+    weekly_cases_arr,
+    weekly_noise_800pc_arr,
+    1.0,
+    IndividualTestSpecification(0.8, 0.8, 0),
+)
+
+filled_weekly_100pc_rdt_8080_noise_800pc_test_arr = fill_aggregation_values(
+    weekly_100pc_rdt_8080_noise_800pc_test_arr
+)
+
+biweekly_100pc_rdt_8080_noise_100pc_test_arr = create_testing_arrs(
+    biweekly_cases_arr,
+    biweekly_noise_100pc_arr,
+    1.0,
+    IndividualTestSpecification(0.8, 0.8, 0),
+)
+
+filled_biweekly_100pc_rdt_8080_noise_100pc_test_arr = fill_aggregation_values(
+    biweekly_100pc_rdt_8080_noise_100pc_test_arr; week_aggregation = 2
+)
+
+biweekly_100pc_rdt_8080_noise_800pc_test_arr = create_testing_arrs(
+    biweekly_cases_arr,
+    biweekly_noise_800pc_arr,
+    1.0,
+    IndividualTestSpecification(0.8, 0.8, 0),
+)
+
+filled_biweekly_100pc_rdt_8080_noise_800pc_test_arr = fill_aggregation_values(
+    biweekly_100pc_rdt_8080_noise_800pc_test_arr; week_aggregation = 2
+)
+
+monthly_100pc_rdt_8080_noise_100pc_test_arr = create_testing_arrs(
+    monthly_cases_arr,
+    monthly_noise_100pc_arr,
+    1.0,
+    IndividualTestSpecification(0.8, 0.8, 0),
+)
+
+filled_monthly_100pc_rdt_8080_noise_100pc_test_arr =
+    fill_aggregation_values(
+        monthly_100pc_rdt_8080_noise_100pc_test_arr; week_aggregation = 4
+    ) |>
+    x -> x[1:length(plot_dates), :, :]
+
+monthly_100pc_rdt_8080_noise_800pc_test_arr = create_testing_arrs(
+    monthly_cases_arr,
+    monthly_noise_800pc_arr,
+    1.0,
+    IndividualTestSpecification(0.8, 0.8, 0),
+)
+
+filled_monthly_100pc_rdt_8080_noise_800pc_test_arr =
+    fill_aggregation_values(
+        monthly_100pc_rdt_8080_noise_800pc_test_arr; week_aggregation = 4
+    ) |>
+    x -> x[1:length(plot_dates), :, :]
+
+#%%
+tycho_epicurve(
+    plot_dates,
+    filled_weekly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+    filled_biweekly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+    filled_monthly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1];
+    plottitle = "Test Positives",
+    subtitle = "RDT 80/80 (100% Testing), Noise (100% Poisson) Epicurve",
+)
+
+#%%
+tycho_epicurve(
+    plot_dates,
+    filled_weekly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+    filled_biweekly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+    filled_monthly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1];
+    plottitle = "Test Positives",
+    subtitle = "RDT 80/80 (100% Testing), Noise (800% Poisson) Epicurve",
+)
+
+#%%
+tycho_test_positive_components_epicurve(
+    plot_dates,
+    (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
+    (
+        filled_weekly_100pc_rdt_8080_noise_100pc_test_arr[:, :, 1],
+        filled_biweekly_100pc_rdt_8080_noise_100pc_test_arr[:, :, 1],
+        filled_monthly_100pc_rdt_8080_noise_100pc_test_arr[:, :, 1],
+    );
+    plottitle = "RDT 80/80 (100% Testing), Noise (100% Poisson) Epicurves",
+)
+
+#%%
+tycho_test_positive_components_epicurve(
+    plot_dates,
+    (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
+    (
+        filled_weekly_100pc_rdt_8080_noise_800pc_test_arr[:, :, 1],
+        filled_biweekly_100pc_rdt_8080_noise_800pc_test_arr[:, :, 1],
+        filled_monthly_100pc_rdt_8080_noise_800pc_test_arr[:, :, 1],
+    );
+    plottitle = "RDT 80/80 (100% Testing), Noise (800% Poisson) Epicurves",
+)

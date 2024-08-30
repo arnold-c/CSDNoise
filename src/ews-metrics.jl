@@ -1,3 +1,4 @@
+using StatsBase: StatsBase
 using SumTypes
 using DataFrames: DataFrames
 using Bumper
@@ -12,6 +13,8 @@ function EWSMetrics(
     aggregated_timeseries = aggregate_timeseries(
         timeseries, ews_spec.aggregation
     )
+
+    aggregated_timeseries_indices = collect(1:length(aggregated_timeseries))
 
     mean_vec = spaero_mean(
         ews_spec.method, aggregated_timeseries, ews_spec.bandwidth
@@ -35,16 +38,31 @@ function EWSMetrics(
         ews_spec.bandwidth;
         lag = ews_spec.lag,
     )
+
+    cov_vec = spaero_cov(sd_vec, mean_vec)
+    iod_vec = spaero_iod(var_vec, mean_vec)
+    skew_vec = spaero_skew(m3_vec, sd3_vec)
+    kurtosis_vec = spaero_kurtosis(m4_vec, var2_vec)
+    autocor_vec = spaero_autocor(autocov_vec, sd_vec)
+
     return EWSMetrics(
         ews_spec,
         mean_vec,
         var_vec,
-        spaero_cov(sd_vec, mean_vec),
-        spaero_iod(var_vec, mean_vec),
-        spaero_skew(m3_vec, sd3_vec),
-        spaero_kurtosis(m4_vec, var2_vec),
+        cov_vec,
+        iod_vec,
+        skew_vec,
+        kurtosis_vec,
         autocov_vec,
-        spaero_autocor(autocov_vec, sd_vec),
+        autocor_vec,
+        StatsBase.corkendall(aggregated_timeseries_indices, mean_vec),
+        StatsBase.corkendall(aggregated_timeseries_indices, var_vec),
+        StatsBase.corkendall(aggregated_timeseries_indices, cov_vec),
+        StatsBase.corkendall(aggregated_timeseries_indices, iod_vec),
+        StatsBase.corkendall(aggregated_timeseries_indices, skew_vec),
+        StatsBase.corkendall(aggregated_timeseries_indices, kurtosis_vec),
+        StatsBase.corkendall(aggregated_timeseries_indices, autocov_vec),
+        StatsBase.corkendall(aggregated_timeseries_indices, autocor_vec),
     )
 end
 

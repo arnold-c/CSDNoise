@@ -35,6 +35,6 @@ end
 function fill_aggregation_values(vals; week_aggregation = 1)
     dimensions = ndims(vals)
     daily_aggregation = week_aggregation * 7
-    inner = dimensions == 1 ? daily_aggregation : (daily_aggregation, 1)
+    inner = (daily_aggregation, repeat([1], dimensions - 1)...)
     return repeat(vals; inner = inner)
 end

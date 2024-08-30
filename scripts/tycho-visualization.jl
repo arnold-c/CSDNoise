@@ -76,58 +76,58 @@ monthly_cases_arr = zeros(Int64, length(monthly_cases), 1, nsims)
 monthly_cases_arr .= monthly_cases
 
 #%%
-weekly_noise_100pc_arr =
-    create_noise_arr(
-        PoissonNoiseSpecification("poisson", 1.0),
-        weekly_cases_arr;
-    )[1] |>
-    x -> fill_aggregation_values(x)
+weekly_noise_100pc_arr = create_noise_arr(
+    PoissonNoiseSpecification("poisson", 1.0),
+    weekly_cases_arr;
+)[1]
+filled_weekly_noise_100pc_arr = fill_aggregation_values(weekly_noise_100pc_arr)
 
-weekly_noise_800pc_arr =
-    create_noise_arr(
-        PoissonNoiseSpecification("poisson", 8.0),
-        weekly_cases_arr;
-    )[1] |>
-    x -> fill_aggregation_values(x)
+weekly_noise_800pc_arr = create_noise_arr(
+    PoissonNoiseSpecification("poisson", 8.0),
+    weekly_cases_arr;
+)[1]
+filled_weekly_noise_800pc_arr = fill_aggregation_values(weekly_noise_800pc_arr)
 
-biweekly_noise_100pc_arr =
-    create_noise_arr(
-        PoissonNoiseSpecification("poisson", 1.0),
-        biweekly_cases_arr;
-    )[1] |>
-    x -> fill_aggregation_values(x; week_aggregation = 2)
+biweekly_noise_100pc_arr = create_noise_arr(
+    PoissonNoiseSpecification("poisson", 1.0),
+    biweekly_cases_arr;
+)[1]
+filled_biweekly_noise_100pc_arr = fill_aggregation_values(
+    biweekly_noise_100pc_arr; week_aggregation = 2
+)
 
-biweekly_noise_800pc_arr =
-    create_noise_arr(
-        PoissonNoiseSpecification("poisson", 8.0),
-        biweekly_cases_arr;
-    )[1] |>
-    x -> fill_aggregation_values(x; week_aggregation = 2)
+biweekly_noise_800pc_arr = create_noise_arr(
+    PoissonNoiseSpecification("poisson", 8.0),
+    biweekly_cases_arr;
+)[1]
+filled_biweekly_noise_800pc_arr = fill_aggregation_values(
+    biweekly_noise_800pc_arr; week_aggregation = 2
+)
 
-monthly_noise_100pc_arr =
-    create_noise_arr(
-        PoissonNoiseSpecification("poisson", 1.0),
-        monthly_cases_arr;
-    )[1] |>
-    x ->
-        fill_aggregation_values(x; week_aggregation = 4) |>
-        x -> x[1:length(plot_dates)]
+monthly_noise_100pc_arr = create_noise_arr(
+    PoissonNoiseSpecification("poisson", 1.0),
+    monthly_cases_arr;
+)[1]
+filled_monthly_noise_100pc_arr =
+    fill_aggregation_values(monthly_noise_100pc_arr; week_aggregation = 4) |>
+    x -> x[1:length(plot_dates), :]
 
-monthly_noise_800pc_arr =
-    create_noise_arr(
-        PoissonNoiseSpecification("poisson", 8.0),
-        monthly_cases_arr;
-    )[1] |>
-    x ->
-        fill_aggregation_values(x; week_aggregation = 4) |>
-        x -> x[1:length(plot_dates)]
+monthly_noise_800pc_arr = create_noise_arr(
+    PoissonNoiseSpecification("poisson", 8.0),
+    monthly_cases_arr;
+)[1]
+filled_monthly_noise_800pc_arr =
+    fill_aggregation_values(monthly_noise_800pc_arr; week_aggregation = 4) |>
+    x -> x[1:length(plot_dates), :]
 
 #%%
-tycho_noise_epicurve(
+tycho_noise_components_epicurve(
     plot_dates,
     (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
-    (weekly_noise_100pc_arr[:, 1],
-        biweekly_noise_100pc_arr[:, 1],
-        monthly_noise_100pc_arr[:, 1]);
+    (
+        filled_weekly_noise_100pc_arr[:, 1],
+        filled_biweekly_noise_100pc_arr[:, 1],
+        filled_monthly_noise_100pc_arr[:, 1],
+    );
     plottitle = "Noise (100% Poisson) Epicurve",
 )

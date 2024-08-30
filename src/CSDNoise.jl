@@ -49,8 +49,9 @@ export aggregate_timeseries,
 include("ews-functions.jl")
 
 include("tycho-cleaning.jl")
-export cdc_week_to_date, calculate_aggregation_cases, fill_aggregation_values,
-    fill_aggregation_values!
+export cdc_week_to_date,
+    calculate_aggregation_cases, fill_aggregation_values,
+    calculate_ews_enddate
 
 include("test-constants.jl")
 export CLINICAL_CASE_TEST_SPEC, EPI_LINKED_CASE_TEST_SPEC, CLINICAL_TEST_SPECS

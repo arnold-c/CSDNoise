@@ -26,9 +26,11 @@ function calculate_aggregation_cases(long_cases_df; week_aggregation = 1)
         long_cases_df,
         :aggregation_weeks => x -> x .== week_aggregation,
     )
-    return subset_cases[!, :cases],
-    fill_aggregation_values(
-        subset_cases[!, :cases]; week_aggregation = week_aggregation
+    return (
+        subset_cases[!, :cases],
+        fill_aggregation_values(
+            subset_cases[!, :cases]; week_aggregation = week_aggregation
+        ),
     )
 end
 
@@ -37,4 +39,23 @@ function fill_aggregation_values(vals; week_aggregation = 1)
     daily_aggregation = week_aggregation * 7
     inner = (daily_aggregation, repeat([1], dimensions - 1)...)
     return repeat(vals; inner = inner)
+end
+
+function calculate_ews_enddate(
+    long_cases_df;
+    week_aggregation = 1,
+    obsdate = cdc_week_to_date(1990, 34; weekday = 6),
+)
+    subset_cases = subset(
+        long_cases_df,
+        :aggregation_weeks => x -> x .== week_aggregation,
+    )
+
+    index = findfirst(x -> x == obsdate, subset_cases[!, :date])
+    if isnothing(index)
+        index = length(
+            subset(subset_cases, :date => x -> x .<= obsdate)[!, :date]
+        )
+    end
+    return index
 end

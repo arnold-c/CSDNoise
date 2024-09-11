@@ -8,6 +8,7 @@ using CSV
 using DataFrames
 using GLMakie
 using StatsBase
+using StructArrays
 
 include(srcdir("makie-plotting-setup.jl"))
 
@@ -379,4 +380,440 @@ isapprox(
     subset(tycho_spaero_cases_ews_tau_df, :aggregation => x -> x .== "4wk") |>
     df -> subset(df, :statistic => x -> x .== "variance")[1, :value],
     monthly_cases_ewsmetrics.variance_tau,
+)
+
+#%%
+weekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Centered,
+                1,
+                52,
+                1,
+            ),
+            weekly_100pc_rdt_8080_noise_100pc_test_arr[
+                1:weekly_obs_index, 5, sim
+            ],
+        ),
+        axes(weekly_100pc_rdt_8080_noise_100pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+biweekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Centered,
+                1,
+                Int64(52 / 2),
+                1,
+            ),
+            biweekly_100pc_rdt_8080_noise_100pc_test_arr[
+                1:biweekly_obs_index, 5, sim
+            ],
+        ),
+        axes(biweekly_100pc_rdt_8080_noise_100pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+monthly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Centered,
+                1,
+                Int64(52 / 4),
+                1,
+            ),
+            monthly_100pc_rdt_8080_noise_100pc_test_arr[
+                1:monthly_obs_index, 5, sim
+            ],
+        ),
+        axes(monthly_100pc_rdt_8080_noise_100pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+#%%
+weekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Centered,
+                1,
+                52,
+                1,
+            ),
+            weekly_100pc_rdt_8080_noise_800pc_test_arr[
+                1:weekly_obs_index, 5, sim
+            ],
+        ),
+        axes(weekly_100pc_rdt_8080_noise_800pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+biweekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Centered,
+                1,
+                Int64(52 / 2),
+                1,
+            ),
+            biweekly_100pc_rdt_8080_noise_800pc_test_arr[
+                1:biweekly_obs_index, 5, sim
+            ],
+        ),
+        axes(biweekly_100pc_rdt_8080_noise_800pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+monthly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Centered,
+                1,
+                Int64(52 / 4),
+                1,
+            ),
+            monthly_100pc_rdt_8080_noise_800pc_test_arr[
+                1:monthly_obs_index, 5, sim
+            ],
+        ),
+        axes(monthly_100pc_rdt_8080_noise_800pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+#%%
+tycho_tau_distribution(
+    (
+        weekly = weekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics,
+        biweekly = biweekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics,
+        monthly = monthly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics,
+    ),
+    weekly_cases_ewsmetrics,
+    :variance_tau;
+    plottitle = "RDT 80/80 (100% Testing), Noise (100% Poisson)\nCentered EWS: Variance Tau Distribution",
+)
+
+#%%
+tycho_tau_distribution(
+    (
+        weekly = weekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics,
+        biweekly = biweekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics,
+        monthly = monthly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics,
+    ),
+    weekly_cases_ewsmetrics,
+    :variance_tau;
+    plottitle = "RDT 80/80 (100% Testing), Noise (800% Poisson)\nCentered EWS: Variance Tau Distribution",
+)
+
+#%%
+weekly_100pc_rdt_8080_noise_100pc_centered_var_thresholds = expanding_ews_thresholds(
+    weekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+biweekly_100pc_rdt_8080_noise_100pc_centered_var_thresholds = expanding_ews_thresholds(
+    biweekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+monthly_100pc_rdt_8080_noise_100pc_centered_var_thresholds = expanding_ews_thresholds(
+    monthly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+#%%
+weekly_100pc_rdt_8080_noise_800pc_centered_var_thresholds = expanding_ews_thresholds(
+    weekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+biweekly_100pc_rdt_8080_noise_800pc_centered_var_thresholds = expanding_ews_thresholds(
+    biweekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+monthly_100pc_rdt_8080_noise_800pc_centered_var_thresholds = expanding_ews_thresholds(
+    monthly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+#%%
+tycho_epicurve(
+    plot_dates,
+    (
+        filled_weekly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+        filled_biweekly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+        filled_monthly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics[1].variance,
+        biweekly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics[1].variance,
+        monthly_100pc_rdt_8080_noise_100pc_centered_ewsmetrics[1].variance,
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_100pc_centered_var_thresholds[2][:, 2],
+        biweekly_100pc_rdt_8080_noise_100pc_centered_var_thresholds[2][:, 2],
+        monthly_100pc_rdt_8080_noise_100pc_centered_var_thresholds[2][:, 2],
+    );
+    plottitle = "Test Positives",
+    subtitle = "RDT 80/80 (100% Testing), Noise (100% Poisson) Epicurve",
+    ews_ylabel = "Variance",
+)
+
+#%%
+tycho_epicurve(
+    plot_dates,
+    (
+        filled_weekly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+        filled_biweekly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+        filled_monthly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics[1].variance,
+        biweekly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics[1].variance,
+        monthly_100pc_rdt_8080_noise_800pc_centered_ewsmetrics[1].variance,
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_800pc_centered_var_thresholds[2][:, 2],
+        biweekly_100pc_rdt_8080_noise_800pc_centered_var_thresholds[2][:, 2],
+        monthly_100pc_rdt_8080_noise_800pc_centered_var_thresholds[2][:, 2],
+    );
+    plottitle = "Test Positives",
+    subtitle = "RDT 80/80 (100% Testing), Noise (800% Poisson) Epicurve",
+    ews_ylabel = "Variance",
+)
+
+#%%
+weekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Backward,
+                1,
+                52,
+                1,
+            ),
+            weekly_100pc_rdt_8080_noise_100pc_test_arr[
+                1:weekly_obs_index, 5, sim
+            ],
+        ),
+        axes(weekly_100pc_rdt_8080_noise_100pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+biweekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Backward,
+                1,
+                Int64(52 / 2),
+                1,
+            ),
+            biweekly_100pc_rdt_8080_noise_100pc_test_arr[
+                1:biweekly_obs_index, 5, sim
+            ],
+        ),
+        axes(biweekly_100pc_rdt_8080_noise_100pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+monthly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Backward,
+                1,
+                Int64(52 / 4),
+                1,
+            ),
+            monthly_100pc_rdt_8080_noise_100pc_test_arr[
+                1:monthly_obs_index, 5, sim
+            ],
+        ),
+        axes(monthly_100pc_rdt_8080_noise_100pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+#%%
+weekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Backward,
+                1,
+                52,
+                1,
+            ),
+            weekly_100pc_rdt_8080_noise_800pc_test_arr[
+                1:weekly_obs_index, 5, sim
+            ],
+        ),
+        axes(weekly_100pc_rdt_8080_noise_800pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+biweekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Backward,
+                1,
+                Int64(52 / 2),
+                1,
+            ),
+            biweekly_100pc_rdt_8080_noise_800pc_test_arr[
+                1:biweekly_obs_index, 5, sim
+            ],
+        ),
+        axes(biweekly_100pc_rdt_8080_noise_800pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+monthly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics =
+    map(
+        sim -> EWSMetrics(
+            EWSMetricSpecification(
+                Backward,
+                1,
+                Int64(52 / 4),
+                1,
+            ),
+            monthly_100pc_rdt_8080_noise_800pc_test_arr[
+                1:monthly_obs_index, 5, sim
+            ],
+        ),
+        axes(monthly_100pc_rdt_8080_noise_800pc_test_arr, 3),
+    ) |>
+    x -> StructArray(x)
+
+#%%
+tycho_tau_distribution(
+    (
+        weekly = weekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics,
+        biweekly = biweekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics,
+        monthly = monthly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics,
+    ),
+    weekly_cases_ewsmetrics,
+    :variance_tau;
+    plottitle = "RDT 80/80 (100% Testing), Noise (100% Poisson)\nBackward EWS: Variance Tau Distribution",
+)
+
+#%%
+tycho_tau_distribution(
+    (
+        weekly = weekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics,
+        biweekly = biweekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics,
+        monthly = monthly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics,
+    ),
+    weekly_cases_ewsmetrics,
+    :variance_tau;
+    plottitle = "RDT 80/80 (100% Testing), Noise (800% Poisson)\nBackward EWS: Variance Tau Distribution",
+)
+
+#%%
+weekly_100pc_rdt_8080_noise_100pc_backward_var_thresholds = expanding_ews_thresholds(
+    weekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+biweekly_100pc_rdt_8080_noise_100pc_backward_var_thresholds = expanding_ews_thresholds(
+    biweekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+monthly_100pc_rdt_8080_noise_100pc_backward_var_thresholds = expanding_ews_thresholds(
+    monthly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+#%%
+weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds = expanding_ews_thresholds(
+    weekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+biweekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds = expanding_ews_thresholds(
+    biweekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+monthly_100pc_rdt_8080_noise_800pc_backward_var_thresholds = expanding_ews_thresholds(
+    monthly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics[1],
+    :variance,
+    Expanding;
+    percentiles = (0.8, 0.95),
+)
+
+#%%
+tycho_epicurve(
+    plot_dates,
+    (
+        filled_weekly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+        filled_biweekly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+        filled_monthly_100pc_rdt_8080_noise_100pc_test_arr[:, 5, 1],
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics[1].variance,
+        biweekly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics[1].variance,
+        monthly_100pc_rdt_8080_noise_100pc_backward_ewsmetrics[1].variance,
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_100pc_backward_var_thresholds[2][:, 2],
+        biweekly_100pc_rdt_8080_noise_100pc_backward_var_thresholds[2][:, 2],
+        monthly_100pc_rdt_8080_noise_100pc_backward_var_thresholds[2][:, 2],
+    );
+    plottitle = "Test Positives",
+    subtitle = "RDT 80/80 (100% Testing), Noise (100% Poisson) Epicurve",
+    ews_ylabel = "Variance",
+)
+
+#%%
+tycho_epicurve(
+    plot_dates,
+    (
+        filled_weekly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+        filled_biweekly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+        filled_monthly_100pc_rdt_8080_noise_800pc_test_arr[:, 5, 1],
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics[1].variance,
+        biweekly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics[1].variance,
+        monthly_100pc_rdt_8080_noise_800pc_backward_ewsmetrics[1].variance,
+    ),
+    (
+        weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 2],
+        biweekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 2],
+        monthly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 2],
+    );
+    plottitle = "Test Positives",
+    subtitle = "RDT 80/80 (100% Testing), Noise (800% Poisson) Epicurve",
+    ews_ylabel = "Variance",
 )

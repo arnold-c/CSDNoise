@@ -1833,6 +1833,230 @@ function tycho_epicurve(
     return fig
 end
 
+function tycho_epicurve(
+    plot_dates,
+    cases_tuple,
+    ews_tuple;
+    plottitle = "",
+    subtitle = "",
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+    ews_ylabel = "EWS",
+    cases_ylabel = "Test Positives",
+)
+    xticks = calculate_xticks(plot_dates)
+
+    weekly_cases, biweekly_cases, monthly_cases = cases_tuple
+    weekly_ews, biweekly_ews, monthly_ews = ews_tuple
+
+    fig = Figure()
+    ews_ax = Axis(
+        fig[1, 1];
+        xlabel = "Date",
+        ylabel = ews_ylabel,
+    )
+    cases_ax = Axis(
+        fig[2, 1];
+        xlabel = "Date",
+        ylabel = cases_ylabel,
+        xticks = xticks,
+    )
+
+    tycho_epicurve!(
+        cases_ax,
+        plot_dates,
+        weekly_cases,
+        biweekly_cases,
+        monthly_cases;
+        obsdate = obsdate,
+    )
+
+    ews_timeseries!(
+        ews_ax,
+        plot_dates,
+        weekly_ews,
+        biweekly_ews,
+        monthly_ews;
+        obsdate = obsdate,
+    )
+
+    linkxaxes!(cases_ax, ews_ax)
+    hidexdecorations!(ews_ax)
+
+    Legend(fig[:, 2], cases_ax, "Aggregation (wks)")
+
+    Label(fig[1, 1, Top()], plottitle * "\n" * subtitle; font = :bold)
+
+    return fig
+end
+
+function ews_timeseries!(
+    ax,
+    plot_dates,
+    weekly_ews,
+    biweekly_ews,
+    monthly_ews;
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+)
+    weekly_xaxes = (1:length(weekly_ews)) .* 7
+    biweekly_xaxes = (1:length(biweekly_ews)) .* (2 * 7) .- 7
+    monthly_xaxes = (1:length(monthly_ews)) .* (4 * 7) .- 21
+
+    obsdate_indices = findfirst(x -> x == obsdate, plot_dates)
+    vspan!(
+        ax,
+        obsdate_indices,
+        length(plot_dates);
+        color = (:black, 0.1),
+    )
+
+    lines!(
+        ax, monthly_xaxes, monthly_ews; color = :darkred, label = "Monthly"
+    )
+    lines!(
+        ax, biweekly_xaxes, biweekly_ews; color = :blue, label = "Biweekly"
+    )
+    lines!(ax, weekly_xaxes, weekly_ews; color = :black, label = "Weekly")
+
+    return nothing
+end
+
+function tycho_epicurve(
+    plot_dates,
+    cases_tuple,
+    ews_tuple,
+    ews_threshold_tuple;
+    plottitle = "",
+    subtitle = "",
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+    ews_ylabel = "EWS",
+    cases_ylabel = "Test Positives",
+    threshold_percentile = 0.95,
+)
+    xticks = calculate_xticks(plot_dates)
+
+    weekly_cases, biweekly_cases, monthly_cases = cases_tuple
+    weekly_ews, biweekly_ews, monthly_ews = ews_tuple
+
+    fig = Figure()
+    ews_ax = Axis(
+        fig[1, 1];
+        xlabel = "Date",
+        ylabel = ews_ylabel,
+    )
+    cases_ax = Axis(
+        fig[2, 1];
+        xlabel = "Date",
+        ylabel = cases_ylabel,
+        xticks = xticks,
+    )
+
+    tycho_epicurve!(
+        cases_ax,
+        plot_dates,
+        weekly_cases,
+        biweekly_cases,
+        monthly_cases;
+        obsdate = obsdate,
+    )
+
+    ews_timeseries!(
+        ews_ax,
+        plot_dates,
+        ews_tuple,
+        ews_threshold_tuple;
+        obsdate = obsdate,
+    )
+
+    linkxaxes!(cases_ax, ews_ax)
+    hidexdecorations!(ews_ax)
+
+    Legend(fig[:, 2], cases_ax, "Aggregation (wks)")
+
+    Label(
+        fig[1, 2],
+        "Circles Represent\nExceeds Threshold\nof $threshold_percentile Percentile";
+        valign = :center,
+        font = :bold,
+    )
+    Label(fig[1, 1, Top()], plottitle * "\n" * subtitle; font = :bold)
+
+    rowsize!(fig.layout, 1, Relative(0.5))
+
+    return fig
+end
+
+function ews_timeseries!(
+    ax,
+    plot_dates,
+    ews_tuple,
+    ews_threshold_tuple;
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+)
+    weekly_ews, biweekly_ews, monthly_ews = ews_tuple
+    weekly_ews_threshold, biweekly_ews_threshold, monthly_ews_threshold =
+        ews_threshold_tuple
+
+    weekly_xaxes = (1:length(weekly_ews)) .* 7
+    biweekly_xaxes = (1:length(biweekly_ews)) .* (2 * 7) .- 7
+    monthly_xaxes = (1:length(monthly_ews)) .* (4 * 7) .- 21
+
+    monthly_ews_threshold = monthly_ews .* monthly_ews_threshold
+    replace!(monthly_ews_threshold, 0.0 => NaN)
+
+    biweekly_ews_threshold = biweekly_ews .* biweekly_ews_threshold
+    replace!(biweekly_ews_threshold, 0.0 => NaN)
+
+    weekly_ews_threshold = weekly_ews .* weekly_ews_threshold
+    replace!(weekly_ews_threshold, 0.0 => NaN)
+
+    obsdate_indices = findfirst(x -> x == obsdate, plot_dates)
+    vspan!(
+        ax,
+        obsdate_indices,
+        length(plot_dates);
+        color = (:black, 0.1),
+    )
+
+    lines!(
+        ax, monthly_xaxes, monthly_ews; color = :darkred, label = "Monthly"
+    )
+    scatter!(
+        ax,
+        monthly_xaxes,
+        monthly_ews_threshold;
+        markersize = 10,
+        strokecolor = :darkred,
+        strokewidth = 2,
+        color = (:darkred, 0.4),
+    )
+
+    lines!(
+        ax, biweekly_xaxes, biweekly_ews; color = :blue, label = "Biweekly"
+    )
+    scatter!(
+        ax,
+        biweekly_xaxes,
+        biweekly_ews_threshold;
+        markersize = 10,
+        strokecolor = :blue,
+        strokewidth = 2,
+        color = (:blue, 0.4),
+    )
+
+    lines!(ax, weekly_xaxes, weekly_ews; color = :black, label = "Weekly")
+    scatter!(
+        ax,
+        weekly_xaxes,
+        weekly_ews_threshold;
+        markersize = 10,
+        strokecolor = :grey20,
+        strokewidth = 2,
+        color = (:grey20, 0.4),
+    )
+
+    return nothing
+end
+
 function calculate_xticks(plot_dates)
     unique_years = unique(Dates.year.(plot_dates))
     year_indices = map(
@@ -2006,5 +2230,56 @@ function tycho_test_positive_components_epicurve(
     Label(fig[0, :], plottitle)
     rowsize!(fig.layout, 0, Relative(0.03))
 
+    return fig
+end
+
+function tycho_tau_distribution(
+    tested_ews_tuple,
+    actual_ews_sa,
+    tau_metric;
+    plottitle = string(tau_metric) * " Distribution",
+)
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        title = plottitle,
+        xlabel = "Kendall's Tau",
+        ylabel = "Count",
+    )
+    for (i, (aggregation, ews)) in
+        zip(1:length(tested_ews_tuple), pairs(tested_ews_tuple))
+        aggregation_tau = getproperty(ews, tau_metric)
+        hist!(
+            ax,
+            aggregation_tau;
+            color = (Makie.wong_colors()[i], 0.5),
+            bins = 20,
+            label = string(aggregation),
+        )
+        vlines!(
+            ax,
+            mean(aggregation_tau);
+            color = Makie.wong_colors()[i],
+            linestyle = :dash,
+            linewidth = 4,
+        )
+    end
+
+    vlines!(
+        ax,
+        mean(getproperty(actual_ews_sa, tau_metric));
+        color = :grey20,
+        linewidth = 4,
+    )
+
+    text!(
+        ax,
+        mean(getproperty(actual_ews_sa, tau_metric)) + 0.005,
+        length(getproperty(tested_ews_tuple[1], tau_metric)) / 10;
+        text = "Actual Tau (Mean)",
+        justification = :left,
+    )
+
+    Legend(fig[1, 2], ax, "Aggregation (wks)")
     return fig
 end

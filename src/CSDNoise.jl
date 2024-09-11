@@ -47,6 +47,7 @@ export aggregate_timeseries,
     EWSMetricSpecification, EWSMetrics
 
 include("ews-functions.jl")
+export EWSThresholdWindow, Rolling, Expanding, expanding_ews_thresholds
 
 include("tycho-cleaning.jl")
 export cdc_week_to_date,
@@ -119,7 +120,8 @@ export seircolors,
     compare_optimal_thresholds_test_chars_plot,
     create_optimal_thresholds_test_chars_plot,
     Reff_ews_plot, tycho_epicurve, tycho_noise_components_epicurve,
-    tycho_test_positive_components_epicurve
+    tycho_test_positive_components_epicurve,
+    tycho_tau_distribution
 # @reexport using .PlottingFunctions
 
 include("ensemble-sim_single-scenario_plots.jl")

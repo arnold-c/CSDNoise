@@ -53,6 +53,7 @@ function tycho_testing_plots(
     ews_threshold_percentile = 0.95,
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
     sim = 1,
+    return_objects = false,
     force = true,
 )
     @assert length(noise_arr_tuple) == length(cases_arr_tuple) == 3
@@ -358,6 +359,30 @@ function tycho_testing_plots(
         )
 
         Makie.empty!(plot)
+    end
+
+    if return_objects
+        return (
+            plot_dates,
+            weekly_test_arr,
+            filled_weekly_test_arr,
+            biweekly_test_arr,
+            filled_biweekly_test_arr,
+            monthly_test_arr,
+            filled_monthly_test_arr,
+            weekly_obs_index,
+            biweekly_obs_index,
+            monthly_obs_index,
+            weekly_cases_ewsmetrics,
+            biweekly_cases_ewsmetrics,
+            monthly_cases_ewsmetrics,
+            weekly_test_ewsmetrics,
+            biweekly_test_ewsmetrics,
+            monthly_test_ewsmetrics,
+            weekly_thresholds,
+            biweekly_thresholds,
+            monthly_thresholds,
+        )
     end
 
     return nothing

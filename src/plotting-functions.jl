@@ -1936,6 +1936,9 @@ function tycho_epicurve(
     T2<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
     T3<:Tuple{<:AbstractMatrix,<:AbstractMatrix,<:AbstractMatrix},
 }
+    @assert ndims(ews_threshold_tuple[1]) == ndims(ews_threshold_tuple[2]) ==
+        ndims(ews_threshold_tuple[3]) == 1
+
     return tycho_epicurve(
         plot_dates,
         cases_tuple,

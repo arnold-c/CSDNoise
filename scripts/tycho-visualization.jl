@@ -81,105 +81,90 @@ monthly_cases_arr = zeros(Int64, length(monthly_cases), 1, nsims)
 monthly_cases_arr .= monthly_cases
 
 #%%
-weekly_noise_100pc_arr = create_noise_arr(
-    PoissonNoiseSpecification("poisson", 1.0),
-    weekly_cases_arr;
-)[1]
-filled_weekly_noise_100pc_arr = fill_aggregation_values(weekly_noise_100pc_arr)
+sim = 1
 
-weekly_noise_800pc_arr = create_noise_arr(
-    PoissonNoiseSpecification("poisson", 8.0),
-    weekly_cases_arr;
-)[1]
-filled_weekly_noise_800pc_arr = fill_aggregation_values(weekly_noise_800pc_arr)
-
-biweekly_noise_100pc_arr = create_noise_arr(
-    PoissonNoiseSpecification("poisson", 1.0),
-    biweekly_cases_arr;
-)[1]
-filled_biweekly_noise_100pc_arr = fill_aggregation_values(
-    biweekly_noise_100pc_arr; week_aggregation = 2
+for noise_specification in (
+    PoissonNoiseSpecification(1.0),
+    PoissonNoiseSpecification(8.0),
 )
+    weekly_noise_arr = create_noise_arr(noise_specification, weekly_cases_arr;)[1]
+    filled_weekly_noise_arr = fill_aggregation_values(weekly_noise_arr)
 
-biweekly_noise_800pc_arr = create_noise_arr(
-    PoissonNoiseSpecification("poisson", 8.0),
-    biweekly_cases_arr;
-)[1]
-filled_biweekly_noise_800pc_arr = fill_aggregation_values(
-    biweekly_noise_800pc_arr; week_aggregation = 2
-)
-
-monthly_noise_100pc_arr = create_noise_arr(
-    PoissonNoiseSpecification("poisson", 1.0),
-    monthly_cases_arr;
-)[1]
-filled_monthly_noise_100pc_arr =
-    fill_aggregation_values(monthly_noise_100pc_arr; week_aggregation = 4) |>
-    x -> x[1:length(plot_dates), :]
-
-monthly_noise_800pc_arr = create_noise_arr(
-    PoissonNoiseSpecification("poisson", 8.0),
-    monthly_cases_arr;
-)[1]
-filled_monthly_noise_800pc_arr =
-    fill_aggregation_values(monthly_noise_800pc_arr; week_aggregation = 4) |>
-    x -> x[1:length(plot_dates), :]
-
-#%%
-noise_epicurve = tycho_noise_components_epicurve(
-    plot_dates,
-    (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
-    (
-        filled_weekly_noise_100pc_arr[:, 1],
-        filled_biweekly_noise_100pc_arr[:, 1],
-        filled_monthly_noise_100pc_arr[:, 1],
-    );
-    plottitle = "Noise (100% Poisson) Epicurve",
-)
-
-noise_epicurve
-
-save(
-    joinpath(base_plotdir, "noise-epicurve.png"),
-    incidence_epicurve;
-    size = (2200, 1600),
-)
-
-#%%
-for (test_specification, noise_specification, ews_method) in Iterators.product(
-    (
-        IndividualTestSpecification(0.5, 0.5, 0),
-        IndividualTestSpecification(0.8, 0.8, 0),
-        IndividualTestSpecification(1.0, 1.0, 0),
-        IndividualTestSpecification(1.0, 0.0, 0),
-    ),
-    (
-        PoissonNoiseSpecification(1.0),
-        PoissonNoiseSpecification(8.0),
-    ),
-    (Main.Backward, Main.Centered),
-)
-    tycho_testing_plots(
-        (
-            weekly_noise_100pc_arr,
-            biweekly_noise_100pc_arr,
-            monthly_noise_100pc_arr,
-        ),
-        (
-            weekly_cases_arr,
-            biweekly_cases_arr,
-            monthly_cases_arr,
-        ),
-        (
-            weekly_plot_cases,
-            biweekly_plot_cases,
-            monthly_plot_cases,
-        ),
-        tycho_CA_measles_long_plotdata;
-        individual_test_specification = test_specification,
-        noise_specification = noise_specification,
-        ews_method = ews_method,
-        plot_base_path = joinpath(base_plotdir, "testing-plots"),
-        force = false,
+    biweekly_noise_arr = create_noise_arr(
+        noise_specification, biweekly_cases_arr;
+    )[1]
+    filled_biweekly_noise_arr = fill_aggregation_values(
+        biweekly_noise_arr; week_aggregation = 2
     )
+
+    monthly_noise_arr = create_noise_arr(
+        noise_specification, monthly_cases_arr;
+    )[1]
+    filled_monthly_noise_arr =
+        fill_aggregation_values(
+            monthly_noise_arr; week_aggregation = 4
+        ) |>
+        x -> x[1:length(plot_dates), :]
+
+    noise_epicurve = tycho_noise_components_epicurve(
+        plot_dates,
+        (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
+        (
+            filled_weekly_noise_arr[:, sim],
+            filled_biweekly_noise_arr[:, sim],
+            filled_monthly_noise_arr[:, sim],
+        );
+        plottitle = "Noise (100% Poisson) Epicurve",
+    )
+
+    noise_path = joinpath(
+        base_plotdir,
+        "testing-plots",
+        getdirpath(noise_specification),
+        "sim_$(sim)",
+    )
+
+    mkpath(noise_path)
+
+    save(
+        joinpath(noise_path, "noise-epicurve.png"),
+        noise_epicurve;
+        size = (2200, 1600),
+    )
+
+    for (test_specification, ews_method) in
+        Iterators.product(
+        (
+            IndividualTestSpecification(0.5, 0.5, 0),
+            IndividualTestSpecification(0.8, 0.8, 0),
+            IndividualTestSpecification(1.0, 1.0, 0),
+            IndividualTestSpecification(1.0, 0.0, 0),
+        ),
+        (Main.Backward, Main.Centered),
+    )
+        tycho_testing_plots(
+            (
+                weekly_noise_arr,
+                biweekly_noise_arr,
+                monthly_noise_arr,
+            ),
+            (
+                weekly_cases_arr,
+                biweekly_cases_arr,
+                monthly_cases_arr,
+            ),
+            (
+                weekly_plot_cases,
+                biweekly_plot_cases,
+                monthly_plot_cases,
+            ),
+            tycho_CA_measles_long_plotdata;
+            individual_test_specification = test_specification,
+            noise_specification = noise_specification,
+            ews_method = ews_method,
+            sim = sim,
+            plot_base_path = joinpath(base_plotdir, "testing-plots"),
+            force = true,
+        )
+    end
 end

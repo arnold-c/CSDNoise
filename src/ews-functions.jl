@@ -116,7 +116,9 @@ function tycho_testing_plots(
     )"
 
     noise_path = joinpath(
-        plot_base_path, getdirpath(noise_specification)
+        plot_base_path,
+        getdirpath(noise_specification),
+        "sim_$(sim)",
     )
     test_dir = joinpath(noise_path, test_path_description)
     mkpath(test_dir)

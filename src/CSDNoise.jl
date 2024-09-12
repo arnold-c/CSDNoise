@@ -50,7 +50,8 @@ export aggregate_timeseries,
 include("ews-functions.jl")
 export EWSThresholdWindow,
     Rolling, Expanding, expanding_ews_thresholds,
-    tycho_testing_plots
+    tycho_testing_plots,
+    calculate_ews_lead_time, calculate_ews_trigger
 
 include("tycho-cleaning.jl")
 export cdc_week_to_date,

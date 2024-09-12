@@ -387,3 +387,45 @@ function tycho_testing_plots(
 
     return nothing
 end
+
+function calculate_ews_lead_time(
+    ews_thresholds;
+    aggregation_weeks = 1,
+    consecutive_thresholds = 2,
+    output_type = :days,
+)
+    threshold_index = calculate_ews_trigger_index(
+        ews_thresholds; consecutive_thresholds = consecutive_thresholds
+    )
+
+    if isnothing(threshold_index)
+        @warn "No ews trigger index found. Returning nothing."
+        return nothing
+    end
+
+    output_multiplier = @match output_type begin
+        :days => 7
+        :weeks => 1
+        :months => 7 / 30.5
+        :years => 7 / 365
+    end
+
+    return (length(ews_thresholds) - threshold_index) * aggregation_weeks *
+           output_multiplier
+end
+
+function calculate_ews_trigger_index(
+    ews_thresholds;
+    consecutive_thresholds = 2,
+)
+    cumulative_thresholds = cumsum(ews_thresholds)
+    for (i, v) in pairs(cumulative_thresholds)
+        if i > consecutive_thresholds &&
+            v >=
+           cumulative_thresholds[i - consecutive_thresholds] +
+           consecutive_thresholds
+            return i
+        end
+    end
+    return nothing
+end

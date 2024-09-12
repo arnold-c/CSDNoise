@@ -168,3 +168,17 @@ for noise_specification in (
         )
     end
 end
+
+#%%
+hcat(
+    1:316,
+    weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 1],
+    cumsum(weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 1]),
+)
+
+calculate_ews_lead_time(
+    weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 1];
+    consecutive_thresholds = 2,
+    aggregation_weeks = 2,
+    output_type = :years,
+)

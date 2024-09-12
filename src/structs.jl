@@ -344,6 +344,15 @@ struct IndividualTestSpecification{T1<:AbstractFloat,T2<:Integer}
     test_result_lag::T2
 end
 
+function get_test_description(test_specification::IndividualTestSpecification)
+    description = Match.@match test_specification begin
+        IndividualTestSpecification(1.0, 0.0, 0) => "Clinical case definition"
+        IndividualTestSpecification(x::AbstractFloat, x::AbstractFloat, 0) where {x<1.0} => "RDT-like ($(test_specification.sensitivity * 100)% sens/spec)"
+        IndividualTestSpecification(1.0, 1.0, x::Int) => "ELISA-like ($(x) day lag)"
+    end
+    return description
+end
+
 abstract type NoiseSpecification end
 
 struct PoissonNoiseSpecification{
@@ -351,6 +360,12 @@ struct PoissonNoiseSpecification{
 } <: NoiseSpecification
     noise_type::T1
     noise_mean_scaling::T2
+end
+
+function PoissonNoiseSpecification(
+    noise_mean_scaling::T
+) where {T<:AbstractFloat}
+    return PoissonNoiseSpecification("poisson", noise_mean_scaling)
 end
 
 struct DynamicalNoiseSpecification{
@@ -364,8 +379,46 @@ struct DynamicalNoiseSpecification{
     noise_mean_scaling::T2
 end
 
-function DynamicalNoiseSpecification()
+function DynamicalNoiseSpecification(
+    R_0::T2,
+    latent_period::T3,
+    duration_infection::T3,
+    correlation::T1,
+    noise_mean_scaling::T2,
+) where {T1<:AbstractString,T2<:AbstractFloat,T3<:Integer}
+    return DynamicalNoiseSpecification(
+        "dynamical",
+        R_0,
+        latent_period,
+        duration_infection,
+        correlation,
+        noise_mean_scaling,
+    )
 end
+
+function get_noise_description(
+    noise_specification::T
+) where {T<:NoiseSpecification}
+    return noise_specification.noise_type
+end
+
+function get_noise_description(noise_specification::DynamicalNoiseSpecification)
+    return string(
+        noise_specification.noise_type, ", ", noise_specification.correlation
+    )
+end
+
+function get_noise_magnitude(
+    noise_specification::T
+) where {T<:NoiseSpecification}
+    return string("Poisson scaling: ", noise_specification.noise_mean_scaling)
+end
+
+# function get_noise_magnitude(
+#     noise_specification::DynamicalNoiseSpecification
+# )
+#     return string("Rubella vax: ", noise_specification.vaccination_coverage)
+# end
 
 function getdirpath(spec::NoiseSpecification)
     return reduce(

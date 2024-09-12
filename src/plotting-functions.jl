@@ -1806,7 +1806,7 @@ function tycho_epicurve(
     plottitle = "",
     subtitle = "",
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
-) where {T1<:AbstractVector}
+) where {T1<:AbstractVector{<:Integer}}
     xticks = calculate_xticks(plot_dates)
 
     fig = Figure()
@@ -1931,11 +1931,44 @@ function tycho_epicurve(
     ews_ylabel = "EWS",
     cases_ylabel = "Test Positives",
     threshold_percentile = 0.95,
-) where {T1<:Tuple,T2<:Tuple,T3<:Tuple}
+) where {
+    T1<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
+    T2<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
+    T3<:Tuple{<:AbstractMatrix,<:AbstractMatrix,<:AbstractMatrix},
+}
+    return tycho_epicurve(
+        plot_dates,
+        cases_tuple,
+        ews_tuple,
+        map(x -> reshape(x, :), ews_threshold_tuple);
+        plottitle = plottitle,
+        subtitle = subtitle,
+        obsdate = obsdate,
+        ews_ylabel = ews_ylabel,
+        cases_ylabel = cases_ylabel,
+        threshold_percentile = threshold_percentile,
+    )
+end
+
+function tycho_epicurve(
+    plot_dates,
+    cases_tuple::T1,
+    ews_tuple::T2,
+    ews_threshold_tuple::T3;
+    plottitle = "",
+    subtitle = "",
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+    ews_ylabel = "EWS",
+    cases_ylabel = "Test Positives",
+    threshold_percentile = 0.95,
+) where {
+    T1<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
+    T2<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
+    T3<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
+}
     xticks = calculate_xticks(plot_dates)
 
     weekly_cases, biweekly_cases, monthly_cases = cases_tuple
-    weekly_ews, biweekly_ews, monthly_ews = ews_tuple
 
     fig = Figure()
     ews_ax = Axis(

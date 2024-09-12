@@ -24,8 +24,9 @@ export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
 include("structs.jl")
 export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
     StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
-    OutbreakSpecification, IndividualTestSpecification,
+    OutbreakSpecification, IndividualTestSpecification, get_test_description,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
+    get_noise_description, get_noise_magnitude,
     getdirpath,
     EWSMethod, Backward, Centered,
     EWSMetricSpecification,
@@ -47,7 +48,9 @@ export aggregate_timeseries,
     EWSMetricSpecification, EWSMetrics
 
 include("ews-functions.jl")
-export EWSThresholdWindow, Rolling, Expanding, expanding_ews_thresholds
+export EWSThresholdWindow,
+    Rolling, Expanding, expanding_ews_thresholds,
+    tycho_testing_plots
 
 include("tycho-cleaning.jl")
 export cdc_week_to_date,

@@ -50,6 +50,8 @@ monthly_cases, monthly_plot_cases = calculate_aggregation_cases(
 monthly_plot_cases = monthly_plot_cases[1:length(plot_dates)]
 
 #%%
+base_plotdir = plotsdir("tycho")
+
 incidence_epicurve = tycho_epicurve(
     plot_dates,
     weekly_plot_cases,
@@ -59,6 +61,12 @@ incidence_epicurve = tycho_epicurve(
 )
 
 incidence_epicurve
+
+save(
+    joinpath(base_plotdir, "incidence-epicurve.png"),
+    incidence_epicurve;
+    size = (2200, 1600),
+)
 
 #%%
 nsims = 100
@@ -118,6 +126,7 @@ filled_monthly_noise_800pc_arr =
     x -> x[1:length(plot_dates), :]
 
 #%%
+noise_epicurve = tycho_noise_components_epicurve(
     plot_dates,
     (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
     (
@@ -128,15 +137,49 @@ filled_monthly_noise_800pc_arr =
     plottitle = "Noise (100% Poisson) Epicurve",
 )
 
+noise_epicurve
 
+save(
+    joinpath(base_plotdir, "noise-epicurve.png"),
+    incidence_epicurve;
+    size = (2200, 1600),
 )
 
 #%%
+for (test_specification, noise_specification, ews_method) in Iterators.product(
     (
+        IndividualTestSpecification(0.5, 0.5, 0),
+        IndividualTestSpecification(0.8, 0.8, 0),
+        IndividualTestSpecification(1.0, 1.0, 0),
+        IndividualTestSpecification(1.0, 0.0, 0),
     ),
     (
+        PoissonNoiseSpecification(1.0),
+        PoissonNoiseSpecification(8.0),
     ),
+    (Main.Backward, Main.Centered),
 )
+    tycho_testing_plots(
+        (
+            weekly_noise_100pc_arr,
+            biweekly_noise_100pc_arr,
+            monthly_noise_100pc_arr,
         ),
+        (
+            weekly_cases_arr,
+            biweekly_cases_arr,
+            monthly_cases_arr,
         ),
+        (
+            weekly_plot_cases,
+            biweekly_plot_cases,
+            monthly_plot_cases,
         ),
+        tycho_CA_measles_long_plotdata;
+        individual_test_specification = test_specification,
+        noise_specification = noise_specification,
+        ews_method = ews_method,
+        plot_base_path = joinpath(base_plotdir, "testing-plots"),
+        force = false,
+    )
+end

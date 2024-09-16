@@ -51,6 +51,7 @@ function tycho_testing_plots(
     ews_metric = "variance",
     ews_threshold_window = Main.Expanding,
     ews_threshold_percentile = 0.95,
+    consecutive_thresholds = 2,
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
     sim = 1,
     return_objects = false,
@@ -324,7 +325,20 @@ function tycho_testing_plots(
         percentiles = ews_threshold_percentile,
     )
 
-    weekly_detection_index
+    weekly_detection_index = calculate_ews_trigger_index(
+        weekly_thresholds[2];
+        consecutive_thresholds = consecutive_thresholds,
+    )
+
+    biweekly_detection_index = calculate_ews_trigger_index(
+        biweekly_thresholds[2];
+        consecutive_thresholds = consecutive_thresholds,
+    )
+
+    monthly_detection_index = calculate_ews_trigger_index(
+        monthly_thresholds[2];
+        consecutive_thresholds = consecutive_thresholds,
+    )
 
     plotname = "$(ews_metric)_$(100*ews_threshold_percentile)-percentile_thresholds_$(test_path_description)_$(noise_path_description).png"
     plotpath = joinpath(
@@ -348,10 +362,17 @@ function tycho_testing_plots(
                 weekly_thresholds[2],
                 biweekly_thresholds[2],
                 monthly_thresholds[2],
+            ),
+            (
+                weekly_detection_index,
+                biweekly_detection_index,
+                monthly_detection_index,
             );
             plottitle = "Test Positives",
             subtitle = "$(test_plot_description), $(noise_magnitude_description): $(method_string(weekly_ewsmetric_specification.method)) EWS $(ews_metric) Epicurve",
             ews_ylabel = ews_metric,
+            threshold_percentile = ews_threshold_percentile,
+            consecutive_thresholds = consecutive_thresholds,
         )
 
         save(
@@ -434,9 +455,23 @@ function calculate_ews_lead_time(
 end
 
 function calculate_ews_trigger_index(
-    ews_thresholds;
+    ews_thresholds::T1;
     consecutive_thresholds = 2,
-)
+) where {T1<:AbstractMatrix{<:Bool}}
+    reshaped_ews_thresholds = reshape(ews_thresholds, :)
+
+    @assert length(reshaped_ews_thresholds) == length(ews_thresholds[:, 1])
+
+    return calculate_ews_trigger_index(
+        reshaped_ews_thresholds;
+        consecutive_thresholds = consecutive_thresholds,
+    )
+end
+
+function calculate_ews_trigger_index(
+    ews_thresholds::T1;
+    consecutive_thresholds = 2,
+) where {T1<:AbstractVector{<:Bool}}
     cumulative_thresholds = cumsum(ews_thresholds)
     for (i, v) in pairs(cumulative_thresholds)
         if i > consecutive_thresholds &&

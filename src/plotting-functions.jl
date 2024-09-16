@@ -1924,32 +1924,44 @@ function tycho_epicurve(
     plot_dates,
     cases_tuple::T1,
     ews_tuple::T2,
-    ews_threshold_tuple::T3;
+    ews_threshold_tuple::T3,
+    ews_threshold_indices::T4;
     plottitle = "",
     subtitle = "",
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
     ews_ylabel = "EWS",
     cases_ylabel = "Test Positives",
     threshold_percentile = 0.95,
+    consecutive_thresholds = 2,
 ) where {
-    T1<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
-    T2<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
-    T3<:Tuple{<:AbstractMatrix,<:AbstractMatrix,<:AbstractMatrix},
+    S1<:AbstractVector,
+    S2<:AbstractMatrix,
+    S3<:Union{Nothing,Integer},
+    T1<:Tuple{<:S1,<:S1,<:S1},
+    T2<:Tuple{<:S1,<:S1,<:S1},
+    T3<:Tuple{<:S2,<:S2,<:S2},
+    T4<:Tuple{<:S3,<:S3,<:S3},
 }
-    @assert ndims(ews_threshold_tuple[1]) == ndims(ews_threshold_tuple[2]) ==
-        ndims(ews_threshold_tuple[3]) == 1
+    reshaped_ews_threshold_tuple = map(x -> reshape(x, :), ews_threshold_tuple)
+
+    for i in eachindex(reshaped_ews_threshold_tuple)
+        @assert length(reshaped_ews_threshold_tuple[i]) ==
+            length(ews_threshold_tuple[i][:, 1])
+    end
 
     return tycho_epicurve(
         plot_dates,
         cases_tuple,
         ews_tuple,
-        map(x -> reshape(x, :), ews_threshold_tuple);
+        reshaped_ews_threshold_tuple,
+        ews_threshold_indices;
         plottitle = plottitle,
         subtitle = subtitle,
         obsdate = obsdate,
         ews_ylabel = ews_ylabel,
         cases_ylabel = cases_ylabel,
         threshold_percentile = threshold_percentile,
+        consecutive_thresholds = consecutive_thresholds,
     )
 end
 
@@ -1957,17 +1969,22 @@ function tycho_epicurve(
     plot_dates,
     cases_tuple::T1,
     ews_tuple::T2,
-    ews_threshold_tuple::T3;
+    ews_threshold_tuple::T3,
+    ews_thresholds_indices::T4;
     plottitle = "",
     subtitle = "",
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
     ews_ylabel = "EWS",
     cases_ylabel = "Test Positives",
     threshold_percentile = 0.95,
+    consecutive_thresholds = 2,
 ) where {
-    T1<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
-    T2<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
-    T3<:Tuple{<:AbstractVector,<:AbstractVector,<:AbstractVector},
+    S1<:AbstractVector,
+    S2<:Union{Nothing,Integer},
+    T1<:Tuple{<:S1,<:S1,<:S1},
+    T2<:Tuple{<:S1,<:S1,<:S1},
+    T3<:Tuple{<:S1,<:S1,<:S1},
+    T4<:Tuple{<:S2,<:S2,<:S2},
 }
     xticks = calculate_xticks(plot_dates)
 
@@ -1999,7 +2016,8 @@ function tycho_epicurve(
         ews_ax,
         plot_dates,
         ews_tuple,
-        ews_threshold_tuple;
+        ews_threshold_tuple,
+        ews_thresholds_indices;
         obsdate = obsdate,
     )
 
@@ -2010,7 +2028,8 @@ function tycho_epicurve(
 
     Label(
         fig[1, 2],
-        "Circles Represent\nExceeds Threshold\nof $threshold_percentile Percentile";
+        "Circles Represent\nExceeds Threshold\nof $threshold_percentile Percentile\n\nVertical Lines Represent\n$consecutive_thresholds Consecutive EWS\nExceeds Threshold",
+        ;
         valign = :center,
         font = :bold,
     )
@@ -2025,26 +2044,10 @@ function ews_timeseries!(
     ax,
     plot_dates,
     ews_tuple,
-    ews_threshold_tuple;
+    ews_threshold_tuple,
+    ews_thresholds_indices;
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
 )
-    weekly_ews, biweekly_ews, monthly_ews = ews_tuple
-    weekly_ews_threshold, biweekly_ews_threshold, monthly_ews_threshold =
-        ews_threshold_tuple
-
-    weekly_xaxes = (1:length(weekly_ews)) .* 7
-    biweekly_xaxes = (1:length(biweekly_ews)) .* (2 * 7) .- 7
-    monthly_xaxes = (1:length(monthly_ews)) .* (4 * 7) .- 21
-
-    monthly_ews_threshold = monthly_ews .* monthly_ews_threshold
-    replace!(monthly_ews_threshold, 0.0 => NaN)
-
-    biweekly_ews_threshold = biweekly_ews .* biweekly_ews_threshold
-    replace!(biweekly_ews_threshold, 0.0 => NaN)
-
-    weekly_ews_threshold = weekly_ews .* weekly_ews_threshold
-    replace!(weekly_ews_threshold, 0.0 => NaN)
-
     obsdate_indices = findfirst(x -> x == obsdate, plot_dates)
     vspan!(
         ax,

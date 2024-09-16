@@ -2053,42 +2053,38 @@ function ews_timeseries!(
         color = (:black, 0.1),
     )
 
-    lines!(
-        ax, monthly_xaxes, monthly_ews; color = :darkred, label = "Monthly"
+    for (ews, threshold, ind, aggregation, color, label) in zip(
+        ews_tuple,
+        ews_threshold_tuple,
+        ews_thresholds_indices,
+        [1, 2, 4],
+        [:grey20, :blue, :darkred],
+        ["Weekly", "Biweekly", "Monthly"],
     )
-    scatter!(
-        ax,
-        monthly_xaxes,
-        monthly_ews_threshold;
-        markersize = 10,
-        strokecolor = :darkred,
-        strokewidth = 2,
-        color = (:darkred, 0.4),
-    )
+        multiplier = aggregation * 7
 
-    lines!(
-        ax, biweekly_xaxes, biweekly_ews; color = :blue, label = "Biweekly"
-    )
-    scatter!(
-        ax,
-        biweekly_xaxes,
-        biweekly_ews_threshold;
-        markersize = 10,
-        strokecolor = :blue,
-        strokewidth = 2,
-        color = (:blue, 0.4),
-    )
+        xaxes = (1:length(ews)) .* multiplier
+        ind = ind .* multiplier
 
-    lines!(ax, weekly_xaxes, weekly_ews; color = :black, label = "Weekly")
-    scatter!(
-        ax,
-        weekly_xaxes,
-        weekly_ews_threshold;
-        markersize = 10,
-        strokecolor = :grey20,
-        strokewidth = 2,
-        color = (:grey20, 0.4),
-    )
+        threshold = ews .* threshold
+        replace!(threshold, 0.0 => NaN)
+
+        lines!(
+            ax, xaxes, ews; color = color, label = label
+        )
+        scatter!(
+            ax,
+            xaxes,
+            threshold;
+            markersize = 10,
+            strokecolor = color,
+            strokewidth = 2,
+            color = (color, 0.4),
+        )
+        if !isnothing(ind)
+            vlines!(ax, ind; color = color)
+        end
+    end
 
     return nothing
 end

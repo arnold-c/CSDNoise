@@ -28,7 +28,7 @@ export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
     get_noise_description, get_noise_magnitude, get_noise_magnitude_description,
     getdirpath,
-    EWSMethod, Backward, Centered,
+    EWSMethod, Backward, Centered, method_string,
     EWSMetricSpecification,
     ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics,
     EWSMetrics
@@ -51,7 +51,8 @@ include("ews-functions.jl")
 export EWSThresholdWindow,
     Rolling, Expanding, expanding_ews_thresholds,
     tycho_testing_plots,
-    calculate_ews_lead_time, calculate_ews_trigger_index
+    calculate_ews_lead_time, calculate_ews_trigger_index,
+    ews_lead_time_df!
 
 include("tycho-cleaning.jl")
 export cdc_week_to_date,
@@ -125,7 +126,8 @@ export seircolors,
     create_optimal_thresholds_test_chars_plot,
     Reff_ews_plot, tycho_epicurve, tycho_noise_components_epicurve,
     tycho_test_positive_components_epicurve,
-    tycho_tau_distribution
+    tycho_tau_distribution,
+    ews_lead_time_plot
 # @reexport using .PlottingFunctions
 
 include("ensemble-sim_single-scenario_plots.jl")

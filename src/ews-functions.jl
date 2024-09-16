@@ -485,3 +485,98 @@ function calculate_ews_trigger_index(
     end
     return nothing
 end
+
+function ews_lead_time_df!(
+    lead_time_df::DataFrame,
+    cases_arr,
+    noise_arr,
+    long_plotdata,
+    individual_test_specification;
+    noise_type = "poisson",
+    noise_magnitude = 1.0,
+    week_aggregation = 1,
+    ews_method = Main.Centered,
+    ews_aggregation = 1,
+    ews_bandwidth = 52,
+    ews_lag = 1,
+    ews_metric = "variance",
+    ews_threshold_window = Main.Expanding,
+    ews_threshold_percentile = 0.95,
+    consecutive_thresholds = 2,
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+    lead_time_units = :days,
+    lead_time_percentile = 0.95,
+)
+    test_arr = create_testing_arrs(
+        cases_arr,
+        noise_arr,
+        1.0,
+        individual_test_specification,
+    )
+
+    obs_index = calculate_ews_enddate(
+        long_plotdata;
+        week_aggregation = week_aggregation,
+        obsdate = obsdate,
+    )
+
+    test_ewsmetrics =
+        map(
+            k -> EWSMetrics(
+                EWSMetricSpecification(
+                    ews_method,
+                    ews_aggregation,
+                    ews_bandwidth,
+                    ews_lag,
+                ),
+                test_arr[
+                    1:obs_index, 5, k
+                ],
+            ),
+            axes(test_arr, 3),
+        ) |>
+        x -> StructArray(x)
+
+    ews_metric_sym = Symbol(ews_metric)
+
+    ews_lead_time = zeros(Float64, length(test_ewsmetrics))
+    for sim in axes(test_ewsmetrics, 1)
+        weekly_thresholds = expanding_ews_thresholds(
+            test_ewsmetrics[sim],
+            ews_metric_sym,
+            ews_threshold_window;
+            percentiles = ews_threshold_percentile,
+        )[2]
+
+        ews_lead_time[sim] = calculate_ews_lead_time(
+            weekly_thresholds;
+            week_aggregation = week_aggregation,
+            consecutive_thresholds = consecutive_thresholds,
+            output_type = lead_time_units,
+        )
+    end
+
+    percentile_tail = (1 - lead_time_percentile) / 2
+
+    push!(
+        lead_time_df,
+        (
+            noise_type = noise_type,
+            noise_magnitude = noise_magnitude,
+            test_specification = individual_test_specification,
+            week_aggregation = 1,
+            ews_method = ews_method,
+            lead_time_dist = ews_lead_time,
+            lead_time_median = StatsBase.median(ews_lead_time),
+            lead_time_lower = StatsBase.quantile(
+                ews_lead_time, percentile_tail
+            ),
+            lead_time_upper = StatsBase.quantile(
+                ews_lead_time, 1.0 - percentile_tail
+            ),
+            lead_time_units = String(lead_time_units),
+        ),
+    )
+
+    return nothing
+end

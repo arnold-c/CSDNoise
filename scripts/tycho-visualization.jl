@@ -164,21 +164,105 @@ for noise_specification in (
             ews_method = ews_method,
             sim = sim,
             plot_base_path = joinpath(base_plotdir, "testing-plots"),
-            force = true,
+            # force = true,
+            force = false,
         )
     end
 end
 
 #%%
-hcat(
-    1:316,
-    weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 1],
-    cumsum(weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 1]),
+lead_time_df = DataFrame(
+    "noise_type" => String[],
+    "noise_magnitude" => Float64[],
+    "test_specification" => IndividualTestSpecification[],
+    "week_aggregation" => Int64[],
+    "ews_method" => EWSMethod[],
+    "lead_time_dist" => Vector{Float64}[],
+    "lead_time_median" => Float64[],
+    "lead_time_lower" => Float64[],
+    "lead_time_upper" => Float64[],
+    "lead_time_units" => String[],
 )
 
-calculate_ews_lead_time(
-    weekly_100pc_rdt_8080_noise_800pc_backward_var_thresholds[2][:, 1];
-    consecutive_thresholds = 2,
-    week_aggregation = 2,
-    output_type = :years,
+# push!(
+#     lead_time_df,
+#     (
+#         noise_type = "poisson",
+#         noise_magnitude = 1.0,
+#         test_specification = IndividualTestSpecification(1.0, 1.0, 0),
+#         week_aggregation = 1,
+#         ews_method = Main.Backward,
+#         lead_time = 0.0,
+#         lead_time_units = "days",
+#     ),
+# )
+
+for noise_specification in (
+    PoissonNoiseSpecification(1.0),
+    PoissonNoiseSpecification(2.0),
+    PoissonNoiseSpecification(3.0),
+    PoissonNoiseSpecification(4.0),
+    PoissonNoiseSpecification(5.0),
+    PoissonNoiseSpecification(6.0),
+    PoissonNoiseSpecification(7.0),
+    PoissonNoiseSpecification(8.0),
+)
+    weekly_noise_arr = create_noise_arr(
+        noise_specification, weekly_cases_arr; seed = 1234
+    )[1]
+    filled_weekly_noise_arr = fill_aggregation_values(weekly_noise_arr)
+
+    biweekly_noise_arr = create_noise_arr(
+        noise_specification, biweekly_cases_arr;
+    )[1]
+    filled_biweekly_noise_arr = fill_aggregation_values(
+        biweekly_noise_arr; week_aggregation = 2
+    )
+
+    monthly_noise_arr = create_noise_arr(
+        noise_specification, monthly_cases_arr;
+    )[1]
+    filled_monthly_noise_arr =
+        fill_aggregation_values(
+            monthly_noise_arr; week_aggregation = 4
+        ) |>
+        x -> x[1:length(plot_dates), :]
+
+    for (test_specification, ews_method) in
+        Iterators.product(
+        (
+            # IndividualTestSpecification(0.5, 0.5, 0),
+            IndividualTestSpecification(0.8, 0.8, 0),
+            IndividualTestSpecification(1.0, 1.0, 0),
+            # IndividualTestSpecification(1.0, 0.0, 0),
+        ),
+        (Main.Backward,),
+    )
+        ews_lead_time_df!(
+            lead_time_df,
+            weekly_cases_arr,
+            weekly_noise_arr,
+            tycho_CA_measles_long_plotdata,
+            test_specification;
+            noise_type = get_noise_description(noise_specification),
+            noise_magnitude = get_noise_magnitude(noise_specification),
+            week_aggregation = 1,
+            ews_method = ews_method,
+            ews_aggregation = 1,
+            ews_bandwidth = 52,
+            ews_lag = 1,
+            ews_metric = "variance",
+            ews_threshold_window = Main.Expanding,
+            ews_threshold_percentile = 0.95,
+            consecutive_thresholds = 2,
+            obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+            lead_time_units = :weeks,
+            lead_time_percentile = 0.8,
+        )
+    end
+end
+
+ews_lead_time_plot(
+    lead_time_df;
+    lead_time_units = :weeks,
 )

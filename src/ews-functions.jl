@@ -390,10 +390,21 @@ end
 
 function calculate_ews_lead_time(
     ews_thresholds;
-    aggregation_weeks = 1,
+    week_aggregation = 1,
     consecutive_thresholds = 2,
     output_type = :days,
 )
+    output_multiplier = @match output_type begin
+        :days => 7
+        :weeks => 1
+        :months => 7 / 30.5
+        :years => 7 / 365
+        _ =>
+            error(
+                "Unknown output type: $(output_type).\nChoose between :days, :weeks, :months, or :years."
+            )
+    end
+
     threshold_index = calculate_ews_trigger_index(
         ews_thresholds; consecutive_thresholds = consecutive_thresholds
     )
@@ -403,14 +414,7 @@ function calculate_ews_lead_time(
         return nothing
     end
 
-    output_multiplier = @match output_type begin
-        :days => 7
-        :weeks => 1
-        :months => 7 / 30.5
-        :years => 7 / 365
-    end
-
-    return (length(ews_thresholds) - threshold_index) * aggregation_weeks *
+    return (length(ews_thresholds) - threshold_index) * week_aggregation *
            output_multiplier
 end
 

@@ -324,6 +324,8 @@ function tycho_testing_plots(
         percentiles = ews_threshold_percentile,
     )
 
+    weekly_detection_index
+
     plotname = "$(ews_metric)_$(100*ews_threshold_percentile)-percentile_thresholds_$(test_path_description)_$(noise_path_description).png"
     plotpath = joinpath(
         ewspath, plotname
@@ -394,6 +396,23 @@ function calculate_ews_lead_time(
     consecutive_thresholds = 2,
     output_type = :days,
 )
+    threshold_index = calculate_ews_trigger_index(
+        ews_thresholds; consecutive_thresholds = consecutive_thresholds
+    )
+
+    return calculate_ews_lead_time(
+        ews_thresholds,
+        threshold_index;
+        week_aggregation = week_aggregation,
+        output_type = output_type,
+    )
+end
+
+function calculate_ews_lead_time(
+    ews_thresholds, threshold_index;
+    week_aggregation = 1,
+    output_type = :days,
+)
     output_multiplier = @match output_type begin
         :days => 7
         :weeks => 1
@@ -404,10 +423,6 @@ function calculate_ews_lead_time(
                 "Unknown output type: $(output_type).\nChoose between :days, :weeks, :months, or :years."
             )
     end
-
-    threshold_index = calculate_ews_trigger_index(
-        ews_thresholds; consecutive_thresholds = consecutive_thresholds
-    )
 
     if isnothing(threshold_index)
         @warn "No ews trigger index found. Returning nothing."

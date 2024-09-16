@@ -110,7 +110,9 @@ function tycho_testing_plots(
         x -> x[1:length(plot_dates), :, :]
 
     test_plot_description = get_test_description(individual_test_specification)
-    noise_magnitude_description = get_noise_magnitude(noise_specification)
+    noise_magnitude_description = get_noise_magnitude_description(
+        noise_specification
+    )
 
     test_path_description = "sens-$(individual_test_specification.sensitivity)_spec-$(individual_test_specification.specificity)_lag-$(individual_test_specification.test_result_lag)"
     noise_path_description = "$(

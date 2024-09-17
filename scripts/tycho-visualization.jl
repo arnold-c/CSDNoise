@@ -81,7 +81,7 @@ monthly_cases_arr = zeros(Int64, length(monthly_cases), 1, nsims)
 monthly_cases_arr .= monthly_cases
 
 #%%
-sim = 4
+sims = (1, 4)
 
 for noise_specification in (
     PoissonNoiseSpecification(1.0),
@@ -106,33 +106,35 @@ for noise_specification in (
         ) |>
         x -> x[1:length(plot_dates), :]
 
-    noise_epicurve = tycho_noise_components_epicurve(
-        plot_dates,
-        (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
-        (
-            filled_weekly_noise_arr[:, sim],
-            filled_biweekly_noise_arr[:, sim],
-            filled_monthly_noise_arr[:, sim],
-        );
-        plottitle = "Noise (100% Poisson) Epicurve",
-    )
+    for sim in sims
+        noise_epicurve = tycho_noise_components_epicurve(
+            plot_dates,
+            (weekly_plot_cases, biweekly_plot_cases, monthly_plot_cases),
+            (
+                filled_weekly_noise_arr[:, sim],
+                filled_biweekly_noise_arr[:, sim],
+                filled_monthly_noise_arr[:, sim],
+            );
+            plottitle = "Noise (100% Poisson) Epicurve",
+        )
 
-    noise_path = joinpath(
-        base_plotdir,
-        "testing-plots",
-        getdirpath(noise_specification),
-        "sim_$(sim)",
-    )
+        noise_path = joinpath(
+            base_plotdir,
+            "testing-plots",
+            getdirpath(noise_specification),
+            "sim_$(sim)",
+        )
 
-    mkpath(noise_path)
+        mkpath(noise_path)
 
-    save(
-        joinpath(noise_path, "noise-epicurve.png"),
-        noise_epicurve;
-        size = (2200, 1600),
-    )
+        save(
+            joinpath(noise_path, "noise-epicurve.png"),
+            noise_epicurve;
+            size = (2200, 1600),
+        )
+    end
 
-    for (test_specification, ews_method) in
+    for (test_specification, ews_method, sim) in
         Iterators.product(
         (
             IndividualTestSpecification(0.5, 0.5, 0),
@@ -141,6 +143,7 @@ for noise_specification in (
             IndividualTestSpecification(1.0, 0.0, 0),
         ),
         (Main.Backward, Main.Centered),
+        sims,
     )
         tycho_testing_plots(
             (
@@ -164,8 +167,8 @@ for noise_specification in (
             ews_method = ews_method,
             sim = sim,
             plot_base_path = joinpath(base_plotdir, "testing-plots"),
-            # force = true,
-            force = false,
+            force = true,
+            # force = false,
         )
     end
 end

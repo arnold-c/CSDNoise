@@ -180,69 +180,52 @@ lead_time_df = DataFrame(
     "test_specification" => IndividualTestSpecification[],
     "week_aggregation" => Int64[],
     "ews_method" => EWSMethod[],
-    "lead_time_dist" => Vector{Float64}[],
+    "lead_time_dist" => Vector{Vector{Float64}}(),
     "lead_time_median" => Float64[],
     "lead_time_lower" => Float64[],
     "lead_time_upper" => Float64[],
     "lead_time_units" => String[],
 )
 
-# push!(
-#     lead_time_df,
-#     (
-#         noise_type = "poisson",
-#         noise_magnitude = 1.0,
-#         test_specification = IndividualTestSpecification(1.0, 1.0, 0),
-#         week_aggregation = 1,
-#         ews_method = Main.Backward,
-#         lead_time = 0.0,
-#         lead_time_units = "days",
-#     ),
-# )
-
 res = 1
 
-for noise_specification in (
-    PoissonNoiseSpecification(1.0),
-    PoissonNoiseSpecification(2.0),
-    PoissonNoiseSpecification(3.0),
-    PoissonNoiseSpecification(4.0),
-    PoissonNoiseSpecification(5.0),
-    PoissonNoiseSpecification(6.0),
-    PoissonNoiseSpecification(7.0),
-    PoissonNoiseSpecification(8.0),
+for (noise_specification, (week_aggregation, cases_arr)) in Iterators.product(
+    (
+        PoissonNoiseSpecification(1.0),
+        PoissonNoiseSpecification(2.0),
+        PoissonNoiseSpecification(3.0),
+        PoissonNoiseSpecification(4.0),
+        PoissonNoiseSpecification(5.0),
+        PoissonNoiseSpecification(6.0),
+        PoissonNoiseSpecification(7.0),
+        PoissonNoiseSpecification(8.0),
+    ),
+    zip((1, 2, 4), (weekly_cases_arr, biweekly_cases_arr, monthly_cases_arr)),
 )
-    weekly_noise_arr = create_noise_arr(
-        noise_specification, weekly_cases_arr; seed = 1234
-    )[1]
-
-    biweekly_noise_arr = create_noise_arr(
-        noise_specification, biweekly_cases_arr;
-    )[1]
-
-    monthly_noise_arr = create_noise_arr(
-        noise_specification, monthly_cases_arr;
-    )[1]
+    noise_arr = create_noise_arr(noise_specification, cases_arr)[1]
 
     for (test_specification, ews_method) in
         Iterators.product(
         (
             IndividualTestSpecification(0.5, 0.5, 0),
+            IndividualTestSpecification(0.6, 0.6, 0),
+            IndividualTestSpecification(0.7, 0.7, 0),
             IndividualTestSpecification(0.8, 0.8, 0),
+            IndividualTestSpecification(0.9, 0.9, 0),
             IndividualTestSpecification(1.0, 1.0, 0),
             IndividualTestSpecification(1.0, 0.0, 0),
         ),
-        (Main.Backward,),
+        (Main.Backward, Main.Centered),
     )
         res = ews_lead_time_df!(
             lead_time_df,
-            weekly_cases_arr,
-            weekly_noise_arr,
+            cases_arr,
+            noise_arr,
             tycho_CA_measles_long_plotdata,
             test_specification;
             noise_type = get_noise_description(noise_specification),
             noise_magnitude = get_noise_magnitude(noise_specification),
-            week_aggregation = 1,
+            week_aggregation = week_aggregation,
             ews_method = ews_method,
             ews_aggregation = 1,
             ews_bandwidth = 52,
@@ -253,155 +236,33 @@ for noise_specification in (
             consecutive_thresholds = 2,
             obsdate = cdc_week_to_date(1990, 3; weekday = 6),
             lead_time_units = :weeks,
-            lead_time_percentile = 0.8,
+            lead_time_percentile = 0.5,
             return_objects = true,
         )
     end
 end
 
-ews_lead_time_plot(
-    lead_time_df;
-    lead_time_units = :weeks,
-)
-
 #%%
-hist(lead_time_df[1, :lead_time_dist]; bins = 140:1:350)
+lead_time_plotdir = joinpath(base_plotdir, "testing-plots", "lead-time-plots")
+mkpath(lead_time_plotdir)
 
-#%%
-res_orig = deepcopy(res)
-
-#%%
-res[1][:, 5, 1] == res[1][:, 5, 100]
-
-#%%
-for sim in eachindex(res[2])
-    @show res[2].variance[sim] == res_orig[2].variance[sim]
-end
-
-#%%
-for sim in eachindex(res[3])
-    @show res[3][sim] == res_orig[3][sim]
-end
-
-#%%
-hcat(res[3][1], res_orig[3][1])
-
-#%%
-for sim in eachindex(res[2])
-    @show res[2][sim].variance == res_orig[2][sim].variance
-    @show res[2][1].variance == res_orig[2][sim].variance
-end
-
-#%%
-for sim in eachindex(res[2])
-    @assert expanding_ews_thresholds(
-        res[2][sim],
-        :variance,
-        Main.Expanding;
-        percentiles = 0.95,
-    )[2] == expanding_ews_thresholds(
-        res_orig[2][sim],
-        :variance,
-        Main.Expanding;
-        percentiles = 0.95,
-    )[2] "failed sim $sim"
-end
-
-#%%
-hcat(
-    expanding_ews_thresholds(
-        res[2][1],
-        :variance,
-        Main.Expanding;
-        percentiles = 0.95,
-    )[1],
-    expanding_ews_thresholds(
-        res_orig[2][1],
-        :variance,
-        Main.Expanding;
-        percentiles = 0.95,
-    )[1],
-)
-
-#%%
-expanding_ews_thresholds(
-    res[2][1],
-    :variance,
-    Main.Expanding;
-    percentiles = 0.95,
-)[1] .==
-expanding_ews_thresholds(
-    res_orig[2][1],
-    :variance,
-    Main.Expanding;
-    percentiles = 0.95,
-)[1]
-
-#%%
-hcat(
-    expanding_ews_thresholds(
-        res[2][1],
-        :variance,
-        Main.Expanding;
-        percentiles = 0.95,
-    )...,
-    expanding_ews_thresholds(
-        res_orig[2][1],
-        :variance,
-        Main.Expanding;
-        percentiles = 0.95,
-    )...) |>
-arr ->
-    DataFrame(arr, [:res_var, :res_thresh, :orig_var, :orig_thresh]) |>
-    df ->
-        transform!(
-            df, [:res_var, :orig_var] => ByRow((x1, x2) -> x1 - x2) => :var_diff
-        ) |>
-        df ->
-            transform!(
-                df,
-                [:res_thresh, :orig_thresh] =>
-                    ByRow((x1, x2) -> x1 - x2) => :thresh_diff,
-            )
-
-# df -> filter(row -> row.diff > 0, df)
-
-#%%
-@assert res[2][1].variance == res_orig[2][1].variance
-
-#%%
-for sim in eachindex(res[3])
-    @assert calculate_ews_lead_time(
-        res[3][sim];
-        week_aggregation = 1,
-        consecutive_thresholds = 2,
-        output_type = :weeks,
-    ) .== calculate_ews_lead_time(
-        res_orig[3][sim];
-        week_aggregation = 1,
-        consecutive_thresholds = 2,
-        output_type = :weeks,
+for (week_aggregation, ews_method) in
+    Iterators.product((1, 2, 4), (Main.Backward, Main.Centered))
+    lead_time_plot = ews_lead_time_plot(
+        lead_time_df;
+        week_aggregation = week_aggregation,
+        lead_time_units = :weeks,
+        ews_method = ews_method,
     )
-end
 
-#%%
-hcat(
-    map(
-        sim -> calculate_ews_lead_time(
-            res[3][sim];
-            week_aggregation = 1,
-            consecutive_thresholds = 2,
-            output_type = :weeks,
+    save(
+        joinpath(
+            lead_time_plotdir,
+            "lead-time-plot_$(week_aggregation)-aggregation_$(method_string(ews_method)).png",
         ),
-        eachindex(res[3]),
-    ),
-    map(
-        sim -> calculate_ews_lead_time(
-            res_orig[3][sim];
-            week_aggregation = 1,
-            consecutive_thresholds = 2,
-            output_type = :weeks,
-        ),
-        eachindex(res_orig[3]),
-    ),
-)
+        lead_time_plot;
+        size = (2200, 1600),
+    )
+
+    Makie.empty!(lead_time_plot)
+end

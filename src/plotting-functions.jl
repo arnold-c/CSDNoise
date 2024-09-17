@@ -2333,6 +2333,8 @@ function ews_lead_time_plot(
     fig = Figure()
     ax = Axis(
         fig[1, 1];
+        title = "Lead Time By Test and Noise Magnitude",
+        subtitle = "$week_aggregation Week Aggregation and $(titlecase(method_string(ews_method))) EWS",
         xlabel = "Noise Magnitude",
         ylabel = "Lead Time ($(lead_time_units))",
         xticks = minimum(unique_noise):maximum(unique_noise),

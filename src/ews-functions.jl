@@ -527,7 +527,7 @@ function ews_lead_time_df!(
                 EWSMetricSpecification(
                     ews_method,
                     ews_aggregation,
-                    ews_bandwidth,
+                    Int(ews_bandwidth / week_aggregation),
                     ews_lag,
                 ),
                 test_arr[
@@ -541,7 +541,7 @@ function ews_lead_time_df!(
     ews_metric_sym = Symbol(ews_metric)
 
     weekly_thresholds = Vector{Matrix{Bool}}(undef, length(test_ewsmetrics))
-    ews_lead_time = zeros(Float64, length(test_ewsmetrics))
+    ews_lead_time = fill(NaN, length(test_ewsmetrics))
     for sim in axes(test_ewsmetrics, 1)
         weekly_thresholds[sim] = expanding_ews_thresholds(
             test_ewsmetrics[sim],
@@ -550,15 +550,34 @@ function ews_lead_time_df!(
             percentiles = ews_threshold_percentile,
         )[2]
 
-        ews_lead_time[sim] = calculate_ews_lead_time(
+        lead_time = calculate_ews_lead_time(
             weekly_thresholds[sim];
             week_aggregation = week_aggregation,
             consecutive_thresholds = consecutive_thresholds,
             output_type = lead_time_units,
         )
+        if !isnothing(lead_time)
+            ews_lead_time[sim] = lead_time
+        end
     end
 
+    filter!(!isnan, ews_lead_time)
+
     percentile_tail = (1 - lead_time_percentile) / 2
+
+    if !isempty(ews_lead_time)
+        median_ews_lead_time = StatsBase.median(ews_lead_time)
+        lower_ews_lead_time = StatsBase.quantile(
+            ews_lead_time, percentile_tail
+        )
+        upper_ews_lead_time = StatsBase.quantile(
+            ews_lead_time, 1.0 - percentile_tail
+        )
+    else
+        median_ews_lead_time = NaN
+        lower_ews_lead_time = NaN
+        upper_ews_lead_time = NaN
+    end
 
     push!(
         lead_time_df,
@@ -566,16 +585,12 @@ function ews_lead_time_df!(
             noise_type = noise_type,
             noise_magnitude = noise_magnitude,
             test_specification = individual_test_specification,
-            week_aggregation = 1,
+            week_aggregation = week_aggregation,
             ews_method = ews_method,
             lead_time_dist = ews_lead_time,
-            lead_time_median = StatsBase.median(ews_lead_time),
-            lead_time_lower = StatsBase.quantile(
-                ews_lead_time, percentile_tail
-            ),
-            lead_time_upper = StatsBase.quantile(
-                ews_lead_time, 1.0 - percentile_tail
-            ),
+            lead_time_median = median_ews_lead_time,
+            lead_time_lower = lower_ews_lead_time,
+            lead_time_upper = upper_ews_lead_time,
             lead_time_units = String(lead_time_units),
         ),
     )

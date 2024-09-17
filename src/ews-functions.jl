@@ -17,8 +17,8 @@ function expanding_ews_thresholds(
     ews_vec = getproperty(ewsmetrics, metric)
 
     ews_distributions = fill(NaN, length(ews_vec), length(percentiles))
-    exceeds_thresholds = Array{Bool}(
-        undef, length(ews_vec), length(percentiles)
+    exceeds_thresholds = zeros(Bool,
+        length(ews_vec), length(percentiles),
     )
 
     for i in eachindex(ews_vec)

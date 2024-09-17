@@ -81,7 +81,7 @@ monthly_cases_arr = zeros(Int64, length(monthly_cases), 1, nsims)
 monthly_cases_arr .= monthly_cases
 
 #%%
-sim = 1
+sim = 4
 
 for noise_specification in (
     PoissonNoiseSpecification(1.0),
@@ -197,6 +197,8 @@ lead_time_df = DataFrame(
 #     ),
 # )
 
+res = 1
+
 for noise_specification in (
     PoissonNoiseSpecification(1.0),
     PoissonNoiseSpecification(2.0),
@@ -210,35 +212,26 @@ for noise_specification in (
     weekly_noise_arr = create_noise_arr(
         noise_specification, weekly_cases_arr; seed = 1234
     )[1]
-    filled_weekly_noise_arr = fill_aggregation_values(weekly_noise_arr)
 
     biweekly_noise_arr = create_noise_arr(
         noise_specification, biweekly_cases_arr;
     )[1]
-    filled_biweekly_noise_arr = fill_aggregation_values(
-        biweekly_noise_arr; week_aggregation = 2
-    )
 
     monthly_noise_arr = create_noise_arr(
         noise_specification, monthly_cases_arr;
     )[1]
-    filled_monthly_noise_arr =
-        fill_aggregation_values(
-            monthly_noise_arr; week_aggregation = 4
-        ) |>
-        x -> x[1:length(plot_dates), :]
 
     for (test_specification, ews_method) in
         Iterators.product(
         (
-            # IndividualTestSpecification(0.5, 0.5, 0),
+            IndividualTestSpecification(0.5, 0.5, 0),
             IndividualTestSpecification(0.8, 0.8, 0),
             IndividualTestSpecification(1.0, 1.0, 0),
-            # IndividualTestSpecification(1.0, 0.0, 0),
+            IndividualTestSpecification(1.0, 0.0, 0),
         ),
         (Main.Backward,),
     )
-        ews_lead_time_df!(
+        res = ews_lead_time_df!(
             lead_time_df,
             weekly_cases_arr,
             weekly_noise_arr,
@@ -258,6 +251,7 @@ for noise_specification in (
             obsdate = cdc_week_to_date(1990, 3; weekday = 6),
             lead_time_units = :weeks,
             lead_time_percentile = 0.8,
+            return_objects = true,
         )
     end
 end
@@ -265,4 +259,146 @@ end
 ews_lead_time_plot(
     lead_time_df;
     lead_time_units = :weeks,
+)
+
+#%%
+hist(lead_time_df[1, :lead_time_dist]; bins = 140:1:350)
+
+#%%
+res_orig = deepcopy(res)
+
+#%%
+res[1][:, 5, 1] == res[1][:, 5, 100]
+
+#%%
+for sim in eachindex(res[2])
+    @show res[2].variance[sim] == res_orig[2].variance[sim]
+end
+
+#%%
+for sim in eachindex(res[3])
+    @show res[3][sim] == res_orig[3][sim]
+end
+
+#%%
+hcat(res[3][1], res_orig[3][1])
+
+#%%
+for sim in eachindex(res[2])
+    @show res[2][sim].variance == res_orig[2][sim].variance
+    @show res[2][1].variance == res_orig[2][sim].variance
+end
+
+#%%
+for sim in eachindex(res[2])
+    @assert expanding_ews_thresholds(
+        res[2][sim],
+        :variance,
+        Main.Expanding;
+        percentiles = 0.95,
+    )[2] == expanding_ews_thresholds(
+        res_orig[2][sim],
+        :variance,
+        Main.Expanding;
+        percentiles = 0.95,
+    )[2] "failed sim $sim"
+end
+
+#%%
+hcat(
+    expanding_ews_thresholds(
+        res[2][1],
+        :variance,
+        Main.Expanding;
+        percentiles = 0.95,
+    )[1],
+    expanding_ews_thresholds(
+        res_orig[2][1],
+        :variance,
+        Main.Expanding;
+        percentiles = 0.95,
+    )[1],
+)
+
+#%%
+expanding_ews_thresholds(
+    res[2][1],
+    :variance,
+    Main.Expanding;
+    percentiles = 0.95,
+)[1] .==
+expanding_ews_thresholds(
+    res_orig[2][1],
+    :variance,
+    Main.Expanding;
+    percentiles = 0.95,
+)[1]
+
+#%%
+hcat(
+    expanding_ews_thresholds(
+        res[2][1],
+        :variance,
+        Main.Expanding;
+        percentiles = 0.95,
+    )...,
+    expanding_ews_thresholds(
+        res_orig[2][1],
+        :variance,
+        Main.Expanding;
+        percentiles = 0.95,
+    )...) |>
+arr ->
+    DataFrame(arr, [:res_var, :res_thresh, :orig_var, :orig_thresh]) |>
+    df ->
+        transform!(
+            df, [:res_var, :orig_var] => ByRow((x1, x2) -> x1 - x2) => :var_diff
+        ) |>
+        df ->
+            transform!(
+                df,
+                [:res_thresh, :orig_thresh] =>
+                    ByRow((x1, x2) -> x1 - x2) => :thresh_diff,
+            )
+
+# df -> filter(row -> row.diff > 0, df)
+
+#%%
+@assert res[2][1].variance == res_orig[2][1].variance
+
+#%%
+for sim in eachindex(res[3])
+    @assert calculate_ews_lead_time(
+        res[3][sim];
+        week_aggregation = 1,
+        consecutive_thresholds = 2,
+        output_type = :weeks,
+    ) .== calculate_ews_lead_time(
+        res_orig[3][sim];
+        week_aggregation = 1,
+        consecutive_thresholds = 2,
+        output_type = :weeks,
+    )
+end
+
+#%%
+hcat(
+    map(
+        sim -> calculate_ews_lead_time(
+            res[3][sim];
+            week_aggregation = 1,
+            consecutive_thresholds = 2,
+            output_type = :weeks,
+        ),
+        eachindex(res[3]),
+    ),
+    map(
+        sim -> calculate_ews_lead_time(
+            res_orig[3][sim];
+            week_aggregation = 1,
+            consecutive_thresholds = 2,
+            output_type = :weeks,
+        ),
+        eachindex(res_orig[3]),
+    ),
 )

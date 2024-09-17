@@ -506,6 +506,7 @@ function ews_lead_time_df!(
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
     lead_time_units = :days,
     lead_time_percentile = 0.95,
+    return_objects = false,
 )
     test_arr = create_testing_arrs(
         cases_arr,
@@ -539,9 +540,10 @@ function ews_lead_time_df!(
 
     ews_metric_sym = Symbol(ews_metric)
 
+    weekly_thresholds = Vector{Matrix{Bool}}(undef, length(test_ewsmetrics))
     ews_lead_time = zeros(Float64, length(test_ewsmetrics))
     for sim in axes(test_ewsmetrics, 1)
-        weekly_thresholds = expanding_ews_thresholds(
+        weekly_thresholds[sim] = expanding_ews_thresholds(
             test_ewsmetrics[sim],
             ews_metric_sym,
             ews_threshold_window;
@@ -549,7 +551,7 @@ function ews_lead_time_df!(
         )[2]
 
         ews_lead_time[sim] = calculate_ews_lead_time(
-            weekly_thresholds;
+            weekly_thresholds[sim];
             week_aggregation = week_aggregation,
             consecutive_thresholds = consecutive_thresholds,
             output_type = lead_time_units,
@@ -577,6 +579,10 @@ function ews_lead_time_df!(
             lead_time_units = String(lead_time_units),
         ),
     )
+
+    if return_objects
+        return test_arr, test_ewsmetrics, weekly_thresholds
+    end
 
     return nothing
 end

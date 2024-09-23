@@ -9,6 +9,7 @@ using DataFrames
 using GLMakie
 using StatsBase
 using StructArrays
+using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
 
@@ -82,6 +83,16 @@ monthly_cases_arr .= monthly_cases
 
 #%%
 sims = (1, 4)
+ews_metrics = [
+    "autocorrelation",
+    "autocovariance",
+    "coefficient_of_variation",
+    "index_of_dispersion",
+    "kurtosis",
+    "mean",
+    "skewness",
+    "variance",
+]
 
 for noise_specification in (
     PoissonNoiseSpecification(1.0),
@@ -134,42 +145,47 @@ for noise_specification in (
         )
     end
 
-    for (test_specification, ews_method, sim) in
-        Iterators.product(
+    @showprogress for (test_specification, ews_method, sim) in
+                      Iterators.product(
         (
             IndividualTestSpecification(0.5, 0.5, 0),
             IndividualTestSpecification(0.8, 0.8, 0),
             IndividualTestSpecification(1.0, 1.0, 0),
             IndividualTestSpecification(1.0, 0.0, 0),
         ),
-        (Main.Backward, Main.Centered),
+        (
+            Main.Backward,
+            Main.Centered,
+        ),
         sims,
     )
-        tycho_testing_plots(
-            (
-                weekly_noise_arr,
-                biweekly_noise_arr,
-                monthly_noise_arr,
-            ),
-            (
-                weekly_cases_arr,
-                biweekly_cases_arr,
-                monthly_cases_arr,
-            ),
-            (
-                weekly_plot_cases,
-                biweekly_plot_cases,
-                monthly_plot_cases,
-            ),
-            tycho_CA_measles_long_plotdata;
-            individual_test_specification = test_specification,
-            noise_specification = noise_specification,
-            ews_method = ews_method,
-            sim = sim,
-            plot_base_path = joinpath(base_plotdir, "testing-plots"),
-            force = true,
-            # force = false,
-        )
+        for ews_metric in ews_metrics
+            tycho_testing_plots(
+                (
+                    weekly_noise_arr,
+                    biweekly_noise_arr,
+                    monthly_noise_arr,
+                ),
+                (
+                    weekly_cases_arr,
+                    biweekly_cases_arr,
+                    monthly_cases_arr,
+                ),
+                (
+                    weekly_plot_cases,
+                    biweekly_plot_cases,
+                    monthly_plot_cases,
+                ),
+                tycho_CA_measles_long_plotdata;
+                individual_test_specification = test_specification,
+                noise_specification = noise_specification,
+                ews_metric = ews_metric,
+                ews_method = ews_method,
+                sim = sim,
+                plot_base_path = joinpath(base_plotdir, "testing-plots"),
+                # force = false,
+            )
+        end
     end
 end
 

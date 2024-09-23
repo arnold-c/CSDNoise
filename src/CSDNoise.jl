@@ -50,7 +50,7 @@ export aggregate_timeseries,
 include("ews-functions.jl")
 export EWSThresholdWindow,
     Rolling, Expanding, expanding_ews_thresholds,
-    tycho_testing_plots,
+    tycho_testing_plots, tycho_tau_heatmap,
     calculate_ews_lead_time, calculate_ews_trigger_index,
     ews_lead_time_df!
 

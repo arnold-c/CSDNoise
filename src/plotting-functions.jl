@@ -14,6 +14,7 @@ using FLoops
 using LaTeXStrings
 using NaNMath: NaNMath
 using Dates
+using Debugger: Debugger
 
 seircolors = ["dodgerblue4", "green", "firebrick3", "chocolate2", "purple"]
 seir_state_labels = ["S", "E", "I", "R", "N"]
@@ -2067,7 +2068,6 @@ function ews_timeseries!(
         multiplier = aggregation * 7
 
         xaxes = (1:length(ews)) .* multiplier
-        ind = ind .* multiplier
 
         threshold = ews .* threshold
         replace!(threshold, 0.0 => NaN)
@@ -2085,6 +2085,7 @@ function ews_timeseries!(
             color = (color, 0.4),
         )
         if !isnothing(ind)
+            ind = ind .* multiplier
             vlines!(ax, ind; color = color)
         end
     end
@@ -2284,6 +2285,9 @@ function tycho_tau_distribution(
     for (i, (aggregation, ews)) in
         zip(1:length(tested_ews_tuple), pairs(tested_ews_tuple))
         aggregation_tau = getproperty(ews, tau_metric)
+        if sum(isnan.(aggregation_tau)) == length(aggregation_tau)
+            continue
+        end
         hist!(
             ax,
             aggregation_tau;
@@ -2315,7 +2319,13 @@ function tycho_tau_distribution(
         justification = :left,
     )
 
-    Legend(fig[1, 2], ax, "Aggregation (wks)")
+    lplots = filter(Makie.get_plots(ax)) do plot
+        haskey(plot.attributes, :label)
+    end
+
+    if !isempty(lplots)
+        Legend(fig[1, 2], ax, "Aggregation (wks)")
+    end
     return fig
 end
 

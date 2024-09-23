@@ -1,6 +1,8 @@
 using SumTypes
+using Match: Match
 using StatsBase: StatsBase
 using StructArrays
+using Debugger: Debugger
 
 @sum_type EWSThresholdWindow begin
     Expanding
@@ -17,23 +19,32 @@ function expanding_ews_thresholds(
     ews_vec = getproperty(ewsmetrics, metric)
 
     ews_distributions = fill(NaN, length(ews_vec), length(percentiles))
+    ews_worker_vec = fill(
+        NaN, sum((!isnan).(@view(ews_vec[(burn_in + 1):end])))
+    )
     exceeds_thresholds = zeros(Bool,
         length(ews_vec), length(percentiles),
     )
 
+    worker_ind = 0
     for i in eachindex(ews_vec)
-        if i <= burn_in
+        if i <= burn_in || isnan(ews_vec[i])
             continue
         end
+        worker_ind += 1
+        # use online stats to build up new distribution to avoid computing quantiles for vectors containing NaNs
+        ews_worker_vec[worker_ind] = ews_vec[i]
         ews_distributions[i, :] .= map(
-            p -> StatsBase.quantile(@view(ews_vec[1:i]), p),
+            p -> StatsBase.quantile(@view(ews_worker_vec[1:worker_ind]), p),
             percentiles,
         )
 
-        exceeds_thresholds[i, :] .= ews_vec[i] .>= ews_distributions[i, :]
+        exceeds_thresholds[i, :] .= ews_vec[i] .>= ews_distributions[(i - 1), :]
     end
 
-    return ews_distributions, exceeds_thresholds
+    @assert worker_ind == length(ews_worker_vec)
+
+    return ews_distributions, exceeds_thresholds, ews_worker_vec
 end
 
 function tycho_testing_plots(
@@ -306,6 +317,8 @@ function tycho_testing_plots(
         Makie.empty!(plot)
     end
 
+    Debugger.@bp
+
     weekly_thresholds = expanding_ews_thresholds(
         weekly_test_ewsmetrics[sim],
         ews_metric_sym,
@@ -411,6 +424,103 @@ function tycho_testing_plots(
     end
 
     return nothing
+end
+
+function tycho_tau_heatmap(
+    long_plotdata,
+    cases_arr,
+    noise_arr,
+    test_tuple;
+    week_aggregation = 1,
+    ews_metrics = [
+        :autocorrelation,
+        :autocovariance,
+        :coefficient_of_variation,
+        :index_of_dispersion,
+        :kurtosis,
+        :mean,
+        :skewness,
+        :variance,
+    ],
+    ews_method = Main.Centered,
+    ews_aggregation = 1,
+    ews_bandwidth = 52,
+    ews_lag = 1,
+    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+    statistic_function = StatsBase.mean,
+)
+    ews_df = DataFrame(
+        "ews_metric" => String[],
+        "test_specification" => IndividualTestSpecification[],
+        "ews_metric_value" => Float64[],
+        "ews_metric_vector" => Vector{Float64}[],
+    )
+
+    for individual_test_specification in test_tuple
+        test_arr = create_testing_arrs(
+            cases_arr,
+            noise_arr,
+            1.0,
+            individual_test_specification,
+        )
+
+        obs_index = calculate_ews_enddate(
+            long_plotdata;
+            week_aggregation = week_aggregation,
+            obsdate = obsdate,
+        )
+
+        ewsmetric_specification = EWSMetricSpecification(
+            ews_method,
+            ews_aggregation,
+            Int(ews_bandwidth / week_aggregation),
+            ews_lag,
+        )
+
+        test_ewsmetrics =
+            map(
+                k -> EWSMetrics(
+                    ewsmetric_specification,
+                    test_arr[
+                        1:obs_index, 5, k
+                    ],
+                ),
+                axes(test_arr, 3),
+            ) |>
+            x -> StructArray(x)
+
+        for ews_metric in ews_metrics
+            ews_metric_tau = ews_metric * "_tau"
+            ews_metric_tau_sym = Symbol(ews_metric_tau)
+
+            ews_tau = get_tau(
+                test_ewsmetrics;
+                tau_metric = ews_metric_tau_sym,
+                statistic_function = statistic_function,
+            )
+
+            push!(
+                ews_df,
+                (
+                    ews_metric,
+                    individual_test_specification,
+                    ews_tau,
+                    getproperty(test_ewsmetrics, ews_metric_tau_sym),
+                ),
+            )
+        end
+    end
+    return ews_df
+end
+
+function get_tau(
+    ews_metrics;
+    tau_metric = :variance_tau,
+    statistic_function = StatsBase.mean,
+)
+    tau_vector = getproperty(ews_metrics, tau_metric)
+
+    return statistic_function(tau_vector)
 end
 
 function calculate_ews_lead_time(

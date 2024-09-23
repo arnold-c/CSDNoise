@@ -44,6 +44,7 @@ export aggregate_timeseries,
     spaero_kurtosis,
     spaero_autocov,
     spaero_autocor,
+    spaero_corkendall,
     compare_against_spaero, filter_spaero_comparison,
     ews_as_df
 

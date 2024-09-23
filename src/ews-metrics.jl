@@ -14,8 +14,6 @@ function EWSMetrics(
         timeseries, ews_spec.aggregation
     )
 
-    aggregated_timeseries_indices = collect(1:length(aggregated_timeseries))
-
     mean_vec = spaero_mean(
         ews_spec.method, aggregated_timeseries, ews_spec.bandwidth
     )
@@ -55,14 +53,14 @@ function EWSMetrics(
         kurtosis_vec,
         autocov_vec,
         autocor_vec,
-        StatsBase.corkendall(aggregated_timeseries_indices, mean_vec),
-        StatsBase.corkendall(aggregated_timeseries_indices, var_vec),
-        StatsBase.corkendall(aggregated_timeseries_indices, cov_vec),
-        StatsBase.corkendall(aggregated_timeseries_indices, iod_vec),
-        StatsBase.corkendall(aggregated_timeseries_indices, skew_vec),
-        StatsBase.corkendall(aggregated_timeseries_indices, kurtosis_vec),
-        StatsBase.corkendall(aggregated_timeseries_indices, autocov_vec),
-        StatsBase.corkendall(aggregated_timeseries_indices, autocor_vec),
+        spaero_corkendall(mean_vec),
+        spaero_corkendall(var_vec),
+        spaero_corkendall(cov_vec),
+        spaero_corkendall(iod_vec),
+        spaero_corkendall(skew_vec),
+        spaero_corkendall(kurtosis_vec),
+        spaero_corkendall(autocov_vec),
+        spaero_corkendall(autocor_vec),
     )
 end
 
@@ -304,6 +302,18 @@ function _lagged_vector(lagged_vec, vec, lag)
         lagged_vec[i] = vec[i - lag]
     end
     return nothing
+end
+
+function spaero_corkendall(ews_vec)
+    sum(isnan.(ews_vec)) == 0 &&
+        return StatsBase.corkendall(
+            collect(1:length(ews_vec)), ews_vec
+        )
+
+    filtered_ews_vec = filter(x -> !isnan(x), ews_vec)
+    return StatsBase.corkendall(
+        collect(1:length(filtered_ews_vec)), filtered_ews_vec
+    )
 end
 
 function compare_against_spaero(

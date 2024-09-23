@@ -45,7 +45,7 @@ export aggregate_timeseries,
     spaero_autocov,
     spaero_autocor,
     compare_against_spaero, filter_spaero_comparison,
-    EWSMetricSpecification, EWSMetrics
+    ews_as_df
 
 include("ews-functions.jl")
 export EWSThresholdWindow,

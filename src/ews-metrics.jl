@@ -389,3 +389,17 @@ function filter_spaero_comparison(df; tolerance = 1e-13, warn = true)
     end
     return subsetted
 end
+
+function ews_as_df(ews::EWSMetrics)
+    metrics = filter(
+        x -> x != :ews_specification && !contains(string(x), "tau"),
+        propertynames(ews),
+    )
+    df =
+        reduce(
+            hcat,
+            map(metric -> getproperty(ews, metric), metrics),
+        ) |>
+        array -> DataFrames.DataFrame(array, [metrics...])
+    return df
+end

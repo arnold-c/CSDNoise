@@ -187,6 +187,41 @@ for noise_specification in (
             )
         end
     end
+
+    # for (ews_method, (cases_arr, noise_arr, week_aggregation), sim) in
+    #     Iterators.product(
+    #     (Main.Backward, Main.Centered),
+    #     zip(
+    #         (weekly_cases_arr, biweekly_cases_arr, monthly_cases_arr),
+    #         (weekly_noise_arr, biweekly_noise_arr, monthly_noise_arr),
+    #         (1, 2, 4),
+    #     ),
+    #     sims,
+    # )
+    #     ews_df = tycho_tau_heatmap(
+    #         tycho_CA_measles_long_plotdata,
+    #         cases_arr,
+    #         noise_arr,
+    #         (
+    #             IndividualTestSpecification(0.5, 0.5, 0),
+    #             IndividualTestSpecification(0.8, 0.8, 0),
+    #             IndividualTestSpecification(1.0, 1.0, 0),
+    #         );
+    #         week_aggregation = week_aggregation,
+    #         ews_metrics = [
+    #             "autocorrelation",
+    #             "autocovariance",
+    #             "coefficient_of_variation",
+    #             "index_of_dispersion",
+    #             "kurtosis",
+    #             "mean",
+    #             "skewness",
+    #             "variance",
+    #         ],
+    #         ews_method = ews_method,
+    #         statistic_function = StatsBase.median,
+    #     )
+    # end
 end
 
 #%%

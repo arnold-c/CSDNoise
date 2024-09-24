@@ -426,7 +426,7 @@ function tycho_testing_plots(
     return nothing
 end
 
-function tycho_tau_heatmap(
+function tycho_tau_heatmap_df(
     long_plotdata,
     cases_arr,
     noise_arr,

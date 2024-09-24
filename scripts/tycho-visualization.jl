@@ -82,7 +82,10 @@ monthly_cases_arr = zeros(Int64, length(monthly_cases), 1, nsims)
 monthly_cases_arr .= monthly_cases
 
 #%%
-sims = (1, 4)
+sims = (
+    1,
+    # 4
+)
 ews_metrics = [
     "autocorrelation",
     "autocovariance",
@@ -96,7 +99,7 @@ ews_metrics = [
 
 for noise_specification in (
     PoissonNoiseSpecification(1.0),
-    PoissonNoiseSpecification(8.0),
+    # PoissonNoiseSpecification(8.0),
 )
     weekly_noise_arr = create_noise_arr(noise_specification, weekly_cases_arr;)[1]
     filled_weekly_noise_arr = fill_aggregation_values(weekly_noise_arr)
@@ -145,84 +148,101 @@ for noise_specification in (
         )
     end
 
-    @showprogress for (test_specification, ews_method, sim) in
-                      Iterators.product(
-        (
-            IndividualTestSpecification(0.5, 0.5, 0),
-            IndividualTestSpecification(0.8, 0.8, 0),
-            IndividualTestSpecification(1.0, 1.0, 0),
-            IndividualTestSpecification(1.0, 0.0, 0),
-        ),
-        (
-            Main.Backward,
-            Main.Centered,
-        ),
-        sims,
-    )
-        for ews_metric in ews_metrics
-            tycho_testing_plots(
-                (
-                    weekly_noise_arr,
-                    biweekly_noise_arr,
-                    monthly_noise_arr,
-                ),
-                (
-                    weekly_cases_arr,
-                    biweekly_cases_arr,
-                    monthly_cases_arr,
-                ),
-                (
-                    weekly_plot_cases,
-                    biweekly_plot_cases,
-                    monthly_plot_cases,
-                ),
-                tycho_CA_measles_long_plotdata;
-                individual_test_specification = test_specification,
-                noise_specification = noise_specification,
-                ews_metric = ews_metric,
-                ews_method = ews_method,
-                sim = sim,
-                plot_base_path = joinpath(base_plotdir, "testing-plots"),
-                # force = false,
-            )
-        end
-    end
-
-    # for (ews_method, (cases_arr, noise_arr, week_aggregation), sim) in
-    #     Iterators.product(
-    #     (Main.Backward, Main.Centered),
-    #     zip(
-    #         (weekly_cases_arr, biweekly_cases_arr, monthly_cases_arr),
-    #         (weekly_noise_arr, biweekly_noise_arr, monthly_noise_arr),
-    #         (1, 2, 4),
+    # @showprogress for (test_specification, ews_method, sim) in
+    #                   Iterators.product(
+    #     (
+    #         IndividualTestSpecification(0.5, 0.5, 0),
+    #         IndividualTestSpecification(0.8, 0.8, 0),
+    #         IndividualTestSpecification(1.0, 1.0, 0),
+    #         IndividualTestSpecification(1.0, 0.0, 0),
+    #     ),
+    #     (
+    #         Main.Backward,
+    #         Main.Centered,
     #     ),
     #     sims,
     # )
-    #     ews_df = tycho_tau_heatmap(
-    #         tycho_CA_measles_long_plotdata,
-    #         cases_arr,
-    #         noise_arr,
-    #         (
-    #             IndividualTestSpecification(0.5, 0.5, 0),
-    #             IndividualTestSpecification(0.8, 0.8, 0),
-    #             IndividualTestSpecification(1.0, 1.0, 0),
-    #         );
-    #         week_aggregation = week_aggregation,
-    #         ews_metrics = [
-    #             "autocorrelation",
-    #             "autocovariance",
-    #             "coefficient_of_variation",
-    #             "index_of_dispersion",
-    #             "kurtosis",
-    #             "mean",
-    #             "skewness",
-    #             "variance",
-    #         ],
-    #         ews_method = ews_method,
-    #         statistic_function = StatsBase.median,
-    #     )
+    #     for ews_metric in ews_metrics
+    #         tycho_testing_plots(
+    #             (
+    #                 weekly_noise_arr,
+    #                 biweekly_noise_arr,
+    #                 monthly_noise_arr,
+    #             ),
+    #             (
+    #                 weekly_cases_arr,
+    #                 biweekly_cases_arr,
+    #                 monthly_cases_arr,
+    #             ),
+    #             (
+    #                 weekly_plot_cases,
+    #                 biweekly_plot_cases,
+    #                 monthly_plot_cases,
+    #             ),
+    #             tycho_CA_measles_long_plotdata;
+    #             individual_test_specification = test_specification,
+    #             noise_specification = noise_specification,
+    #             ews_metric = ews_metric,
+    #             ews_method = ews_method,
+    #             sim = sim,
+    #             plot_base_path = joinpath(base_plotdir, "testing-plots"),
+    #             force = false,
+    #         )
+    #     end
     # end
+
+    for (ews_method, (cases_arr, noise_arr, week_aggregation), sim) in
+        Iterators.product(
+        (Main.Backward, Main.Centered),
+        zip(
+            (weekly_cases_arr, biweekly_cases_arr, monthly_cases_arr),
+            (weekly_noise_arr, biweekly_noise_arr, monthly_noise_arr),
+            (1, 2, 4),
+        ),
+        sims,
+    )
+        ews_df = tycho_tau_heatmap_df(
+            tycho_CA_measles_long_plotdata,
+            cases_arr,
+            noise_arr,
+            (
+                IndividualTestSpecification(0.5, 0.5, 0),
+                IndividualTestSpecification(0.8, 0.8, 0),
+                IndividualTestSpecification(1.0, 1.0, 0),
+            );
+            week_aggregation = week_aggregation,
+            ews_metrics = [
+                "autocorrelation",
+                "autocovariance",
+                "coefficient_of_variation",
+                "index_of_dispersion",
+                "kurtosis",
+                "mean",
+                "skewness",
+                "variance",
+            ],
+            ews_method = ews_method,
+            statistic_function = StatsBase.median,
+        )
+    end
 end
+
+#%%
+tycho_tau_heatmap_plot(
+    ews_df
+)
+
+#%%
+subset(
+    ews_df,
+    :test_specification => ByRow(==(IndividualTestSpecification(0.5, 0.5, 0))),
+) |>
+df ->
+    sort(df, :ews_metric) |>
+    df -> df[
+        indexin(["mean", "variance"], df.ews_metric),
+        [:ews_metric, :ews_metric_value],
+    ]
 
 #%%
 lead_time_df = DataFrame(

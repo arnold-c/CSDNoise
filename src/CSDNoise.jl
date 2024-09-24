@@ -51,7 +51,7 @@ export aggregate_timeseries,
 include("ews-functions.jl")
 export EWSThresholdWindow,
     Rolling, Expanding, expanding_ews_thresholds,
-    tycho_testing_plots, tycho_tau_heatmap,
+    tycho_testing_plots, tycho_tau_heatmap_df,
     calculate_ews_lead_time, calculate_ews_trigger_index,
     ews_lead_time_df!
 
@@ -128,6 +128,7 @@ export seircolors,
     Reff_ews_plot, tycho_epicurve, tycho_noise_components_epicurve,
     tycho_test_positive_components_epicurve,
     tycho_tau_distribution,
+    tycho_tau_heatmap_plot,
     ews_lead_time_plot
 # @reexport using .PlottingFunctions
 

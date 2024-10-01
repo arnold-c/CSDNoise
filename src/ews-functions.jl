@@ -318,8 +318,6 @@ function tycho_testing_plots(
         Makie.empty!(plot)
     end
 
-    Debugger.@bp
-
     weekly_thresholds = expanding_ews_thresholds(
         weekly_test_ewsmetrics[sim],
         ews_metric_sym,
@@ -361,44 +359,45 @@ function tycho_testing_plots(
         ewspath, plotname
     )
 
-    if !isfile(plotpath) || force
-        plot = tycho_epicurve(
-            plot_dates,
-            (
-                filled_weekly_test_arr[:, 5, sim],
-                filled_biweekly_test_arr[:, 5, sim],
-                filled_monthly_test_arr[:, 5, sim],
-            ),
-            (
-                getproperty(weekly_test_ewsmetrics[sim], ews_metric_sym),
-                getproperty(biweekly_test_ewsmetrics[sim], ews_metric_sym),
-                getproperty(monthly_test_ewsmetrics[sim], ews_metric_sym),
-            ),
-            (
-                weekly_thresholds[2],
-                biweekly_thresholds[2],
-                monthly_thresholds[2],
-            ),
-            (
-                weekly_detection_index,
-                biweekly_detection_index,
-                monthly_detection_index,
-            );
-            plottitle = "Test Positives",
-            subtitle = "$(test_plot_description), $(noise_magnitude_description): $(method_string(weekly_ewsmetric_specification.method)) EWS $(ews_metric) Epicurve",
-            ews_ylabel = ews_metric,
-            threshold_percentile = ews_threshold_percentile,
-            consecutive_thresholds = consecutive_thresholds,
-        )
+    # if !isfile(plotpath) || force
+    Debugger.@bp
+    plot = tycho_epicurve(
+        plot_dates,
+        (
+            filled_weekly_test_arr[:, 5, sim],
+            filled_biweekly_test_arr[:, 5, sim],
+            filled_monthly_test_arr[:, 5, sim],
+        ),
+        (
+            getproperty(weekly_test_ewsmetrics[sim], ews_metric_sym),
+            getproperty(biweekly_test_ewsmetrics[sim], ews_metric_sym),
+            getproperty(monthly_test_ewsmetrics[sim], ews_metric_sym),
+        ),
+        (
+            weekly_thresholds[2],
+            biweekly_thresholds[2],
+            monthly_thresholds[2],
+        ),
+        (
+            weekly_detection_index,
+            biweekly_detection_index,
+            monthly_detection_index,
+        );
+        plottitle = "Test Positives",
+        subtitle = "$(test_plot_description), $(noise_magnitude_description): $(method_string(weekly_ewsmetric_specification.method)) EWS $(ews_metric) Epicurve",
+        ews_ylabel = ews_metric,
+        threshold_percentile = ews_threshold_percentile,
+        consecutive_thresholds = consecutive_thresholds,
+    )
 
-        save(
-            plotpath,
-            plot;
-            size = (2200, 1600),
-        )
+    save(
+        plotpath,
+        plot;
+        size = (2200, 1600),
+    )
 
-        Makie.empty!(plot)
-    end
+    Makie.empty!(plot)
+    # end
 
     if return_objects
         return (

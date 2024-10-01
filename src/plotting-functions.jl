@@ -1971,7 +1971,7 @@ function tycho_epicurve(
     cases_tuple::T1,
     ews_tuple::T2,
     ews_threshold_tuple::T3,
-    ews_thresholds_indices::T4;
+    ews_threshold_indices::T4;
     plottitle = "",
     subtitle = "",
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
@@ -2018,7 +2018,7 @@ function tycho_epicurve(
         plot_dates,
         ews_tuple,
         ews_threshold_tuple,
-        ews_thresholds_indices;
+        ews_threshold_indices;
         obsdate = obsdate,
     )
 
@@ -2046,7 +2046,7 @@ function ews_timeseries!(
     plot_dates,
     ews_tuple,
     ews_threshold_tuple,
-    ews_thresholds_indices;
+    ews_threshold_indices;
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
 )
     obsdate_indices = findfirst(x -> x == obsdate, plot_dates)
@@ -2060,7 +2060,7 @@ function ews_timeseries!(
     for (ews, threshold, ind, aggregation, color, label) in zip(
         ews_tuple,
         ews_threshold_tuple,
-        ews_thresholds_indices,
+        ews_threshold_indices,
         [1, 2, 4],
         [:grey20, :blue, :darkred],
         ["Weekly", "Biweekly", "Monthly"],
@@ -2070,7 +2070,11 @@ function ews_timeseries!(
         xaxes = (1:length(ews)) .* multiplier
 
         threshold = ews .* threshold
-        replace!(threshold, 0.0 => NaN)
+        replace!(
+            threshold,
+            0.0 => NaN,
+            -0.0 => NaN,
+        )
 
         lines!(
             ax, xaxes, ews; color = color, label = label

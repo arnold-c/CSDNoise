@@ -344,6 +344,15 @@ struct IndividualTestSpecification{T1<:AbstractFloat,T2<:Integer}
     test_result_lag::T2
 end
 
+function get_test_description(test_specification::IndividualTestSpecification)
+    description = Match.@match test_specification begin
+        IndividualTestSpecification(1.0, 0.0, 0) => "Clinical case definition"
+        IndividualTestSpecification(x::AbstractFloat, x::AbstractFloat, 0) where {x<1.0} => "RDT-like ($(test_specification.sensitivity * 100)% sens/spec)"
+        IndividualTestSpecification(1.0, 1.0, x::Int) => "ELISA-like ($(x) day lag)"
+    end
+    return description
+end
+
 abstract type NoiseSpecification end
 
 struct PoissonNoiseSpecification{
@@ -351,6 +360,12 @@ struct PoissonNoiseSpecification{
 } <: NoiseSpecification
     noise_type::T1
     noise_mean_scaling::T2
+end
+
+function PoissonNoiseSpecification(
+    noise_mean_scaling::T
+) where {T<:AbstractFloat}
+    return PoissonNoiseSpecification("poisson", noise_mean_scaling)
 end
 
 struct DynamicalNoiseSpecification{
@@ -364,8 +379,52 @@ struct DynamicalNoiseSpecification{
     noise_mean_scaling::T2
 end
 
-function DynamicalNoiseSpecification()
+function DynamicalNoiseSpecification(
+    R_0::T2,
+    latent_period::T3,
+    duration_infection::T3,
+    correlation::T1,
+    noise_mean_scaling::T2,
+) where {T1<:AbstractString,T2<:AbstractFloat,T3<:Integer}
+    return DynamicalNoiseSpecification(
+        "dynamical",
+        R_0,
+        latent_period,
+        duration_infection,
+        correlation,
+        noise_mean_scaling,
+    )
 end
+
+function get_noise_description(
+    noise_specification::T
+) where {T<:NoiseSpecification}
+    return noise_specification.noise_type
+end
+
+function get_noise_description(noise_specification::DynamicalNoiseSpecification)
+    return string(
+        noise_specification.noise_type, ", ", noise_specification.correlation
+    )
+end
+
+function get_noise_magnitude_description(
+    noise_specification::T
+) where {T<:NoiseSpecification}
+    return string("Poisson scaling: ", noise_specification.noise_mean_scaling)
+end
+
+function get_noise_magnitude(
+    noise_specification::T
+) where {T<:NoiseSpecification}
+    return noise_specification.noise_mean_scaling
+end
+
+# function get_noise_magnitude(
+#     noise_specification::DynamicalNoiseSpecification
+# )
+#     return string("Rubella vax: ", noise_specification.vaccination_coverage)
+# end
 
 function getdirpath(spec::NoiseSpecification)
     return reduce(
@@ -411,17 +470,26 @@ method_string(method::EWSMethod) = lowercase(split(string(method), "::")[1])
 
 struct EWSMetrics{
     T1<:EWSMetricSpecification,
-    T2<:AbstractArray{<:AbstractFloat},
+    T2<:AbstractFloat,
+    T3<:AbstractArray{T2},
 }
     ews_specification::T1
-    mean::T2
-    variance::T2
-    coefficient_of_variation::T2
-    index_of_dispersion::T2
-    skewness::T2
-    kurtosis::T2
-    autocovariance::T2
-    autocorrelation::T2
+    mean::T3
+    variance::T3
+    coefficient_of_variation::T3
+    index_of_dispersion::T3
+    skewness::T3
+    kurtosis::T3
+    autocovariance::T3
+    autocorrelation::T3
+    mean_tau::T2
+    variance_tau::T2
+    coefficient_of_variation_tau::T2
+    index_of_dispersion_tau::T2
+    skewness_tau::T2
+    kurtosis_tau::T2
+    autocovariance_tau::T2
+    autocorrelation_tau::T2
 end
 
 struct ScenarioSpecification{

@@ -24,6 +24,75 @@ using TestItems
 function create_testing_arrs(
     incarr,
     noisearr,
+    perc_tested,
+    individual_test_spec::IndividualTestSpecification,
+)
+    testarr = zeros(Int64, size(incarr, 1), 5, size(incarr, 3))
+
+    create_testing_arrs!(
+        testarr,
+        incarr,
+        noisearr,
+        perc_tested,
+        individual_test_spec.test_result_lag,
+        individual_test_spec.sensitivity,
+        individual_test_spec.specificity,
+    )
+
+    return testarr
+end
+
+function create_testing_arrs!(
+    testarr,
+    incarr,
+    noisearr,
+    perc_tested,
+    testlag,
+    testsens,
+    testspec,
+)
+    tlength = size(testarr, 1)
+
+    for sim in axes(incarr, 3)
+        # Number of infectious individuals tested
+        calculate_tested!(
+            @view(testarr[:, 1, sim]), @view(incarr[:, 1, sim]), perc_tested
+        )
+
+        # Number of noise individuals tested
+        calculate_tested!(
+            @view(testarr[:, 2, sim]), @view(noisearr[:, sim]), perc_tested
+        )
+
+        # Number of test positive INFECTED individuals
+        calculate_true_positives!(
+            @view(testarr[:, 3, sim]),
+            @view(testarr[:, 1, sim]),
+            tlength,
+            testlag,
+            testsens,
+        )
+
+        # Number of test positive NOISE individuals
+        calculate_noise_positives!(
+            @view(testarr[:, 4, sim]),
+            @view(testarr[:, 2, sim]),
+            tlength,
+            testlag,
+            testspec,
+        )
+
+        # Number of test positive TOTAL individuals
+        @. testarr[:, 5, sim] =
+            @view(testarr[:, 3, sim]) + @view(testarr[:, 4, sim])
+    end
+
+    return nothing
+end
+
+function create_testing_arrs(
+    incarr,
+    noisearr,
     outbreak_detect_spec::OutbreakDetectionSpecification,
     individual_test_spec::IndividualTestSpecification,
     time_specification::SimTimeParameters,

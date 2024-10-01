@@ -1,3 +1,4 @@
+using StatsBase: StatsBase
 using SumTypes
 using DataFrames: DataFrames
 using Bumper
@@ -35,16 +36,31 @@ function EWSMetrics(
         ews_spec.bandwidth;
         lag = ews_spec.lag,
     )
+
+    cov_vec = spaero_cov(sd_vec, mean_vec)
+    iod_vec = spaero_iod(var_vec, mean_vec)
+    skew_vec = spaero_skew(m3_vec, sd3_vec)
+    kurtosis_vec = spaero_kurtosis(m4_vec, var2_vec)
+    autocor_vec = spaero_autocor(autocov_vec, sd_vec)
+
     return EWSMetrics(
         ews_spec,
         mean_vec,
         var_vec,
-        spaero_cov(sd_vec, mean_vec),
-        spaero_iod(var_vec, mean_vec),
-        spaero_skew(m3_vec, sd3_vec),
-        spaero_kurtosis(m4_vec, var2_vec),
+        cov_vec,
+        iod_vec,
+        skew_vec,
+        kurtosis_vec,
         autocov_vec,
-        spaero_autocor(autocov_vec, sd_vec),
+        autocor_vec,
+        spaero_corkendall(mean_vec),
+        spaero_corkendall(var_vec),
+        spaero_corkendall(cov_vec),
+        spaero_corkendall(iod_vec),
+        spaero_corkendall(skew_vec),
+        spaero_corkendall(kurtosis_vec),
+        spaero_corkendall(autocov_vec),
+        spaero_corkendall(autocor_vec),
     )
 end
 
@@ -288,6 +304,18 @@ function _lagged_vector(lagged_vec, vec, lag)
     return nothing
 end
 
+function spaero_corkendall(ews_vec)
+    sum(isnan.(ews_vec)) == 0 &&
+        return StatsBase.corkendall(
+            collect(1:length(ews_vec)), ews_vec
+        )
+
+    filtered_ews_vec = filter(x -> !isnan(x), ews_vec)
+    return StatsBase.corkendall(
+        collect(1:length(filtered_ews_vec)), filtered_ews_vec
+    )
+end
+
 function compare_against_spaero(
     spaero_ews::T1, my_ews::T2;
     ews = [
@@ -370,4 +398,18 @@ function filter_spaero_comparison(df; tolerance = 1e-13, warn = true)
         @warn "There are differences in the metrics between spaero and my implementation of EWS."
     end
     return subsetted
+end
+
+function ews_as_df(ews::EWSMetrics)
+    metrics = filter(
+        x -> x != :ews_specification && !contains(string(x), "tau"),
+        propertynames(ews),
+    )
+    df =
+        reduce(
+            hcat,
+            map(metric -> getproperty(ews, metric), metrics),
+        ) |>
+        array -> DataFrames.DataFrame(array, [metrics...])
+    return df
 end

@@ -2334,6 +2334,8 @@ function tycho_tau_heatmap_plot(
     baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
     colormap = :RdBu,
     textcolorthreshold = 0.6,
+    statistic_function = "mean",
+    plottitle = "Kendall's Tau Heatmap: " * titlecase(statistic_function),
 )
     df[!, :test_sens] = getproperty.(df.test_specification, :sensitivity)
     df[!, :test_spec] = getproperty.(df.test_specification, :sensitivity)
@@ -2369,7 +2371,7 @@ function tycho_tau_heatmap_plot(
     fig = Figure()
     ax = Axis(
         fig[1, 1];
-        title = "Kendall's Tau Heatmap",
+        title = plottitle,
         xlabel = "Test Specification (Sensitivity, Specificity, Lag)",
         ylabel = "EWS Metric",
         xticks = (1:length(unique_tests), test_axis_label.(unique_tests)),

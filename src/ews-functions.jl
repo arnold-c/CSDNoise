@@ -2,6 +2,7 @@ using SumTypes
 using Match: Match
 using StatsBase: StatsBase
 using StructArrays
+using DataFrames
 using Debugger: Debugger
 
 @sum_type EWSThresholdWindow begin

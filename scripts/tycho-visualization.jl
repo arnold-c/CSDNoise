@@ -84,7 +84,7 @@ monthly_cases_arr .= monthly_cases
 #%%
 sims = (
     1,
-    # 4
+    4,
 )
 ews_metrics = [
     "autocorrelation",
@@ -191,7 +191,9 @@ for noise_specification in (
     #     end
     # end
 
-    for (ews_method, (cases_arr, noise_arr, week_aggregation), sim) in
+    for (
+        ews_method, (cases_arr, noise_arr, week_aggregation), statistic_function
+    ) in
         Iterators.product(
         (Main.Backward, Main.Centered),
         zip(
@@ -199,7 +201,7 @@ for noise_specification in (
             (weekly_noise_arr, biweekly_noise_arr, monthly_noise_arr),
             (1, 2, 4),
         ),
-        sims,
+        (StatsBase.median, StatsBase.mean),
     )
         ews_df = tycho_tau_heatmap_df(
             tycho_CA_measles_long_plotdata,
@@ -222,27 +224,31 @@ for noise_specification in (
                 "variance",
             ],
             ews_method = ews_method,
-            statistic_function = StatsBase.median,
+            statistic_function = statistic_function,
+        )
+
+        ews_heatmap = tycho_tau_heatmap_plot(
+            ews_df;
+            statistic_function = titlecase(string(statistic_function)),
+        )
+
+        noise_path = joinpath(
+            base_plotdir,
+            "testing-plots",
+            getdirpath(noise_specification),
+        )
+
+        mkpath(noise_path)
+
+        save(
+            joinpath(
+                noise_path, "ews-heatmap_$(string(statistic_function)).png"
+            ),
+            ews_heatmap;
+            size = (2200, 1600),
         )
     end
 end
-
-#%%
-tycho_tau_heatmap_plot(
-    ews_df
-)
-
-#%%
-subset(
-    ews_df,
-    :test_specification => ByRow(==(IndividualTestSpecification(0.5, 0.5, 0))),
-) |>
-df ->
-    sort(df, :ews_metric) |>
-    df -> df[
-        indexin(["mean", "variance"], df.ews_metric),
-        [:ews_metric, :ews_metric_value],
-    ]
 
 #%%
 lead_time_df = DataFrame(

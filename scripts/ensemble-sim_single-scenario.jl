@@ -70,10 +70,6 @@ for (noise_specification, ews_metric_specification) in Iterators.product(
         ews_metric_specification,
     )
 
-    ensemble_solution_dict = get_ensemble_file(scenario_specification)
-
-    @unpack OT_chars = ensemble_solution_dict
-
     noisearr, poisson_noise_prop = create_noise_arr(
         noise_specification,
         ensemble_single_incarr;
@@ -95,7 +91,6 @@ for (noise_specification, ews_metric_specification) in Iterators.product(
         noisearr,
         poisson_noise_prop,
         noisedir,
-        OT_chars,
         ensemble_single_incarr,
         testarr,
         test_movingavg_arr,

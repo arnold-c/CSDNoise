@@ -14,7 +14,7 @@ function plot_all_single_scenarios(
         plotsdir(),
         "ensemble",
         "single-scenario",
-        noisedir
+        noisedir,
     )
     mkpath(ensemble_noise_plotpath)
 
@@ -22,13 +22,13 @@ function plot_all_single_scenarios(
         noisearr,
         poisson_noise_prop,
         time_specification,
-        noisedir
+        noisedir,
     )
 
     save(
         joinpath(
             ensemble_noise_plotpath,
-            "ensemble-sim_single-scenario_noise.png"
+            "ensemble-sim_single-scenario_noise.png",
         ),
         ensemble_noise_fig; size = (2200, 1600),
     )
@@ -106,7 +106,7 @@ function plot_all_single_scenarios(
 
     ensemble_single_scenario_outbreak_detect_diff_plot = ensemble_outbreak_detect_diff_plot(
         OT_chars;
-        binwidth = 1
+        binwidth = 1,
     )
 
     save(
@@ -244,7 +244,7 @@ function plot_all_single_scenarios(
     ensemble_single_scenario_testing_timeseries_plot = testing_plot(
         testarr,
         time_specification;
-        plottitle = noise_plottitle
+        plottitle = noise_plottitle,
     )
 
     save(
@@ -260,7 +260,7 @@ function plot_all_single_scenarios(
     ensemble_single_scenario_outbreak_dist_plot = ensemble_outbreak_distribution_plot(
         testarr,
         incarr;
-        plottitle = noise_plottitle
+        plottitle = noise_plottitle,
     )
 
     save(

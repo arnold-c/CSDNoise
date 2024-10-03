@@ -1384,9 +1384,6 @@ function Reff_ews_plot(
             outbreakstatus
     end
 
-    hcat(times .* (7 * 365), outbreak_status_vec) |>
-    x -> println(DataFrames.DataFrame(x[(x[:, 2] .== 1), :], :auto))
-
     Reff_above_one = zeros(Int64, length(times))
     for (lower, upper, _) in
         eachrow(Reff_thresholds_vec[sim])

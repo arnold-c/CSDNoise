@@ -40,10 +40,14 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 )["ensemble_Reff_thresholds_vec"]
 
 #%%
+nsims_plot = 5
 ensemble_incarr_Reff_plot(
-    ensemble_single_incarr,
-    ensemble_single_Reff_arr,
-    ensemble_single_Reff_thresholds_vec,
+    ensemble_single_incarr[:, :, 1:nsims_plot],
+    ensemble_single_Reff_arr[:, 1:nsims_plot],
+    ensemble_single_Reff_thresholds_vec[1:nsims_plot],
+    ensemble_single_periodsum_vecs[1:nsims_plot], ;
+    outbreak_alpha = 0.1,
+    Reff_alpha = 1,
 )
 
 #%%

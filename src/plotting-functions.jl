@@ -1816,12 +1816,22 @@ end
 function ensemble_incarr_Reff_plot(
     incarr,
     Reffarr,
-    Reff_thresholds_vec;
+    Reff_thresholds_vec,
+    thresholdsarr;
     aggregation = 1,
     linewidth = 3,
     hlinewidth = 2,
     threshold = 5 * aggregation,
-)
+    outbreak_alpha = 0.2,
+    Reff_alpha = 0.2,
+    outbreak_colormap = [
+        (N_MISSED_OUTBREAKS_COLOR, outbreak_alpha),
+        (PERC_OUTBREAKS_DETECTED_COLOR, outbreak_alpha),
+    ],
+    Reff_colormap = [
+        (N_MISSED_OUTBREAKS_COLOR, Reff_alpha),
+        (N_ALERTS_COLOR, Reff_alpha),
+    ])
     fig = Figure()
     times = collect(1:aggregation:size(incarr, 1)) ./ 365
 
@@ -1837,13 +1847,25 @@ function ensemble_incarr_Reff_plot(
     aggregated_vec_length = size(Reffarr, 1) ÷ aggregation * aggregation
     times = times[1:aggregation:aggregated_vec_length]
 
-    Reff_above_one = zeros(Int64, length(times))
     for sim in axes(incarr, 3)
+        Reff_above_one = zeros(Int64, length(times))
+
         for (lower, upper, _) in
             eachrow(Reff_thresholds_vec[sim])
             Reff_above_one[lower:upper] .= 1
         end
         Reff_above_one = aggregate_timeseries(Reff_above_one, aggregation)
+
+        filtered_thresholdsarr = thresholdsarr[sim][
+            (thresholdsarr[sim][:, 4] .== 1), :,
+        ]
+
+        outbreak_status_vec = zeros(Int64, length(times))
+        for (lower, upper, periodsum, outbreakstatus) in
+            eachrow(filtered_thresholdsarr)
+            outbreak_status_vec[(lower ÷ aggregation):1:(upper ÷ aggregation)] .=
+                outbreakstatus
+        end
 
         lines!(
             reffax,
@@ -1855,7 +1877,8 @@ function ensemble_incarr_Reff_plot(
                 ]
             );
             linewidth = linewidth,
-            color = (:black, 0.2),
+            color = Reff_above_one,
+            colormap = Reff_colormap,
         )
 
         lines!(
@@ -1863,12 +1886,27 @@ function ensemble_incarr_Reff_plot(
             times,
             aggregate_timeseries(@view(incarr[:, 1, sim]), aggregation);
             linewidth = linewidth,
-            color = (:black, 0.01),
+            color = outbreak_status_vec,
+            colormap = outbreak_colormap,
         )
     end
 
     hlines!(reffax, 1; linestyle = :dash)
     hlines!(incax, threshold; linestyle = :dash)
+
+    Legend(
+        fig[1, 2],
+        [PolyElement(; color = (col[1], 1)) for col in Reff_colormap],
+        ["Reff < 1", "Reff >= 1"],
+        "Reff Status",
+    )
+
+    Legend(
+        fig[2, 2],
+        [PolyElement(; color = (col[1], 1)) for col in outbreak_colormap],
+        ["Not Outbreak", "Outbreak"],
+        "True\nOutbreak Status",
+    )
 
     return fig
 end

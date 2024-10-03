@@ -1362,25 +1362,35 @@ function Reff_ews_plot(
         N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
     ],
     threshold = 5,
+    aggregation = 1,
     metric_color = Makie.wong_colors()[1],
     kwargs...,
 ) where {T<:StructArray,S<:Symbol}
     @unpack trange = timeparams
     times = collect(trange) ./ 365
+    aggregated_vec_length = size(Reffarr, 1) ÷ aggregation * aggregation
+    times = times[1:aggregation:aggregated_vec_length]
 
     kwargs_dict = Dict(kwargs)
 
-    period_sum_arr = zeros(Int64, length(times), 2)
+    filtered_thresholdsarr = thresholdsarr[sim][
+        (thresholdsarr[sim][:, 4] .== 1), :,
+    ]
+
+    outbreak_status_vec = zeros(Int64, length(times))
     for (lower, upper, periodsum, outbreakstatus) in
-        eachrow(thresholdsarr[sim])
-        period_sum_arr[lower:upper, 1] .= periodsum
-        period_sum_arr[lower:upper, 2] .= outbreakstatus
+        eachrow(filtered_thresholdsarr)
+        outbreak_status_vec[(lower ÷ aggregation):1:(upper ÷ aggregation)] .=
+            outbreakstatus
     end
+
+    hcat(times .* (7 * 365), outbreak_status_vec) |>
+    x -> println(DataFrames.DataFrame(x[(x[:, 2] .== 1), :], :auto))
 
     Reff_above_one = zeros(Int64, length(times))
     for (lower, upper, _) in
         eachrow(Reff_thresholds_vec[sim])
-        Reff_above_one[lower:upper] .= 1
+        Reff_above_one[(lower ÷ aggregation):1:(upper ÷ aggregation)] .= 1
     end
 
     ewsmetric_vec = getproperty(ewsmetric_sa, ewsmetric)[sim]
@@ -1401,7 +1411,12 @@ function Reff_ews_plot(
     line_and_hline!(
         reffax,
         times,
-        @view(Reffarr[:, sim]),
+        @view(
+            Reffarr[
+                1:aggregation:aggregated_vec_length,
+                sim,
+            ]
+        ),
         1;
         color = Reff_above_one,
         colormap = Reff_colormap,
@@ -1410,9 +1425,9 @@ function Reff_ews_plot(
     line_and_hline!(
         incax,
         times,
-        @view(incidencearr[:, 1, sim]),
-        threshold;
-        color = @view(period_sum_arr[:, 2]),
+        aggregate_timeseries(@view(incidencearr[:, 1, sim]), aggregation),
+        threshold * aggregation;
+        color = outbreak_status_vec,
         colormap = outbreak_colormap,
     )
 
@@ -1461,7 +1476,7 @@ function Reff_ews_plot(
         "True\nOutbreak Status",
     )
 
-    rowsize!(fig.layout, 0, Relative(0.05))
+    # rowsize!(fig.layout, 0, Relative(0.05))
 
     return fig
 end
@@ -1494,11 +1509,10 @@ function Reff_ews_plot(
 
     kwargs_dict = Dict(kwargs)
 
-    period_sum_arr = zeros(Int64, length(times), 2)
+    outbreak_status_vec = zeros(Int64, length(times))
     for (lower, upper, periodsum, outbreakstatus) in
         eachrow(thresholdsarr[sim])
-        period_sum_arr[lower:upper, 1] .= periodsum
-        period_sum_arr[lower:upper, 2] .= outbreakstatus
+        outbreak_status_vec[lower:upper] .= outbreakstatus
     end
 
     Reff_above_one = zeros(Int64, length(times))
@@ -1545,7 +1559,7 @@ function Reff_ews_plot(
         times,
         @view(incidencearr[:, 1, sim]),
         threshold;
-        color = @view(period_sum_arr[:, 2]),
+        color = @view(outbreak_status_vec[:, 2]),
         colormap = outbreak_colormap,
         linewidth = linewidth,
         hlinewidth = hlinewidth,

@@ -1813,6 +1813,66 @@ function line_and_hline!(
     return nothing
 end
 
+function ensemble_incarr_Reff_plot(
+    incarr,
+    Reffarr,
+    Reff_thresholds_vec;
+    aggregation = 1,
+    linewidth = 3,
+    hlinewidth = 2,
+    threshold = 5 * aggregation,
+)
+    fig = Figure()
+    times = collect(1:aggregation:size(incarr, 1)) ./ 365
+
+    fig = Figure()
+    reffax = Axis(
+        fig[1, 1]; ylabel = "Reff"
+    )
+    incax = Axis(
+        fig[2, 1]; ylabel = "Incidence"
+    )
+
+    linkxaxes!(incax, reffax)
+    aggregated_vec_length = size(Reffarr, 1) ÷ aggregation * aggregation
+    times = times[1:aggregation:aggregated_vec_length]
+
+    Reff_above_one = zeros(Int64, length(times))
+    for sim in axes(incarr, 3)
+        for (lower, upper, _) in
+            eachrow(Reff_thresholds_vec[sim])
+            Reff_above_one[lower:upper] .= 1
+        end
+        Reff_above_one = aggregate_timeseries(Reff_above_one, aggregation)
+
+        lines!(
+            reffax,
+            times,
+            @view(
+                Reffarr[
+                    1:aggregation:aggregated_vec_length,
+                    sim,
+                ]
+            );
+            linewidth = linewidth,
+            color = (:black, 0.2),
+        )
+
+        lines!(
+            incax,
+            times,
+            aggregate_timeseries(@view(incarr[:, 1, sim]), aggregation);
+            linewidth = linewidth,
+            color = (:black, 0.01),
+        )
+    end
+
+    hlines!(reffax, 1; linestyle = :dash)
+    hlines!(incax, threshold; linestyle = :dash)
+
+    return fig
+end
+
 function tycho_epicurve(
     plot_dates,
     weekly_cases::T1,

@@ -40,6 +40,13 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 )["ensemble_Reff_thresholds_vec"]
 
 #%%
+ensemble_incarr_Reff_plot(
+    ensemble_single_incarr,
+    ensemble_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+)
+
+#%%
 ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     ensemble_single_incarr,
     ensemble_single_seir_arr,

@@ -10,6 +10,28 @@ using Debugger: Debugger
     Rolling
 end
 
+function calculate_bandwidth_and_return_ews_metric_spec(
+    ews_metric_spec_components...
+)
+    @assert length(ews_metric_spec_components) == 4
+
+    bandwidth = calculate_bandwidth(
+        ews_metric_spec_components[3],
+        ews_metric_spec_components[2],
+    )
+
+    return EWSMetricSpecification(
+        ews_metric_spec_components[1],
+        ews_metric_spec_components[2],
+        bandwidth,
+        ews_metric_spec_components[4],
+    )
+end
+
+function calculate_bandwidth(bandwidth_days, aggregation_days)
+    return bandwidth_days ÷ aggregation_days
+end
+
 function expanding_ews_thresholds(
     ewsmetrics::T1,
     metric::T2,
@@ -46,6 +68,66 @@ function expanding_ews_thresholds(
     @assert worker_ind == length(ews_worker_vec)
 
     return ews_distributions, exceeds_thresholds, ews_worker_vec
+end
+
+@sum_type EWSEndDateType begin
+    Reff_start
+    Reff_end
+    Outbreak_start
+    Outbreak_end
+    Outbreak_middle
+end
+
+function calculate_ews_enddate(
+    thresholds,
+    enddate_type::EWSEndDateType,
+)
+    _calculate_ews_enddate = @cases enddate_type begin
+        Reff_start => calculate_Reff_start_ews_enddate
+        Reff_end => calculate_Reff_end_ews_enddate
+        Outbreak_start => calculate_Outbreak_start_ews_enddate
+        Outbreak_end => calculate_Outbreak_end_ews_enddate
+        Outbreak_middle => calculate_Outbreak_ews_enddate
+    end
+
+    return Int64(
+        _calculate_ews_enddate(thresholds)
+    )
+end
+
+function calculate_Reff_start_ews_enddate(thresholds)
+    return thresholds[1, 1]
+end
+
+function calculate_Reff_end_ews_enddate(thresholds)
+    return thresholds[1, 2]
+end
+
+function calculate_Outbreak_start_ews_enddate(thresholds)
+    filtered_outbreak_thresholds = thresholds[
+        (thresholds[:, 4] .== 1), :,
+    ]
+    return filtered_outbreak_thresholds[1, 1]
+end
+
+function calculate_Outbreak_end_ews_enddate(thresholds)
+    filtered_outbreak_thresholds = thresholds[
+        (thresholds[:, 4] .== 1), :,
+    ]
+    return filtered_outbreak_thresholds[1, 2]
+end
+
+function calculate_Outbreak_ews_enddate(thresholds)
+    filtered_outbreak_thresholds = thresholds[
+        (thresholds[:, 4] .== 1), :,
+    ]
+
+    return filtered_outbreak_thresholds[1, 1] +
+           (
+        filtered_outbreak_thresholds[1, 2] -
+        filtered_outbreak_thresholds[1, 1] +
+        1
+    ) ÷ 2
 end
 
 function tycho_testing_plots(

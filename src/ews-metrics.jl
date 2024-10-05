@@ -71,11 +71,19 @@ function EWSMetrics(
     )
 end
 
-function aggregate_timeseries(timeseries, aggregation)
+function aggregate_thresholds_vec(thresholdsvec, aggregation)
+    return aggregate_timeseries(thresholdsvec, aggregation, x -> sum(x) >= 1)
+end
+
+function aggregate_Reff_vec(Reff_vec, aggregation)
+    return aggregate_timeseries(Reff_vec, aggregation, mean)
+end
+
+function aggregate_timeseries(timeseries, aggregation, stat_function = sum)
     if aggregation == 1
         return timeseries
     end
-    return _aggregate_timeseries(timeseries, aggregation)
+    return _aggregate_timeseries(timeseries, aggregation, stat_function)
 end
 
 function _aggregate_timeseries(timeseries, aggregation, stat_function = mean)

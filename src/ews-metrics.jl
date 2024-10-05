@@ -71,12 +71,13 @@ function aggregate_timeseries(timeseries, aggregation)
     return _aggregate_timeseries(timeseries, aggregation)
 end
 
-function _aggregate_timeseries(timeseries, aggregation)
+function _aggregate_timeseries(timeseries, aggregation, stat_function = mean)
     aggregate_timeseries = zeros(
-        eltype(timeseries), length(timeseries) ÷ aggregation
+        eltype(stat_function(@view(timeseries[1:2]))),
+        length(timeseries) ÷ aggregation,
     )
     for i in eachindex(aggregate_timeseries)
-        aggregate_timeseries[i] = sum(
+        aggregate_timeseries[i] = stat_function(
             @view(timeseries[((i - 1) * aggregation + 1):(i * aggregation)])
         )
     end
@@ -122,8 +123,10 @@ end
 function _spaero_centered_mean!(mean_vec, timeseries, bw)
     tlength = length(timeseries)
     @inbounds for i in eachindex(timeseries)
-        if i < bw
+        if i < bw && i + bw <= tlength
             mean_vec[i] = mean(@view(timeseries[begin:(i + bw - 1)]))
+        elseif i < bw
+            mean_vec[i] = mean(@view(timeseries[begin:end]))
         elseif i + bw > tlength
             mean_vec[i] = mean(@view(timeseries[(i - bw + 1):end]))
         else

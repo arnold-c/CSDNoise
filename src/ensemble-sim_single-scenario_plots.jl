@@ -1,16 +1,18 @@
 using StructArrays
 
 function plot_all_single_scenarios(
-    noisearr,
+    noisevec,
     noisedir,
-    incarr,
-    testarr,
-    test_movingvg_arr,
-    Reff_arr,
-    Reff_thresholds_vec,
-    periodsum_vecs,
-    ewsvec::T1,
+    incvec,
+    outbreak_status_vec,
+    testvec,
+    test_movingvg_vec,
+    Reff_vec,
+    Reff_thresholds,
+    outbreak_thresholds,
+    ewsvec,
     ewsdir,
+    ews_enddate,
     test_specification,
     outbreak_detection_specification,
     time_specification;
@@ -24,10 +26,10 @@ function plot_all_single_scenarios(
         "skewness",
         "variance",
     ],
-    sim = 1,
     aggregation = 1,
+    sim = 1,
     force = false,
-) where {T1<:StructArray}
+)
     ensemble_noise_plotpath = joinpath(
         plotsdir(),
         "ensemble",
@@ -46,13 +48,13 @@ function plot_all_single_scenarios(
 
     if !isfile(plotpath) || force
         ensemble_single_scenario_incidence_testing_plot = incidence_testing_plot(
-            incarr,
-            noisearr,
-            testarr,
-            test_movingvg_arr,
-            outbreak_detection_specification,
+            incvec,
+            outbreak_status_vec,
+            noisevec,
+            testvec,
+            test_movingvg_vec,
             time_specification;
-            sim = sim,
+            aggregation = aggregation,
             plottitle = noise_plottitle,
         )
 
@@ -67,6 +69,7 @@ function plot_all_single_scenarios(
     ews_plotpath = joinpath(
         ensemble_noise_plotpath,
         ewsdir,
+        "enddate-$(ews_enddate)",
     )
 
     mkpath(ews_plotpath)
@@ -79,14 +82,13 @@ function plot_all_single_scenarios(
 
         if !isfile(plotpath) || force
             ensemble_single_Reff_ews_plot = Reff_ews_plot(
-                incarr,
-                Reff_arr,
-                Reff_thresholds_vec,
+                incvec,
+                Reff_vec,
+                Reff_thresholds,
                 ewsvec,
                 Symbol(ewsmetric),
-                periodsum_vecs,
-                time_specification;
-                aggregation = aggregation,
+                outbreak_thresholds,
+                time_specification,
             )
 
             save(

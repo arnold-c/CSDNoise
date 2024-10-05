@@ -408,23 +408,23 @@ function visualize_ensemble_noise(
 end
 
 function incidence_testing_plot(
-    incarr,
-    noisearr,
-    testingarr,
-    test_movingvg_arr,
-    detection_specification,
+    incvec,
+    outbreak_status_vec,
+    noisevec,
+    testvec,
+    test_movingavg_vec,
     timeparams;
-    sim = 1,
+    aggregation = 1,
     outbreakcolormap = [
         N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
-    ],
-    alertcolormap = [
-        N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
     ],
     plottitle = "",
     kwargs...,
 )
     times = collect(timeparams.trange) ./ 365
+    aggregated_vec_length = length(incvec)
+    times = times[1:aggregation:(aggregation * aggregated_vec_length)]
+
     kwargs_dict = Dict(kwargs)
 
     inc_test_fig = Figure()
@@ -438,24 +438,20 @@ function incidence_testing_plot(
     )
 
     lines!(
-        inc_test_ax1, times, incarr[:, 1, sim];
-        color = incarr[:, 3, sim],
+        inc_test_ax1, times, incvec;
+        color = outbreak_status_vec,
         colormap = outbreakcolormap,
     )
     lines!(
-        inc_test_ax2, times, incarr[:, 1, sim] .+ noisearr[:, sim];
-        color = incarr[:, 3, sim],
+        inc_test_ax2, times, incvec .+ noisevec;
+        color = outbreak_status_vec,
         colormap = outbreakcolormap,
     )
     lines!(
-        inc_test_ax3, times, testingarr[:, 5, sim];
-        color = testingarr[:, 6, sim],
-        colormap = alertcolormap,
+        inc_test_ax3, times, testvec
     )
     lines!(
-        inc_test_ax4, times, test_movingvg_arr[:, sim];
-        color = testingarr[:, 6, sim],
-        colormap = alertcolormap,
+        inc_test_ax4, times, test_movingavg_vec
     )
 
     linkxaxes!(inc_test_ax1, inc_test_ax2, inc_test_ax3, inc_test_ax4)
@@ -479,23 +475,12 @@ function incidence_testing_plot(
     map(
         ax -> hlines!(
             ax,
-            5;
+            5 * aggregation;
             color = :black,
             linestyle = :dash,
             linewidth = 2,
         ),
         [inc_test_ax1, inc_test_ax2],
-    )
-
-    map(
-        ax -> hlines!(
-            ax,
-            detection_specification.alert_threshold;
-            color = :black,
-            linestyle = :dash,
-            linewidth = 2,
-        ),
-        [inc_test_ax3, inc_test_ax4],
     )
 
     Label(
@@ -508,13 +493,6 @@ function incidence_testing_plot(
         [PolyElement(; color = col) for col in outbreakcolormap],
         ["Not Outbreak", "Outbreak"],
         "True\nOutbreak Status",
-    )
-
-    Legend(
-        inc_test_fig[3:4, 2],
-        [PolyElement(; color = col) for col in alertcolormap],
-        ["Not Outbreak", "Outbreak"],
-        "Alert Status",
     )
 
     rowsize!(inc_test_fig.layout, 0, 5)
@@ -1347,14 +1325,13 @@ function create_optimal_thresholds_test_chars_plot(
 end
 
 function Reff_ews_plot(
-    incidencearr,
-    Reffarr,
-    Reff_thresholds_vec,
-    ewsmetric_sa::T,
+    incvec,
+    Reffvec,
+    Reff_thresholds,
+    ewsmetrics,
     ewsmetric::S,
     thresholdsarr,
     timeparams;
-    sim = 1,
     outbreak_colormap = [
         N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
     ],
@@ -1362,35 +1339,37 @@ function Reff_ews_plot(
         N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
     ],
     threshold = 5,
-    aggregation = 1,
     metric_color = Makie.wong_colors()[1],
     kwargs...,
-) where {T<:StructArray,S<:Symbol}
+) where {S<:Symbol}
     @unpack trange = timeparams
+    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
+    method = split(string(method), "::")[1]
+
     times = collect(trange) ./ 365
-    aggregated_vec_length = size(Reffarr, 1) ÷ aggregation * aggregation
-    times = times[1:aggregation:aggregated_vec_length]
+    aggregated_vec_length = length(Reffvec)
+    times = times[1:aggregation:(aggregation * aggregated_vec_length)]
 
     kwargs_dict = Dict(kwargs)
 
-    filtered_thresholdsarr = thresholdsarr[sim][
-        (thresholdsarr[sim][:, 4] .== 1), :,
-    ]
-
     outbreak_status_vec = zeros(Int64, length(times))
-    for (lower, upper, periodsum, outbreakstatus) in
-        eachrow(filtered_thresholdsarr)
-        outbreak_status_vec[(lower ÷ aggregation):1:(upper ÷ aggregation)] .=
-            outbreakstatus
+    for (lower, upper) in
+        eachrow(thresholdsarr)
+        outbreak_status_vec[lower:1:upper] .= 1
     end
 
     Reff_above_one = zeros(Int64, length(times))
     for (lower, upper, _) in
-        eachrow(Reff_thresholds_vec[sim])
-        Reff_above_one[(lower ÷ aggregation):1:(upper ÷ aggregation)] .= 1
+        eachrow(Reff_thresholds)
+        Reff_above_one[lower:1:upper] .= 1
     end
 
-    ewsmetric_vec = getproperty(ewsmetric_sa, ewsmetric)[sim]
+    ewsmetric_vec = getproperty(ewsmetrics, ewsmetric)
+    ewsmetric_endpoint = length(ewsmetric_vec)
+    ewsmetric_vec = vcat(
+        ewsmetric_vec,
+        fill(NaN, length(times) - ewsmetric_endpoint),
+    )
 
     fig = Figure()
     reffax = Axis(
@@ -1405,25 +1384,30 @@ function Reff_ews_plot(
 
     linkxaxes!(incax, reffax, metric_ax)
 
+    map(
+        ax ->
+            vspan!(
+                ax, 0, (ewsmetric_endpoint - 1) * aggregation / 365;
+                color = (:lightgrey, 0.5),
+            ),
+        [incax, reffax, metric_ax],
+    )
+
     line_and_hline!(
         reffax,
         times,
-        @view(
-            Reffarr[
-                1:aggregation:aggregated_vec_length,
-                sim,
-            ]
-        ),
+        Reffvec,
         1;
         color = Reff_above_one,
         colormap = Reff_colormap,
     )
 
+    outbreak_threshold_hline = aggregation == 1 ? threshold : NaN
     line_and_hline!(
         incax,
         times,
-        aggregate_timeseries(@view(incidencearr[:, 1, sim]), aggregation),
-        threshold * aggregation;
+        incvec,
+        outbreak_threshold_hline;
         color = outbreak_status_vec,
         colormap = outbreak_colormap,
     )
@@ -1473,7 +1457,12 @@ function Reff_ews_plot(
         "True\nOutbreak Status",
     )
 
-    # rowsize!(fig.layout, 0, Relative(0.05))
+    Label(
+        fig[0, :],
+        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation) days\nEWS calculated for shaded region",
+    )
+
+    rowsize!(fig.layout, 0, Relative(0.05))
 
     return fig
 end

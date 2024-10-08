@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "1d4e0fb41fc5430e9efc607a887fce727b442a77"
+project_hash = "e37330ff90aab3f69d0fbe74157caa1cd32b95d1"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2176,6 +2176,17 @@ version = "0.4.82"
 [[deps.TriplotBase]]
 git-tree-sha1 = "4d4ed7f294cda19382ff7de4c137d24d16adc89b"
 uuid = "981d1d27-644d-49a2-9326-4793e63143c3"
+version = "0.1.0"
+
+[[deps.Try]]
+git-tree-sha1 = "56e72d45a7d77e23f6e943d28183eb509119843a"
+uuid = "bf1d0ff0-c4a9-496b-85f0-2b0d71c4f32a"
+version = "0.1.1"
+
+[[deps.TryExperimental]]
+deps = ["Try"]
+git-tree-sha1 = "4af340a24be37069a3642220b3397bacc437a0a9"
+uuid = "ae3b139e-64da-4858-8f55-5617df0d650e"
 version = "0.1.0"
 
 [[deps.TypedSyntax]]

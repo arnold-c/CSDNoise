@@ -4,6 +4,8 @@ using StatsBase: StatsBase
 using StructArrays
 using DataFrames
 using Debugger: Debugger
+using Try: Try
+using TryExperimental: trygetindex
 
 @sum_type EWSThresholdWindow begin
     Expanding
@@ -90,44 +92,56 @@ function calculate_ews_enddate(
         Outbreak_middle => calculate_Outbreak_ews_enddate
     end
 
-    return Int64(
-        _calculate_ews_enddate(thresholds)
+    enddate = _calculate_ews_enddate(thresholds)
+
+    if Try.isok(enddate)
+        return enddate
+    end
+
+    return Try.Err(
+        "Failed to calculate ews_enddate for $enddate_type"
     )
 end
 
 function calculate_Reff_start_ews_enddate(thresholds)
-    return thresholds[1, 1]
+    return trygetindex(thresholds, 1, 1)
 end
 
 function calculate_Reff_end_ews_enddate(thresholds)
-    return thresholds[1, 2]
+    return trygetindex(thresholds, 1, 2)
 end
 
 function calculate_Outbreak_start_ews_enddate(thresholds)
-    filtered_outbreak_thresholds = thresholds[
-        (thresholds[:, 4] .== 1), :,
-    ]
-    return filtered_outbreak_thresholds[1, 1]
+    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+
+    return trygetindex(filtered_outbreak_thresholds, 1, 1)
 end
 
 function calculate_Outbreak_end_ews_enddate(thresholds)
-    filtered_outbreak_thresholds = thresholds[
-        (thresholds[:, 4] .== 1), :,
-    ]
-    return filtered_outbreak_thresholds[1, 2]
+    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+
+    return trygetindex(filtered_outbreak_thresholds, 1, 2)
 end
 
 function calculate_Outbreak_ews_enddate(thresholds)
-    filtered_outbreak_thresholds = thresholds[
-        (thresholds[:, 4] .== 1), :,
-    ]
+    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
 
-    return filtered_outbreak_thresholds[1, 1] +
-           (
-        filtered_outbreak_thresholds[1, 2] -
+    if size(filtered_outbreak_thresholds, 1) == 0
+        return Try.Err(BoundsError(thresholds, (1, 1)))
+    end
+
+    return Try.Ok(
         filtered_outbreak_thresholds[1, 1] +
-        1
-    ) ÷ 2
+        (
+            filtered_outbreak_thresholds[1, 2] -
+            filtered_outbreak_thresholds[1, 1] +
+            1
+        ) ÷ 2,
+    )
+end
+
+function filter_outbreak_thresholds(thresholds; thresholds_col = 4)
+    return thresholds[(thresholds[:, thresholds_col] .== 1), :]
 end
 
 function tycho_testing_plots(

@@ -4,10 +4,14 @@ using DrWatson
 
 using UnPack
 using ColorSchemes
+using Dates
 
 using CSDNoise
 using StructArrays
 using SumTypes
+using Try
+
+using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
 includet(srcdir("ensemble-parameters.jl"))
@@ -68,6 +72,11 @@ save(
 )
 
 #%%
+# Open a textfile for writing
+io = open(scriptsdir("ensemble-sim_single-scenario.log.txt"), "a")
+
+force = false
+
 sims = (
     1,
     4,
@@ -91,9 +100,21 @@ ews_spec_vec = create_combinations_vec(
     ),
 )
 
-for (noise_specification, ews_metric_specification) in Iterators.product(
-    ensemble_noise_specification_vec[1:2],
-    ews_spec_vec,
+ews_metrics = [
+    "autocorrelation",
+    "autocovariance",
+    "coefficient_of_variation",
+    "index_of_dispersion",
+    "kurtosis",
+    "mean",
+    "skewness",
+    "variance",
+]
+
+@showprogress for (noise_specification, ews_metric_specification) in
+                  Iterators.product(
+    [ensemble_noise_specification_vec[1]],
+    [ews_spec_vec[1]],
 )
     scenario_specification = ScenarioSpecification(
         ensemble_specification,
@@ -134,85 +155,160 @@ for (noise_specification, ews_metric_specification) in Iterators.product(
                 ensemble_single_periodsum_vecs
         end
 
-        for sim in sims
+        enddate_vec = zeros(Int64, size(testarr, 3))
+        ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+            undef, size(testarr, 3)
+        )
+        inc_ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+            undef, size(testarr, 3)
+        )
+        fill!(ews_vals_vec, missing)
+        fill!(inc_ews_vals_vec, missing)
+
+        for sim in axes(testarr, 3)
             enddate = calculate_ews_enddate(
                 thresholds[sim],
                 ews_enddate_type,
             )
 
-            Debugger.@bp
+            if Try.isok(enddate)
+                enddate_vec[sim] = Try.unwrap(enddate)
 
-            ews_vals = EWSMetrics(
-                ews_metric_specification,
-                @view(testarr[1:enddate, 5, sim]),
-            )
+                inc_ews_vals_vec[sim] = EWSMetrics(
+                    ews_metric_specification,
+                    @view(ensemble_single_incarr[1:enddate_vec[sim], 1, sim])
+                )
 
-            aggregated_noise_vec = aggregate_timeseries(
-                @view(noisearr[:, sim]),
-                ews_metric_specification.aggregation,
-            )
-
-            aggregated_inc_vec = aggregate_timeseries(
-                @view(ensemble_single_incarr[:, 1, sim]),
-                ews_metric_specification.aggregation,
-            )
-            aggregated_outbreak_status_vec = aggregate_thresholds_vec(
-                @view(ensemble_single_incarr[:, 3, sim]),
-                ews_metric_specification.aggregation,
-            )
-
-            aggregated_test_vec = aggregate_timeseries(
-                @view(testarr[:, 5, sim]),
-                ews_metric_specification.aggregation,
-            )
-
-            aggregated_test_movingavg_vec = zeros(
-                Int64, size(aggregated_test_vec)
-            )
-            calculate_movingavg!(
-                aggregated_test_movingavg_vec,
-                aggregated_test_vec,
-                ensemble_single_outbreak_detection_spec.moving_average_lag,
-            )
-
-            aggregated_Reff_vec = aggregate_Reff_vec(
-                @view(ensemble_single_Reff_arr[:, sim]),
-                ews_metric_specification.aggregation,
-            )
-
-            aggregated_Reff_thresholds_arr =
-                ensemble_single_Reff_thresholds_vec[sim] .÷
-                ews_metric_specification.aggregation
-
-            aggregated_outbreak_thresholds_arr =
-                ensemble_single_periodsum_vecs[sim][
-                    (ensemble_single_periodsum_vecs[sim][:, 4] .== 1), [1, 2]
-                ] .÷ ews_metric_specification.aggregation
-
-            plot_all_single_scenarios(
-                aggregated_noise_vec,
-                noisedir,
-                aggregated_inc_vec,
-                aggregated_outbreak_status_vec,
-                aggregated_test_vec,
-                aggregated_test_movingavg_vec,
-                aggregated_Reff_vec,
-                aggregated_Reff_thresholds_arr,
-                aggregated_outbreak_thresholds_arr,
-                ews_vals,
-                ews_metric_specification.dirpath,
-                split(string(ews_enddate_type), "::")[1],
-                ensemble_single_individual_test_spec,
-                ensemble_single_outbreak_detection_spec,
-                ensemble_time_specification;
-                aggregation = ews_metric_specification.aggregation,
-                sim = sim,
-                force = true,
-            )
+                ews_vals_vec[sim] = EWSMetrics(
+                    ews_metric_specification,
+                    @view(testarr[1:enddate_vec[sim], 5, sim])
+                )
+            else
+                write(
+                    io, "$(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))\n"
+                )
+                write(io, "Error:\t$(Try.unwrap_err(enddate))\n")
+            end
         end
-    end
 
-    GC.gc(true)
-    @info "Finished plotting the single scenario for $(noisedir), $(ews_metric_specification.dirpath)"
-    println("=================================================================")
+        filter!(x -> !ismissing(x), ews_vals_vec)
+        filter!(x -> !ismissing(x), inc_ews_vals_vec)
+
+        @assert length(ews_vals_vec) == length(inc_ews_vals_vec)
+
+        ensemble_noise_plotpath = joinpath(
+            plotsdir(),
+            "ensemble",
+            noisedir,
+            ews_metric_specification.dirpath,
+            split(string(ews_enddate_type), "::")[1],
+        )
+        mkpath(ensemble_noise_plotpath)
+
+        for ews_metric in ews_metrics
+            plotpath = joinpath(
+                ensemble_noise_plotpath,
+                "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png",
+            )
+
+            if !isfile(plotpath) || force
+                plot = simulation_tau_distribution(
+                    ews_vals_vec,
+                    inc_ews_vals_vec,
+                    ews_metric;
+                    plottitle = "$(get_test_description(ensemble_single_individual_test_spec)), $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(split(string(ews_enddate_type), "::")[1]) EWS $(ews_metric) Tau Distribution",
+                )
+
+                save(
+                    plotpath,
+                    plot;
+                    size = (2200, 1600),
+                )
+            end
+        end
+
+        GC.gc(true)
+        @info "Finished plotting the single scenario for $(noisedir), $(ews_metric_specification.dirpath), $(ews_enddate_type)"
+        println(
+            "================================================================="
+        )
+    end
 end
+
+close(io)
+
+#%%
+#     for sim in sims
+#         enddate = enddate_vec[sim]
+#
+#         ews_vals = ews_vals_vec[sim]
+#
+#         aggregated_noise_vec = aggregate_timeseries(
+#             @view(noisearr[:, sim]),
+#             ews_metric_specification.aggregation,
+#         )
+#
+#         aggregated_inc_vec = aggregate_timeseries(
+#             @view(ensemble_single_incarr[:, 1, sim]),
+#             ews_metric_specification.aggregation,
+#         )
+#         aggregated_outbreak_status_vec = aggregate_thresholds_vec(
+#             @view(ensemble_single_incarr[:, 3, sim]),
+#             ews_metric_specification.aggregation,
+#         )
+#
+#         aggregated_test_vec = aggregate_timeseries(
+#             @view(testarr[:, 5, sim]),
+#             ews_metric_specification.aggregation,
+#         )
+#
+#         aggregated_test_movingavg_vec = zeros(
+#             Int64, size(aggregated_test_vec)
+#         )
+#
+#         calculate_movingavg!(
+#             aggregated_test_movingavg_vec,
+#             aggregated_test_vec,
+#             ensemble_single_outbreak_detection_spec.moving_average_lag,
+#         )
+#
+#         aggregated_Reff_vec = aggregate_Reff_vec(
+#             @view(ensemble_single_Reff_arr[:, sim]),
+#             ews_metric_specification.aggregation,
+#         )
+#
+#         aggregated_Reff_thresholds_arr =
+#             ensemble_single_Reff_thresholds_vec[sim] .÷
+#             ews_metric_specification.aggregation
+#
+#         aggregated_outbreak_thresholds_arr =
+#             ensemble_single_periodsum_vecs[sim][
+#                 (ensemble_single_periodsum_vecs[sim][:, 4] .== 1), [1, 2]
+#             ] .÷ ews_metric_specification.aggregation
+#
+#         plot_all_single_scenarios(
+#             aggregated_noise_vec,
+#             noisedir,
+#             aggregated_inc_vec,
+#             aggregated_outbreak_status_vec,
+#             aggregated_test_vec,
+#             aggregated_test_movingavg_vec,
+#             aggregated_Reff_vec,
+#             aggregated_Reff_thresholds_arr,
+#             aggregated_outbreak_thresholds_arr,
+#             ews_vals,
+#             ews_metric_specification.dirpath,
+#             split(string(ews_enddate_type), "::")[1],
+#             ensemble_single_individual_test_spec,
+#             ensemble_single_outbreak_detection_spec,
+#             ensemble_time_specification;
+#             aggregation = ews_metric_specification.aggregation,
+#             sim = sim,
+#             force = true,
+#         )
+#     end
+#
+#     GC.gc(true)
+#     @info "Finished plotting the single scenario for $(noisedir), $(ews_metric_specification.dirpath)"
+#     println("=================================================================")
+# end

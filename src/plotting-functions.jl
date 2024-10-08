@@ -15,6 +15,7 @@ using LaTeXStrings
 using NaNMath: NaNMath
 using Dates
 using Debugger: Debugger
+using StructArrays: StructArrays
 
 seircolors = ["dodgerblue4", "green", "firebrick3", "chocolate2", "purple"]
 seir_state_labels = ["S", "E", "I", "R", "N"]
@@ -2370,6 +2371,91 @@ function tycho_test_positive_components_epicurve(
 
     return fig
 end
+
+function simulation_tau_distribution(
+    tested_ews_vec::T1,
+    actual_ews_vec::T1,
+    tau_metric;
+    plottitle = string(tau_metric) * " Distribution",
+) where {T1<:Vector{<:EWSMetrics}}
+    tested_ews_sa = StructArrays.StructArray(tested_ews_vec)
+    actual_ews_sa = StructArrays.StructArray(actual_ews_vec)
+
+    return simulation_tau_distribution(
+        tested_ews_sa,
+        actual_ews_sa,
+        tau_metric;
+        plottitle = plottitle,
+    )
+end
+
+function simulation_tau_distribution(
+    tested_ews::T1,
+    actual_ews::T1,
+    tau_metric;
+    plottitle = string(tau_metric) * " Distribution",
+) where {T1<:EWSMetrics}
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        title = plottitle,
+        xlabel = "Kendall's Tau",
+        ylabel = "Count",
+    )
+
+    tau = skipnan(getfield(tested_ews, Symbol(tau_metric)))
+    actual_tau = skipnan(getfield(actual_ews, Symbol(tau_metric)))
+
+    hist!(
+        ax,
+        tau;
+        color = (Makie.wong_colors()[1], 0.5),
+        bins = 20,
+        label = "Tested EWS",
+    )
+
+    hist!(
+        ax,
+        actual_tau;
+        color = (Makie.wong_colors()[2], 0.5),
+        bins = 20,
+        label = "Actual EWS",
+    )
+
+    vlines!(
+        ax,
+        mean(tau);
+        color = Makie.wong_colors()[1],
+        linestyle = :dash,
+        linewidth = 4,
+    )
+
+    vlines!(
+        ax,
+        mean(actual_tau);
+        color = :grey20,
+        linewidth = 4,
+    )
+
+    text!(
+        ax,
+        mean(actual_tau) + 0.005,
+        length(actual_tau) / 10;
+        text = "Actual Tau (Mean)",
+        justification = :left,
+    )
+
+    lplots = filter(Makie.get_plots(ax)) do plot
+        haskey(plot.attributes, :label)
+    end
+
+    if !isempty(lplots)
+        Legend(fig[1, 2], ax, "Aggregation (wks)")
+    end
+    return fig
+end
+
+skipnan(x) = filter(!isnan, x)
 
 function tycho_tau_distribution(
     tested_ews_tuple,

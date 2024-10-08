@@ -132,6 +132,7 @@ export seircolors,
     Reff_ews_plot, ensemble_incarr_Reff_plot,
     tycho_epicurve, tycho_noise_components_epicurve,
     tycho_test_positive_components_epicurve,
+    simulation_tau_distribution,
     tycho_tau_distribution,
     tycho_tau_heatmap_plot,
     ews_lead_time_plot
@@ -155,6 +156,7 @@ export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
     create_and_save_xlsx_optimal_threshold_summaries
 
 @static if false
+    include("scripts/ensemble-sim_single-scenario.jl")
     include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
     include("scripts/tycho-visualizations.jl")
 end

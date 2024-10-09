@@ -35,7 +35,7 @@ export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
 # @reexport using .ODStructs
 
 include("ews-metrics.jl")
-export aggregate_timeseries,
+export aggregate_Reff_vec, aggregate_thresholds_vec, aggregate_timeseries,
     spaero_mean, spaero_mean!,
     spaero_var,
     spaero_cov,
@@ -49,9 +49,15 @@ export aggregate_timeseries,
     ews_as_df
 
 include("ews-functions.jl")
-export EWSThresholdWindow,
+export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
+    EWSThresholdWindow,
     Rolling, Expanding, expanding_ews_thresholds,
-    tycho_testing_plots, tycho_tau_heatmap_df,
+    EWSEndDateType, Reff_start, Reff_end, Outbreak_start, Outbreak_end,
+    Outbreak_middle,
+    calculate_ews_enddate,
+    tycho_testing_plots,
+    simulation_tau_heatmap_df!,
+    tycho_tau_heatmap_df,
     calculate_ews_lead_time, calculate_ews_trigger_index,
     ews_lead_time_df!
 
@@ -125,8 +131,10 @@ export seircolors,
     compare_optimal_thresholds_chars_plot, create_optimal_thresholds_chars_plot,
     compare_optimal_thresholds_test_chars_plot,
     create_optimal_thresholds_test_chars_plot,
-    Reff_ews_plot, tycho_epicurve, tycho_noise_components_epicurve,
+    Reff_ews_plot, ensemble_incarr_Reff_plot,
+    tycho_epicurve, tycho_noise_components_epicurve,
     tycho_test_positive_components_epicurve,
+    simulation_tau_distribution,
     tycho_tau_distribution,
     tycho_tau_heatmap_plot,
     ews_lead_time_plot
@@ -150,6 +158,8 @@ export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
     create_and_save_xlsx_optimal_threshold_summaries
 
 @static if false
+    include("scripts//tycho-visualization.jl")
+    include("scripts/ensemble-sim_single-scenario.jl")
     include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
     include("scripts/tycho-visualizations.jl")
 end

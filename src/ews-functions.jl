@@ -4,10 +4,34 @@ using StatsBase: StatsBase
 using StructArrays
 using DataFrames
 using Debugger: Debugger
+using Try: Try
+using TryExperimental: trygetindex
 
 @sum_type EWSThresholdWindow begin
     Expanding
     Rolling
+end
+
+function calculate_bandwidth_and_return_ews_metric_spec(
+    ews_metric_spec_components...
+)
+    @assert length(ews_metric_spec_components) == 4
+
+    bandwidth = calculate_bandwidth(
+        ews_metric_spec_components[3],
+        ews_metric_spec_components[2],
+    )
+
+    return EWSMetricSpecification(
+        ews_metric_spec_components[1],
+        ews_metric_spec_components[2],
+        bandwidth,
+        ews_metric_spec_components[4],
+    )
+end
+
+function calculate_bandwidth(bandwidth_days, aggregation_days)
+    return bandwidth_days ÷ aggregation_days
 end
 
 function expanding_ews_thresholds(
@@ -46,6 +70,78 @@ function expanding_ews_thresholds(
     @assert worker_ind == length(ews_worker_vec)
 
     return ews_distributions, exceeds_thresholds, ews_worker_vec
+end
+
+@sum_type EWSEndDateType begin
+    Reff_start
+    Reff_end
+    Outbreak_start
+    Outbreak_end
+    Outbreak_middle
+end
+
+function calculate_ews_enddate(
+    thresholds,
+    enddate_type::EWSEndDateType,
+)
+    _calculate_ews_enddate = @cases enddate_type begin
+        Reff_start => calculate_Reff_start_ews_enddate
+        Reff_end => calculate_Reff_end_ews_enddate
+        Outbreak_start => calculate_Outbreak_start_ews_enddate
+        Outbreak_end => calculate_Outbreak_end_ews_enddate
+        Outbreak_middle => calculate_Outbreak_ews_enddate
+    end
+
+    enddate = _calculate_ews_enddate(thresholds)
+
+    if Try.isok(enddate)
+        return enddate
+    end
+
+    return Try.Err(
+        "Failed to calculate ews_enddate for $enddate_type"
+    )
+end
+
+function calculate_Reff_start_ews_enddate(thresholds)
+    return trygetindex(thresholds, 1, 1)
+end
+
+function calculate_Reff_end_ews_enddate(thresholds)
+    return trygetindex(thresholds, 1, 2)
+end
+
+function calculate_Outbreak_start_ews_enddate(thresholds)
+    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+
+    return trygetindex(filtered_outbreak_thresholds, 1, 1)
+end
+
+function calculate_Outbreak_end_ews_enddate(thresholds)
+    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+
+    return trygetindex(filtered_outbreak_thresholds, 1, 2)
+end
+
+function calculate_Outbreak_ews_enddate(thresholds)
+    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+
+    if size(filtered_outbreak_thresholds, 1) == 0
+        return Try.Err(BoundsError(thresholds, (1, 1)))
+    end
+
+    return Try.Ok(
+        filtered_outbreak_thresholds[1, 1] +
+        (
+            filtered_outbreak_thresholds[1, 2] -
+            filtered_outbreak_thresholds[1, 1] +
+            1
+        ) ÷ 2,
+    )
+end
+
+function filter_outbreak_thresholds(thresholds; thresholds_col = 4)
+    return thresholds[(thresholds[:, thresholds_col] .== 1), :]
 end
 
 function tycho_testing_plots(
@@ -422,6 +518,43 @@ function tycho_testing_plots(
             monthly_thresholds,
         )
     end
+
+    return nothing
+end
+
+function simulation_tau_heatmap_df!(
+    ews_df,
+    test_ewsmetrics,
+    ews_metric;
+    individual_test_specification = IndividualTestSpecification(1.0, 1.0, 0),
+    ews_enddate_type = Reff_start::EWSEndDateType,
+    statistic_function = StatsBase.mean,
+)
+    @assert names(ews_df) == [
+        "ews_metric",
+        "test_specification",
+        "ews_enddate_type",
+        "ews_metric_value",
+        "ews_metric_vector",
+    ]
+
+    ews_metric_tau_sym = Symbol(ews_metric, "_tau")
+    ews_tau = get_tau(
+        test_ewsmetrics;
+        tau_metric = ews_metric_tau_sym,
+        statistic_function = statistic_function,
+    )
+
+    push!(
+        ews_df,
+        (
+            ews_metric,
+            individual_test_specification,
+            ews_enddate_type,
+            ews_tau,
+            getproperty(test_ewsmetrics, ews_metric_tau_sym),
+        ),
+    )
 
     return nothing
 end

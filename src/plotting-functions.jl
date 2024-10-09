@@ -15,6 +15,7 @@ using LaTeXStrings
 using NaNMath: NaNMath
 using Dates
 using Debugger: Debugger
+using StructArrays: StructArrays
 
 seircolors = ["dodgerblue4", "green", "firebrick3", "chocolate2", "purple"]
 seir_state_labels = ["S", "E", "I", "R", "N"]
@@ -408,23 +409,23 @@ function visualize_ensemble_noise(
 end
 
 function incidence_testing_plot(
-    incarr,
-    noisearr,
-    testingarr,
-    test_movingvg_arr,
-    detection_specification,
+    incvec,
+    outbreak_status_vec,
+    noisevec,
+    testvec,
+    test_movingavg_vec,
     timeparams;
-    sim = 1,
+    aggregation = 1,
     outbreakcolormap = [
         N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
-    ],
-    alertcolormap = [
-        N_MISSED_OUTBREAKS_COLOR, N_ALERTS_COLOR
     ],
     plottitle = "",
     kwargs...,
 )
     times = collect(timeparams.trange) ./ 365
+    aggregated_vec_length = length(incvec)
+    times = times[1:aggregation:(aggregation * aggregated_vec_length)]
+
     kwargs_dict = Dict(kwargs)
 
     inc_test_fig = Figure()
@@ -438,24 +439,20 @@ function incidence_testing_plot(
     )
 
     lines!(
-        inc_test_ax1, times, incarr[:, 1, sim];
-        color = incarr[:, 3, sim],
+        inc_test_ax1, times, incvec;
+        color = outbreak_status_vec,
         colormap = outbreakcolormap,
     )
     lines!(
-        inc_test_ax2, times, incarr[:, 1, sim] .+ noisearr[:, sim];
-        color = incarr[:, 3, sim],
+        inc_test_ax2, times, incvec .+ noisevec;
+        color = outbreak_status_vec,
         colormap = outbreakcolormap,
     )
     lines!(
-        inc_test_ax3, times, testingarr[:, 5, sim];
-        color = testingarr[:, 6, sim],
-        colormap = alertcolormap,
+        inc_test_ax3, times, testvec
     )
     lines!(
-        inc_test_ax4, times, test_movingvg_arr[:, sim];
-        color = testingarr[:, 6, sim],
-        colormap = alertcolormap,
+        inc_test_ax4, times, test_movingavg_vec
     )
 
     linkxaxes!(inc_test_ax1, inc_test_ax2, inc_test_ax3, inc_test_ax4)
@@ -479,23 +476,12 @@ function incidence_testing_plot(
     map(
         ax -> hlines!(
             ax,
-            5;
+            5 * aggregation;
             color = :black,
             linestyle = :dash,
             linewidth = 2,
         ),
         [inc_test_ax1, inc_test_ax2],
-    )
-
-    map(
-        ax -> hlines!(
-            ax,
-            detection_specification.alert_threshold;
-            color = :black,
-            linestyle = :dash,
-            linewidth = 2,
-        ),
-        [inc_test_ax3, inc_test_ax4],
     )
 
     Label(
@@ -508,13 +494,6 @@ function incidence_testing_plot(
         [PolyElement(; color = col) for col in outbreakcolormap],
         ["Not Outbreak", "Outbreak"],
         "True\nOutbreak Status",
-    )
-
-    Legend(
-        inc_test_fig[3:4, 2],
-        [PolyElement(; color = col) for col in alertcolormap],
-        ["Not Outbreak", "Outbreak"],
-        "Alert Status",
     )
 
     rowsize!(inc_test_fig.layout, 0, 5)
@@ -1347,14 +1326,13 @@ function create_optimal_thresholds_test_chars_plot(
 end
 
 function Reff_ews_plot(
-    incidencearr,
-    Reffarr,
-    Reff_thresholds_vec,
-    ewsmetric_sa::T,
+    incvec,
+    Reffvec,
+    Reff_thresholds,
+    ewsmetrics,
     ewsmetric::S,
     thresholdsarr,
     timeparams;
-    sim = 1,
     outbreak_colormap = [
         N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
     ],
@@ -1364,26 +1342,35 @@ function Reff_ews_plot(
     threshold = 5,
     metric_color = Makie.wong_colors()[1],
     kwargs...,
-) where {T<:StructArray,S<:Symbol}
+) where {S<:Symbol}
     @unpack trange = timeparams
+    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
+    method = split(string(method), "::")[1]
+
     times = collect(trange) ./ 365
+    aggregated_vec_length = length(Reffvec)
+    times = times[1:aggregation:(aggregation * aggregated_vec_length)]
 
     kwargs_dict = Dict(kwargs)
 
-    period_sum_arr = zeros(Int64, length(times), 2)
-    for (lower, upper, periodsum, outbreakstatus) in
-        eachrow(thresholdsarr[sim])
-        period_sum_arr[lower:upper, 1] .= periodsum
-        period_sum_arr[lower:upper, 2] .= outbreakstatus
+    outbreak_status_vec = zeros(Int64, length(times))
+    for (lower, upper) in
+        eachrow(thresholdsarr)
+        outbreak_status_vec[lower:1:upper] .= 1
     end
 
     Reff_above_one = zeros(Int64, length(times))
     for (lower, upper, _) in
-        eachrow(Reff_thresholds_vec[sim])
-        Reff_above_one[lower:upper] .= 1
+        eachrow(Reff_thresholds)
+        Reff_above_one[lower:1:upper] .= 1
     end
 
-    ewsmetric_vec = getproperty(ewsmetric_sa, ewsmetric)[sim]
+    ewsmetric_vec = getproperty(ewsmetrics, ewsmetric)
+    ewsmetric_endpoint = length(ewsmetric_vec)
+    ewsmetric_vec = vcat(
+        ewsmetric_vec,
+        fill(NaN, length(times) - ewsmetric_endpoint),
+    )
 
     fig = Figure()
     reffax = Axis(
@@ -1398,21 +1385,31 @@ function Reff_ews_plot(
 
     linkxaxes!(incax, reffax, metric_ax)
 
+    map(
+        ax ->
+            vspan!(
+                ax, 0, (ewsmetric_endpoint - 1) * aggregation / 365;
+                color = (:lightgrey, 0.5),
+            ),
+        [incax, reffax, metric_ax],
+    )
+
     line_and_hline!(
         reffax,
         times,
-        @view(Reffarr[:, sim]),
+        Reffvec,
         1;
         color = Reff_above_one,
         colormap = Reff_colormap,
     )
 
+    outbreak_threshold_hline = aggregation == 1 ? threshold : NaN
     line_and_hline!(
         incax,
         times,
-        @view(incidencearr[:, 1, sim]),
-        threshold;
-        color = @view(period_sum_arr[:, 2]),
+        incvec,
+        outbreak_threshold_hline;
+        color = outbreak_status_vec,
         colormap = outbreak_colormap,
     )
 
@@ -1461,6 +1458,11 @@ function Reff_ews_plot(
         "True\nOutbreak Status",
     )
 
+    Label(
+        fig[0, :],
+        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation) days\nEWS calculated for shaded region",
+    )
+
     rowsize!(fig.layout, 0, Relative(0.05))
 
     return fig
@@ -1494,11 +1496,10 @@ function Reff_ews_plot(
 
     kwargs_dict = Dict(kwargs)
 
-    period_sum_arr = zeros(Int64, length(times), 2)
+    outbreak_status_vec = zeros(Int64, length(times))
     for (lower, upper, periodsum, outbreakstatus) in
         eachrow(thresholdsarr[sim])
-        period_sum_arr[lower:upper, 1] .= periodsum
-        period_sum_arr[lower:upper, 2] .= outbreakstatus
+        outbreak_status_vec[lower:upper] .= outbreakstatus
     end
 
     Reff_above_one = zeros(Int64, length(times))
@@ -1545,7 +1546,7 @@ function Reff_ews_plot(
         times,
         @view(incidencearr[:, 1, sim]),
         threshold;
-        color = @view(period_sum_arr[:, 2]),
+        color = @view(outbreak_status_vec[:, 2]),
         colormap = outbreak_colormap,
         linewidth = linewidth,
         hlinewidth = hlinewidth,
@@ -1797,6 +1798,104 @@ function line_and_hline!(
         linestyle = hlinestyle,
     )
     return nothing
+end
+
+function ensemble_incarr_Reff_plot(
+    incarr,
+    Reffarr,
+    Reff_thresholds_vec,
+    thresholdsarr;
+    aggregation = 1,
+    linewidth = 3,
+    hlinewidth = 2,
+    threshold = 5 * aggregation,
+    outbreak_alpha = 0.2,
+    Reff_alpha = 0.2,
+    outbreak_colormap = [
+        (N_MISSED_OUTBREAKS_COLOR, outbreak_alpha),
+        (PERC_OUTBREAKS_DETECTED_COLOR, outbreak_alpha),
+    ],
+    Reff_colormap = [
+        (N_MISSED_OUTBREAKS_COLOR, Reff_alpha),
+        (N_ALERTS_COLOR, Reff_alpha),
+    ])
+    fig = Figure()
+    times = collect(1:aggregation:size(incarr, 1)) ./ 365
+
+    fig = Figure()
+    reffax = Axis(
+        fig[1, 1]; ylabel = "Reff"
+    )
+    incax = Axis(
+        fig[2, 1]; ylabel = "Incidence"
+    )
+
+    linkxaxes!(incax, reffax)
+    aggregated_vec_length = size(Reffarr, 1) ÷ aggregation * aggregation
+    times = times[1:aggregation:aggregated_vec_length]
+
+    for sim in axes(incarr, 3)
+        Reff_above_one = zeros(Int64, length(times))
+
+        for (lower, upper, _) in
+            eachrow(Reff_thresholds_vec[sim])
+            Reff_above_one[lower:upper] .= 1
+        end
+        Reff_above_one = aggregate_timeseries(Reff_above_one, aggregation)
+
+        filtered_thresholdsarr = thresholdsarr[sim][
+            (thresholdsarr[sim][:, 4] .== 1), :,
+        ]
+
+        outbreak_status_vec = zeros(Int64, length(times))
+        for (lower, upper, periodsum, outbreakstatus) in
+            eachrow(filtered_thresholdsarr)
+            outbreak_status_vec[(lower ÷ aggregation):1:(upper ÷ aggregation)] .=
+                outbreakstatus
+        end
+
+        lines!(
+            reffax,
+            times,
+            @view(
+                Reffarr[
+                    1:aggregation:aggregated_vec_length,
+                    sim,
+                ]
+            );
+            linewidth = linewidth,
+            color = Reff_above_one,
+            colormap = Reff_colormap,
+        )
+
+        lines!(
+            incax,
+            times,
+            aggregate_timeseries(@view(incarr[:, 1, sim]), aggregation);
+            linewidth = linewidth,
+            color = outbreak_status_vec,
+            colormap = outbreak_colormap,
+        )
+    end
+
+    hlines!(reffax, 1; linestyle = :dash)
+    hlines!(incax, threshold; linestyle = :dash)
+
+    Legend(
+        fig[1, 2],
+        [PolyElement(; color = (col[1], 1)) for col in Reff_colormap],
+        ["Reff < 1", "Reff >= 1"],
+        "Reff Status",
+    )
+
+    Legend(
+        fig[2, 2],
+        [PolyElement(; color = (col[1], 1)) for col in outbreak_colormap],
+        ["Not Outbreak", "Outbreak"],
+        "True\nOutbreak Status",
+    )
+
+    return fig
 end
 
 function tycho_epicurve(
@@ -2272,6 +2371,116 @@ function tycho_test_positive_components_epicurve(
 
     return fig
 end
+
+function simulation_tau_distribution(
+    tested_ews_vec::T1,
+    actual_ews_vec::T1,
+    tau_metric;
+    plottitle = string(tau_metric) * " Distribution",
+) where {T1<:Vector{<:Union{<:Missing,<:EWSMetrics}}}
+    if split(tau_metric, "_")[end] != "tau"
+        tau_metric *= "_tau"
+    end
+    return simulation_tau_distribution(
+        convert(Vector{EWSMetrics}, tested_ews_vec),
+        convert(Vector{EWSMetrics}, actual_ews_vec),
+        tau_metric;
+        plottitle = plottitle,
+    )
+end
+
+function simulation_tau_distribution(
+    tested_ews_vec::T1,
+    actual_ews_vec::T1,
+    tau_metric;
+    plottitle = string(tau_metric) * " Distribution",
+) where {T1<:Vector{<:EWSMetrics}}
+    tested_ews_sa = StructArrays.StructArray(tested_ews_vec)
+    actual_ews_sa = StructArrays.StructArray(actual_ews_vec)
+
+    if split(tau_metric, "_")[end] != "tau"
+        tau_metric *= "_tau"
+    end
+
+    return simulation_tau_distribution(
+        tested_ews_sa,
+        actual_ews_sa,
+        tau_metric;
+        plottitle = plottitle,
+    )
+end
+
+function simulation_tau_distribution(
+    tested_ews::T1,
+    actual_ews::T1,
+    tau_metric;
+    plottitle = string(tau_metric) * " Distribution",
+) where {T1<:StructArrays.StructArray{EWSMetrics}}
+    if split(tau_metric, "_")[end] != "tau"
+        tau_metric *= "_tau"
+    end
+
+    tau = skipnan(getproperty(tested_ews, Symbol(tau_metric)))
+    actual_tau = skipnan(getproperty(actual_ews, Symbol(tau_metric)))
+
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        title = plottitle,
+        xlabel = "Kendall's Tau",
+        ylabel = "Count",
+    )
+
+    hist!(
+        ax,
+        tau;
+        color = (Makie.wong_colors()[1], 0.5),
+        bins = 20,
+        label = "Tested EWS",
+    )
+
+    hist!(
+        ax,
+        actual_tau;
+        color = (Makie.wong_colors()[2], 0.5),
+        bins = 20,
+        label = "Actual EWS",
+    )
+
+    vlines!(
+        ax,
+        mean(tau);
+        color = Makie.wong_colors()[1],
+        linestyle = :dash,
+        linewidth = 4,
+    )
+
+    vlines!(
+        ax,
+        mean(actual_tau);
+        color = :grey20,
+        linewidth = 4,
+    )
+
+    text!(
+        ax,
+        mean(actual_tau) + 0.005,
+        length(actual_tau) / 10;
+        text = "Actual Tau (Mean)",
+        justification = :left,
+    )
+
+    lplots = filter(Makie.get_plots(ax)) do plot
+        haskey(plot.attributes, :label)
+    end
+
+    if !isempty(lplots)
+        Legend(fig[1, 2], ax, "Aggregation (wks)")
+    end
+    return fig
+end
+
+skipnan(x) = filter(!isnan, x)
 
 function tycho_tau_distribution(
     tested_ews_tuple,

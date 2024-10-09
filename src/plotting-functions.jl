@@ -2377,9 +2377,30 @@ function simulation_tau_distribution(
     actual_ews_vec::T1,
     tau_metric;
     plottitle = string(tau_metric) * " Distribution",
+) where {T1<:Vector{<:Union{<:Missing,<:EWSMetrics}}}
+    if split(tau_metric, "_")[end] != "tau"
+        tau_metric *= "_tau"
+    end
+    return simulation_tau_distribution(
+        convert(Vector{EWSMetrics}, tested_ews_vec),
+        convert(Vector{EWSMetrics}, actual_ews_vec),
+        tau_metric;
+        plottitle = plottitle,
+    )
+end
+
+function simulation_tau_distribution(
+    tested_ews_vec::T1,
+    actual_ews_vec::T1,
+    tau_metric;
+    plottitle = string(tau_metric) * " Distribution",
 ) where {T1<:Vector{<:EWSMetrics}}
     tested_ews_sa = StructArrays.StructArray(tested_ews_vec)
     actual_ews_sa = StructArrays.StructArray(actual_ews_vec)
+
+    if split(tau_metric, "_")[end] != "tau"
+        tau_metric *= "_tau"
+    end
 
     return simulation_tau_distribution(
         tested_ews_sa,
@@ -2394,7 +2415,14 @@ function simulation_tau_distribution(
     actual_ews::T1,
     tau_metric;
     plottitle = string(tau_metric) * " Distribution",
-) where {T1<:EWSMetrics}
+) where {T1<:StructArrays.StructArray{EWSMetrics}}
+    if split(tau_metric, "_")[end] != "tau"
+        tau_metric *= "_tau"
+    end
+
+    tau = skipnan(getproperty(tested_ews, Symbol(tau_metric)))
+    actual_tau = skipnan(getproperty(actual_ews, Symbol(tau_metric)))
+
     fig = Figure()
     ax = Axis(
         fig[1, 1];
@@ -2402,9 +2430,6 @@ function simulation_tau_distribution(
         xlabel = "Kendall's Tau",
         ylabel = "Count",
     )
-
-    tau = skipnan(getfield(tested_ews, Symbol(tau_metric)))
-    actual_tau = skipnan(getfield(actual_ews, Symbol(tau_metric)))
 
     hist!(
         ax,

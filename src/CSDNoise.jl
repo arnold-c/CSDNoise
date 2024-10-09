@@ -55,7 +55,9 @@ export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
     EWSEndDateType, Reff_start, Reff_end, Outbreak_start, Outbreak_end,
     Outbreak_middle,
     calculate_ews_enddate,
-    tycho_testing_plots, tycho_tau_heatmap_df,
+    tycho_testing_plots,
+    simulation_tau_heatmap_df!,
+    tycho_tau_heatmap_df,
     calculate_ews_lead_time, calculate_ews_trigger_index,
     ews_lead_time_df!
 
@@ -156,6 +158,7 @@ export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
     create_and_save_xlsx_optimal_threshold_summaries
 
 @static if false
+    include("scripts//tycho-visualization.jl")
     include("scripts/ensemble-sim_single-scenario.jl")
     include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
     include("scripts/tycho-visualizations.jl")

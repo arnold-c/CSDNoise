@@ -288,6 +288,7 @@ ews_df = DataFrame(
                 ews_df, :ews_enddate_type => ByRow(==(ews_enddate_type))
             );
             statistic_function = titlecase("mean"),
+            plottitle = "Kendall's Tau Heatmap (Mean)\n$(method_string(ews_metric_specification.method)), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
         )
 
         save(

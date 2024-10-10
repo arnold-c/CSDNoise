@@ -159,10 +159,12 @@ function run_jump_prob(ensemble_param_dict)
         undef, size(ensemble_inc_vecs, 2)
     )
 
+    dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
+
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
 
-        dynamics_parameters = DynamicsParameters(
+        dynamics_parameters[sim] = DynamicsParameters(
             dynamics_parameter_specification; seed = run_seed
         )
 
@@ -171,7 +173,7 @@ function run_jump_prob(ensemble_param_dict)
             @view(ensemble_inc_vecs[:, sim]),
             ensemble_beta_arr,
             state_parameters.init_states,
-            dynamics_parameters,
+            dynamics_parameters[sim],
             time_parameters;
             seed = run_seed,
         )
@@ -183,7 +185,7 @@ function run_jump_prob(ensemble_param_dict)
         calculateReffective_t!(
             @view(ensemble_Reff_arr[:, sim]),
             ensemble_beta_arr,
-            dynamics_parameters,
+            dynamics_parameters[sim],
             1,
             @view(ensemble_seir_arr[:, :, sim]),
         )

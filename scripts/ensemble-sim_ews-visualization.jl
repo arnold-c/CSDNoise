@@ -231,8 +231,8 @@ ews_df = DataFrame(
                 "min-vax_$(ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage)",
                 "max-vax_$(ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage)",
                 noisedir,
-                "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
                 "percent-tested_$(percent_tested)",
+                "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
                 ews_metric_specification.dirpath,
                 split(string(ews_enddate_type), "::")[1],
             )
@@ -288,7 +288,10 @@ ews_df = DataFrame(
         plotpath = joinpath(
             plotsdir(),
             "ensemble",
+            "min-vax_$(ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage)",
+            "max-vax_$(ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage)",
             noisedir,
+            "percent-tested_$(percent_tested)",
             "tau-heatmaps",
             ews_metric_specification.dirpath,
             split(string(ews_enddate_type), "::")[1],

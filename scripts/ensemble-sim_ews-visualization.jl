@@ -12,19 +12,13 @@ using SumTypes
 using Try
 using DataFrames
 using StatsBase: StatsBase
+using Random: Random
+using Distributions: Distributions
 
 using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
 includet(srcdir("ensemble-parameters.jl"))
-
-#%%
-ensemble_single_individual_test_spec = IndividualTestSpecification(
-    1.0, 1.0, 0
-)
-ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
-    10, 7, 1.0, 1.0, "movingavg"
-)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(
@@ -48,11 +42,17 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 
 #%%
 nsims_plot = 5
+Random.seed!(1234)
+selected_sims = rand(
+    Distributions.DiscreteUniform(1, size(ensemble_single_incarr, 3)),
+    nsims_plot,
+)
+
 ensemble_incarr_Reff_plot(
-    ensemble_single_incarr[:, :, 1:nsims_plot],
-    ensemble_single_Reff_arr[:, 1:nsims_plot],
-    ensemble_single_Reff_thresholds_vec[1:nsims_plot],
-    ensemble_single_periodsum_vecs[1:nsims_plot], ;
+    ensemble_single_incarr[:, :, selected_sims],
+    ensemble_single_Reff_arr[:, selected_sims],
+    ensemble_single_Reff_thresholds_vec[selected_sims],
+    ensemble_single_periodsum_vecs[selected_sims], ;
     outbreak_alpha = 0.1,
     Reff_alpha = 1,
 )
@@ -75,7 +75,7 @@ save(
 
 #%%
 # Open a textfile for writing
-io = open(scriptsdir("ensemble-sim_single-scenario.log.txt"), "a")
+io = open(scriptsdir("ensemble-sim_ews-visualization.log.txt"), "a")
 write(io, "============================================\n")
 
 force = false
@@ -85,11 +85,6 @@ test_specification_vec = [
     IndividualTestSpecification(0.8, 0.8, 0),
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
-
-sims = (
-    1,
-    4,
-)
 
 ews_method_vec = [
     Centered,
@@ -123,6 +118,7 @@ ews_metrics = [
 ews_df = DataFrame(
     "ews_metric" => String[],
     "test_specification" => IndividualTestSpecification[],
+    "ews_metric_specification" => EWSMetricSpecification[],
     "ews_enddate_type" => EWSEndDateType[],
     "ews_metric_value" => Float64[],
     "ews_metric_vector" => Vector{Float64}[],
@@ -131,7 +127,7 @@ ews_df = DataFrame(
 @showprogress for (noise_specification, ews_metric_specification) in
                   Iterators.product(
     [ensemble_noise_specification_vec[1]],
-    [ews_spec_vec[1]],
+    ews_spec_vec,
 )
     noisearr = create_noise_arr(
         noise_specification,
@@ -250,6 +246,7 @@ ews_df = DataFrame(
                     ews_vals_sa,
                     ews_metric;
                     individual_test_specification = test_specification,
+                    ews_metric_specification = ews_metric_specification,
                     ews_enddate_type = ews_enddate_type,
                     statistic_function = StatsBase.mean,
                 )
@@ -285,10 +282,12 @@ ews_df = DataFrame(
 
         tau_heatmap = tycho_tau_heatmap_plot(
             subset(
-                ews_df, :ews_enddate_type => ByRow(==(ews_enddate_type))
+                ews_df,
+                :ews_enddate_type => ByRow(==(ews_enddate_type)),
+                :ews_metric_specification => ByRow(==(ews_metric_specification))
             );
             statistic_function = titlecase("mean"),
-            plottitle = "Kendall's Tau Heatmap (Mean)\n$(method_string(ews_metric_specification.method)), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
+            plottitle = "Kendall's Tau Heatmap (Mean)\n$(ews_metric_specification.dirpath), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
         )
 
         save(

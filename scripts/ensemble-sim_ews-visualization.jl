@@ -88,7 +88,7 @@ save(
 io = open(scriptsdir("ensemble-sim_ews-visualization.log.txt"), "a")
 write(io, "============================================\n")
 
-force = false
+force = true
 
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
@@ -144,6 +144,11 @@ ews_df = DataFrame(
     percent_tested_vec,
     ews_spec_vec,
 )
+    min_vaccination_coverage =
+        ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage
+    max_vaccination_coverage =
+        ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage
+
     noisearr = create_noise_arr(
         noise_specification,
         ensemble_single_incarr;
@@ -228,8 +233,8 @@ ews_df = DataFrame(
             ensemble_noise_plotpath = joinpath(
                 plotsdir(),
                 "ensemble",
-                "min-vax_$(ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage)",
-                "max-vax_$(ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage)",
+                "min-vax_$(min_vaccination_coverage)",
+                "max-vax_$(max_vaccination_coverage)",
                 noisedir,
                 "percent-tested_$(percent_tested)",
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
@@ -249,7 +254,7 @@ ews_df = DataFrame(
                         ews_vals_sa,
                         inc_ews_vals_sa,
                         ews_metric;
-                        plottitle = "$(get_test_description(test_specification)), $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(split(string(ews_enddate_type), "::")[1]) EWS $(ews_metric) Tau Distribution",
+                        plottitle = "$(get_test_description(test_specification)) ($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(split(string(ews_enddate_type), "::")[1]) EWS $(ews_metric) Tau Distribution",
                     )
 
                     save(
@@ -288,8 +293,8 @@ ews_df = DataFrame(
         plotpath = joinpath(
             plotsdir(),
             "ensemble",
-            "min-vax_$(ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage)",
-            "max-vax_$(ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage)",
+            "min-vax_$(min_vaccination_coverage)",
+            "max-vax_$(max_vaccination_coverage)",
             noisedir,
             "percent-tested_$(percent_tested)",
             "tau-heatmaps",
@@ -309,7 +314,7 @@ ews_df = DataFrame(
                     ByRow(==(ews_metric_specification)),
             );
             statistic_function = titlecase("mean"),
-            plottitle = "Kendall's Tau Heatmap (Mean)\n$(ews_metric_specification.dirpath), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
+            plottitle = "Kendall's Tau Heatmap (Mean)\n($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(ews_metric_specification.dirpath), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
         )
 
         save(

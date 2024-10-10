@@ -48,7 +48,7 @@ selected_sims = rand(
     nsims_plot,
 )
 
-ensemble_incarr_Reff_plot(
+ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
     ensemble_single_incarr[:, :, selected_sims],
     ensemble_single_Reff_arr[:, selected_sims],
     ensemble_single_Reff_thresholds_vec[selected_sims],
@@ -57,12 +57,21 @@ ensemble_incarr_Reff_plot(
     Reff_alpha = 1,
 )
 
+save(
+    plotsdir(
+        "ensemble/single-scenario/ensemble_single_scenario_incidence_Reff.png"
+    ),
+    ensemble_single_scenario_incidence_Reff_plot;
+    size = (2200, 1600),
+)
+
 #%%
 ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     ensemble_single_incarr,
     ensemble_single_seir_arr,
     ensemble_single_periodsum_vecs,
     ensemble_time_specification;
+    sim = 1,
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
 
@@ -70,7 +79,8 @@ save(
     plotsdir(
         "ensemble/single-scenario/ensemble_single_scenario_incidence_prevalence.png"
     ),
-    ensemble_single_scenario_incidence_prevalence_plot,
+    ensemble_single_scenario_incidence_prevalence_plot;
+    size = (2200, 1600),
 )
 
 #%%
@@ -284,7 +294,8 @@ ews_df = DataFrame(
             subset(
                 ews_df,
                 :ews_enddate_type => ByRow(==(ews_enddate_type)),
-                :ews_metric_specification => ByRow(==(ews_metric_specification))
+                :ews_metric_specification =>
+                    ByRow(==(ews_metric_specification)),
             );
             statistic_function = titlecase("mean"),
             plottitle = "Kendall's Tau Heatmap (Mean)\n$(ews_metric_specification.dirpath), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",

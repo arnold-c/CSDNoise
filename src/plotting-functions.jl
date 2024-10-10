@@ -284,6 +284,7 @@ function incidence_prevalence_plot(
     ensemblearr,
     thresholdsarr,
     timeparams;
+    sim = 1,
     colormap = [N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR],
     threshold = 5,
     kwargs...,
@@ -294,7 +295,7 @@ function incidence_prevalence_plot(
 
     period_sum_arr = zeros(Int64, length(times), 2)
     for (lower, upper, periodsum, outbreakstatus) in
-        eachrow(thresholdsarr[1])
+        eachrow(thresholdsarr[sim])
         period_sum_arr[lower:upper, 1] .= periodsum
         period_sum_arr[lower:upper, 2] .= outbreakstatus
     end
@@ -311,14 +312,14 @@ function incidence_prevalence_plot(
     lines!(
         ax_prev,
         times,
-        ensemblearr[:, 2, 1];
+        ensemblearr[:, 2, sim];
         color = period_sum_arr[:, 2],
         colormap = colormap,
     )
     lines!(
         ax_inc,
         times,
-        incidencearr[:, 1, 1];
+        incidencearr[:, 1, sim];
         color = period_sum_arr[:, 2],
         colormap = colormap,
     )

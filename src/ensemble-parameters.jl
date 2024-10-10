@@ -17,7 +17,7 @@ ensemble_dynamics_specification = DynamicsParameterSpecification(
     SIGMA,
     GAMMA,
     16.0,
-    0.0,
+    0.6,
     0.8,
 )
 

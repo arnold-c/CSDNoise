@@ -33,6 +33,7 @@ end
 function SimTimeParameters(;
     burnin = 0.0, tmin = 0.0, tmax = 365.0 * 100.0, tstep = 1.0
 )
+    @assert burnin <= tmax
     return SimTimeParameters(
         burnin, tmin, tmax, tstep, tmin:tstep:tmax, (tmin, tmax),
         length(tmin:tstep:tmax),
@@ -332,6 +333,7 @@ function EnsembleSpecification(
         "R0_$(dynamics_parameter_specification.R_0)",
         "latent_period_$(round(1 / dynamics_parameter_specification.sigma; digits = 2))",
         "infectious_period_$(round(1 / dynamics_parameter_specification.gamma; digits = 2))",
+        "burnin_vaccination_coverage_$(dynamics_parameter_specification.burnin_vaccination_coverage)",
         "min_vaccination_coverage_$(dynamics_parameter_specification.min_vaccination_coverage)",
         "max_vaccination_coverage_$(dynamics_parameter_specification.max_vaccination_coverage)",
         "births_per_k_$(dynamics_parameter_specification.annual_births_per_k)",

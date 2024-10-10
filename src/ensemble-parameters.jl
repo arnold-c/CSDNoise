@@ -4,7 +4,7 @@ burnin_years = 10
 nyears = 20
 ensemble_time_specification = SimTimeParameters(;
     burnin = 365.0 * burnin_years, tmin = 0.0, tmax = 365.0 * nyears,
-    tstep = 1.0
+    tstep = 1.0,
 )
 
 ensemble_state_specification = StateParameters(
@@ -19,7 +19,7 @@ ensemble_dynamics_specification = DynamicsParameterSpecification(
     SIGMA,
     GAMMA,
     16.0,
-    0.6,
+    0.0,
     0.8,
 )
 

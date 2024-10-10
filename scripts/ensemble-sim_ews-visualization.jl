@@ -14,6 +14,7 @@ using DataFrames
 using StatsBase: StatsBase
 using Random: Random
 using Distributions: Distributions
+using StyledStrings
 
 using ProgressMeter
 
@@ -88,7 +89,7 @@ save(
 io = open(scriptsdir("ensemble-sim_ews-visualization.log.txt"), "a")
 write(io, "============================================\n")
 
-force = true
+force = false
 
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
@@ -144,6 +145,13 @@ ews_df = DataFrame(
     percent_tested_vec,
     ews_spec_vec,
 )
+    println(
+        styled"{green:\n=================================================================}"
+    )
+    println(
+        styled"Creating EWS visualization for:\n{green,inverse: $(getdirpath(noise_specification))}, {red,inverse: $(percent_tested)}, {blue,inverse: $(ews_metric_specification.dirpath)}"
+    )
+
     min_burnin_vaccination_coverage =
         ensemble_specification.dynamics_parameter_specification.min_burnin_vaccination_coverage
     max_burnin_vaccination_coverage =
@@ -162,29 +170,37 @@ ews_df = DataFrame(
     )[1]
     noisedir = getdirpath(noise_specification)
 
-    for test_specification in test_specification_vec
-        testarr = create_testing_arrs(
-            ensemble_single_incarr,
-            noisearr,
-            percent_tested,
-            test_specification,
+    for ews_enddate_type in
+        (
+        Main.Reff_start,
+        Main.Reff_end,
+        Main.Outbreak_start,
+        Main.Outbreak_end,
+        Main.Outbreak_middle,
+    )
+        ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
+        println(
+            styled"\t\tEWS end date type: {magenta: $(ews_enddate_type_str)}"
         )
 
-        for ews_enddate_type in
-            (
-            Main.Reff_start,
-            Main.Reff_end,
-            Main.Outbreak_start,
-            Main.Outbreak_end,
-            Main.Outbreak_middle,
-        )
-            thresholds = SumTypes.@cases ews_enddate_type begin
-                [Reff_start, Reff_end] =>
-                    ensemble_single_Reff_thresholds_vec
-                [Outbreak_start, Outbreak_end, Outbreak_middle] =>
-                    ensemble_single_periodsum_vecs
-            end
+        thresholds = SumTypes.@cases ews_enddate_type begin
+            [Reff_start, Reff_end] =>
+                ensemble_single_Reff_thresholds_vec
+            [Outbreak_start, Outbreak_end, Outbreak_middle] =>
+                ensemble_single_periodsum_vecs
+        end
 
+        for test_specification in test_specification_vec
+            println(
+                styled"\t\t\t\t-> Test specification tau distribution: {blue: $(get_test_description(test_specification))}"
+            )
+
+            testarr = create_testing_arrs(
+                ensemble_single_incarr,
+                noisearr,
+                percent_tested,
+                test_specification,
+            )
             enddate_vec = zeros(Int64, size(testarr, 3))
             ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
                 undef, size(testarr, 3)
@@ -247,7 +263,7 @@ ews_df = DataFrame(
                 "percent-tested_$(percent_tested)",
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
                 ews_metric_specification.dirpath,
-                split(string(ews_enddate_type), "::")[1],
+                ews_enddate_type_str,
             )
             mkpath(ensemble_noise_plotpath)
 
@@ -262,7 +278,7 @@ ews_df = DataFrame(
                         ews_vals_sa,
                         inc_ews_vals_sa,
                         ews_metric;
-                        plottitle = "$(get_test_description(test_specification)) ($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(split(string(ews_enddate_type), "::")[1]) EWS $(ews_metric) Tau Distribution",
+                        plottitle = "$(get_test_description(test_specification)) ($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(ews_enddate_type_str) EWS $(ews_metric) Tau Distribution",
                     )
 
                     save(
@@ -282,22 +298,8 @@ ews_df = DataFrame(
                     statistic_function = StatsBase.mean,
                 )
             end
-
-            GC.gc(true)
-            @info "Finished plotting the single scenario for $(noisedir), $(ews_metric_specification.dirpath), $(ews_enddate_type), $(get_test_description(test_specification))"
-            println(
-                "================================================================="
-            )
         end
-    end
 
-    for ews_enddate_type in (
-        Main.Reff_start,
-        Main.Reff_end,
-        Main.Outbreak_start,
-        Main.Outbreak_end,
-        Main.Outbreak_middle,
-    )
         plotpath = joinpath(
             plotsdir(),
             "ensemble",
@@ -310,13 +312,16 @@ ews_df = DataFrame(
             "percent-tested_$(percent_tested)",
             "tau-heatmaps",
             ews_metric_specification.dirpath,
-            split(string(ews_enddate_type), "::")[1],
+            ews_enddate_type_str,
         )
         mkpath(plotpath)
         plotpath = joinpath(
             plotpath, "ews-tau-heatmap_mean.png"
         )
 
+        println(
+            styled"\t\t\t\t-> Tau heatmap"
+        )
         tau_heatmap = tycho_tau_heatmap_plot(
             subset(
                 ews_df,
@@ -325,7 +330,7 @@ ews_df = DataFrame(
                     ByRow(==(ews_metric_specification)),
             );
             statistic_function = titlecase("mean"),
-            plottitle = "Kendall's Tau Heatmap (Mean)\n($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(ews_metric_specification.dirpath), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
+            plottitle = "Kendall's Tau Heatmap (Mean)\n($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(ews_metric_specification.dirpath), $(ews_enddate_type_str), $(get_noise_magnitude_description(noise_specification))",
         )
 
         save(

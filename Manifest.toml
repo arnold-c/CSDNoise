@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "e37330ff90aab3f69d0fbe74157caa1cd32b95d1"
+project_hash = "2ac3d5f70448b4ed9e50f6912eb67d2810be04a1"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2048,6 +2048,12 @@ weakdeps = ["Adapt", "GPUArraysCore", "SparseArrays", "StaticArrays"]
     StructArraysGPUArraysCoreExt = "GPUArraysCore"
     StructArraysSparseArraysExt = "SparseArrays"
     StructArraysStaticArraysExt = "StaticArrays"
+
+[[deps.StyledStrings]]
+deps = ["PrecompileTools", "TOML"]
+git-tree-sha1 = "711c9650010c95814911c2005ea04e70e70e65ed"
+uuid = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
+version = "1.0.3"
 
 [[deps.SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]

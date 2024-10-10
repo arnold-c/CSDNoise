@@ -10,6 +10,7 @@ using StructArrays
 using Match
 using SumTypes
 using Distributions: Distributions
+using Random: Random
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -130,7 +131,6 @@ struct DynamicsParameters{
     T1<:AbstractFloat,
     T2<:Union{<:Integer,T1},
     T3<:Function,
-    T4<:AbstractVector{<:T1},
 }
     beta_mean::T1
     beta_force::T1
@@ -143,20 +143,20 @@ struct DynamicsParameters{
     R_0::T1
     min_vaccination_coverage::T1
     max_vaccination_coverage::T1
-    vaccination_coverage::T4
+    vaccination_coverage::T1
 end
 
 function DynamicsParameters(
-    dynamic_parameter_specification::T1, nsims::T2
-) where {
-    T1<:DynamicsParameterSpecification,T2<:Integer
-}
-    vaccination_coverage = rand(
-        Distributions.Uniform(
-            dynamic_parameter_specification.min_vaccination_coverage,
-            dynamic_parameter_specification.max_vaccination_coverage),
-        nsims,
-    )
+    dynamic_parameter_specification::T1; seed = 1234
+) where {T1<:DynamicsParameterSpecification}
+    Random.seed!(seed)
+
+    vaccination_coverage = round(
+        rand(
+            Distributions.Uniform(
+                dynamic_parameter_specification.min_vaccination_coverage,
+                dynamic_parameter_specification.max_vaccination_coverage),
+        ); digits = 2)
 
     return DynamicsParameters(
         [
@@ -209,51 +209,17 @@ end
 struct EnsembleSpecification{
     T1<:Tuple,
     T2<:StateParameters,
-    T3<:DynamicsParameters,
+    T3<:DynamicsParameterSpecification,
     T4<:SimTimeParameters,
     T5<:Integer,
     T6<:AbstractString,
 }
     modeltypes::T1
     state_parameters::T2
-    dynamics_parameters::T3
+    dynamics_parameter_specification::T3
     time_parameters::T4
     nsims::T5
     dirpath::T6
-end
-
-function EnsembleSpecification(
-    modeltypes::Tuple,
-    state_parameters::StateParameters,
-    dynamics_parameters::DynamicsParameters,
-    time_parameters::SimTimeParameters,
-    nsims::Int64,
-)
-    dirpath = outdir(
-        "ensemble",
-        modeltypes...,
-        "N_$(state_parameters.init_states.N)",
-        "r_$(state_parameters.init_state_props.r_prop)",
-        "nsims_$(nsims)",
-        "R0_$(dynamics_parameters.R_0)",
-        "latent_period_$(round(1 / dynamics_parameters.sigma; digits = 2))",
-        "infectious_period_$(round(1 / dynamics_parameters.gamma; digits = 2))",
-        "min_vaccination_coverage_$(dynamics_parameters.min_vaccination_coverage)",
-        "max_vaccination_coverage_$(dynamics_parameters.max_vaccination_coverage)",
-        "births_per_k_$(dynamics_parameters.annual_births_per_k)",
-        "beta_force_$(dynamics_parameters.beta_force)",
-        "tmax_$(time_parameters.tmax)",
-        "tstep_$(time_parameters.tstep)",
-    )
-
-    return EnsembleSpecification(
-        modeltypes,
-        state_parameters,
-        dynamics_parameters,
-        time_parameters,
-        nsims,
-        dirpath,
-    )
 end
 
 function EnsembleSpecification(
@@ -263,16 +229,30 @@ function EnsembleSpecification(
     time_parameters::SimTimeParameters,
     nsims::Int64,
 )
-    dynamics_parameters = DynamicsParameters(
-        dynamics_parameter_specification, nsims
+    dirpath = outdir(
+        "ensemble",
+        modeltypes...,
+        "N_$(state_parameters.init_states.N)",
+        "r_$(state_parameters.init_state_props.r_prop)",
+        "nsims_$(nsims)",
+        "R0_$(dynamics_parameter_specification.R_0)",
+        "latent_period_$(round(1 / dynamics_parameter_specification.sigma; digits = 2))",
+        "infectious_period_$(round(1 / dynamics_parameter_specification.gamma; digits = 2))",
+        "min_vaccination_coverage_$(dynamics_parameter_specification.min_vaccination_coverage)",
+        "max_vaccination_coverage_$(dynamics_parameter_specification.max_vaccination_coverage)",
+        "births_per_k_$(dynamics_parameter_specification.annual_births_per_k)",
+        "beta_force_$(dynamics_parameter_specification.beta_force)",
+        "tmax_$(time_parameters.tmax)",
+        "tstep_$(time_parameters.tstep)",
     )
 
     return EnsembleSpecification(
         modeltypes,
         state_parameters,
-        dynamics_parameters,
+        dynamics_parameter_specification,
         time_parameters,
         nsims,
+        dirpath,
     )
 end
 

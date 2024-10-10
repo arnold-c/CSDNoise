@@ -133,7 +133,9 @@ function run_jump_prob(ensemble_param_dict)
     # test_spec_vec,
     # ews_spec_vec = ensemble_param_dict
 
-    @unpack state_parameters, dynamics_parameters, time_parameters, nsims =
+    @unpack state_parameters,
+    dynamics_parameter_specification, time_parameters,
+    nsims =
         ensemble_spec
 
     @unpack tstep, tlength, trange = time_parameters
@@ -159,6 +161,10 @@ function run_jump_prob(ensemble_param_dict)
 
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
+
+        dynamics_parameters = DynamicsParameters(
+            dynamics_parameter_specification; seed = run_seed
+        )
 
         seir_mod!(
             @view(ensemble_seir_vecs[:, sim]),

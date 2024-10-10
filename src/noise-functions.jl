@@ -16,44 +16,48 @@ function create_noise_arr(
 )
     seed *= 10
 
-    @unpack state_parameters, dynamics_parameters, time_parameters, nsims =
+    @unpack state_parameters,
+    dynamics_parameter_specification, time_parameters,
+    nsims =
         ensemble_specification
     @unpack tlength = time_parameters
 
     noise_beta_force = @match noise_specification.correlation begin
         "none" => 0.0
-        _ => dynamics_parameters.beta_force
+        _ => dynamics_parameter_specification.beta_force
     end
 
     noise_seasonality = @match noise_specification.correlation begin
-        "out-of-phase" => @match dynamics_parameters.seasonality begin
+        "out-of-phase" => @match dynamics_parameter_specification.seasonality begin
             $cos => sin
             $sin => cos
         end
-        _ => dynamics_parameters.seasonality
+        _ => dynamics_parameter_specification.seasonality
     end
 
     noise_dynamics_parameters = DynamicsParameters(
-        dynamics_parameters.beta_mean,
+        dynamics_parameter_specification.beta_mean,
         noise_beta_force,
         noise_seasonality,
         1 / noise_specification.latent_period,
         1 / noise_specification.duration_infection,
-        dynamics_parameters.mu,
-        dynamics_parameters.annual_births_per_k,
+        dynamics_parameter_specification.mu,
+        dynamics_parameter_specification.annual_births_per_k,
         calculate_import_rate(
-            dynamics_parameters.mu,
+            dynamics_parameter_specification.mu,
             noise_specification.R_0,
             state_parameters.init_states.N,
         ),
         noise_specification.R_0,
+        0.0,
+        0.0,
         0.0,
     )
 
     ensemble_seir_vecs = Array{typeof(state_parameters.init_states),2}(
         undef,
         tlength,
-        nsims
+        nsims,
     )
 
     ensemble_inc_vecs = Array{typeof(SVector(0)),2}(

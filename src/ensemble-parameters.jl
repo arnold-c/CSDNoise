@@ -10,14 +10,15 @@ ensemble_state_specification = StateParameters(
     Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95),
 )
 
-ensemble_dynamics_specification = DynamicsParameters(
+ensemble_dynamics_specification = DynamicsParameterSpecification(
     ensemble_state_specification.init_states.N,
     27,
     0.0,
     SIGMA,
     GAMMA,
     16.0,
-    0.8
+    0.6,
+    0.8,
 )
 
 ensemble_nsims = 100
@@ -34,7 +35,7 @@ poisson_noise_mean_scaling_vec = [8.0]
 
 poisson_noise_spec_vec = create_combinations_vec(
     PoissonNoiseSpecification,
-    (["poisson"], poisson_noise_mean_scaling_vec)
+    (["poisson"], poisson_noise_mean_scaling_vec),
 )
 
 dynamical_noise_R0 = [5.0]

@@ -22,7 +22,8 @@ export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
 # @reexport using .EWSMetrics
 
 include("structs.jl")
-export SimTimeParameters, EnsembleSpecification, DynamicsParameters,
+export SimTimeParameters, EnsembleSpecification,
+    DynamicsParameterSpecification, DynamicsParameters,
     StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
     OutbreakSpecification, IndividualTestSpecification, get_test_description,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
@@ -158,7 +159,7 @@ export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
     create_and_save_xlsx_optimal_threshold_summaries
 
 @static if false
-    include("scripts//tycho-visualization.jl")
+    include("scripts/ensemble-sim.jl")
     include("scripts/ensemble-sim_single-scenario.jl")
     include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
     include("scripts/tycho-visualizations.jl")

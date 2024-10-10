@@ -34,7 +34,7 @@ function create_ensemble_spec_combinations(
     gamma_vec,
     annual_births_per_k_vec,
     R_0_vec,
-    vaccination_coverage_vec,
+    vaccination_coverage_pairs_vec,
     N_vec,
     init_states_prop_dict,
     model_types_vec,
@@ -48,7 +48,7 @@ function create_ensemble_spec_combinations(
         gamma_vec,
         annual_births_per_k_vec,
         R_0_vec,
-        vaccination_coverage_vec,
+        vaccination_coverage_pairs_vec,
         N_vec,
         init_states_prop_dict,
         model_types_vec,
@@ -67,7 +67,7 @@ function create_ensemble_spec_combinations(
             gamma,
             annual_births_per_k,
             R_0,
-            vaccination_coverage,
+            vaccination_coverage_pairs,
             N,
             init_states_prop,
             model_type,
@@ -84,7 +84,7 @@ function create_ensemble_spec_combinations(
             StateParameters(
                 N, init_states_prop
             ),
-            DynamicsParameters(
+            DynamicsParameterSpecification(
                 beta_mean,
                 beta_force,
                 seasonality,
@@ -94,7 +94,7 @@ function create_ensemble_spec_combinations(
                 annual_births_per_k,
                 epsilon,
                 R_0,
-                vaccination_coverage,
+                vaccination_coverage_pairs...,
             ),
             time_p,
             nsims,
@@ -126,14 +126,16 @@ function run_jump_prob(ensemble_param_dict)
     @unpack ensemble_spec,
     seed,
     executor,
-    quantile_vec,
-    outbreak_spec_dict,
-    noise_spec_vec,
-    outbreak_detection_spec_vec,
-    test_spec_vec,
-    ews_spec_vec = ensemble_param_dict
+    # quantile_vec,
+    outbreak_spec_dict = ensemble_param_dict
+    # noise_spec_vec,
+    # outbreak_detection_spec_vec,
+    # test_spec_vec,
+    # ews_spec_vec = ensemble_param_dict
 
-    @unpack state_parameters, dynamics_parameters, time_parameters, nsims =
+    @unpack state_parameters,
+    dynamics_parameter_specification, time_parameters,
+    nsims =
         ensemble_spec
 
     @unpack tstep, tlength, trange = time_parameters
@@ -157,15 +159,21 @@ function run_jump_prob(ensemble_param_dict)
         undef, size(ensemble_inc_vecs, 2)
     )
 
+    dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
+
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
+
+        dynamics_parameters[sim] = DynamicsParameters(
+            dynamics_parameter_specification; seed = run_seed
+        )
 
         seir_mod!(
             @view(ensemble_seir_vecs[:, sim]),
             @view(ensemble_inc_vecs[:, sim]),
             ensemble_beta_arr,
             state_parameters.init_states,
-            dynamics_parameters,
+            dynamics_parameters[sim],
             time_parameters;
             seed = run_seed,
         )
@@ -177,7 +185,7 @@ function run_jump_prob(ensemble_param_dict)
         calculateReffective_t!(
             @view(ensemble_Reff_arr[:, sim]),
             ensemble_beta_arr,
-            dynamics_parameters,
+            dynamics_parameters[sim],
             1,
             @view(ensemble_seir_arr[:, :, sim]),
         )
@@ -193,21 +201,23 @@ function run_jump_prob(ensemble_param_dict)
         )
         dict[:ensemble_spec] = ensemble_spec
         dict[:ensemble_inc_vecs] = ensemble_inc_vecs
-        dict[:noise_spec_vec] = noise_spec_vec
-        dict[:outbreak_detection_spec_vec] = outbreak_detection_spec_vec
-        dict[:test_spec_vec] = test_spec_vec
-        dict[:ews_spec_vec] = ews_spec_vec
-        dict[:seed] = seed
-        dict[:executor] = executor
+        # dict[:noise_spec_vec] = noise_spec_vec
+        # dict[:outbreak_detection_spec_vec] = outbreak_detection_spec_vec
+        # dict[:test_spec_vec] = test_spec_vec
+        # dict[:ews_spec_vec] = ews_spec_vec
+        # dict[:seed] = seed
+        # dict[:executor] = executor
     end
 
-    run_define_outbreaks(outbreak_spec_dict)
+    run_define_outbreaks(outbreak_spec_dict; executor = executor)
 
     return @strdict ensemble_seir_arr ensemble_spec ensemble_Reff_arr ensemble_Reff_thresholds_vec
 end
 
-function run_define_outbreaks(dict_of_outbreak_spec_params)
-    @floop for outbreak_spec_params in dict_of_outbreak_spec_params
+function run_define_outbreaks(
+    dict_of_outbreak_spec_params; executor = ThreadedEx()
+)
+    @floop executor for outbreak_spec_params in dict_of_outbreak_spec_params
         @produce_or_load(
             define_outbreaks,
             outbreak_spec_params,
@@ -222,165 +232,165 @@ end
 function define_outbreaks(incidence_param_dict)
     @unpack ensemble_spec,
     ensemble_inc_vecs,
-    outbreak_spec,
-    noise_spec_vec,
-    outbreak_detection_spec_vec,
-    test_spec_vec, ews_spec_vec, seed, executor =
-        incidence_param_dict
+    outbreak_spec = incidence_param_dict
+    # noise_spec_vec,
+    # outbreak_detection_spec_vec,
+    # test_spec_vec, ews_spec_vec, seed, executor =
+    # incidence_param_dict
 
     ensemble_inc_arr, ensemble_thresholds_vec = create_inc_infec_arr(
         ensemble_inc_vecs, outbreak_spec
     )
 
-    non_clinical_case_test_spec_vec = filter(
-        spec -> !(spec in CLINICAL_TEST_SPECS),
-        test_spec_vec,
-    )
-
-    non_clinical_case_outbreak_detection_spec_vec = filter(
-        spec -> spec.percent_clinic_tested !== 1.0,
-        outbreak_detection_spec_vec,
-    )
-
-    non_clinical_case_ensemble_scenarios = create_combinations_vec(
-        ScenarioSpecification,
-        (
-            [ensemble_spec],
-            [outbreak_spec],
-            noise_spec_vec,
-            non_clinical_case_outbreak_detection_spec_vec,
-            non_clinical_case_test_spec_vec,
-            ews_spec_vec,
-        ),
-    )
-
-    clinical_case_outbreak_detection_spec_vec = filter(
-        spec -> spec.percent_clinic_tested == 1.0,
-        outbreak_detection_spec_vec,
-    )
-
-    clinical_case_ensemble_scenarios = create_combinations_vec(
-        ScenarioSpecification,
-        (
-            [ensemble_spec],
-            [outbreak_spec],
-            noise_spec_vec,
-            clinical_case_outbreak_detection_spec_vec,
-            CLINICAL_TEST_SPECS,
-            ews_spec_vec,
-        ),
-    )
-
-    ensemble_scenarios = vcat(
-        non_clinical_case_ensemble_scenarios, clinical_case_ensemble_scenarios
-    )
-
-    scenario_param_dict = dict_list(
-        @dict(
-            scenario_spec = ensemble_scenarios,
-            ensemble_inc_arr,
-            thresholds_vec = [ensemble_thresholds_vec],
-            seed = seed,
-        )
-    )
-
-    run_OutbreakThresholdChars_creation(
-        scenario_param_dict; executor = executor
-    )
-
-    inc_ews_param_dict = dict_list(
-        @dict(
-            basedirpath = incidence_param_dict[:dirpath],
-            tstep = ensemble_spec.time_parameters.tstep,
-            ews_specification = ews_spec_vec,
-            ensemble_inc_arr = ensemble_inc_arr
-        )
-    )
-
-    run_incidence_ews_metrics(
-        inc_ews_param_dict; executor = executor
-    )
+    # non_clinical_case_test_spec_vec = filter(
+    #     spec -> !(spec in CLINICAL_TEST_SPECS),
+    #     test_spec_vec,
+    # )
+    #
+    # non_clinical_case_outbreak_detection_spec_vec = filter(
+    #     spec -> spec.percent_clinic_tested !== 1.0,
+    #     outbreak_detection_spec_vec,
+    # )
+    #
+    # non_clinical_case_ensemble_scenarios = create_combinations_vec(
+    #     ScenarioSpecification,
+    #     (
+    #         [ensemble_spec],
+    #         [outbreak_spec],
+    #         noise_spec_vec,
+    #         non_clinical_case_outbreak_detection_spec_vec,
+    #         non_clinical_case_test_spec_vec,
+    #         ews_spec_vec,
+    #     ),
+    # )
+    #
+    # clinical_case_outbreak_detection_spec_vec = filter(
+    #     spec -> spec.percent_clinic_tested == 1.0,
+    #     outbreak_detection_spec_vec,
+    # )
+    #
+    # clinical_case_ensemble_scenarios = create_combinations_vec(
+    #     ScenarioSpecification,
+    #     (
+    #         [ensemble_spec],
+    #         [outbreak_spec],
+    #         noise_spec_vec,
+    #         clinical_case_outbreak_detection_spec_vec,
+    #         CLINICAL_TEST_SPECS,
+    #         ews_spec_vec,
+    #     ),
+    # )
+    #
+    # ensemble_scenarios = vcat(
+    #     non_clinical_case_ensemble_scenarios, clinical_case_ensemble_scenarios
+    # )
+    #
+    # scenario_param_dict = dict_list(
+    #     @dict(
+    #         scenario_spec = ensemble_scenarios,
+    #         ensemble_inc_arr,
+    #         thresholds_vec = [ensemble_thresholds_vec],
+    #         seed = seed,
+    #     )
+    # )
+    #
+    # run_OutbreakThresholdChars_creation(
+    #     scenario_param_dict; executor = executor
+    # )
+    #
+    # inc_ews_param_dict = dict_list(
+    #     @dict(
+    #         basedirpath = incidence_param_dict[:dirpath],
+    #         tstep = ensemble_spec.time_parameters.tstep,
+    #         ews_specification = ews_spec_vec,
+    #         ensemble_inc_arr = ensemble_inc_arr
+    #     )
+    # )
+    #
+    # run_incidence_ews_metrics(
+    #     inc_ews_param_dict; executor = executor
+    # )
 
     return @strdict ensemble_inc_arr ensemble_thresholds_vec
 end
 
-function run_incidence_ews_metrics(
-    dict_of_inc_ews_params; executor = ThreadedEx()
-)
-    @floop executor for inc_ews_params in dict_of_inc_ews_params
-        @produce_or_load(
-            incidence_ews_metrics,
-            inc_ews_params,
-            "$(joinpath(inc_ews_params[:basedirpath], inc_ews_params[:ews_specification].dirpath))";
-            filename = "incidence-ews-metrics",
-            loadfile = false
-        )
-    end
-end
-
-function incidence_ews_metrics(inc_ews_params)
-    @unpack ensemble_inc_arr, ews_specification, tstep = inc_ews_params
-
-    inc_ewsmetrics_vec = Vector{EWSMetrics}(undef, size(ensemble_inc_arr, 3))
-    for sim in eachindex(inc_ewsmetrics_vec)
-        inc_ewsmetrics_vec[sim] = EWSMetrics(
-            ews_specification,
-            @view(ensemble_inc_arr[:, 1, sim])
-        )
-    end
-    inc_ewsmetrics = StructArray(inc_ewsmetrics_vec)
-    return @strdict inc_ewsmetrics
-end
-
-function run_OutbreakThresholdChars_creation(
-    dict_of_OTchars_params; executor = ThreadedEx()
-)
-    @floop executor for OTChars_params in dict_of_OTchars_params
-        @produce_or_load(
-            OutbreakThresholdChars_creation,
-            OTChars_params,
-            "$(OTChars_params[:scenario_spec].dirpath)";
-            filename = "ensemble-scenario",
-            loadfile = false
-        )
-    end
-end
-
-function OutbreakThresholdChars_creation(OT_chars_param_dict)
-    @unpack scenario_spec,
-    ensemble_inc_arr,
-    thresholds_vec,
-    seed = OT_chars_param_dict
-
-    @unpack noise_specification,
-    ensemble_specification,
-    outbreak_specification,
-    outbreak_detection_specification,
-    individual_test_specification,
-    ewsmetric_specification = scenario_spec
-
-    noise_array, noise_rubella_prop = create_noise_arr(
-        noise_specification,
-        ensemble_inc_arr;
-        ensemble_specification = scenario_spec.ensemble_specification,
-        seed = seed,
-    )
-
-    testarr, ewsarr = create_testing_arrs(
-        ensemble_inc_arr,
-        noise_array,
-        outbreak_detection_specification,
-        individual_test_specification,
-        ensemble_specification.time_parameters,
-        ewsmetric_specification,
-    )[1:2]
-
-    OT_chars = calculate_OutbreakThresholdChars(
-        testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop
-    )
-    test_ewsmetrics = StructArray(ewsarr)
-    return @strdict OT_chars test_ewsmetrics
-end
+# function run_incidence_ews_metrics(
+#     dict_of_inc_ews_params; executor = ThreadedEx()
+# )
+#     @floop executor for inc_ews_params in dict_of_inc_ews_params
+#         @produce_or_load(
+#             incidence_ews_metrics,
+#             inc_ews_params,
+#             "$(joinpath(inc_ews_params[:basedirpath], inc_ews_params[:ews_specification].dirpath))";
+#             filename = "incidence-ews-metrics",
+#             loadfile = false
+#         )
+#     end
+# end
+#
+# function incidence_ews_metrics(inc_ews_params)
+#     @unpack ensemble_inc_arr, ews_specification, tstep = inc_ews_params
+#
+#     inc_ewsmetrics_vec = Vector{EWSMetrics}(undef, size(ensemble_inc_arr, 3))
+#     for sim in eachindex(inc_ewsmetrics_vec)
+#         inc_ewsmetrics_vec[sim] = EWSMetrics(
+#             ews_specification,
+#             @view(ensemble_inc_arr[:, 1, sim])
+#         )
+#     end
+#     inc_ewsmetrics = StructArray(inc_ewsmetrics_vec)
+#     return @strdict inc_ewsmetrics
+# end
+#
+# function run_OutbreakThresholdChars_creation(
+#     dict_of_OTchars_params; executor = ThreadedEx()
+# )
+#     @floop executor for OTChars_params in dict_of_OTchars_params
+#         @produce_or_load(
+#             OutbreakThresholdChars_creation,
+#             OTChars_params,
+#             "$(OTChars_params[:scenario_spec].dirpath)";
+#             filename = "ensemble-scenario",
+#             loadfile = false
+#         )
+#     end
+# end
+#
+# function OutbreakThresholdChars_creation(OT_chars_param_dict)
+#     @unpack scenario_spec,
+#     ensemble_inc_arr,
+#     thresholds_vec,
+#     seed = OT_chars_param_dict
+#
+#     @unpack noise_specification,
+#     ensemble_specification,
+#     outbreak_specification,
+#     outbreak_detection_specification,
+#     individual_test_specification,
+#     ewsmetric_specification = scenario_spec
+#
+#     noise_array, noise_rubella_prop = create_noise_arr(
+#         noise_specification,
+#         ensemble_inc_arr;
+#         ensemble_specification = scenario_spec.ensemble_specification,
+#         seed = seed,
+#     )
+#
+#     testarr, ewsarr = create_testing_arrs(
+#         ensemble_inc_arr,
+#         noise_array,
+#         outbreak_detection_specification,
+#         individual_test_specification,
+#         ensemble_specification.time_parameters,
+#         ewsmetric_specification,
+#     )[1:2]
+#
+#     OT_chars = calculate_OutbreakThresholdChars(
+#         testarr, ensemble_inc_arr, thresholds_vec, noise_rubella_prop
+#     )
+#     test_ewsmetrics = StructArray(ewsarr)
+#     return @strdict OT_chars test_ewsmetrics
+# end
 
 function get_ensemble_file() end
 

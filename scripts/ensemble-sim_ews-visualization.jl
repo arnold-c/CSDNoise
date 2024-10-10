@@ -12,19 +12,13 @@ using SumTypes
 using Try
 using DataFrames
 using StatsBase: StatsBase
+using Random: Random
+using Distributions: Distributions
 
 using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
 includet(srcdir("ensemble-parameters.jl"))
-
-#%%
-ensemble_single_individual_test_spec = IndividualTestSpecification(
-    1.0, 1.0, 0
-)
-ensemble_single_outbreak_detection_spec = OutbreakDetectionSpecification(
-    10, 7, 1.0, 1.0, "movingavg"
-)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(
@@ -48,13 +42,27 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 
 #%%
 nsims_plot = 5
-ensemble_incarr_Reff_plot(
-    ensemble_single_incarr[:, :, 1:nsims_plot],
-    ensemble_single_Reff_arr[:, 1:nsims_plot],
-    ensemble_single_Reff_thresholds_vec[1:nsims_plot],
-    ensemble_single_periodsum_vecs[1:nsims_plot], ;
+Random.seed!(1234)
+selected_sims = rand(
+    Distributions.DiscreteUniform(1, size(ensemble_single_incarr, 3)),
+    nsims_plot,
+)
+
+ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
+    ensemble_single_incarr[:, :, selected_sims],
+    ensemble_single_Reff_arr[:, selected_sims],
+    ensemble_single_Reff_thresholds_vec[selected_sims],
+    ensemble_single_periodsum_vecs[selected_sims], ;
     outbreak_alpha = 0.1,
     Reff_alpha = 1,
+)
+
+save(
+    plotsdir(
+        "ensemble/single-scenario/ensemble_single_scenario_incidence_Reff.png"
+    ),
+    ensemble_single_scenario_incidence_Reff_plot;
+    size = (2200, 1600),
 )
 
 #%%
@@ -63,6 +71,7 @@ ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     ensemble_single_seir_arr,
     ensemble_single_periodsum_vecs,
     ensemble_time_specification;
+    sim = 1,
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
 
@@ -70,15 +79,16 @@ save(
     plotsdir(
         "ensemble/single-scenario/ensemble_single_scenario_incidence_prevalence.png"
     ),
-    ensemble_single_scenario_incidence_prevalence_plot,
+    ensemble_single_scenario_incidence_prevalence_plot;
+    size = (2200, 1600),
 )
 
 #%%
 # Open a textfile for writing
-io = open(scriptsdir("ensemble-sim_single-scenario.log.txt"), "a")
+io = open(scriptsdir("ensemble-sim_ews-visualization.log.txt"), "a")
 write(io, "============================================\n")
 
-force = false
+force = true
 
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
@@ -86,10 +96,7 @@ test_specification_vec = [
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
 
-sims = (
-    1,
-    4,
-)
+percent_tested_vec = [1.0]
 
 ews_method_vec = [
     Centered,
@@ -123,16 +130,25 @@ ews_metrics = [
 ews_df = DataFrame(
     "ews_metric" => String[],
     "test_specification" => IndividualTestSpecification[],
+    "ews_metric_specification" => EWSMetricSpecification[],
     "ews_enddate_type" => EWSEndDateType[],
     "ews_metric_value" => Float64[],
     "ews_metric_vector" => Vector{Float64}[],
 )
 
-@showprogress for (noise_specification, ews_metric_specification) in
+@showprogress for (
+    noise_specification, percent_tested, ews_metric_specification
+) in
                   Iterators.product(
     [ensemble_noise_specification_vec[1]],
-    [ews_spec_vec[1]],
+    percent_tested_vec,
+    ews_spec_vec,
 )
+    min_vaccination_coverage =
+        ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage
+    max_vaccination_coverage =
+        ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage
+
     noisearr = create_noise_arr(
         noise_specification,
         ensemble_single_incarr;
@@ -145,7 +161,7 @@ ews_df = DataFrame(
         testarr = create_testing_arrs(
             ensemble_single_incarr,
             noisearr,
-            ensemble_single_outbreak_detection_spec.percent_tested,
+            percent_tested,
             test_specification,
         )
 
@@ -217,7 +233,10 @@ ews_df = DataFrame(
             ensemble_noise_plotpath = joinpath(
                 plotsdir(),
                 "ensemble",
+                "min-vax_$(min_vaccination_coverage)",
+                "max-vax_$(max_vaccination_coverage)",
                 noisedir,
+                "percent-tested_$(percent_tested)",
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
                 ews_metric_specification.dirpath,
                 split(string(ews_enddate_type), "::")[1],
@@ -235,7 +254,7 @@ ews_df = DataFrame(
                         ews_vals_sa,
                         inc_ews_vals_sa,
                         ews_metric;
-                        plottitle = "$(get_test_description(test_specification)), $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(split(string(ews_enddate_type), "::")[1]) EWS $(ews_metric) Tau Distribution",
+                        plottitle = "$(get_test_description(test_specification)) ($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(split(string(ews_enddate_type), "::")[1]) EWS $(ews_metric) Tau Distribution",
                     )
 
                     save(
@@ -250,6 +269,7 @@ ews_df = DataFrame(
                     ews_vals_sa,
                     ews_metric;
                     individual_test_specification = test_specification,
+                    ews_metric_specification = ews_metric_specification,
                     ews_enddate_type = ews_enddate_type,
                     statistic_function = StatsBase.mean,
                 )
@@ -273,7 +293,10 @@ ews_df = DataFrame(
         plotpath = joinpath(
             plotsdir(),
             "ensemble",
+            "min-vax_$(min_vaccination_coverage)",
+            "max-vax_$(max_vaccination_coverage)",
             noisedir,
+            "percent-tested_$(percent_tested)",
             "tau-heatmaps",
             ews_metric_specification.dirpath,
             split(string(ews_enddate_type), "::")[1],
@@ -285,10 +308,13 @@ ews_df = DataFrame(
 
         tau_heatmap = tycho_tau_heatmap_plot(
             subset(
-                ews_df, :ews_enddate_type => ByRow(==(ews_enddate_type))
+                ews_df,
+                :ews_enddate_type => ByRow(==(ews_enddate_type)),
+                :ews_metric_specification =>
+                    ByRow(==(ews_metric_specification)),
             );
             statistic_function = titlecase("mean"),
-            plottitle = "Kendall's Tau Heatmap (Mean)\n$(method_string(ews_metric_specification.method)), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
+            plottitle = "Kendall's Tau Heatmap (Mean)\n($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(ews_metric_specification.dirpath), $(split(string(ews_enddate_type), "::")[1]), $(get_noise_magnitude_description(noise_specification))",
         )
 
         save(

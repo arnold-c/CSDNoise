@@ -9,6 +9,7 @@ using LabelledArrays
 using StructArrays
 using Match
 using SumTypes
+using Distributions: Distributions
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -34,7 +35,7 @@ function SimTimeParameters(; tmin = 0.0, tmax = 365.0 * 100.0, tstep = 1.0)
     )
 end
 
-struct DynamicsParameters{
+struct DynamicsParameterSpecification{
     T1<:AbstractFloat,T2<:Union{<:Integer,T1},T3<:Function
 }
     beta_mean::T1
@@ -46,16 +47,18 @@ struct DynamicsParameters{
     annual_births_per_k::T2
     epsilon::T1
     R_0::T1
-    vaccination_coverage::T1
+    min_vaccination_coverage::T1
+    max_vaccination_coverage::T1
 end
 
-function DynamicsParameters(
+function DynamicsParameterSpecification(
     sigma::Float64,
     gamma::Float64,
     R_0::Float64;
-    vaccination_coverage::Float64 = 0.8,
+    max_vaccination_coverage::Float64 = 0.8,
+    min_vaccination_coverage::Float64 = 0.0,
 )
-    return DynamicsParameters(
+    return DynamicsParameterSpecification(
         BETA_MEAN,
         BETA_FORCE,
         cos,
@@ -65,24 +68,26 @@ function DynamicsParameters(
         ANNUAL_BIRTHS_PER_K,
         EPSILON,
         R_0,
-        vaccination_coverage,
+        min_vaccination_coverage,
+        max_vaccination_coverage,
     )
 end
 
-function DynamicsParameters(
+function DynamicsParameterSpecification(
     N::Int64,
     annual_births_per_k::Int64,
     beta_force::Float64,
     sigma::Float64,
     gamma::Float64,
     R_0::Float64,
-    vaccination_coverage::Float64,
+    min_vaccination_coverage::Float64,
+    max_vaccination_coverage::Float64;
 )
     mu = calculate_mu(annual_births_per_k)
     beta_mean = calculate_beta(R_0, gamma, mu, 1, N)
     epsilon = calculate_import_rate(mu, R_0, N)
 
-    return DynamicsParameters(
+    return DynamicsParameterSpecification(
         beta_mean,
         beta_force,
         cos,
@@ -92,19 +97,21 @@ function DynamicsParameters(
         annual_births_per_k,
         epsilon,
         R_0,
-        vaccination_coverage,
+        min_vaccination_coverage,
+        max_vaccination_coverage,
     )
 end
 
-function DynamicsParameters(
+function DynamicsParameterSpecification(
     N::Int64, annual_births_per_k::Int64, beta_force::Float64;
-    vaccination_coverage::Float64 = 0.8,
+    min_vaccination_coverage::Float64 = 0.0,
+    max_vaccination_coverage::Float64 = 0.8,
 )
     mu = calculate_mu(annual_births_per_k)
     beta_mean = calculate_beta(R0, GAMMA, mu, 1, N)
     epsilon = calculate_import_rate(mu, R0, N)
 
-    return DynamicsParameters(
+    return DynamicsParameterSpecification(
         beta_mean,
         beta_force,
         cos,
@@ -114,6 +121,49 @@ function DynamicsParameters(
         annual_births_per_k,
         epsilon,
         R0,
+        min_vaccination_coverage,
+        max_vaccination_coverage,
+    )
+end
+
+struct DynamicsParameters{
+    T1<:AbstractFloat,
+    T2<:Union{<:Integer,T1},
+    T3<:Function,
+    T4<:AbstractVector{<:T1},
+}
+    beta_mean::T1
+    beta_force::T1
+    seasonality::T3
+    sigma::T1
+    gamma::T1
+    mu::T1
+    annual_births_per_k::T2
+    epsilon::T1
+    R_0::T1
+    min_vaccination_coverage::T1
+    max_vaccination_coverage::T1
+    vaccination_coverage::T4
+end
+
+function DynamicsParameters(
+    dynamic_parameter_specification::T1, nsims::T2
+) where {
+    T1<:DynamicsParameterSpecification,T2<:Integer
+}
+    vaccination_coverage = rand(
+        Distributions.Uniform(
+            dynamic_parameter_specification.min_vaccination_coverage,
+            dynamic_parameter_specification.max_vaccination_coverage),
+        nsims,
+    )
+
+    return DynamicsParameters(
+        [
+            getfield(dynamic_parameter_specification, f) for
+            f in fieldnames(DynamicsParameterSpecification)
+        ]
+        ...,
         vaccination_coverage,
     )
 end
@@ -188,7 +238,8 @@ function EnsembleSpecification(
         "R0_$(dynamics_parameters.R_0)",
         "latent_period_$(round(1 / dynamics_parameters.sigma; digits = 2))",
         "infectious_period_$(round(1 / dynamics_parameters.gamma; digits = 2))",
-        "vaccination_coverage_$(dynamics_parameters.vaccination_coverage)",
+        "min_vaccination_coverage_$(dynamics_parameters.min_vaccination_coverage)",
+        "max_vaccination_coverage_$(dynamics_parameters.max_vaccination_coverage)",
         "births_per_k_$(dynamics_parameters.annual_births_per_k)",
         "beta_force_$(dynamics_parameters.beta_force)",
         "tmax_$(time_parameters.tmax)",
@@ -202,6 +253,26 @@ function EnsembleSpecification(
         time_parameters,
         nsims,
         dirpath,
+    )
+end
+
+function EnsembleSpecification(
+    modeltypes::Tuple,
+    state_parameters::StateParameters,
+    dynamics_parameter_specification::DynamicsParameterSpecification,
+    time_parameters::SimTimeParameters,
+    nsims::Int64,
+)
+    dynamics_parameters = DynamicsParameters(
+        dynamics_parameter_specification, nsims
+    )
+
+    return EnsembleSpecification(
+        modeltypes,
+        state_parameters,
+        dynamics_parameters,
+        time_parameters,
+        nsims,
     )
 end
 

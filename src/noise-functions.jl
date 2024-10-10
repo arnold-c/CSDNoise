@@ -33,7 +33,7 @@ function create_noise_arr(
         _ => dynamics_parameters.seasonality
     end
 
-    noise_dynamics_parameters = DynamicsParameters(
+    noise_dynamics_parameters = DynamicsParameterSpecification(
         dynamics_parameters.beta_mean,
         noise_beta_force,
         noise_seasonality,
@@ -53,7 +53,7 @@ function create_noise_arr(
     ensemble_seir_vecs = Array{typeof(state_parameters.init_states),2}(
         undef,
         tlength,
-        nsims
+        nsims,
     )
 
     ensemble_inc_vecs = Array{typeof(SVector(0)),2}(

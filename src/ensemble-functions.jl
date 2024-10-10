@@ -34,7 +34,7 @@ function create_ensemble_spec_combinations(
     gamma_vec,
     annual_births_per_k_vec,
     R_0_vec,
-    vaccination_coverage_vec,
+    vaccination_coverage_pairs_vec,
     N_vec,
     init_states_prop_dict,
     model_types_vec,
@@ -48,7 +48,7 @@ function create_ensemble_spec_combinations(
         gamma_vec,
         annual_births_per_k_vec,
         R_0_vec,
-        vaccination_coverage_vec,
+        vaccination_coverage_pairs_vec,
         N_vec,
         init_states_prop_dict,
         model_types_vec,
@@ -67,7 +67,7 @@ function create_ensemble_spec_combinations(
             gamma,
             annual_births_per_k,
             R_0,
-            vaccination_coverage,
+            vaccination_coverage_pairs,
             N,
             init_states_prop,
             model_type,
@@ -84,7 +84,7 @@ function create_ensemble_spec_combinations(
             StateParameters(
                 N, init_states_prop
             ),
-            DynamicsParameters(
+            DynamicsParameterSpecification(
                 beta_mean,
                 beta_force,
                 seasonality,
@@ -94,7 +94,7 @@ function create_ensemble_spec_combinations(
                 annual_births_per_k,
                 epsilon,
                 R_0,
-                vaccination_coverage,
+                vaccination_coverage_pairs...,
             ),
             time_p,
             nsims,

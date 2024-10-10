@@ -96,6 +96,8 @@ test_specification_vec = [
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
 
+percent_tested_vec = [1.0]
+
 ews_method_vec = [
     Centered,
     Backward,
@@ -134,9 +136,12 @@ ews_df = DataFrame(
     "ews_metric_vector" => Vector{Float64}[],
 )
 
-@showprogress for (noise_specification, ews_metric_specification) in
+@showprogress for (
+    noise_specification, percent_tested, ews_metric_specification
+) in
                   Iterators.product(
     [ensemble_noise_specification_vec[1]],
+    percent_tested_vec,
     ews_spec_vec,
 )
     noisearr = create_noise_arr(
@@ -151,7 +156,7 @@ ews_df = DataFrame(
         testarr = create_testing_arrs(
             ensemble_single_incarr,
             noisearr,
-            ensemble_single_outbreak_detection_spec.percent_tested,
+            percent_tested,
             test_specification,
         )
 
@@ -223,8 +228,11 @@ ews_df = DataFrame(
             ensemble_noise_plotpath = joinpath(
                 plotsdir(),
                 "ensemble",
+                "min-vax_$(ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage)",
+                "max-vax_$(ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage)",
                 noisedir,
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
+                "percent-tested_$(percent_tested)",
                 ews_metric_specification.dirpath,
                 split(string(ews_enddate_type), "::")[1],
             )

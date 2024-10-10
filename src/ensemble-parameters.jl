@@ -1,6 +1,6 @@
 ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
 
-burnin_years = 10
+burnin_years = 5
 nyears = 20
 ensemble_time_specification = SimTimeParameters(;
     burnin = 365.0 * burnin_years, tmin = 0.0, tmax = 365.0 * nyears,

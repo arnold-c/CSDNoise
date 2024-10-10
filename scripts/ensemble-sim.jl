@@ -26,7 +26,7 @@ ensemble_state_p_vec = create_combinations_vec(
 tmin_vec = [0.0]
 tstep_vec = [1.0]
 nyears_vec = [20]
-burnin_years_vec = [10]
+burnin_years_vec = [5, 10]
 tmax_vec = nyears_vec .* 365.0
 burnin_vec = burnin_years_vec .* 365.0
 

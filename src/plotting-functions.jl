@@ -1373,6 +1373,8 @@ function Reff_ews_plot(
         fill(NaN, length(times) - ewsmetric_endpoint),
     )
 
+    ewsmetric_tau = getproperty(ewsmetrics, Symbol(String(ewsmetric) * "_tau"))
+
     fig = Figure()
     reffax = Axis(
         fig[1, 1]; ylabel = "Reff"
@@ -1420,6 +1422,26 @@ function Reff_ews_plot(
         ewsmetric_vec;
         color = metric_color,
         linewidth = 3,
+    )
+
+
+    ewsmetric_extrema = extrema(replace(ewsmetric_vec[1:ewsmetric_endpoint], NaN => 0))
+    ewsmetric_range_buffer = abs(ewsmetric_extrema[2] - ewsmetric_extrema[1])/10
+
+    ewsmetric_tau_yvalue = if ewsmetric_vec[ewsmetric_endpoint] >= ewsmetric_extrema[2] - ewsmetric_range_buffer
+        ewsmetric_extrema[2] - ewsmetric_range_buffer
+    elseif ewsmetric_vec[ewsmetric_endpoint] <= ewsmetric_extrema[1] + ewsmetric_range_buffer
+        ewsmetric_extrema[1] + ewsmetric_range_buffer
+    else
+        ewsmetric_vec[ewsmetric_endpoint]
+    end
+
+    text!(
+        metric_ax,
+        times[ewsmetric_endpoint] + 0.5,
+        ewsmetric_tau_yvalue;
+        text = "τ = $(round(ewsmetric_tau; digits = 2))",
+        justification = :right,
     )
 
     if haskey(kwargs_dict, :xlims)

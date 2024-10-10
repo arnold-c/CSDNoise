@@ -175,8 +175,8 @@ ews_df = DataFrame(
         Main.Reff_start,
         Main.Reff_end,
         Main.Outbreak_start,
-        Main.Outbreak_end,
-        Main.Outbreak_middle,
+        # Main.Outbreak_end,
+        # Main.Outbreak_middle,
     )
         ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
         println(
@@ -262,16 +262,21 @@ ews_df = DataFrame(
                 noisedir,
                 "percent-tested_$(percent_tested)",
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
+            )
+            ensemble_ews_plotpath = joinpath(
+                ensemble_noise_plotpath,
                 ews_metric_specification.dirpath,
                 ews_enddate_type_str,
             )
-            mkpath(ensemble_noise_plotpath)
+            mkpath(ensemble_ews_plotpath)
 
             for ews_metric in ews_metrics
-                plotpath = joinpath(
-                    ensemble_noise_plotpath,
-                    "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png",
+                plotdir = joinpath(
+                    ensemble_ews_plotpath,
+                    "tau-distributions",
                 )
+                mkpath(plotdir)
+                plotpath = joinpath(plotdir, "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png")
 
                 if !isfile(plotpath) || force
                     plot = simulation_tau_distribution(
@@ -296,6 +301,85 @@ ews_df = DataFrame(
                     ews_metric_specification = ews_metric_specification,
                     ews_enddate_type = ews_enddate_type,
                     statistic_function = StatsBase.mean,
+                )
+            end
+
+            println(
+                styled"\t\t\t\t-> Single scenario plots"
+            )
+
+            for sim in [selected_sims[1]]
+                enddate = enddate_vec[sim]
+
+                ews_vals = ews_vals_vec[sim]
+
+                aggregated_noise_vec = aggregate_timeseries(
+                    @view(noisearr[:, sim]),
+                    ews_metric_specification.aggregation,
+                )
+
+                aggregated_inc_vec = aggregate_timeseries(
+                    @view(ensemble_single_incarr[:, 1, sim]),
+                    ews_metric_specification.aggregation,
+                )
+                aggregated_outbreak_status_vec = aggregate_thresholds_vec(
+                    @view(ensemble_single_incarr[:, 3, sim]),
+                    ews_metric_specification.aggregation,
+                )
+
+                aggregated_test_vec = aggregate_timeseries(
+                    @view(testarr[:, 5, sim]),
+                    ews_metric_specification.aggregation,
+                )
+
+                aggregated_test_movingavg_vec = zeros(
+                    Int64, size(aggregated_test_vec)
+                )
+
+                calculate_movingavg!(
+                    aggregated_test_movingavg_vec,
+                    aggregated_test_vec,
+                    7,
+                )
+
+                aggregated_Reff_vec = aggregate_Reff_vec(
+                    @view(ensemble_single_Reff_arr[:, sim]),
+                    ews_metric_specification.aggregation,
+                )
+
+                aggregated_Reff_thresholds_arr =
+                    ensemble_single_Reff_thresholds_vec[sim] .÷
+                    ews_metric_specification.aggregation
+
+                aggregated_outbreak_thresholds_arr =
+                    ensemble_single_periodsum_vecs[sim][
+                        (ensemble_single_periodsum_vecs[sim][:, 4] .== 1),
+                        [1, 2],
+                    ] .÷ ews_metric_specification.aggregation
+
+                plotdir = joinpath(ensemble_ews_plotpath,"single-scenario","sim-$(sim)")
+                mkpath(plotdir)
+
+                plot_all_single_scenarios(
+                    aggregated_noise_vec,
+                    noisedir,
+                    aggregated_inc_vec,
+                    aggregated_outbreak_status_vec,
+                    aggregated_test_vec,
+                    aggregated_test_movingavg_vec,
+                    aggregated_Reff_vec,
+                    aggregated_Reff_thresholds_arr,
+                    aggregated_outbreak_thresholds_arr,
+                    ews_vals,
+                    ews_metric_specification.dirpath,
+                    ews_enddate_type_str,
+                    test_specification,
+                    percent_tested,
+                    ensemble_time_specification;
+                    aggregation = ews_metric_specification.aggregation,
+                    sim = sim,
+                    force = true,
+                    base_plotpath = plotdir,
                 )
             end
         end

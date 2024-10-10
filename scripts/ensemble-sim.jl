@@ -25,14 +25,18 @@ ensemble_state_p_vec = create_combinations_vec(
 #%%
 tmin_vec = [0.0]
 tstep_vec = [1.0]
-nyears_vec = [10]
+nyears_vec = [20]
+burnin_years_vec = [10]
 tmax_vec = nyears_vec .* 365.0
+burnin_vec = burnin_years_vec .* 365.0
 
 time_p_vec = vec(
     map(
-        Iterators.product(tmin_vec, tstep_vec, tmax_vec)
-    ) do (tmin, tstep, tmax)
-        SimTimeParameters(; tmin = tmin, tmax = tmax, tstep = tstep)
+        Iterators.product(burnin_vec, tmin_vec, tstep_vec, tmax_vec)
+    ) do (burnin, tmin, tstep, tmax)
+        SimTimeParameters(;
+            burnin = burnin, tmin = tmin, tmax = tmax, tstep = tstep
+        )
     end,
 )
 

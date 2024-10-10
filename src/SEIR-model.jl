@@ -60,11 +60,11 @@ function seir_mod!(
         sigma = dynamics_params.sigma
         gamma = dynamics_params.gamma
         R_0 = dynamics_params.R_0
-        vaccination_coverage = dynamics_params.vaccination_coverage
         timestep = time_params.tstep
         beta_mean = dynamics_params.beta_mean
         beta_force = dynamics_params.beta_force
         trange = time_params.trange
+        burnin = time_params.burnin
 
         state_vec[1] = states
         inc_vec[1] = SVector(0)
@@ -75,6 +75,12 @@ function seir_mod!(
     )
 
     @inbounds for i in 2:(time_params.tlength)
+        if i < Int(time_params.burnin)
+            vaccination_coverage = dynamics_params.burnin_vaccination_coverage
+        else
+            vaccination_coverage = dynamics_params.vaccination_coverage
+        end
+
         state_vec[i], inc_vec[i] = seir_mod_loop!(
             state_vec[i - 1],
             beta_vec[i],

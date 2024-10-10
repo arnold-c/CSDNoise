@@ -144,6 +144,11 @@ ews_df = DataFrame(
     percent_tested_vec,
     ews_spec_vec,
 )
+    min_burnin_vaccination_coverage =
+        ensemble_specification.dynamics_parameter_specification.min_burnin_vaccination_coverage
+    max_burnin_vaccination_coverage =
+        ensemble_specification.dynamics_parameter_specification.max_burnin_vaccination_coverage
+    burnin_time = ensemble_specification.time_parameters.burnin
     min_vaccination_coverage =
         ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage
     max_vaccination_coverage =
@@ -233,6 +238,9 @@ ews_df = DataFrame(
             ensemble_noise_plotpath = joinpath(
                 plotsdir(),
                 "ensemble",
+                "burnin-time-$(burnin_time)",
+                "min-burnin-vax_$(min_burnin_vaccination_coverage)",
+                "max-burnin-vax_$(max_burnin_vaccination_coverage)",
                 "min-vax_$(min_vaccination_coverage)",
                 "max-vax_$(max_vaccination_coverage)",
                 noisedir,
@@ -293,6 +301,9 @@ ews_df = DataFrame(
         plotpath = joinpath(
             plotsdir(),
             "ensemble",
+            "burnin-time-$(burnin_time)",
+            "min-burnin-vax_$(min_burnin_vaccination_coverage)",
+            "max-burnin-vax_$(max_burnin_vaccination_coverage)",
             "min-vax_$(min_vaccination_coverage)",
             "max-vax_$(max_vaccination_coverage)",
             noisedir,

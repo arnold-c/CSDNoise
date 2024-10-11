@@ -22,6 +22,52 @@ include(srcdir("makie-plotting-setup.jl"))
 include(srcdir("ensemble-parameters.jl"))
 
 #%%
+ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
+
+burnin_years = 5
+nyears = 20
+burnin_time = 365.0 * burnin_years
+ensemble_time_specification = SimTimeParameters(;
+    burnin = 365.0 * burnin_years, tmin = 0.0, tmax = 365.0 * nyears,
+    tstep = 1.0,
+)
+
+ensemble_state_specification = StateParameters(
+    500_000,
+    Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95),
+)
+
+min_burnin_vaccination_coverage = 0.9
+max_burnin_vaccination_coverage = 1.0
+min_vaccination_coverage = 0.0
+max_vaccination_coverage = 0.8
+
+#%%
+ensemble_dynamics_specification = DynamicsParameterSpecification(
+    ensemble_state_specification.init_states.N,
+    27,
+    0.0,
+    SIGMA,
+    GAMMA,
+    16.0,
+    min_vaccination_coverage,
+    max_vaccination_coverage;
+    min_burnin_vaccination_coverage = min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage = max_burnin_vaccination_coverage,
+)
+
+#%%
+ensemble_nsims = 100
+
+ensemble_specification = EnsembleSpecification(
+    ensemble_model_type,
+    ensemble_state_specification,
+    ensemble_dynamics_specification,
+    ensemble_time_specification,
+    ensemble_nsims,
+)
+
+#%%
 ensemble_single_seir_arr = get_ensemble_file(
     ensemble_specification
 )["ensemble_seir_arr"]
@@ -42,16 +88,6 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 )["ensemble_Reff_thresholds_vec"]
 
 #%%
-min_burnin_vaccination_coverage =
-    ensemble_specification.dynamics_parameter_specification.min_burnin_vaccination_coverage
-max_burnin_vaccination_coverage =
-    ensemble_specification.dynamics_parameter_specification.max_burnin_vaccination_coverage
-burnin_time = ensemble_specification.time_parameters.burnin
-min_vaccination_coverage =
-    ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage
-max_vaccination_coverage =
-    ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage
-
 ensemble_vax_plotpath = joinpath(
     plotsdir(),
     "ensemble",

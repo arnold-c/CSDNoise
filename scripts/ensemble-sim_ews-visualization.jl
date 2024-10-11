@@ -19,7 +19,7 @@ using StyledStrings
 using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
-includet(srcdir("ensemble-parameters.jl"))
+include(srcdir("ensemble-parameters.jl"))
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(

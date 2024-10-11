@@ -68,6 +68,37 @@ function DynamicsParameterSpecification(
     annual_births_per_k,
     epsilon,
     R_0,
+    min_burnin_vaccination_coverage::Nothing,
+    max_burnin_vaccination_coverage,
+    min_vaccination_coverage,
+    max_vaccination_coverage,
+)
+    return DynamicsParameterSpecification(
+        beta_mean,
+        beta_force,
+        seasonality,
+        sigma,
+        gamma,
+        mu,
+        annual_births_per_k,
+        epsilon,
+        R_0,
+        min_vaccination_coverage,
+        max_vaccination_coverage;
+        max_burnin_vaccination_coverage = max_burnin_vaccination_coverage,
+    )
+end
+
+function DynamicsParameterSpecification(
+    beta_mean,
+    beta_force,
+    seasonality,
+    sigma,
+    gamma,
+    mu,
+    annual_births_per_k,
+    epsilon,
+    R_0,
     min_vaccination_coverage,
     max_vaccination_coverage;
     max_burnin_vaccination_coverage = 1.0,
@@ -104,7 +135,7 @@ function DynamicsParameterSpecification(
 )
     kwargs_dict = Dict(kwargs)
 
-    if haskey(kwargs_dict, :burnin_vaccination_coverage)
+    if haskey(kwargs_dict, :min_burnin_vaccination_coverage)
         min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
     else
         if haskey(kwargs_dict, :burnin_adjustment)

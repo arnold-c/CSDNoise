@@ -218,10 +218,10 @@ ews_df = DataFrame(
             exceeds_threshold_arr = Array{Matrix{Bool},2}(
                 undef, size(testarr, 3), length(ews_metrics)
             )
-            detection_index_arr = Array{Union{Missing,Int64},2}(
+            detection_index_arr = Array{Union{Nothing,Int64},2}(
                 undef, size(testarr, 3), length(ews_metrics)
             )
-            fill!(detection_index_arr, missing)
+            fill!(detection_index_arr, nothing)
 
             for sim in axes(testarr, 3)
                 enddate = calculate_ews_enddate(
@@ -253,7 +253,7 @@ ews_df = DataFrame(
                         )[2]
 
                         detection_index_arr[sim, j] = calculate_ews_trigger_index(
-                            @view(exceeds_threshold_arr[sim, j]);
+                            exceeds_threshold_arr[sim, j];
                             consecutive_thresholds = consecutive_thresholds,
                         )
                     end
@@ -273,8 +273,8 @@ ews_df = DataFrame(
             filtered_inc_ews_vals_vec = filter(!ismissing, inc_ews_vals_vec)
             filter!(x -> x != 0, failed_sims)
 
-            filter!(!isnan, ews_lead_time)
-            percentile_tail = (1 - lead_time_percentile) / 2
+            # filter!(!isnan, ews_lead_time)
+            # percentile_tail = (1 - lead_time_percentile) / 2
 
             @assert length(ews_vals_vec) == length(inc_ews_vals_vec)
 

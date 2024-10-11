@@ -1425,7 +1425,22 @@ function Reff_ews_plot(
         color = metric_color,
         linewidth = 3,
     )
-    vlines!(metric_ax, detection_index; color = :black)
+    if !isnothing(detection_index)
+        exceeds_threshold_indices = findall(
+            x -> x == true, exceeds_thresholds_vec
+        )
+
+        vlines!(metric_ax, times[detection_index]; color = :black)
+        scatter!(
+            metric_ax,
+            times[exceeds_threshold_indices],
+            ewsmetric_vec[exceeds_threshold_indices];
+            markersize = 10,
+            strokecolor = :grey20,
+            strokewidth = 2,
+            color = (:grey20, 0.4),
+        )
+    end
 
     ewsmetric_extrema = extrema(
         replace(ewsmetric_vec[1:ewsmetric_endpoint], NaN => 0)

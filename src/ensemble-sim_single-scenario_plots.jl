@@ -78,7 +78,7 @@ function plot_all_single_scenarios(
                 ewsvec,
                 Symbol(ewsmetric),
                 outbreak_thresholds,
-                exceeds_thresholds_vec,
+                vec(exceeds_thresholds_vec[i]),
                 detection_index_vec[i],
                 time_specification,
             )

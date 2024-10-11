@@ -185,7 +185,7 @@ function DynamicsParameterSpecification(
 
     kwargs_dict = Dict(kwargs)
 
-    if haskey(kwargs_dict, :burnin_vaccination_coverage)
+    if haskey(kwargs_dict, :min_burnin_vaccination_coverage)
         min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
     else
         if haskey(kwargs_dict, :burnin_adjustment)
@@ -229,7 +229,7 @@ function DynamicsParameterSpecification(
     epsilon = calculate_import_rate(mu, R0, N)
 
     kwargs_dict = Dict(kwargs)
-    if haskey(kwargs_dict, :burnin_vaccination_coverage)
+    if haskey(kwargs_dict, :min_burnin_vaccination_coverage)
         min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
     else
         if haskey(kwargs_dict, :burnin_adjustment)

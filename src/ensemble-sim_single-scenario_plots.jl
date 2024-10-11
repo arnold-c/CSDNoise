@@ -14,7 +14,7 @@ function plot_all_single_scenarios(
     ewsdir,
     ews_enddate,
     test_specification,
-    outbreak_detection_specification,
+    percent_tested,
     time_specification;
     ews_metrics = [
         "autocorrelation",
@@ -29,20 +29,14 @@ function plot_all_single_scenarios(
     aggregation = 1,
     sim = 1,
     force = false,
+    base_plotpath = joinpath(plotsdir(), "ensemble", "single-scenario", noisedir, "sim-$(sim)"),
 )
-    ensemble_noise_plotpath = joinpath(
-        plotsdir(),
-        "ensemble",
-        "single-scenario",
-        noisedir,
-        "sim-$(sim)",
-    )
-    mkpath(ensemble_noise_plotpath)
+    mkpath(base_plotpath)
 
-    noise_plottitle = "Sens: $(test_specification.sensitivity), Spec: $(test_specification.specificity), Lag: $(test_specification.test_result_lag),\nThreshold: $(outbreak_detection_specification.alert_threshold), Perc Clinic Tested: $(outbreak_detection_specification.percent_clinic_tested)\nNoise: $(noisedir), Alert Method: $(outbreak_detection_specification.alert_method.method_name)"
+    noise_plottitle = "Sens: $(test_specification.sensitivity), Spec: $(test_specification.specificity), Lag: $(test_specification.test_result_lag),\nNoise: $(noisedir), Percent Tested: $(percent_tested)"
 
     plotpath = joinpath(
-        ensemble_noise_plotpath,
+        base_plotpath,
         "ensemble-sim_single-scenario_incidence-testing_sim-$(sim).png",
     )
 
@@ -66,17 +60,9 @@ function plot_all_single_scenarios(
         Makie.empty!(ensemble_single_scenario_incidence_testing_plot)
     end
 
-    ews_plotpath = joinpath(
-        ensemble_noise_plotpath,
-        ewsdir,
-        "enddate-$(ews_enddate)",
-    )
-
-    mkpath(ews_plotpath)
-
     for ewsmetric in ews_metrics
         plotpath = joinpath(
-            ews_plotpath,
+            base_plotpath,
             "ensemble-sim_single-scenario_$(ewsmetric)_ews_agg-$(aggregation)_sim-$(sim).png",
         )
 

@@ -1924,7 +1924,7 @@ function ensemble_incarr_Reff_plot(
         )
     end
 
-    hlines!(reffax, 1; linestyle = :dash)
+    hlines!(reffax, [0.9, 1]; linestyle = :dash)
     hlines!(incax, threshold; linestyle = :dash)
 
     Legend(

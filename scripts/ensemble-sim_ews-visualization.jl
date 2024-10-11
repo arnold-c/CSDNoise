@@ -97,13 +97,15 @@ ensemble_vax_plotpath = joinpath(
     "min-vax_$(min_vaccination_coverage)",
     "max-vax_$(max_vaccination_coverage)",
 )
+mkpath(ensemble_vax_plotpath)
 
 #%%
-nsims_plot = 5
+nsims_plot = 10
 Random.seed!(1234)
-selected_sims = rand(
-    Distributions.DiscreteUniform(1, size(ensemble_single_incarr, 3)),
-    nsims_plot,
+selected_sims = StatsBase.sample(
+    collect(1:size(ensemble_single_incarr, 3)),
+    nsims_plot;
+    replace = false,
 )
 
 ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(

@@ -51,7 +51,7 @@ dur_inf_days_vec = [DUR_INF_DAYS]
 R_0_vec = collect(16.0)
 sigma_vec = 1 ./ latent_per_days_vec
 gamma_vec = 1 ./ dur_inf_days_vec
-burnin_vaccination_coverage_pairs_vec = [(0.8, 1.0), (nothing, 1.0)]
+burnin_vaccination_coverage_pairs_vec = [(0.9, 1.0), (nothing, 1.0)]
 vaccination_coverage_pairs_vec = [(0.0, 0.8), (0.6, 0.8)]
 
 #%%

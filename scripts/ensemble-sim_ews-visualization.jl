@@ -87,7 +87,6 @@ save(
 #%%
 # Open a textfile for writing
 io = open(scriptsdir("ensemble-sim_ews-visualization.log.txt"), "a")
-write(io, "============================================\n")
 
 force = false
 
@@ -202,6 +201,7 @@ ews_df = DataFrame(
                 test_specification,
             )
             enddate_vec = zeros(Int64, size(testarr, 3))
+            failed_sims = zeros(Int64, size(testarr, 3))
             ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
                 undef, size(testarr, 3)
             )
@@ -232,6 +232,7 @@ ews_df = DataFrame(
                         @view(testarr[1:enddate_vec[sim], 5, sim])
                     )
                 else
+                    failed_sims[sim] = sim
                     write(
                         io,
                         "$(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))\n",
@@ -241,14 +242,17 @@ ews_df = DataFrame(
                 end
             end
 
-            filter!(x -> !ismissing(x), ews_vals_vec)
-            filter!(x -> !ismissing(x), inc_ews_vals_vec)
+            filtered_ews_vals_vec = filter(!ismissing, ews_vals_vec)
+            filtered_inc_ews_vals_vec = filter(!ismissing, inc_ews_vals_vec)
+            filter!(x -> x != 0, failed_sims)
 
             @assert length(ews_vals_vec) == length(inc_ews_vals_vec)
 
-            ews_vals_sa = StructArray(convert(Vector{EWSMetrics}, ews_vals_vec))
+            ews_vals_sa = StructArray(
+                convert(Vector{EWSMetrics}, filtered_ews_vals_vec)
+            )
             inc_ews_vals_sa = StructArray(
-                convert(Vector{EWSMetrics}, inc_ews_vals_vec)
+                convert(Vector{EWSMetrics}, filtered_inc_ews_vals_vec)
             )
 
             ensemble_noise_plotpath = joinpath(
@@ -276,7 +280,10 @@ ews_df = DataFrame(
                     "tau-distributions",
                 )
                 mkpath(plotdir)
-                plotpath = joinpath(plotdir, "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png")
+                plotpath = joinpath(
+                    plotdir,
+                    "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png",
+                )
 
                 if !isfile(plotpath) || force
                     plot = simulation_tau_distribution(
@@ -309,6 +316,13 @@ ews_df = DataFrame(
             )
 
             for sim in [selected_sims[1]]
+                if sim in failed_sims
+                    write(
+                        io,
+                        "Tried to plot single EWS for simulation $(sim), but failed as no end date was found\n\n",
+                    )
+                    continue
+                end
                 enddate = enddate_vec[sim]
 
                 ews_vals = ews_vals_vec[sim]
@@ -357,7 +371,9 @@ ews_df = DataFrame(
                         [1, 2],
                     ] .÷ ews_metric_specification.aggregation
 
-                plotdir = joinpath(ensemble_ews_plotpath,"single-scenario","sim-$(sim)")
+                plotdir = joinpath(
+                    ensemble_ews_plotpath, "single-scenario", "sim-$(sim)"
+                )
                 mkpath(plotdir)
 
                 plot_all_single_scenarios(

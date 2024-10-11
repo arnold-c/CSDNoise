@@ -11,6 +11,8 @@ function plot_all_single_scenarios(
     Reff_thresholds,
     outbreak_thresholds,
     ewsvec,
+    exceeds_thresholds_vec,
+    detection_index_vec,
     ewsdir,
     ews_enddate,
     test_specification,
@@ -29,7 +31,9 @@ function plot_all_single_scenarios(
     aggregation = 1,
     sim = 1,
     force = false,
-    base_plotpath = joinpath(plotsdir(), "ensemble", "single-scenario", noisedir, "sim-$(sim)"),
+    base_plotpath = joinpath(
+        plotsdir(), "ensemble", "single-scenario", noisedir, "sim-$(sim)"
+    ),
 )
     mkpath(base_plotpath)
 
@@ -60,7 +64,7 @@ function plot_all_single_scenarios(
         Makie.empty!(ensemble_single_scenario_incidence_testing_plot)
     end
 
-    for ewsmetric in ews_metrics
+    for (i, ewsmetric) in pairs(ews_metrics)
         plotpath = joinpath(
             base_plotpath,
             "ensemble-sim_single-scenario_$(ewsmetric)_ews_agg-$(aggregation)_sim-$(sim).png",
@@ -74,6 +78,8 @@ function plot_all_single_scenarios(
                 ewsvec,
                 Symbol(ewsmetric),
                 outbreak_thresholds,
+                vec(exceeds_thresholds_vec[i]),
+                detection_index_vec[i],
                 time_specification,
             )
 

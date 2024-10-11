@@ -1333,6 +1333,8 @@ function Reff_ews_plot(
     ewsmetrics,
     ewsmetric::S,
     thresholdsarr,
+    exceeds_thresholds_vec,
+    detection_index,
     timeparams;
     outbreak_colormap = [
         N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR
@@ -1423,18 +1425,39 @@ function Reff_ews_plot(
         color = metric_color,
         linewidth = 3,
     )
+    if !isnothing(detection_index)
+        exceeds_threshold_indices = findall(
+            x -> x == true, exceeds_thresholds_vec
+        )
 
-
-    ewsmetric_extrema = extrema(replace(ewsmetric_vec[1:ewsmetric_endpoint], NaN => 0))
-    ewsmetric_range_buffer = abs(ewsmetric_extrema[2] - ewsmetric_extrema[1])/10
-
-    ewsmetric_tau_yvalue = if ewsmetric_vec[ewsmetric_endpoint] >= ewsmetric_extrema[2] - ewsmetric_range_buffer
-        ewsmetric_extrema[2] - ewsmetric_range_buffer
-    elseif ewsmetric_vec[ewsmetric_endpoint] <= ewsmetric_extrema[1] + ewsmetric_range_buffer
-        ewsmetric_extrema[1] + ewsmetric_range_buffer
-    else
-        ewsmetric_vec[ewsmetric_endpoint]
+        vlines!(metric_ax, times[detection_index]; color = :black)
+        scatter!(
+            metric_ax,
+            times[exceeds_threshold_indices],
+            ewsmetric_vec[exceeds_threshold_indices];
+            markersize = 10,
+            strokecolor = :grey20,
+            strokewidth = 2,
+            color = (:grey20, 0.4),
+        )
     end
+
+    ewsmetric_extrema = extrema(
+        replace(ewsmetric_vec[1:ewsmetric_endpoint], NaN => 0)
+    )
+    ewsmetric_range_buffer =
+        abs(ewsmetric_extrema[2] - ewsmetric_extrema[1]) / 10
+
+    ewsmetric_tau_yvalue =
+        if ewsmetric_vec[ewsmetric_endpoint] >=
+            ewsmetric_extrema[2] - ewsmetric_range_buffer
+            ewsmetric_extrema[2] - ewsmetric_range_buffer
+        elseif ewsmetric_vec[ewsmetric_endpoint] <=
+            ewsmetric_extrema[1] + ewsmetric_range_buffer
+            ewsmetric_extrema[1] + ewsmetric_range_buffer
+        else
+            ewsmetric_vec[ewsmetric_endpoint]
+        end
 
     text!(
         metric_ax,

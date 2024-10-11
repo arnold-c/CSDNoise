@@ -127,6 +127,10 @@ ews_metrics = [
     "variance",
 ]
 
+ews_threshold_window = Main.Expanding
+ews_threshold_percentile = 0.95
+consecutive_thresholds = 2
+
 ews_df = DataFrame(
     "ews_metric" => String[],
     "test_specification" => IndividualTestSpecification[],
@@ -211,6 +215,14 @@ ews_df = DataFrame(
             fill!(ews_vals_vec, missing)
             fill!(inc_ews_vals_vec, missing)
 
+            exceeds_threshold_arr = Array{Matrix{Bool},2}(
+                undef, size(testarr, 3), length(ews_metrics)
+            )
+            detection_index_arr = Array{Union{Missing,Int64},2}(
+                undef, size(testarr, 3), length(ews_metrics)
+            )
+            fill!(detection_index_arr, missing)
+
             for sim in axes(testarr, 3)
                 enddate = calculate_ews_enddate(
                     thresholds[sim],
@@ -231,6 +243,21 @@ ews_df = DataFrame(
                         ews_metric_specification,
                         @view(testarr[1:enddate_vec[sim], 5, sim])
                     )
+
+                    for (j, ews_metric) in pairs(ews_metrics)
+                        exceeds_threshold_arr[sim, j] = expanding_ews_thresholds(
+                            ews_vals_vec[sim],
+                            Symbol(ews_metric),
+                            ews_threshold_window;
+                            percentiles = ews_threshold_percentile,
+                        )[2]
+
+                        detection_index_arr[sim, j] = calculate_ews_trigger_index(
+                            @view(exceeds_threshold_arr[sim, j]);
+                            consecutive_thresholds = consecutive_thresholds,
+                        )
+                    end
+
                 else
                     failed_sims[sim] = sim
                     write(
@@ -245,6 +272,9 @@ ews_df = DataFrame(
             filtered_ews_vals_vec = filter(!ismissing, ews_vals_vec)
             filtered_inc_ews_vals_vec = filter(!ismissing, inc_ews_vals_vec)
             filter!(x -> x != 0, failed_sims)
+
+            filter!(!isnan, ews_lead_time)
+            percentile_tail = (1 - lead_time_percentile) / 2
 
             @assert length(ews_vals_vec) == length(inc_ews_vals_vec)
 
@@ -387,6 +417,8 @@ ews_df = DataFrame(
                     aggregated_Reff_thresholds_arr,
                     aggregated_outbreak_thresholds_arr,
                     ews_vals,
+                    exceeds_threshold_arr[sim, :],
+                    detection_index_arr[sim, :],
                     ews_metric_specification.dirpath,
                     ews_enddate_type_str,
                     test_specification,

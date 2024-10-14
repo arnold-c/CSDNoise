@@ -68,40 +68,8 @@ function DynamicsParameterSpecification(
     annual_births_per_k,
     epsilon,
     R_0,
-    min_burnin_vaccination_coverage::Nothing,
-    max_burnin_vaccination_coverage,
-    min_vaccination_coverage,
-    max_vaccination_coverage,
-)
-    return DynamicsParameterSpecification(
-        beta_mean,
-        beta_force,
-        seasonality,
-        sigma,
-        gamma,
-        mu,
-        annual_births_per_k,
-        epsilon,
-        R_0,
-        min_vaccination_coverage,
-        max_vaccination_coverage;
-        max_burnin_vaccination_coverage = max_burnin_vaccination_coverage,
-    )
-end
-
-function DynamicsParameterSpecification(
-    beta_mean,
-    beta_force,
-    seasonality,
-    sigma,
-    gamma,
-    mu,
-    annual_births_per_k,
-    epsilon,
-    R_0,
-    min_vaccination_coverage,
-    max_vaccination_coverage;
-    max_burnin_vaccination_coverage = 1.0,
+    burnin_vaccination_params::Tuple{<:Nothing,<:AbstractFloat},
+    vaccination_params::Tuple{<:AbstractFloat,<:AbstractFloat},
 )
     return DynamicsParameterSpecification(
         beta_mean,
@@ -114,151 +82,96 @@ function DynamicsParameterSpecification(
         epsilon,
         R_0,
         calculate_min_burnin_vaccination_coverage(R_0),
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+        burnin_vaccination_params[2],
+        vaccination_params[1],
+        vaccination_params[2],
     )
 end
 
 function calculate_min_burnin_vaccination_coverage(R_0; adjustment = 0.00)
-    return min(1 - 1 / R_0 + adjustment, 1.0)
+    return min(calculate_min_burnin_vaccination_coverage(R_0) + adjustment, 1.0)
+end
+
+function calculate_herd_immunity_threshold(R_0)
+    return (1 - 1 / R_0)
 end
 
 function DynamicsParameterSpecification(
-    sigma::Float64,
-    gamma::Float64,
-    R_0::Float64;
-    max_burnin_vaccination_coverage::Float64 = 1.0,
-    max_vaccination_coverage::Float64 = 0.8,
-    min_vaccination_coverage::Float64 = 0.0,
-    kwargs...,
+    beta_mean,
+    beta_force,
+    seasonality,
+    sigma,
+    gamma,
+    mu,
+    annual_births_per_k,
+    epsilon,
+    R_0,
+    burnin_vaccination_params::Tuple{
+        <:Nothing,<:AbstractFloat,<:AbstractFloat,<:Integer
+    },
+    vaccination_params::Tuple{<:AbstractFloat,<:AbstractFloat},
+    initial_states,
 )
-    kwargs_dict = Dict(kwargs)
-
-    if haskey(kwargs_dict, :min_burnin_vaccination_coverage)
-        min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
-    else
-        if haskey(kwargs_dict, :burnin_adjustment)
-            burnin_adjustment = kwargs_dict[:burnin_adjustment]
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0; adjustment = burnin_adjustment
-            )
-        else
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0
-            )
-        end
-    end
-
-    return DynamicsParameterSpecification(
-        BETA_MEAN,
-        BETA_FORCE,
-        cos,
-        sigma,
-        gamma,
-        MU,
-        ANNUAL_BIRTHS_PER_K,
-        EPSILON,
-        R_0,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
-    )
-end
-
-function DynamicsParameterSpecification(
-    N::Int64,
-    annual_births_per_k::Int64,
-    beta_force::Float64,
-    sigma::Float64,
-    gamma::Float64,
-    R_0::Float64,
-    min_vaccination_coverage::Float64,
-    max_vaccination_coverage::Float64;
-    max_burnin_vaccination_coverage::Float64 = 1.0,
-    kwargs...,
-)
-    mu = calculate_mu(annual_births_per_k)
-    beta_mean = calculate_beta(R_0, gamma, mu, 1, N)
-    epsilon = calculate_import_rate(mu, R_0, N)
-
-    kwargs_dict = Dict(kwargs)
-
-    if haskey(kwargs_dict, :min_burnin_vaccination_coverage)
-        min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
-    else
-        if haskey(kwargs_dict, :burnin_adjustment)
-            burnin_adjustment = kwargs_dict[:burnin_adjustment]
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0; adjustment = burnin_adjustment
-            )
-        else
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0
-            )
-        end
-    end
-
     return DynamicsParameterSpecification(
         beta_mean,
         beta_force,
-        cos,
+        seasonality,
         sigma,
         gamma,
         mu,
         annual_births_per_k,
         epsilon,
         R_0,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+        calculate_vaccination_rate_to_achieve_Reff(
+            burnin_vaccination_params[3],
+            initial_states.S,
+            initial_states.N,
+            R_0,
+            mu,
+            burnin_vaccination_params[4],
+        ),
+        burnin_vaccination_params[2],
+        vaccination_params[1],
+        vaccination_params[2],
     )
 end
 
-function DynamicsParameterSpecification(
-    N::Int64, annual_births_per_k::Int64, beta_force::Float64;
-    max_burnin_vaccination_coverage::Float64 = 1.0,
-    min_vaccination_coverage::Float64 = 0.0,
-    max_vaccination_coverage::Float64 = 0.8,
-    kwargs...,
-)
-    mu = calculate_mu(annual_births_per_k)
-    beta_mean = calculate_beta(R0, GAMMA, mu, 1, N)
-    epsilon = calculate_import_rate(mu, R0, N)
-
-    kwargs_dict = Dict(kwargs)
-    if haskey(kwargs_dict, :min_burnin_vaccination_coverage)
-        min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
-    else
-        if haskey(kwargs_dict, :burnin_adjustment)
-            burnin_adjustment = kwargs_dict[:burnin_adjustment]
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R0; adjustment = burnin_adjustment
-            )
-        else
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R0
-            )
-        end
-    end
-
-    return DynamicsParameterSpecification(
-        beta_mean,
-        beta_force,
-        cos,
-        SIGMA,
-        GAMMA,
-        mu,
-        annual_births_per_k,
-        epsilon,
-        R0,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+"""
+    calculate_vaccination_rate_to_achieve_Reff(
+        target_Reff, initial_states, dynamics_specification, target_years = 10
     )
+
+Assuming that in the burnin period the rate of infections is negligible, the time to reach a target Reff can be calculated by the difference in the rates in and out of the Susceptible group.
+
+μN(1-ρ) -> S -> μS
+dS/dt = μ(N - Nρ - S)
+"""
+function calculate_vaccination_rate_to_achieve_Reff(
+    target_Reff, initial_states, R_0, mu, target_years = 10
+)
+    @unpack S, N = initial_states
+
+    return calculate_vaccination_rate_to_achieve_Reff(
+        target_Reff, S, N, R_0, mu, target_years
+    )
+end
+
+function calculate_vaccination_rate_to_achieve_Reff(
+    target_Reff, S, N, R_0, mu, target_years = 10
+)
+    @assert target_Reff > 0
+    @assert target_Reff < 1.2
+
+    vaccination_coverage =
+        1 -
+        (((target_Reff * N) / R_0 - S) / (365 * target_years * mu) + S) / N
+
+    if vaccination_coverage > 1 || vaccination_coverage < 0
+        return error(
+            "Target Reff cannot be reached in the burn-in period. Initial Reff = $(R_0 * S/N). Try a longer burn-in period or a smaller target Reff."
+        )
+    end
+    return round(vaccination_coverage; digits = 4)
 end
 
 struct DynamicsParameters{

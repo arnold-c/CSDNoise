@@ -37,23 +37,41 @@ ensemble_state_specification = StateParameters(
     Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95),
 )
 
-min_burnin_vaccination_coverage = 0.9
+mu = calculate_mu(27)
+beta_mean = calculate_beta(
+    R0, GAMMA, mu, 1, ensemble_state_specification.init_states.N
+)
+epsilon = calculate_import_rate(
+    mu, R0, ensemble_state_specification.init_states.N
+)
+
+min_burnin_vaccination_coverage = calculate_vaccination_rate_to_achieve_Reff(
+    0.9,
+    ensemble_state_specification.init_states.S,
+    ensemble_state_specification.init_states.N,
+    R0,
+    mu,
+    burnin_years * 2,
+)
+
 max_burnin_vaccination_coverage = 1.0
 min_vaccination_coverage = 0.0
 max_vaccination_coverage = 0.8
 
-#%%
 ensemble_dynamics_specification = DynamicsParameterSpecification(
-    ensemble_state_specification.init_states.N,
-    27,
+    beta_mean,
     0.0,
+    cos,
     SIGMA,
     GAMMA,
-    16.0,
+    mu,
+    27,
+    epsilon,
+    R0,
+    min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage,
     min_vaccination_coverage,
-    max_vaccination_coverage;
-    min_burnin_vaccination_coverage = min_burnin_vaccination_coverage,
-    max_burnin_vaccination_coverage = max_burnin_vaccination_coverage,
+    max_vaccination_coverage,
 )
 
 #%%
@@ -126,6 +144,12 @@ save(
     plotpath,
     ensemble_single_scenario_incidence_Reff_plot;
     size = (2200, 1600),
+)
+
+#%%
+calculate_vaccination_rate_to_achieve_Reff(
+    0.9, ensemble_state_specification.init_states,
+    ensemble_dynamics_specification, 10,
 )
 
 #%%

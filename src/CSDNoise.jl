@@ -89,14 +89,12 @@ export create_testing_arrs, create_testing_arrs!, calculate_tested!,
     calculate_true_positives!, calculate_noise_positives!,
     infer_true_positives, calculate_test_positivity_rate,
     calculate_movingavg, calculate_movingavg!,
-    detectoutbreak, detectoutbreak!, calculate_daily_detection_characteristics,
-    calculate_noutbreaks, calculate_OutbreakThresholdChars,
-    calculate_test_positivity, calculate_outbreak_detection_characteristics,
-    filter_first_matched_bounds, calculate_first_matched_bounds_index,
-    calculate_cases_before_after_alert!, calculate_cases_before_after_alert
+    calculate_test_positivity
 # @reexport using .DiagTestingFunctions
 
-include("ensemble-functions.jl")
+include(
+    "ensemble-functions.jl"
+)
 export create_combinations_vec, create_ensemble_spec_combinations,
     run_ensemble_jump_prob, run_jump_prob,
     run_OutbreakThresholdChars_creation, OutbreakThresholdChars_creation,

@@ -1,5 +1,5 @@
 using GLMakie
-using Unpack: @unpack
+using UnPack: @unpack
 using NaNMath: NaNMath
 using StructArrays: StructArray
 using DataFrames

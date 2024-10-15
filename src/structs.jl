@@ -11,7 +11,7 @@ using Match
 using SumTypes
 using Distributions: Distributions
 using Random: Random
-using Unpack: @unpack
+using UnPack: @unpack
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -173,7 +173,7 @@ end
 
 """
     calculate_vaccination_rate_to_achieve_Reff(
-        target_Reff, initial_states, dynamics_specification, target_years = 10
+        target_Reff, target_years, initial_states, dynamics_specification
     )
 
 Assuming that in the burnin period the rate of infections is negligible, the time to reach a target Reff can be calculated by the difference in the rates in and out of the Susceptible group.

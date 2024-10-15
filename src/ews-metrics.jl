@@ -3,7 +3,6 @@ using SumTypes
 using DataFrames: DataFrames
 using Bumper
 using StrideArrays
-using AllocCheck
 using Printf: @sprintf
 using TestItems
 

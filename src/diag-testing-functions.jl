@@ -8,8 +8,6 @@
 
 using DrWatson
 using Statistics
-using FreqTables
-using ThreadsX
 using FLoops
 using NaNMath: NaNMath
 using TestItems

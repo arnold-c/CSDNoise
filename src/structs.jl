@@ -109,7 +109,7 @@ function DynamicsParameterSpecification(
     burnin_vaccination_params::Tuple{
         <:Nothing,<:AbstractFloat,<:AbstractFloat,<:Integer
     },
-    vaccination_params::Tuple{<:AbstractFloat,<:AbstractFloat},
+    vaccination_params::Union{Tuple{<:AbstractFloat,<:AbstractFloat}, Tuple{<:Nothing,<:Nothing}},
     initial_states,
 )
     return DynamicsParameterSpecification(
@@ -134,6 +134,38 @@ function DynamicsParameterSpecification(
         vaccination_params[1],
         vaccination_params[2],
     )
+end
+
+function DynamicsParameterSpecification(
+    beta_mean,
+    beta_force,
+    seasonality,
+    sigma,
+    gamma,
+    mu,
+    annual_births_per_k,
+    epsilon,
+    R_0,
+    min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage,
+    min_vaccination_coverage::T1,
+    max_vaccination_coverage::T1,
+) where {T1<:Nothing}
+return DynamicsParameterSpecification(
+    beta_mean,
+    beta_force,
+    seasonality,
+    sigma,
+    gamma,
+    mu,
+    annual_births_per_k,
+    epsilon,
+    R_0,
+    min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage,
+    min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage,
+)
 end
 
 """
@@ -209,12 +241,21 @@ function DynamicsParameters(
             ),
         ); digits = 2)
 
-    vaccination_coverage = round(
-        rand(
-            Distributions.Uniform(
-                dynamic_parameter_specification.min_vaccination_coverage,
-                dynamic_parameter_specification.max_vaccination_coverage),
-        ); digits = 2)
+    vaccination_coverage =
+        if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
+           dynamic_parameter_specification.min_vaccination_coverage &&
+            dynamic_parameter_specification.max_burnin_vaccination_coverage ==
+           dynamic_parameter_specification.max_vaccination_coverage
+            burnin_vaccination_coverage
+        else
+            round(
+                rand(
+                    Distributions.Uniform(
+                        dynamic_parameter_specification.min_vaccination_coverage,
+                        dynamic_parameter_specification.max_vaccination_coverage,
+                    ),
+                ); digits = 2)
+        end
 
     return DynamicsParameters(
         [

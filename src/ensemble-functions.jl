@@ -111,12 +111,7 @@ function create_ensemble_spec_combinations(
             )
         end
 
-        @show vaccination_coverage_params
-
-        ensemble_spec_vec[i] = EnsembleSpecification(
-            model_type,
-            states_params,
-            DynamicsParameterSpecification(
+        dynamics_params_specification = DynamicsParameterSpecification(
                 beta_mean,
                 beta_force,
                 seasonality,
@@ -127,7 +122,12 @@ function create_ensemble_spec_combinations(
                 epsilon,
                 R_0,
                 vaccination_coverage_params...,
-            ),
+            )
+
+        ensemble_spec_vec[i] = EnsembleSpecification(
+            model_type,
+            states_params,
+            dynamics_params_specification,
             time_p,
             nsims,
         )

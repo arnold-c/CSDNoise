@@ -70,8 +70,8 @@ ensemble_dynamics_specification = DynamicsParameterSpecification(
     R0,
     min_burnin_vaccination_coverage,
     max_burnin_vaccination_coverage,
-    min_vaccination_coverage,
-    max_vaccination_coverage,
+    nothing,
+    nothing,
 )
 
 #%%

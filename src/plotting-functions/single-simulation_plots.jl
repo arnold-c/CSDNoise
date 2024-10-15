@@ -1,13 +1,5 @@
 using GLMakie
-using ColorSchemes
-using UnPack
-using DataFrames
-using FLoops
-using LaTeXStrings
-using NaNMath: NaNMath
-using Dates
-using Debugger: Debugger
-using StructArrays: StructArrays
+using Unpack: @unpack
 
 function Reff_plot(
     incidencearr,

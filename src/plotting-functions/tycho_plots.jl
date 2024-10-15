@@ -1,3 +1,7 @@
+using GLMakie
+using DataFrames
+using Dates: Dates
+
 function tycho_epicurve(
     plot_dates,
     weekly_cases::T1,

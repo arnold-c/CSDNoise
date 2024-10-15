@@ -1,3 +1,9 @@
+using GLMakie
+using Unpack: @unpack
+using NaNMath: NaNMath
+using StructArrays: StructArray
+using DataFrames
+
 function Reff_ews_plot(
     incvec,
     Reffvec,
@@ -351,7 +357,7 @@ function Reff_ews_plot(
     hlinewidth = 2,
     aggregation = 1,
     kwargs...,
-) where {T1<:StructArray,T2<:DataFrames.DataFrame,S<:Symbol}
+) where {T1<:StructArray,T2<:DataFrame,S<:Symbol}
     @unpack trange = timeparams
     times = collect(trange) ./ 365
 
@@ -501,8 +507,8 @@ function simulation_tau_distribution(
     tau_metric;
     plottitle = string(tau_metric) * " Distribution",
 ) where {T1<:Vector{<:EWSMetrics}}
-    tested_ews_sa = StructArrays.StructArray(tested_ews_vec)
-    actual_ews_sa = StructArrays.StructArray(actual_ews_vec)
+    tested_ews_sa = StructArray(tested_ews_vec)
+    actual_ews_sa = StructArray(actual_ews_vec)
 
     if split(tau_metric, "_")[end] != "tau"
         tau_metric *= "_tau"
@@ -521,7 +527,7 @@ function simulation_tau_distribution(
     actual_ews::T1,
     tau_metric;
     plottitle = string(tau_metric) * " Distribution",
-) where {T1<:StructArrays.StructArray{EWSMetrics}}
+) where {T1<:StructArray{EWSMetrics}}
     if split(tau_metric, "_")[end] != "tau"
         tau_metric *= "_tau"
     end

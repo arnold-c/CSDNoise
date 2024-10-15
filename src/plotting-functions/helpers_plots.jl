@@ -1,3 +1,5 @@
+using GLMakie
+
 const BASE_COLOR = "#5E5C6C"
 const OUTBREAK_COLOR = "#F0780F"
 const REFF_GT_ONE_COLOR = "#00857E"

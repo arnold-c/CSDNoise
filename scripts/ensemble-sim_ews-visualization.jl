@@ -19,7 +19,6 @@ using StyledStrings
 using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
-include(srcdir("ensemble-parameters.jl"))
 
 #%%
 ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")

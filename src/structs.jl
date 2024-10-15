@@ -11,6 +11,7 @@ using Match
 using SumTypes
 using Distributions: Distributions
 using Random: Random
+using Unpack: @unpack
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -126,11 +127,11 @@ function DynamicsParameterSpecification(
         R_0,
         calculate_vaccination_rate_to_achieve_Reff(
             burnin_vaccination_params[3],
+            burnin_vaccination_params[4],
             initial_states.S,
             initial_states.N,
             R_0,
             mu,
-            burnin_vaccination_params[4],
         ),
         burnin_vaccination_params[2],
         vaccination_params[1],
@@ -181,17 +182,17 @@ Assuming that in the burnin period the rate of infections is negligible, the tim
 dS/dt = μ(N - Nρ - S)
 """
 function calculate_vaccination_rate_to_achieve_Reff(
-    target_Reff, initial_states, R_0, mu, target_years = 10
+    target_Reff, target_years, initial_states, R_0, mu
 )
     @unpack S, N = initial_states
 
     return calculate_vaccination_rate_to_achieve_Reff(
-        target_Reff, S, N, R_0, mu, target_years
+        target_Reff, target_years, S, N, R_0, mu
     )
 end
 
 function calculate_vaccination_rate_to_achieve_Reff(
-    target_Reff, S, N, R_0, mu, target_years = 10
+    target_Reff, target_years, S, N, R_0, mu
 )
     @assert target_Reff > 0
     @assert target_Reff < 1.2

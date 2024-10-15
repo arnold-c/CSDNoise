@@ -46,11 +46,11 @@ epsilon = calculate_import_rate(
 
 min_burnin_vaccination_coverage = calculate_vaccination_rate_to_achieve_Reff(
     0.9,
+    burnin_years * 2,
     ensemble_state_specification.init_states.S,
     ensemble_state_specification.init_states.N,
     R0,
     mu,
-    burnin_years * 2,
 )
 
 max_burnin_vaccination_coverage = 1.0
@@ -147,8 +147,10 @@ save(
 
 #%%
 calculate_vaccination_rate_to_achieve_Reff(
-    0.9, ensemble_state_specification.init_states,
-    ensemble_dynamics_specification, 10,
+    0.9,
+    10,
+    ensemble_state_specification.init_states,
+    ensemble_dynamics_specification,
 )
 
 #%%

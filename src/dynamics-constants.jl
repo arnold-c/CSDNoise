@@ -10,4 +10,3 @@ const MU = 1 / (LIFE_EXPECTANCY_YEARS * 365)
 const BETA_MEAN = calculate_beta(R0, GAMMA, MU, 1, POPULATION_N)
 const BETA_FORCE = 0.0
 const EPSILON = calculate_import_rate(MU, R0, POPULATION_N)
-const VACCINATION_COVERAGE = 0.8

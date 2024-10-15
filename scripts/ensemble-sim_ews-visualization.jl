@@ -22,6 +22,70 @@ include(srcdir("makie-plotting-setup.jl"))
 include(srcdir("ensemble-parameters.jl"))
 
 #%%
+ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
+
+burnin_years = 5
+nyears = 20
+burnin_time = 365.0 * burnin_years
+ensemble_time_specification = SimTimeParameters(;
+    burnin = 365.0 * burnin_years, tmin = 0.0, tmax = 365.0 * nyears,
+    tstep = 1.0,
+)
+
+ensemble_state_specification = StateParameters(
+    500_000,
+    Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95),
+)
+
+mu = calculate_mu(27)
+beta_mean = calculate_beta(
+    R0, GAMMA, mu, 1, ensemble_state_specification.init_states.N
+)
+epsilon = calculate_import_rate(
+    mu, R0, ensemble_state_specification.init_states.N
+)
+
+min_burnin_vaccination_coverage = calculate_vaccination_rate_to_achieve_Reff(
+    0.9,
+    ensemble_state_specification.init_states.S,
+    ensemble_state_specification.init_states.N,
+    R0,
+    mu,
+    burnin_years * 2,
+)
+
+max_burnin_vaccination_coverage = 1.0
+min_vaccination_coverage = 0.0
+max_vaccination_coverage = 0.8
+
+ensemble_dynamics_specification = DynamicsParameterSpecification(
+    beta_mean,
+    0.0,
+    cos,
+    SIGMA,
+    GAMMA,
+    mu,
+    27,
+    epsilon,
+    R0,
+    min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage,
+    min_vaccination_coverage,
+    max_vaccination_coverage,
+)
+
+#%%
+ensemble_nsims = 100
+
+ensemble_specification = EnsembleSpecification(
+    ensemble_model_type,
+    ensemble_state_specification,
+    ensemble_dynamics_specification,
+    ensemble_time_specification,
+    ensemble_nsims,
+)
+
+#%%
 ensemble_single_seir_arr = get_ensemble_file(
     ensemble_specification
 )["ensemble_seir_arr"]
@@ -42,11 +106,24 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 )["ensemble_Reff_thresholds_vec"]
 
 #%%
-nsims_plot = 5
+ensemble_vax_plotpath = joinpath(
+    plotsdir(),
+    "ensemble",
+    "burnin-time-$(burnin_time)",
+    "min-burnin-vax_$(min_burnin_vaccination_coverage)",
+    "max-burnin-vax_$(max_burnin_vaccination_coverage)",
+    "min-vax_$(min_vaccination_coverage)",
+    "max-vax_$(max_vaccination_coverage)",
+)
+mkpath(ensemble_vax_plotpath)
+
+#%%
+nsims_plot = 10
 Random.seed!(1234)
-selected_sims = rand(
-    Distributions.DiscreteUniform(1, size(ensemble_single_incarr, 3)),
-    nsims_plot,
+selected_sims = StatsBase.sample(
+    collect(1:size(ensemble_single_incarr, 3)),
+    nsims_plot;
+    replace = false,
 )
 
 ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
@@ -58,12 +135,21 @@ ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
     Reff_alpha = 1,
 )
 
+plotpath = joinpath(
+    ensemble_vax_plotpath,
+    "ensemble-sim_single-scenario_incidence_Reff.png",
+)
+
 save(
-    plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_incidence_Reff.png"
-    ),
+    plotpath,
     ensemble_single_scenario_incidence_Reff_plot;
     size = (2200, 1600),
+)
+
+#%%
+calculate_vaccination_rate_to_achieve_Reff(
+    0.9, ensemble_state_specification.init_states,
+    ensemble_dynamics_specification, 10,
 )
 
 #%%
@@ -76,10 +162,13 @@ ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
 
+plotpath = joinpath(
+    ensemble_vax_plotpath,
+    "ensemble-sim_single-scenario_incidence_prevalence.png",
+)
+
 save(
-    plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_incidence_prevalence.png"
-    ),
+    plotpath,
     ensemble_single_scenario_incidence_prevalence_plot;
     size = (2200, 1600),
 )
@@ -154,16 +243,6 @@ ews_df = DataFrame(
     println(
         styled"Creating EWS visualization for:\n{green,inverse: $(getdirpath(noise_specification))}, {red,inverse: $(percent_tested)}, {blue,inverse: $(ews_metric_specification.dirpath)}"
     )
-
-    min_burnin_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.min_burnin_vaccination_coverage
-    max_burnin_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.max_burnin_vaccination_coverage
-    burnin_time = ensemble_specification.time_parameters.burnin
-    min_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage
-    max_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage
 
     noisearr = create_noise_arr(
         noise_specification,
@@ -286,13 +365,7 @@ ews_df = DataFrame(
             )
 
             ensemble_noise_plotpath = joinpath(
-                plotsdir(),
-                "ensemble",
-                "burnin-time-$(burnin_time)",
-                "min-burnin-vax_$(min_burnin_vaccination_coverage)",
-                "max-burnin-vax_$(max_burnin_vaccination_coverage)",
-                "min-vax_$(min_vaccination_coverage)",
-                "max-vax_$(max_vaccination_coverage)",
+                ensemble_vax_plotpath,
                 noisedir,
                 "percent-tested_$(percent_tested)",
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",

@@ -51,6 +51,9 @@ dur_inf_days_vec = [DUR_INF_DAYS]
 R_0_vec = collect(16.0)
 sigma_vec = 1 ./ latent_per_days_vec
 gamma_vec = 1 ./ dur_inf_days_vec
+burnin_vaccination_coverage_pairs_vec = [
+    (0.9, 1.0), (nothing, 1.0, 0.9)
+]
 vaccination_coverage_pairs_vec = [(0.0, 0.8), (0.6, 0.8)]
 
 #%%
@@ -61,6 +64,7 @@ ensemble_spec_vec = create_ensemble_spec_combinations(
     gamma_vec,
     annual_births_per_k_vec,
     R_0_vec,
+    burnin_vaccination_coverage_pairs_vec,
     vaccination_coverage_pairs_vec,
     N_vec,
     init_states_prop_dict,

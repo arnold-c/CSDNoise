@@ -24,6 +24,7 @@ export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
 include("structs.jl")
 export SimTimeParameters, EnsembleSpecification,
     DynamicsParameterSpecification, DynamicsParameters,
+    calculate_vaccination_rate_to_achieve_Reff,
     StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
     OutbreakSpecification, IndividualTestSpecification, get_test_description,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,

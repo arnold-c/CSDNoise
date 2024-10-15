@@ -8,6 +8,7 @@ using UnPack
 using FLoops
 using ProgressMeter
 using StructArrays
+using Match
 
 # include("transmission-functions.jl")
 # # using .TransmissionFunctions
@@ -34,7 +35,8 @@ function create_ensemble_spec_combinations(
     gamma_vec,
     annual_births_per_k_vec,
     R_0_vec,
-    vaccination_coverage_pairs_vec,
+    burnin_vaccination_coverage_params_vec,
+    vaccination_coverage_params_vec,
     N_vec,
     init_states_prop_dict,
     model_types_vec,
@@ -48,7 +50,8 @@ function create_ensemble_spec_combinations(
         gamma_vec,
         annual_births_per_k_vec,
         R_0_vec,
-        vaccination_coverage_pairs_vec,
+        burnin_vaccination_coverage_params_vec,
+        vaccination_coverage_params_vec,
         N_vec,
         init_states_prop_dict,
         model_types_vec,
@@ -67,6 +70,7 @@ function create_ensemble_spec_combinations(
             gamma,
             annual_births_per_k,
             R_0,
+            burnin_vaccination_coverage_params,
             vaccination_coverage_pairs,
             N,
             init_states_prop,
@@ -79,11 +83,39 @@ function create_ensemble_spec_combinations(
         beta_mean = calculate_beta(R_0, gamma, mu, 1, N)
         epsilon = calculate_import_rate(mu, R_0, N)
 
+        states_params = StateParameters(
+            N, init_states_prop
+        )
+
+        vaccination_coverage_params = @match burnin_vaccination_coverage_params begin
+            (::Nothing, ::Float64, ::Float64) => (
+                (
+                    burnin_vaccination_coverage_params...,
+                    Int64((time_p.burnin / (365.0 / time_p.tstep)) * 2),
+                ),
+                vaccination_coverage_pairs,
+                states_params.init_states,
+            )
+            (::Nothing, ::Float64, ::Float64, ::Int64) => (
+                burnin_vaccination_coverage_params,
+                vaccination_coverage_pairs,
+                states_params.init_states,
+            )
+            (::Nothing, ::Float64) => (
+                burnin_vaccination_coverage_params,
+                vaccination_coverage_pairs,
+            )
+            _ => (
+                burnin_vaccination_coverage_params...,
+                vaccination_coverage_pairs...,
+            )
+        end
+
+        @show vaccination_coverage_params
+
         ensemble_spec_vec[i] = EnsembleSpecification(
             model_type,
-            StateParameters(
-                N, init_states_prop
-            ),
+            states_params,
             DynamicsParameterSpecification(
                 beta_mean,
                 beta_force,
@@ -94,7 +126,7 @@ function create_ensemble_spec_combinations(
                 annual_births_per_k,
                 epsilon,
                 R_0,
-                vaccination_coverage_pairs...,
+                vaccination_coverage_params...,
             ),
             time_p,
             nsims,

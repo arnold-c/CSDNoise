@@ -27,11 +27,11 @@ plotxmax <- cdcweekToDate(year = plotxmax.year, week = 1, weekday = 6) + bandwid
 # %%
 tychoL1 <- read.csv(here::here("data", "Project_Tycho___Level_1_Data_20240813.csv"))
 
-tycho_CA_measles_long_plotdata <- read_csv(here::here("out", "tycho_CA_measles_long_plotdata.csv"))
-tycho_CA_measles_wide_plotdata <- read_csv(here::here("out", "tycho_CA_measles_wide_plotdata.csv"))
+tycho_CA_measles_long_plotdata <- read_csv(here::here("out", "tycho", "tycho_CA_measles_long_plotdata.csv"))
+tycho_CA_measles_wide_plotdata <- read_csv(here::here("out", "tycho", "tycho_CA_measles_wide_plotdata.csv"))
 
-tycho_CA_measles_long_statsdata <- read_csv(here::here("out", "tycho_CA_measles_long_statsdata.csv"))
-tycho_CA_measles_wide_statsdata <- read_csv(here::here("out", "tycho_CA_measles_wide_statsdata.csv"))
+tycho_CA_measles_long_statsdata <- read_csv(here::here("out", "tycho", "tycho_CA_measles_long_statsdata.csv"))
+tycho_CA_measles_wide_statsdata <- read_csv(here::here("out", "tycho", "tycho_CA_measles_wide_statsdata.csv"))
 
 # %%
 # confirm all data is weekly aggregated
@@ -324,9 +324,9 @@ cases_stats <- c(1, 2, 4) %>%
 
 # %%
 # Check stats
-tycho_CA_measles_stats_1wk <- readRDS(here::here("out", "tycho_CA_measles_stats_1wk.rds" ))
-tycho_CA_measles_stats_2wk <- readRDS(here::here("out", "tycho_CA_measles_stats_2wk.rds" ))
-tycho_CA_measles_stats_4wk <- readRDS(here::here("out", "tycho_CA_measles_stats_4wk.rds" ))
+tycho_CA_measles_stats_1wk <- readRDS(here::here("out", "tycho", "R-scripts", "tycho_CA_measles_stats_1wk.rds" ))
+tycho_CA_measles_stats_2wk <- readRDS(here::here("out", "tycho", "R-scripts", "tycho_CA_measles_stats_2wk.rds" ))
+tycho_CA_measles_stats_4wk <- readRDS(here::here("out", "tycho", "R-scripts", "tycho_CA_measles_stats_4wk.rds" ))
 
 sum(tycho_CA_measles_stats_1wk$stats$variance == cases_stats[["1wk"]]$ews$stats$variance) == length(tycho_CA_measles_stats_1wk$stats$variance)
 
@@ -384,7 +384,7 @@ cases_ews_df <- purrr::map(
 ) %>%
   reduce(left_join, by = "date")
 
-write_csv(cases_ews_df, here::here("out", "cases_ews_df.csv"))
+write_csv(cases_ews_df, here::here("out", "tycho", "cases_ews_df.csv"))
 
 cases_ews_long_df <- cases_ews_df %>%
   pivot_longer(
@@ -394,7 +394,7 @@ cases_ews_long_df <- cases_ews_df %>%
     values_to = "value"
   )
 
-write_csv(cases_ews_df, here::here("out", "cases_ews_df.csv"))
+write_csv(cases_ews_long_df, here::here("out", "tycho", "cases_ews_long_df.csv"))
 
 # %%
 # check stats df
@@ -434,7 +434,7 @@ cases_ews_tau_df <- map2_dfr(
   }
 )
 
-write_csv(cases_ews_tau_df, here::here("out", "cases_ews_tau_df.csv"))
+write_csv(cases_ews_tau_df, here::here("out", "tycho", "cases_ews_tau_df.csv"))
 
 # %%
 # check tau values

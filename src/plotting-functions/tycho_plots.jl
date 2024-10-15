@@ -247,11 +247,11 @@ end
 function ews_timeseries!(
     ax,
     plot_dates,
-    ews_tuple,
-    ews_threshold_tuple,
+    ews_tuple::T1,
+    ews_threshold_tuple::T2,
     ews_threshold_indices;
     obsdate = cdc_week_to_date(1990, 3; weekday = 6),
-)
+) where {T1<:Tuple,T2<:Tuple}
     obsdate_indices = findfirst(x -> x == obsdate, plot_dates)
     vspan!(
         ax,

@@ -109,7 +109,9 @@ function DynamicsParameterSpecification(
     burnin_vaccination_params::Tuple{
         <:Nothing,<:AbstractFloat,<:AbstractFloat,<:Integer
     },
-    vaccination_params::Union{Tuple{<:AbstractFloat,<:AbstractFloat}, Tuple{<:Nothing,<:Nothing}},
+    vaccination_params::Union{
+        Tuple{<:AbstractFloat,<:AbstractFloat},Tuple{<:Nothing,<:Nothing}
+    },
     initial_states,
 )
     return DynamicsParameterSpecification(
@@ -151,21 +153,21 @@ function DynamicsParameterSpecification(
     min_vaccination_coverage::T1,
     max_vaccination_coverage::T1,
 ) where {T1<:Nothing}
-return DynamicsParameterSpecification(
-    beta_mean,
-    beta_force,
-    seasonality,
-    sigma,
-    gamma,
-    mu,
-    annual_births_per_k,
-    epsilon,
-    R_0,
-    min_burnin_vaccination_coverage,
-    max_burnin_vaccination_coverage,
-    min_burnin_vaccination_coverage,
-    max_burnin_vaccination_coverage,
-)
+    return DynamicsParameterSpecification(
+        beta_mean,
+        beta_force,
+        seasonality,
+        sigma,
+        gamma,
+        mu,
+        annual_births_per_k,
+        epsilon,
+        R_0,
+        min_burnin_vaccination_coverage,
+        max_burnin_vaccination_coverage,
+        min_burnin_vaccination_coverage,
+        max_burnin_vaccination_coverage,
+    )
 end
 
 """
@@ -357,49 +359,6 @@ function EnsembleSpecification(
         nsims,
         dirpath,
     )
-end
-
-struct OutbreakThresholdChars{
-    T1<:AbstractFloat,
-    T2<:Integer,
-    T3<:Vector{<:AbstractFloat},
-    T4<:Vector{<:Integer},
-    T5<:AbstractMatrix{<:Integer},
-}
-    daily_sensitivity::T1
-    daily_specificity::T1
-    daily_ppv::T1
-    daily_npv::T1
-    accuracy::T1
-    matchedoutbreakbounds::T5
-    noutbreaks::T2
-    nalerts::T2
-    detected_outbreak_size::T4
-    missed_outbreak_size::T4
-    n_true_outbreaks_detected::T2
-    n_missed_outbreaks::T2
-    n_correct_alerts::T2
-    n_false_alerts::T2
-    n_alerts_per_outbreak::T4
-    period_sum_per_outbreak::T4
-    perc_true_outbreaks_detected::T1
-    perc_true_outbreaks_missed::T1
-    falsealert_trueoutbreak_prop::T1
-    correctalert_trueoutbreak_prop::T1
-    trueoutbreak_alerts_prop::T1
-    outbreaksmissed_alerts_prop::T1
-    perc_alerts_false::T1
-    perc_alerts_correct::T1
-    detectiondelays::T4
-    cases_before_alerts::T4
-    cases_perc_before_alerts::T3
-    cases_after_alerts::T4
-    cases_perc_after_alerts::T3
-    unavoidable_cases::T2
-    avoidable_cases::T2
-    n_outbreak_cases::T2
-    n_tests::T2
-    noise_rubella_prop::T1
 end
 
 struct OutbreakSpecification{T1<:Integer,T2<:AbstractString}
@@ -692,45 +651,6 @@ function ScenarioSpecification(
         ewsmetric_specification,
         dirpath,
     )
-end
-
-struct TestPositivity{T1<:AbstractArray{<:AbstractFloat}}
-    one_day::T1
-    seven_day::T1
-    fourteen_day::T1
-    thirty_day::T1
-end
-
-function TestPositivity(true_positive_vec, total_test_vec, alert_vec)
-    return TestPositivity(
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 1
-        ),
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 7
-        ),
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 14
-        ),
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 30
-        ),
-    )
-end
-
-struct OptimalThresholdCharacteristics{
-    T1<:StructVector{<:OutbreakThresholdChars},
-    T2<:IndividualTestSpecification,
-    T3<:NoiseSpecification,
-    T4<:AbstractFloat,
-    T5<:Integer,
-}
-    outbreak_threshold_chars::T1
-    individual_test_specification::T2
-    noise_specification::T3
-    percent_clinic_tested::T4
-    alert_threshold::T5
-    accuracy::T4
 end
 
 # end

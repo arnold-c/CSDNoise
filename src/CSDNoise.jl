@@ -25,14 +25,14 @@ include("structs.jl")
 export SimTimeParameters, EnsembleSpecification,
     DynamicsParameterSpecification, DynamicsParameters,
     calculate_vaccination_rate_to_achieve_Reff,
-    StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
+    StateParameters, OutbreakDetectionSpecification,
     OutbreakSpecification, IndividualTestSpecification, get_test_description,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
     get_noise_description, get_noise_magnitude, get_noise_magnitude_description,
     getdirpath,
     EWSMethod, Backward, Centered, method_string,
     EWSMetricSpecification,
-    ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics,
+    ScenarioSpecification,
     EWSMetrics
 # @reexport using .ODStructs
 
@@ -97,7 +97,6 @@ include(
 )
 export create_combinations_vec, create_ensemble_spec_combinations,
     run_ensemble_jump_prob, run_jump_prob,
-    run_OutbreakThresholdChars_creation, OutbreakThresholdChars_creation,
     get_ensemble_file
 # @reexport using .EnsembleFunctions
 
@@ -120,10 +119,9 @@ export seircolors,
     sir_quantiles_array_base_plot, create_sir_quantiles_plot,
     incidence_prevalence_plot, Reff_plot,
     visualize_ensemble_noise, incidence_testing_plot,
-    testing_plot, ensemble_outbreak_distribution_plot, ensemble_OTChars_plot,
+    testing_plot, ensemble_outbreak_distribution_plot,
     singlescenario_test_positivity_plot, test_positivity_distribution_plot,
-    ensemble_outbreak_detect_diff_plot, save_compare_ensemble_OTchars_plot,
-    compare_ensemble_OTchars_plots,
+    ensemble_outbreak_detect_diff_plot,
     compare_optimal_thresholds_chars_plot, create_optimal_thresholds_chars_plot,
     compare_optimal_thresholds_test_chars_plot,
     create_optimal_thresholds_test_chars_plot,

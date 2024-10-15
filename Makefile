@@ -18,11 +18,16 @@ tmp/ensemble-sim-ews-visualization: scripts/ensemble-sim_ews-visualization.jl tm
 	@touch $@
 
 # Tycho visualization targets
-TYCHO_TARGETS = tycho-visualization tycho-brett-visualization-R tycho-noise-R tycho-data-prep
+TYCHO_TARGETS = tycho-visualization tycho-visualization-R tycho-data-prep tycho-brett-visualization-R
 .PHONY: $(TYCHO_TARGETS) tycho-targets
 $(TYCHO_TARGETS): %: tmp/%
 tmp/tycho-visualization: scripts/tycho-visualization.jl tmp/tycho-data-prep
 	julia $<
+	@touch $@
+
+tmp/tycho-visualization-R: scripts/tycho-visualization.R tmp/tycho-data-prep
+	rig switch $(R_VERSION)
+	Rscript $^
 	@touch $@
 
 tmp/tycho-data-prep: scripts/tycho-cleaning.R
@@ -31,11 +36,6 @@ tmp/tycho-data-prep: scripts/tycho-cleaning.R
 	@touch $@
 
 tmp/tycho-brett-visualization-R: scripts/tycho-brett-visualization.R tmp/tycho-data-prep
-	rig switch $(R_VERSION)
-	Rscript $^
-	@touch $@
-
-tmp/tycho-noise-R: scripts/tycho-noise.R tmp/tycho-brett-visualization-R
 	rig switch $(R_VERSION)
 	Rscript $^
 	@touch $@
@@ -93,4 +93,9 @@ clean-tycho-data-prep:
 
 clean-tycho-brett-visualization:
 	@echo "cleaning tycho Brett visualization"
-	$(shell fd -g 'tycho-brett' 'plots/' | xargs rm -r)
+	$(shell fd -g 'fig1.pdf' 'plots/tycho/R-plots/' | xargs rm)
+
+clean-tycho-visualization-R:
+	@echo "cleaning tycho R visualization"
+	$(shell fd -g 'tycho' 'plots/tycho/R-plots/' | xargs rm -r)
+

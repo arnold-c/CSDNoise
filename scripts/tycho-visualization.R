@@ -3,6 +3,7 @@ library(spaero)
 library(tidyverse)
 library(here)
 library(patchwork)
+library(latex2exp) # used to include LaTeX expressions in plot text
 
 theme_set(
   theme_minimal() +
@@ -15,16 +16,8 @@ theme_set(
 # %%
 source(here::here("src", "tycho-functions.R"))
 
-bandwidth_weeks <- 52
-bandwidth <- bandwidth_weeks * 7 # days
-
-obsdate <- cdcweekToDate(year = 1990, week = 34 - 31, weekday = 6)
-plotxmin.year <- 1984
-plotxmin <- cdcweekToDate(year = plotxmin.year, week = 1, weekday = 6)
-plotxmax.year <- 1992
-plotxmax <- cdcweekToDate(year = plotxmax.year, week = 1, weekday = 6) + bandwidth
-
 # %%
+load(here::here("out", "tycho", "R-scripts", "tycho-params.RData"))
 tychoL1 <- read.csv(here::here("data", "Project_Tycho___Level_1_Data_20240813.csv"))
 
 tycho_CA_measles_long_plotdata <- read_csv(here::here("out", "tycho", "tycho_CA_measles_long_plotdata.csv"))
@@ -32,6 +25,9 @@ tycho_CA_measles_wide_plotdata <- read_csv(here::here("out", "tycho", "tycho_CA_
 
 tycho_CA_measles_long_statsdata <- read_csv(here::here("out", "tycho", "tycho_CA_measles_long_statsdata.csv"))
 tycho_CA_measles_wide_statsdata <- read_csv(here::here("out", "tycho", "tycho_CA_measles_wide_statsdata.csv"))
+
+# %%
+plotdir <- here::here("plots", "tycho", "R-plots")
 
 # %%
 # confirm all data is weekly aggregated
@@ -90,6 +86,16 @@ incidence_plot <- filled_aggregate_plotdata %>%
   labs(title = "Actual Incidence", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
 incidence_plot
+
+ggsave(
+  incidence_plot,
+  filename = "incidence_plot.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
+
 
 # %%
 add_noise <- function(incidence_df, mean_incidence_df = NULL, aggregation_weeks = 1, noise_pc = 100) {
@@ -154,7 +160,7 @@ filled_noise_long_800pc_df <- filled_noise_800pc_df %>%
   mutate(aggregation = factor(aggregation, levels = c("4wk", "2wk", "1wk")))
 
 # %%
-filled_noise_long_100pc_df %>%
+noise_plot_100pc <- filled_noise_long_100pc_df %>%
   mutate(type = factor(type, levels = c("obs", "noise", "cases"))) %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
@@ -167,8 +173,17 @@ filled_noise_long_100pc_df %>%
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
   labs(title = "100% Poisson Noise", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
+ggsave(
+  noise_plot_100pc,
+  filename = "noise_plot_100pc.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
+
 # %%
-filled_noise_long_800pc_df %>%
+noise_plot_800pc <- filled_noise_long_800pc_df %>%
   mutate(type = factor(type, levels = c("obs", "noise", "cases"))) %>%
   ggplot(
     aes(x = date, y = values, color = aggregation, fill = aggregation)
@@ -181,6 +196,14 @@ filled_noise_long_800pc_df %>%
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
   labs(title = "800% Poisson Noise", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
 
+ggsave(
+  noise_plot_800pc,
+  filename = "noise_plot_800pc.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
 
 # %%
 calculate_test_characteristics <- function(inc_noise_df, aggregation_weeks = 1, test_chars = list(prop_tested = 1.0, sensitivity = 1.0, specificity = 1.0)) {
@@ -236,7 +259,7 @@ filled_perfect_test_long_df <- filled_perfect_test_df %>%
   mutate(aggregation = factor(aggregation, levels = c("4wk", "2wk", "1wk")))
 
 # %%
-filled_perfect_test_long_df %>%
+perfect_test_epicurve_components <- filled_perfect_test_long_df %>%
   mutate(
     type = factor(
       type,
@@ -253,6 +276,16 @@ filled_perfect_test_long_df %>%
   scale_alpha_manual(values = c(0.0, 0.1, 1.0)) +
   scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
   labs(title = "Perfect Test Characteristics", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
+
+ggsave(
+  perfect_test_epicurve_components,
+  filename = "perfect_test_epicurve_components.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
+
 
 # %%
 rdt_8080_test_chars <- list(prop_tested = 1.0, sensitivity = 0.8, specificity = 0.8)
@@ -273,7 +306,7 @@ filled_rdt_8080_test_100pc_noise_long_df <- filled_rdt_8080_test_100pc_noise_df 
   mutate(aggregation = factor(aggregation, levels = c("4wk", "2wk", "1wk")))
 
 # %%
-filled_rdt_8080_test_100pc_noise_long_df %>%
+rdt_8080_100pc_noise_epicurve_components <- filled_rdt_8080_test_100pc_noise_long_df %>%
   filter(type %in% c("total_tested", "test_pos", "test_neg", "cases")) %>%
   mutate(type = factor(type, levels = c("test_pos", "test_neg", "total_tested", "cases"))) %>%
   ggplot(
@@ -286,6 +319,15 @@ filled_rdt_8080_test_100pc_noise_long_df %>%
   scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
   facet_wrap(~type, scales = "free_y", ncol = 1) +
   labs(title = "RDT 80/80, 100% Testing, 100% Noise", x = "Date", y = "Incidence", color = "Aggregation", fill = "Aggregation", alpha = "Aggregation")
+
+ggsave(
+  rdt_8080_100pc_noise_epicurve_components,
+  filename = "rdt_8080_100pc_noise_epicurve_components.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
 
 # %%
 filter_statdata <- function(data, aggregation_wks = 1, inc_var = "test_pos", obsdate) {
@@ -346,8 +388,27 @@ rdt_8080_100pc_noise_test_pos_plot <- filled_rdt_8080_test_100pc_noise_long_df %
 
 rdt_8080_100pc_noise_test_pos_plot
 
+ggsave(
+  rdt_8080_100pc_noise_test_pos_plot,
+  filename = "rdt_8080_100pc_noise_test_pos_plot.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
+
 # %%
 rdt_8080_100pc_noise_test_pos_plot / incidence_plot
+
+ggsave(
+  rdt_8080_100pc_noise_test_pos_plot / incidence_plot,
+  filename = "rdt_8080_100pc_noise_test_pos_incidence_plot.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
+
 
 # %%
 extract_ews_to_df <- function(ews_list, aggregation_weeks = 1) {
@@ -505,7 +566,14 @@ rdt_8080_100pc_noise_var_test_pos_plot <- rdt_8080_100pc_noise_var_plot / rdt_80
 
 rdt_8080_100pc_noise_var_test_pos_plot
 
-ggsave(rdt_8080_100pc_noise_var_test_pos_plot, filename = here::here("plots", "tycho", "rdt_8080_100pc_noise_var_test_pos_plot.png"), width = 10, height = 5, dpi = 600)
+ggsave(
+  rdt_8080_100pc_noise_var_test_pos_plot,
+  filename = "rdt_8080_100pc_noise_var_test_pos_plot.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
 
 # %%
 cases_var_plot <- ews_plot(cases_ews_long_df, cases_ews_tau_df, ews = "variance", ews_type = "Actual Incidence", test_type = NULL)
@@ -516,9 +584,14 @@ cases_var_incidence_plot <- cases_var_plot / incidence_plot + plot_layout(axes =
 
 cases_var_incidence_plot
 
-ggsave(cases_var_incidence_plot, filename = here::here("plots", "tycho", "cases_var_incidence_plot.png"), width = 10, height = 5, dpi = 600)
-
-ggsave(cases_var_incidence_plot, filename = here::here("plots", "tycho", "cases_var_incidence_plot.png"), width = 10, height = 5, dpi = 600)
+ggsave(
+  cases_var_incidence_plot,
+  filename = "cases_var_incidence_plot.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
 
 # %%
 simulate_and_collect_ews <- function(
@@ -616,7 +689,7 @@ extract_sim_ews_stats_to_df <- function(stats_list, ews = "variance") {
   tau_df <- extract_tau_to_df(actual_stats, test_stats_list, ews = ews)
 
   return(
-    list2(
+    rlang::list2(
       actual_ews_df = actual_ews_df,
       tau_df = tau_df,
       ews_df = ews_mean_actual_df
@@ -690,37 +763,60 @@ unique(tycho_rdt_5050_100pc_noise_var_stats_dfs[[3]]$ews_df$sim)
 
 ensemble_variance_plot <- tycho_rdt_5050_100pc_noise_var_stats_dfs[[1]]$ews_df %>%
   mutate(
-    color = factor(case_when(variance_first_diff
+    color = factor(case_when(
       sim == "actual" ~ "darkgreen",
       sim == "mean" ~ "grey20",
       .default = "darkorange"
     ), levels = c("darkgreen", "grey20", "darkorange"))
   ) %>%
-  ggplot(aes(x = date, y = variance_first_diff, color = color, alpha = color, group = sim)) +
+  ggplot(aes(x = date, y = variance, color = color, alpha = color, group = sim)) +
     geom_line() +
     scale_x_date(date_breaks = "1 years", date_labels = "%Y", limits = c(as.Date(plotxmin), as.Date(plotxmax))) +
     scale_color_identity(guide = "legend", labels = c("Actual", "Mean", "Simulation")) +
     scale_alpha_manual(values = c(1.0, 1.0, 0.5), labels = c("Actual", "Mean", "Simulation")) +
-    labs(title = "Test Positive vs Incidence Tau: RDT 80/80, 100% Testing, 4wk Aggregation", x = "Date", y = "variance_first_diff", color = "", alpha = "")
+    labs(title = "Test Positive vs Incidence Tau: RDT 80/80, 100% Testing, 4wk Aggregation", x = "Date", y = "variance", color = "", alpha = "")
 
 ensemble_variance_plot / incidence_plot + plot_layout(axes = "collect")
 
+ggsave(
+  ensemble_variance_plot,
+  filename = "rdt_8080_100pc_noise_4wk_variance.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
+
 # %%
-ensemble_variance_tau_plot <- tycho_rdt_5050_100pc_noise_var_stats_dfs[[3]]$tau_df %>%
-  ggplot(data = filter(., sim !%in% c("mean", "actual")), aes(x = tau)) +
-    geom_histogram(color = "gray20", fill = "cornsilk") +
-    geom_vline(
-      xintercept = cases_variance_tau,
-      color = "darkred",
-      linewidth = 2
-    ) +
-    geom_vline(
-      xintercept = variance_tau_mean,
-      color = "navy",
-      linewidth = 2
-    ) +
-    annotate("label", x = cases_variance_tau + 0.002, y = 1000/10, label = "Actual", color = "darkred") +
-    annotate("label", x = variance_tau_mean - 0.002, y = 1000/10, label = "Mean", color = "navy") +
-    labs(title = "Test Positive Tau: RDT 80/80, 100% Testing, 4wk Aggregation", x = "Tau: Variance", y = "Count")
+ensemble_variance_tau_plot <- tycho_rdt_5050_100pc_noise_var_stats_dfs[[3]]$tau_df %>% {
+    df <- filter(., !(sim %in% c("mean", "actual")))
+    actual_tau <- filter(., sim == "actual")$variance_tau
+    mean_tau <- filter(., sim == "mean")$variance_tau
+    ggplot(data = df, mapping = aes(x = variance_tau)) +
+      geom_histogram(color = "gray20", fill = "cornsilk") +
+      geom_vline(
+        xintercept = actual_tau,
+        color = "darkred",
+        linewidth = 2
+      ) +
+      geom_vline(
+        xintercept = mean_tau,
+        color = "navy",
+        linewidth = 2
+      ) +
+      annotate("label", x = actual_tau + 0.002, y = 100/10, label = "Actual", color = "darkred") +
+      annotate("label", x = mean_tau - 0.002, y = 100/10, label = "Mean", color = "navy") +
+      labs(title = "Test Positive Tau: RDT 80/80, 100% Testing, 4wk Aggregation", x = "Tau: Variance", y = "Count")
+  }
 
 ensemble_variance_tau_plot
+
+ggsave(
+  ensemble_variance_tau_plot,
+  filename = "rdt_8080_100pc_noise_4wk_variance_tau.png",
+  path = plotdir,
+  width = 10,
+  height = 5,
+  dpi = 600
+)
+

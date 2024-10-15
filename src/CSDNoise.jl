@@ -16,7 +16,7 @@ export calculate_beta, calculate_beta_amp,
 
 include("dynamics-constants.jl")
 export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
-    LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K, VACCINATION_COVERAGE,
+    LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K,
     MU, BETA_MEAN, BETA_FORCE, EPSILON
 
 # @reexport using .EWSMetrics
@@ -75,10 +75,6 @@ include("SEIR-model.jl")
 export seir_mod, seir_mod!, seir_mod_loop!,
     convert_svec_to_matrix, convert_svec_to_matrix!, convert_svec_to_array
 # @reexport using .SEIRModel
-
-include("cleaning-functions.jl")
-export create_sir_df
-# @reexport using .CleaningFunctions
 
 include("detection-thresholds.jl")
 export create_inc_infec_arr,
@@ -144,20 +140,6 @@ export seircolors,
 
 include("ensemble-sim_single-scenario_plots.jl")
 export plot_all_single_scenarios
-
-include("threshold_comparison_plots.jl")
-export collect_threshold_char_vec, plot_all_threshold_comparisons
-
-include("optimal-threshold-functions.jl")
-export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
-    calculate_optimal_threshold_summaries,
-    create_optimal_thresholds_df, create_wide_optimal_thresholds_df,
-    create_and_save_xlsx_optimal_threshold_summaries,
-    create_optimal_threshold_summary_df,
-    create_wide_optimal_threshold_summary_df,
-    create_all_wide_optimal_threshold_summary_dfs,
-    save_xlsx_optimal_threshold_summaries,
-    create_and_save_xlsx_optimal_threshold_summaries
 
 @static if false
     include("scripts/ensemble-sim.jl")

@@ -104,35 +104,29 @@ include("noise-functions.jl")
 export create_noise_arr, add_poisson_noise_arr!
 # @reexport using .NoiseFunctions
 
+include("plotting-functions/helpers_plots.jl")
+export BASE_COLOR, OUTBREAK_COLOR, REFF_GT_ONE_COLOR,
+    line_and_hline!
+
+include("plotting-functions/single-simulation_plots.jl")
+export incidence_prevalence_plot,
+    Reff_plot,
+    incidence_testing_plot,
+    ensemble_incarr_Reff_plot
+
 include(
-    "plotting-functions.jl"
+    "plotting-functions/tycho_plots.jl"
 )
-export seircolors,
-    seir_state_labels, create_sir_plot, draw_sir_plot,
-    ACCURACY_COLOR, DAILY_SENSITIVITY_COLOR, DAILY_SPECIFICITY_COLOR,
-    DAILY_PPV_COLOR, DAILY_NPV_COLOR,
-    DETECTION_DELAY_COLOR, N_ALERTS_PER_OUTBREAK_COLOR,
-    N_FALSE_ALERTS_COLOR, N_ALERTS_COLOR, N_OUTBREAKS_COLOR,
-    N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR,
-    PERC_OUTBREAKS_MISSED_COLOR, PERC_ALERTS_CORRECT_COLOR,
-    PERC_ALERTS_FALSE_COLOR,
-    sir_quantiles_array_base_plot, create_sir_quantiles_plot,
-    incidence_prevalence_plot, Reff_plot,
-    visualize_ensemble_noise, incidence_testing_plot,
-    testing_plot, ensemble_outbreak_distribution_plot,
-    singlescenario_test_positivity_plot, test_positivity_distribution_plot,
-    ensemble_outbreak_detect_diff_plot,
-    compare_optimal_thresholds_chars_plot, create_optimal_thresholds_chars_plot,
-    compare_optimal_thresholds_test_chars_plot,
-    create_optimal_thresholds_test_chars_plot,
-    Reff_ews_plot, ensemble_incarr_Reff_plot,
-    tycho_epicurve, tycho_noise_components_epicurve,
+export tycho_epicurve, tycho_noise_components_epicurve,
     tycho_test_positive_components_epicurve,
-    simulation_tau_distribution,
     tycho_tau_distribution,
     tycho_tau_heatmap_plot,
     ews_lead_time_plot
-# @reexport using .PlottingFunctions
+
+include(
+    "plotting-functions/simulation-ews_plots.jl"
+)
+export Reff_ews_plot, simulation_tau_distribution
 
 include("ensemble-sim_single-scenario_plots.jl")
 export plot_all_single_scenarios

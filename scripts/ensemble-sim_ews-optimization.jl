@@ -251,7 +251,7 @@ ews_df = ews_hyperparam_optimization(
     );
     io_file = io_file,
     filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
-    force = true,
+    force = false,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
 )

@@ -2,6 +2,8 @@ using DataFrames
 using StyledStrings
 using ProgressMeter
 using UnPack: @unpack
+using REPL: REPL
+using REPL.TerminalMenus: RadioMenu, request
 
 function ews_hyperparam_optimization(
     specification_vecs,
@@ -42,11 +44,10 @@ function ews_hyperparam_optimization(
         ews_df,
         specification_vecs,
         data_arrs;
+        filepath = filepath,
         io_file = io_file,
         specification_vec_tuples = specification_vec_tuples,
     )
-
-    @tagsave(filepath, Dict("ews_df" => ews_df))
 
     if return_df
         return ews_df
@@ -59,6 +60,7 @@ function ews_hyperparam_optimization!(
     ews_df,
     specification_vecs,
     data_arrs;
+    filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
     io_file = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     specification_vec_tuples = (
         noise_specification = NoiseSpecification[],
@@ -83,6 +85,10 @@ function ews_hyperparam_optimization!(
         specification_vecs;
         specification_vec_tuples = specification_vec_tuples,
     )
+
+    if isnothing(missing_specification_vecs)
+        return nothing
+    end
 
     @assert map(propertynames(missing_specification_vecs)) do pn
         Symbol(match(r"(missing_)(.*)$", string(pn)).captures[2])
@@ -295,6 +301,7 @@ function ews_hyperparam_optimization!(
             end
         end
     end
+    @tagsave(filepath, Dict("ews_df" => ews_df))
 end
 
 function check_missing_ews_hyperparameter_simulations(
@@ -351,6 +358,25 @@ function check_missing_ews_hyperparameter_simulations(
         ews_df;
         on = [propertynames(specification_vec_tuples)...],
     )
+
+    if nrow(missing_run_params_df) == 0
+        println("Found no missing simulations")
+        return nothing
+    end
+
+    if nrow(missing_run_params_df) > 0
+        choice = request(
+            "There are $(nrow(missing_run_params_df)) missing simulations. Do you want to continue?",
+            RadioMenu(["No", "Yes"]; ctrl_c_interrupt = false),
+        )
+
+        if choice != 2
+            println("Aborting ...")
+            return nothing
+        end
+
+        println("Continuing ...")
+    end
 
     missing_params_nt = create_missing_run_params_nt(missing_run_params_df)
 

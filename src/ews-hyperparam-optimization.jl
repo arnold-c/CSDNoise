@@ -152,8 +152,8 @@ function ews_hyperparam_optimization!(
                 ews_metric_specification,
                 ews_enddate_type,
                 ews_threshold_window,
-                ews_burnin,
-                ews_percentile,
+                ews_threshold_burnin,
+                ews_threshold_percentile,
                 ews_consecutive_thresholds,
             ) in
                 Iterators.product(
@@ -166,7 +166,7 @@ function ews_hyperparam_optimization!(
             )
                 ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
                 println(
-                    styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS burn-in: {yellow: $(ews_burnin)}, EWS percentile: {magenta,inverse: $(ews_percentile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
+                    styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS window: $(ews_threshold_window), EWS burn-in: {yellow: $(ews_threshold_burnin)}, EWS percentile: {magenta,inverse: $(ews_threshold_percentile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
                 )
 
                 thresholds = SumTypes.@cases ews_enddate_type begin
@@ -226,8 +226,8 @@ function ews_hyperparam_optimization!(
                                 ews_vals_vec[sim],
                                 Symbol(ews_metric),
                                 ews_threshold_window;
-                                percentiles = ews_percentile,
-                                burn_in = ews_burnin,
+                                percentiles = ews_threshold_percentile,
+                                burn_in = ews_threshold_burnin,
                             )[2]
 
                             detection_index_arr[sim, j] = calculate_ews_trigger_index(
@@ -239,8 +239,8 @@ function ews_hyperparam_optimization!(
                                 null_ews_vals_vec[sim],
                                 Symbol(ews_metric),
                                 ews_threshold_window;
-                                percentiles = ews_percentile,
-                                burn_in = ews_burnin,
+                                percentiles = ews_threshold_percentile,
+                                burn_in = ews_threshold_burnin,
                             )[2]
 
                             null_detection_index_arr[sim, j] = calculate_ews_trigger_index(
@@ -274,15 +274,16 @@ function ews_hyperparam_optimization!(
                     push!(
                         ews_df,
                         (
+                            noise_specification,
                             test_specification,
                             percent_tested,
                             ews_metric_specification,
                             ews_enddate_type,
-                            noise_specification,
-                            ews_metric,
-                            ews_percentile,
+                            ews_threshold_window,
+                            ews_threshold_burnin,
+                            ews_threshold_percentile,
                             ews_consecutive_thresholds,
-                            ews_burnin,
+                            ews_metric,
                             true_positives,
                             true_negatives,
                             accuracy,

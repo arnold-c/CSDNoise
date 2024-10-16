@@ -1,3 +1,4 @@
+using DataFrames: IteratorSize
 #%%
 using DrWatson
 @quickactivate "CSDNoise"
@@ -205,16 +206,23 @@ ews_metrics = [
 ]
 
 ews_threshold_window = Main.Expanding
+ews_threshold_burnin = 10
 ews_threshold_percentile = 0.95
 consecutive_thresholds = 2
 
 ews_df = DataFrame(
-    "ews_metric" => String[],
     "test_specification" => IndividualTestSpecification[],
-    "ews_metric_specification" => EWSMetricSpecification[],
     "ews_enddate_type" => EWSEndDateType[],
-    "ews_metric_value" => Float64[],
-    "ews_metric_vector" => Vector{Float64}[],
+    "noise_specification" => NoiseSpecification[],
+    "ews_metric" => String[],
+    "ews_threshold_percentile" => Float64[],
+    "consecutive_thresholds" => Int[],
+    "ews_threshold_burnin" => Int[],
+    "true_positives" => Int64[],
+    "true_negatives" => Int64[],
+    "accuracy" => Float64[],
+    "sensitivity" => Float64[],
+    "specificity" => Float64[],
 )
 
 @showprogress for (
@@ -240,11 +248,17 @@ ews_df = DataFrame(
     )[1]
     noisedir = getdirpath(noise_specification)
 
-    for ews_enddate_type in
+    for (
+        ews_enddate_type, ews_burnin, ews_percentile, ews_consecutive_thresholds
+    ) in
+        Iterators.product(
         (
-        Main.Reff_start,
-        Main.Reff_end,
-        Main.Outbreak_start,
+            Main.Reff_start,
+            Main.Reff_end,
+        ),
+        collect(10:1:15),
+        collect(0.9:0.02:0.98),
+        collect(2:1:10),
     )
         ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
         println(
@@ -327,24 +341,26 @@ ews_df = DataFrame(
                             ews_vals_vec[sim],
                             Symbol(ews_metric),
                             ews_threshold_window;
-                            percentiles = ews_threshold_percentile,
+                            percentiles = ews_percentile,
+                            burn_in = ews_burnin,
                         )[2]
 
                         detection_index_arr[sim, j] = calculate_ews_trigger_index(
                             exceeds_threshold_arr[sim, j];
-                            consecutive_thresholds = consecutive_thresholds,
+                            consecutive_thresholds = ews_consecutive_thresholds,
                         )
 
                         null_exceeds_threshold_arr[sim, j] = expanding_ews_thresholds(
                             null_ews_vals_vec[sim],
                             Symbol(ews_metric),
                             ews_threshold_window;
-                            percentiles = ews_threshold_percentile,
+                            percentiles = ews_percentile,
+                            burn_in = ews_burnin,
                         )[2]
 
                         null_detection_index_arr[sim, j] = calculate_ews_trigger_index(
                             null_exceeds_threshold_arr[sim, j];
-                            consecutive_thresholds = consecutive_thresholds,
+                            consecutive_thresholds = ews_consecutive_thresholds,
                         )
                     end
 
@@ -359,9 +375,39 @@ ews_df = DataFrame(
                 end
             end
 
-            filtered_ews_vals_vec = filter(!ismissing, ews_vals_vec)
-            filtered_null_ews_vals_vec = filter(!ismissing, null_ews_vals_vec)
-            filter!(x -> x != 0, failed_sims)
+            for (j, ews_metric) in pairs(ews_metrics)
+                true_positives = length(
+                    filter(!ismissing, detection_index_arr[:, j])
+                )
+                true_negatives = length(
+                    filter(ismissing, null_detection_index_arr[:, j])
+                )
+                sensitivity = true_positives / ensemble_nsims
+                specificity = true_negatives / ensemble_nsims
+                accuracy = (sensitivity + specificity) / 2
+
+                push!(
+                    ews_df,
+                    (
+                        test_specification,
+                        ews_enddate_type,
+                        noise_specification,
+                        ews_metric,
+                        ews_percentile,
+                        ews_consecutive_thresholds,
+                        ews_burnin,
+                        true_positives,
+                        true_negatives,
+                        accuracy,
+                        sensitivity,
+                        specificity,
+                    ),
+                )
+            end
+
+            # filtered_ews_vals_vec = filter(!ismissing, ews_vals_vec)
+            # filtered_null_ews_vals_vec = filter(!ismissing, null_ews_vals_vec)
+            # filter!(x -> x != 0, failed_sims)
         end
     end
 end

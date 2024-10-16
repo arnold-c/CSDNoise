@@ -1,4 +1,3 @@
-using DataFrames: IteratorSize
 #%%
 using DrWatson
 @quickactivate "CSDNoise"
@@ -240,13 +239,8 @@ specification_vec_tuples = (
     ews_metric = String[],
 )
 
-@assert map(propertynames(specification_vecs)) do pn
-    Symbol(match(r"(.*)(_vec)$", string(pn)).captures[1])
-end ==
-    propertynames(specification_vec_tuples)
-
 #%%
-ews_hyperparam_optimization(
+ews_df = ews_hyperparam_optimization(
     specification_vecs,
     (
         ; ensemble_specification,
@@ -256,15 +250,10 @@ ews_hyperparam_optimization(
         ensemble_single_periodsum_vecs,
     );
     io_file = io_file,
-    filepath = outdir("ews_hyperparam_optimization.jld2"),
-    force = false,
+    filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
+    force = true,
+    return_df = true,
     specification_vec_tuples = specification_vec_tuples,
-)
-
-#%%
-@tagsave(
-    outdir("ensemble-sim_ews-optimization.jld2"),
-    Dict("ews_df" => ews_df)
 )
 
 #%%

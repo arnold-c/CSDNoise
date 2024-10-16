@@ -6,7 +6,7 @@ using UnPack: @unpack
 function ews_hyperparam_optimization(
     specification_vecs,
     data_arrs;
-    filepath = outdir("ews_hyperparam_optimization.jld2"),
+    filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
     io_file = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     force = false,
     specification_vec_tuples = (
@@ -21,30 +21,38 @@ function ews_hyperparam_optimization(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    return_df = true,
 )
-    ews_df =
-        if isfile(filepath) && !force
-            load(filepath)["ews_df"]
-        else
-            DataFrame(
-            (
-                specification_vec_tuples...,
-                true_positives = Int64[],
-                true_negatives = Int64[],
-                accuracy = Float64[],
-                sensitivity = Float64[],
-                specificity = Float64[],
-            )
-    )
-        end
+    if isfile(filepath) && !force
+        ews_df = load(filepath)["ews_df"]
+    else
+        ews_df = DataFrame(
+        (
+            specification_vec_tuples...,
+            true_positives = Int64[],
+            true_negatives = Int64[],
+            accuracy = Float64[],
+            sensitivity = Float64[],
+            specificity = Float64[],
+        )
+)
+    end
 
-    return ews_hyperparam_optimization!(
+    ews_hyperparam_optimization!(
         ews_df,
         specification_vecs,
         data_arrs;
         io_file = io_file,
         specification_vec_tuples = specification_vec_tuples,
     )
+
+    @tagsave(filepath, Dict("ews_df" => ews_df))
+
+    if return_df
+        return ews_df
+    end
+
+    return nothing
 end
 
 function ews_hyperparam_optimization!(
@@ -100,10 +108,6 @@ function ews_hyperparam_optimization!(
         data_arrs
 
     ensemble_nsims = size(ensemble_single_incarr, 3)
-
-    println("All worked as expected")
-    println(missing_specification_vecs)
-    return nothing
 
     io = open(io_file, "a")
 

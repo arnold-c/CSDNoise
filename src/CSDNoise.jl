@@ -63,6 +63,11 @@ export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
     calculate_ews_lead_time, calculate_ews_trigger_index,
     ews_lead_time_df!
 
+include("ews-hyperparam-optimization.jl")
+export ews_hyperparam_optimization,
+    ews_hyperparam_optimization!,
+    check_missing_ews_hyperparameter_simulations
+
 include("tycho-cleaning.jl")
 export cdc_week_to_date,
     calculate_aggregation_cases, fill_aggregation_values,

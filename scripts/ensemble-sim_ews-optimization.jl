@@ -168,6 +168,8 @@ io = open(scriptsdir("ensemble-sim_ews-optimization.log.txt"), "a")
 
 force = false
 
+noise_specification_vec = [PoissonNoiseSpecification(8.0)]
+
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
     IndividualTestSpecification(0.8, 0.8, 0),
@@ -206,38 +208,142 @@ ews_metrics = [
 ]
 
 ews_threshold_window = Main.Expanding
-ews_threshold_burnin = 10
-ews_threshold_percentile = 0.95
-consecutive_thresholds = 2
 
-ews_df = DataFrame(
+if isfile(outdir("ensemble-sim_ews-optimization.jld2"))
+    ews_df = load(outdir("ensemble-sim_ews-optimization.jld2"))["ews_df"]
+else
+    ews_df = DataFrame(
+        "test_specification" => IndividualTestSpecification[],
+        "percent_tested" => Float64[],
+        "ews_metric_specification" => EWSMetricSpecification[],
+        "ews_enddate_type" => EWSEndDateType[],
+        "noise_specification" => NoiseSpecification[],
+        "ews_metric" => String[],
+        "ews_threshold_percentile" => Float64[],
+        "consecutive_thresholds" => Int[],
+        "ews_threshold_burnin" => Int[],
+        "true_positives" => Int64[],
+        "true_negatives" => Int64[],
+        "accuracy" => Float64[],
+        "sensitivity" => Float64[],
+        "specificity" => Float64[],
+    )
+end
+
+#%%
+ews_enddate_type_vec = [Reff_start, Reff_end]
+ews_percentile_vec = [collect(0.9:0.02:0.98)..., 0.99]
+ews_consecutive_thresholds_vec = collect(2:1:10)
+ews_burnin_vec = collect(10:1:15)
+
+#%%
+run_params_df = DataFrame(
     "test_specification" => IndividualTestSpecification[],
+    "percent_tested" => Float64[],
+    "ews_metric_specification" => EWSMetricSpecification[],
     "ews_enddate_type" => EWSEndDateType[],
     "noise_specification" => NoiseSpecification[],
     "ews_metric" => String[],
     "ews_threshold_percentile" => Float64[],
     "consecutive_thresholds" => Int[],
     "ews_threshold_burnin" => Int[],
-    "true_positives" => Int64[],
-    "true_negatives" => Int64[],
-    "accuracy" => Float64[],
-    "sensitivity" => Float64[],
-    "specificity" => Float64[],
 )
 
-@showprogress for (
-    noise_specification, percent_tested, ews_metric_specification
-) in
-                  Iterators.product(
-    [PoissonNoiseSpecification(8.0)],
+for (
+    noise_specification,
+    test_specification,
+    percent_tested,
+    ews_metric_specification,
+    ews_enddate_type,
+    ews_burnin,
+    ews_percentile,
+    ews_consecutive_thresholds,
+    ews_metric,
+) in Iterators.product(
+    noise_specification_vec,
+    test_specification_vec,
     percent_tested_vec,
     ews_spec_vec,
+    ews_enddate_type_vec,
+    ews_burnin_vec,
+    ews_percentile_vec,
+    ews_consecutive_thresholds_vec,
+    ews_metrics,
 )
+    push!(
+        run_params_df,
+        (
+            test_specification,
+            percent_tested,
+            ews_metric_specification,
+            ews_enddate_type,
+            noise_specification,
+            ews_metric,
+            ews_percentile,
+            ews_consecutive_thresholds,
+            ews_burnin,
+        ),
+    )
+end
+
+missing_run_params_df = antijoin(
+    run_params_df,
+    ews_df;
+    on = [
+        :test_specification,
+        :percent_tested,
+        :ews_metric_specification,
+        :ews_enddate_type,
+        :noise_specification,
+        :ews_metric,
+        :ews_threshold_percentile,
+        :consecutive_thresholds,
+        :ews_threshold_burnin,
+    ],
+)
+
+missing_noise_specification_vec = unique(
+    missing_run_params_df[!, :noise_specification]
+)
+
+missing_test_specification_vec = unique(
+    missing_run_params_df[!, :test_specification]
+)
+
+missing_percent_tested_vec = unique(
+    missing_run_params_df[!, :percent_tested]
+)
+
+missing_ews_spec_vec = unique(
+    missing_run_params_df[!, :ews_metric_specification]
+)
+
+missing_ews_enddate_type_vec = unique(
+    missing_run_params_df[!, :ews_enddate_type]
+)
+
+missing_ews_burnin_vec = unique(
+    missing_run_params_df[!, :ews_threshold_burnin]
+)
+
+missing_ews_percentile_vec = unique(
+    missing_run_params_df[!, :ews_threshold_percentile]
+)
+
+missing_ews_consecutive_thresholds_vec = unique(
+    missing_run_params_df[!, :consecutive_thresholds]
+)
+
+missing_ews_metric_vec = unique(
+    missing_run_params_df[!, :ews_metric]
+)
+
+@showprogress for (noise_specification) in missing_noise_specification_vec
     println(
         styled"{green:\n=================================================================}"
     )
     println(
-        styled"Creating EWS visualization for:\n{green,inverse: $(getdirpath(noise_specification))}, {red,inverse: $(percent_tested)}, {blue,inverse: $(ews_metric_specification.dirpath)}"
+        styled"Noise type: {green,inverse: $(getdirpath(noise_specification))}"
     )
 
     noisearr = create_noise_arr(
@@ -246,50 +352,54 @@ ews_df = DataFrame(
         ensemble_specification = ensemble_specification,
         seed = 1234,
     )[1]
-    noisedir = getdirpath(noise_specification)
 
-    for (
-        ews_enddate_type, ews_burnin, ews_percentile, ews_consecutive_thresholds
-    ) in
+    for (test_specification, percent_tested) in
         Iterators.product(
-        (
-            Main.Reff_start,
-            Main.Reff_end,
-        ),
-        collect(10:1:15),
-        collect(0.9:0.02:0.98),
-        collect(2:1:10),
+        missing_test_specification_vec, missing_percent_tested_vec
     )
-        ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
         println(
-            styled"\t\tEWS end date type: {magenta: $(ews_enddate_type_str)}"
+            styled"\t\t\t\t-> Test specification: {blue: $(get_test_description(test_specification))}, Percent tested: {red,inverse: $(percent_tested)}"
         )
 
-        thresholds = SumTypes.@cases ews_enddate_type begin
-            [Reff_start, Reff_end] =>
-                ensemble_single_Reff_thresholds_vec
-            [Outbreak_start, Outbreak_end, Outbreak_middle] =>
-                ensemble_single_periodsum_vecs
-        end
+        testarr = create_testing_arrs(
+            ensemble_single_incarr,
+            noisearr,
+            percent_tested,
+            test_specification,
+        )
 
-        for test_specification in test_specification_vec
+        null_testarr = create_testing_arrs(
+            null_single_incarr,
+            noisearr,
+            percent_tested,
+            test_specification,
+        )
+
+        for (
+            ews_metric_specification,
+            ews_enddate_type,
+            ews_burnin,
+            ews_percentile,
+            ews_consecutive_thresholds,
+        ) in
+            Iterators.product(
+            missing_ews_spec_vec,
+            missing_ews_enddate_type_vec,
+            missing_ews_burnin_vec,
+            missing_ews_percentile_vec,
+            missing_ews_consecutive_thresholds_vec,
+        )
+            ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
             println(
-                styled"\t\t\t\t-> Test specification tau distribution: {blue: $(get_test_description(test_specification))}"
+                styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS burn-in: {yellow: $(ews_burnin)}, EWS percentile: {magenta,inverse: $(ews_percentile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
             )
 
-            testarr = create_testing_arrs(
-                ensemble_single_incarr,
-                noisearr,
-                percent_tested,
-                test_specification,
-            )
-
-            null_testarr = create_testing_arrs(
-                null_single_incarr,
-                noisearr,
-                percent_tested,
-                test_specification,
-            )
+            thresholds = SumTypes.@cases ews_enddate_type begin
+                [Reff_start, Reff_end] =>
+                    ensemble_single_Reff_thresholds_vec
+                [Outbreak_start, Outbreak_end, Outbreak_middle] =>
+                    ensemble_single_periodsum_vecs
+            end
 
             enddate_vec = zeros(Int64, size(testarr, 3))
             failed_sims = zeros(Int64, size(testarr, 3))
@@ -303,16 +413,16 @@ ews_df = DataFrame(
             fill!(null_ews_vals_vec, missing)
 
             exceeds_threshold_arr = Array{Matrix{Bool},2}(
-                undef, size(testarr, 3), length(ews_metrics)
+                undef, size(testarr, 3), length(missing_ews_metric_vec)
             )
             null_exceeds_threshold_arr = Array{Matrix{Bool},2}(
-                undef, size(testarr, 3), length(ews_metrics)
+                undef, size(testarr, 3), length(missing_ews_metric_vec)
             )
             detection_index_arr = Array{Union{Nothing,Int64},2}(
-                undef, size(testarr, 3), length(ews_metrics)
+                undef, size(testarr, 3), length(missing_ews_metric_vec)
             )
             null_detection_index_arr = Array{Union{Nothing,Int64},2}(
-                undef, size(testarr, 3), length(ews_metrics)
+                undef, size(testarr, 3), length(missing_ews_metric_vec)
             )
             fill!(detection_index_arr, nothing)
             fill!(null_detection_index_arr, nothing)
@@ -336,7 +446,7 @@ ews_df = DataFrame(
                         @view(null_testarr[1:enddate_vec[sim], 5, sim])
                     )
 
-                    for (j, ews_metric) in pairs(ews_metrics)
+                    for (j, ews_metric) in pairs(missing_ews_metric_vec)
                         exceeds_threshold_arr[sim, j] = expanding_ews_thresholds(
                             ews_vals_vec[sim],
                             Symbol(ews_metric),
@@ -375,7 +485,7 @@ ews_df = DataFrame(
                 end
             end
 
-            for (j, ews_metric) in pairs(ews_metrics)
+            for (j, ews_metric) in pairs(missing_ews_metric_vec)
                 true_positives = length(
                     filter(!ismissing, detection_index_arr[:, j])
                 )
@@ -390,6 +500,8 @@ ews_df = DataFrame(
                     ews_df,
                     (
                         test_specification,
+                        percent_tested,
+                        ews_metric_specification,
                         ews_enddate_type,
                         noise_specification,
                         ews_metric,
@@ -404,12 +516,19 @@ ews_df = DataFrame(
                     ),
                 )
             end
-
-            # filtered_ews_vals_vec = filter(!ismissing, ews_vals_vec)
-            # filtered_null_ews_vals_vec = filter(!ismissing, null_ews_vals_vec)
-            # filter!(x -> x != 0, failed_sims)
         end
     end
 end
 
 close(io)
+
+#%%
+@tagsave(
+    outdir("ensemble-sim_ews-optimization.jld2"),
+    Dict("ews_df" => ews_df)
+)
+
+#%%
+unique(ews_df.accuracy)
+unique(ews_df.sensitivity)
+unique(ews_df.specificity)

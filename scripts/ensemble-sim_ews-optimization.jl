@@ -355,45 +355,7 @@ ews_df = DataFrame(
                 convert(Vector{EWSMetrics}, filtered_inc_ews_vals_vec)
             )
 
-            ensemble_noise_plotpath = joinpath(
-                ensemble_vax_plotpath,
-                noisedir,
-                "percent-tested_$(percent_tested)",
-                "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
-            )
-            ensemble_ews_plotpath = joinpath(
-                ensemble_noise_plotpath,
-                ews_metric_specification.dirpath,
-                ews_enddate_type_str,
-            )
-            mkpath(ensemble_ews_plotpath)
-
             for ews_metric in ews_metrics
-                plotdir = joinpath(
-                    ensemble_ews_plotpath,
-                    "tau-distributions",
-                )
-                mkpath(plotdir)
-                ews_plotpath = joinpath(
-                    plotdir,
-                    "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png",
-                )
-
-                if !isfile(ews_plotpath) || force
-                    plot = simulation_tau_distribution(
-                        ews_vals_sa,
-                        inc_ews_vals_sa,
-                        ews_metric;
-                        plottitle = "$(get_test_description(test_specification)) ($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(ews_enddate_type_str) EWS $(ews_metric) Tau Distribution",
-                    )
-
-                    save(
-                        ews_plotpath,
-                        plot;
-                        size = (2200, 1600),
-                    )
-                end
-
                 simulation_tau_heatmap_df!(
                     ews_df,
                     ews_vals_sa,
@@ -464,76 +426,8 @@ ews_df = DataFrame(
                         (ensemble_single_periodsum_vecs[sim][:, 4] .== 1),
                         [1, 2],
                     ] .÷ ews_metric_specification.aggregation
-
-                plotdir = joinpath(
-                    ensemble_ews_plotpath, "single-scenario", "sim-$(sim)"
-                )
-                mkpath(plotdir)
-
-                plot_all_single_scenarios(
-                    aggregated_noise_vec,
-                    noisedir,
-                    aggregated_inc_vec,
-                    aggregated_outbreak_status_vec,
-                    aggregated_test_vec,
-                    aggregated_test_movingavg_vec,
-                    aggregated_Reff_vec,
-                    aggregated_Reff_thresholds_arr,
-                    aggregated_outbreak_thresholds_arr,
-                    ews_vals,
-                    exceeds_threshold_arr[sim, :],
-                    detection_index_arr[sim, :],
-                    ews_metric_specification.dirpath,
-                    ews_enddate_type_str,
-                    test_specification,
-                    percent_tested,
-                    ensemble_time_specification;
-                    aggregation = ews_metric_specification.aggregation,
-                    sim = sim,
-                    force = true,
-                    base_plotpath = plotdir,
-                )
             end
         end
-
-        tau_heatmap_plotpath = joinpath(
-            plotsdir(),
-            "ensemble",
-            "burnin-time-$(burnin_time)",
-            "min-burnin-vax_$(min_burnin_vaccination_coverage)",
-            "max-burnin-vax_$(max_burnin_vaccination_coverage)",
-            "min-vax_$(min_vaccination_coverage)",
-            "max-vax_$(max_vaccination_coverage)",
-            noisedir,
-            "percent-tested_$(percent_tested)",
-            "tau-heatmaps",
-            ews_metric_specification.dirpath,
-            ews_enddate_type_str,
-        )
-        mkpath(tau_heatmap_plotpath)
-        tau_heatmap_plotpath = joinpath(
-            tau_heatmap_plotpath, "ews-tau-heatmap_mean.png"
-        )
-
-        println(
-            styled"\t\t\t\t-> Tau heatmap"
-        )
-        tau_heatmap = tycho_tau_heatmap_plot(
-            subset(
-                ews_df,
-                :ews_enddate_type => ByRow(==(ews_enddate_type)),
-                :ews_metric_specification =>
-                    ByRow(==(ews_metric_specification)),
-            );
-            statistic_function = titlecase("mean"),
-            plottitle = "Kendall's Tau Heatmap (Mean)\n($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(ews_metric_specification.dirpath), $(ews_enddate_type_str), $(get_noise_magnitude_description(noise_specification))",
-        )
-
-        save(
-            tau_heatmap_plotpath,
-            tau_heatmap;
-            size = (2200, 1600),
-        )
     end
 end
 

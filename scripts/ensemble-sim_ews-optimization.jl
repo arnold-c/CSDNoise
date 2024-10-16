@@ -72,6 +72,20 @@ ensemble_dynamics_specification = DynamicsParameterSpecification(
     0.8,
 )
 
+null_dynamics_specification = DynamicsParameterSpecification(
+    map(
+        pn -> getproperty(ensemble_dynamics_specification, pn),
+        filter(
+            name ->
+                name != :min_vaccination_coverage &&
+                    name != :max_vaccination_coverage,
+            propertynames(ensemble_dynamics_specification),
+        ),
+    )...,
+    nothing,
+    nothing,
+)
+
 #%%
 ensemble_nsims = 100
 
@@ -79,6 +93,14 @@ ensemble_specification = EnsembleSpecification(
     ensemble_model_type,
     ensemble_state_specification,
     ensemble_dynamics_specification,
+    ensemble_time_specification,
+    ensemble_nsims,
+)
+
+null_specification = EnsembleSpecification(
+    ensemble_model_type,
+    ensemble_state_specification,
+    null_dynamics_specification,
     ensemble_time_specification,
     ensemble_nsims,
 )

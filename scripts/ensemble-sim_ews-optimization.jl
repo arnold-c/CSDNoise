@@ -110,19 +110,11 @@ ensemble_outbreak_specification = OutbreakSpecification(
 )
 
 #%%
-ensemble_single_seir_arr = get_ensemble_file(
-    ensemble_specification
-)["ensemble_seir_arr"]
-
 ensemble_dynamics_parameters_sa = StructVector(
     get_ensemble_file(
         ensemble_specification
     )["dynamics_parameters"],
 )
-
-null_single_seir_arr = get_ensemble_file(
-    null_specification
-)["ensemble_seir_arr"]
 
 null_dynamics_parameters_sa = StructVector(
     get_ensemble_file(
@@ -130,12 +122,24 @@ null_dynamics_parameters_sa = StructVector(
     )["dynamics_parameters"],
 )
 
+@assert ensemble_dynamics_parameters_sa.burnin_vaccination_coverage ==
+    null_dynamics_parameters_sa.burnin_vaccination_coverage ==
+    null_dynamics_parameters_sa.vaccination_coverage
+
+#%%
 ensemble_single_scenario_inc_file = get_ensemble_file(
     ensemble_specification, ensemble_outbreak_specification
 )
 
+null_single_scenario_inc_file = get_ensemble_file(
+    null_specification, ensemble_outbreak_specification
+)
+
 ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
 ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+
+null_single_incarr = null_single_scenario_inc_file["ensemble_inc_arr"]
+null_single_periodsum_vecs = null_single_scenario_inc_file["ensemble_thresholds_vec"]
 
 ensemble_single_Reff_arr = get_ensemble_file(
     ensemble_specification
@@ -144,11 +148,6 @@ ensemble_single_Reff_arr = get_ensemble_file(
 ensemble_single_Reff_thresholds_vec = get_ensemble_file(
     ensemble_specification
 )["ensemble_Reff_thresholds_vec"]
-
-#%%
-@assert ensemble_dynamics_parameters_sa.burnin_vaccination_coverage ==
-    null_dynamics_parameters_sa.burnin_vaccination_coverage ==
-    null_dynamics_parameters_sa.vaccination_coverage
 
 #%%
 ensemble_vax_plotpath = joinpath(
@@ -163,58 +162,8 @@ ensemble_vax_plotpath = joinpath(
 mkpath(ensemble_vax_plotpath)
 
 #%%
-nsims_plot = 10
-Random.seed!(1234)
-selected_sims = StatsBase.sample(
-    collect(1:size(ensemble_single_incarr, 3)),
-    nsims_plot;
-    replace = false,
-)
-
-ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
-    ensemble_single_incarr[:, :, selected_sims],
-    ensemble_single_Reff_arr[:, selected_sims],
-    ensemble_single_Reff_thresholds_vec[selected_sims],
-    ensemble_single_periodsum_vecs[selected_sims], ;
-    outbreak_alpha = 0.1,
-    Reff_alpha = 1,
-)
-
-Reff_incidence_plotpath = joinpath(
-    ensemble_vax_plotpath,
-    "ensemble-sim_single-scenario_incidence_Reff.png",
-)
-
-save(
-    Reff_incidence_plotpath,
-    ensemble_single_scenario_incidence_Reff_plot;
-    size = (2200, 1600),
-)
-
-#%%
-ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
-    ensemble_single_incarr,
-    ensemble_single_seir_arr,
-    ensemble_single_periodsum_vecs,
-    ensemble_time_specification;
-    sim = 1,
-    threshold = ensemble_outbreak_specification.outbreak_threshold,
-)
-
-incidence_prevalence_plotpath = joinpath(
-    ensemble_vax_plotpath,
-    "ensemble-sim_single-scenario_incidence_prevalence.png",
-)
-
-save(
-    incidence_prevalence_plotpath,
-    ensemble_single_scenario_incidence_prevalence_plot;
-    size = (2200, 1600),
-)
-
-#%%
 # Open a textfile for writing
-io = open(scriptsdir("ensemble-sim_ews-visualization.log.txt"), "a")
+io = open(scriptsdir("ensemble-sim_ews-optimization.log.txt"), "a")
 
 force = false
 
@@ -320,24 +269,39 @@ ews_df = DataFrame(
                 percent_tested,
                 test_specification,
             )
+
+            null_testarr = create_testing_arrs(
+                null_single_incarr,
+                noisearr,
+                percent_tested,
+                test_specification,
+            )
+
             enddate_vec = zeros(Int64, size(testarr, 3))
             failed_sims = zeros(Int64, size(testarr, 3))
             ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
                 undef, size(testarr, 3)
             )
-            inc_ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+            null_ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
                 undef, size(testarr, 3)
             )
             fill!(ews_vals_vec, missing)
-            fill!(inc_ews_vals_vec, missing)
+            fill!(null_ews_vals_vec, missing)
 
             exceeds_threshold_arr = Array{Matrix{Bool},2}(
+                undef, size(testarr, 3), length(ews_metrics)
+            )
+            null_exceeds_threshold_arr = Array{Matrix{Bool},2}(
                 undef, size(testarr, 3), length(ews_metrics)
             )
             detection_index_arr = Array{Union{Nothing,Int64},2}(
                 undef, size(testarr, 3), length(ews_metrics)
             )
+            null_detection_index_arr = Array{Union{Nothing,Int64},2}(
+                undef, size(testarr, 3), length(ews_metrics)
+            )
             fill!(detection_index_arr, nothing)
+            fill!(null_detection_index_arr, nothing)
 
             for sim in axes(testarr, 3)
                 enddate = calculate_ews_enddate(
@@ -348,16 +312,14 @@ ews_df = DataFrame(
                 if Try.isok(enddate)
                     enddate_vec[sim] = Try.unwrap(enddate)
 
-                    inc_ews_vals_vec[sim] = EWSMetrics(
-                        ews_metric_specification,
-                        @view(
-                            ensemble_single_incarr[1:enddate_vec[sim], 1, sim]
-                        )
-                    )
-
                     ews_vals_vec[sim] = EWSMetrics(
                         ews_metric_specification,
                         @view(testarr[1:enddate_vec[sim], 5, sim])
+                    )
+
+                    null_ews_vals_vec[sim] = EWSMetrics(
+                        ews_metric_specification,
+                        @view(null_testarr[1:enddate_vec[sim], 5, sim])
                     )
 
                     for (j, ews_metric) in pairs(ews_metrics)
@@ -370,6 +332,18 @@ ews_df = DataFrame(
 
                         detection_index_arr[sim, j] = calculate_ews_trigger_index(
                             exceeds_threshold_arr[sim, j];
+                            consecutive_thresholds = consecutive_thresholds,
+                        )
+
+                        null_exceeds_threshold_arr[sim, j] = expanding_ews_thresholds(
+                            null_ews_vals_vec[sim],
+                            Symbol(ews_metric),
+                            ews_threshold_window;
+                            percentiles = ews_threshold_percentile,
+                        )[2]
+
+                        null_detection_index_arr[sim, j] = calculate_ews_trigger_index(
+                            null_exceeds_threshold_arr[sim, j];
                             consecutive_thresholds = consecutive_thresholds,
                         )
                     end
@@ -386,90 +360,8 @@ ews_df = DataFrame(
             end
 
             filtered_ews_vals_vec = filter(!ismissing, ews_vals_vec)
-            filtered_inc_ews_vals_vec = filter(!ismissing, inc_ews_vals_vec)
+            filtered_null_ews_vals_vec = filter(!ismissing, null_ews_vals_vec)
             filter!(x -> x != 0, failed_sims)
-
-            @assert length(ews_vals_vec) == length(inc_ews_vals_vec)
-
-            ews_vals_sa = StructArray(
-                convert(Vector{EWSMetrics}, filtered_ews_vals_vec)
-            )
-            inc_ews_vals_sa = StructArray(
-                convert(Vector{EWSMetrics}, filtered_inc_ews_vals_vec)
-            )
-
-            for ews_metric in ews_metrics
-                simulation_tau_heatmap_df!(
-                    ews_df,
-                    ews_vals_sa,
-                    ews_metric;
-                    individual_test_specification = test_specification,
-                    ews_metric_specification = ews_metric_specification,
-                    ews_enddate_type = ews_enddate_type,
-                    statistic_function = StatsBase.mean,
-                )
-            end
-
-            println(
-                styled"\t\t\t\t-> Single scenario plots"
-            )
-
-            for sim in [selected_sims[1]]
-                if sim in failed_sims
-                    write(
-                        io,
-                        "Tried to plot single EWS for simulation $(sim), but failed as no end date was found\n\n",
-                    )
-                    continue
-                end
-                enddate = enddate_vec[sim]
-
-                ews_vals = ews_vals_vec[sim]
-
-                aggregated_noise_vec = aggregate_timeseries(
-                    @view(noisearr[:, sim]),
-                    ews_metric_specification.aggregation,
-                )
-
-                aggregated_inc_vec = aggregate_timeseries(
-                    @view(ensemble_single_incarr[:, 1, sim]),
-                    ews_metric_specification.aggregation,
-                )
-                aggregated_outbreak_status_vec = aggregate_thresholds_vec(
-                    @view(ensemble_single_incarr[:, 3, sim]),
-                    ews_metric_specification.aggregation,
-                )
-
-                aggregated_test_vec = aggregate_timeseries(
-                    @view(testarr[:, 5, sim]),
-                    ews_metric_specification.aggregation,
-                )
-
-                aggregated_test_movingavg_vec = zeros(
-                    Int64, size(aggregated_test_vec)
-                )
-
-                calculate_movingavg!(
-                    aggregated_test_movingavg_vec,
-                    aggregated_test_vec,
-                    7,
-                )
-
-                aggregated_Reff_vec = aggregate_Reff_vec(
-                    @view(ensemble_single_Reff_arr[:, sim]),
-                    ews_metric_specification.aggregation,
-                )
-
-                aggregated_Reff_thresholds_arr =
-                    ensemble_single_Reff_thresholds_vec[sim] .÷
-                    ews_metric_specification.aggregation
-
-                aggregated_outbreak_thresholds_arr =
-                    ensemble_single_periodsum_vecs[sim][
-                        (ensemble_single_periodsum_vecs[sim][:, 4] .== 1),
-                        [1, 2],
-                    ] .÷ ews_metric_specification.aggregation
-            end
         end
     end
 end

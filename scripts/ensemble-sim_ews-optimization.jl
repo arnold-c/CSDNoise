@@ -114,6 +114,22 @@ ensemble_single_seir_arr = get_ensemble_file(
     ensemble_specification
 )["ensemble_seir_arr"]
 
+ensemble_dynamics_parameters_sa = StructVector(
+    get_ensemble_file(
+        ensemble_specification
+    )["dynamics_parameters"],
+)
+
+null_single_seir_arr = get_ensemble_file(
+    null_specification
+)["ensemble_seir_arr"]
+
+null_dynamics_parameters_sa = StructVector(
+    get_ensemble_file(
+        null_specification
+    )["dynamics_parameters"],
+)
+
 ensemble_single_scenario_inc_file = get_ensemble_file(
     ensemble_specification, ensemble_outbreak_specification
 )
@@ -128,6 +144,11 @@ ensemble_single_Reff_arr = get_ensemble_file(
 ensemble_single_Reff_thresholds_vec = get_ensemble_file(
     ensemble_specification
 )["ensemble_Reff_thresholds_vec"]
+
+#%%
+@assert ensemble_dynamics_parameters_sa.burnin_vaccination_coverage ==
+    null_dynamics_parameters_sa.burnin_vaccination_coverage ==
+    null_dynamics_parameters_sa.vaccination_coverage
 
 #%%
 ensemble_vax_plotpath = joinpath(

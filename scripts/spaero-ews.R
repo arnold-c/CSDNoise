@@ -1,8 +1,8 @@
 library(spaero)
 library(tidyverse)
 
-incvec_1d <- read_csv(here::here("out", "incidence-array_1d_sim-1.csv"), col_names = FALSE)
-incvec_30d <- read_csv(here::here("out", "incidence-array_30d_sim-1.csv"), col_names = FALSE)
+incvec_1d <- read_csv(here::here("out", "tycho", "tests", "incidence-array_1d_sim-1.csv"), col_names = FALSE)
+incvec_30d <- read_csv(here::here("out", "tycho", "tests", "incidence-array_30d_sim-1.csv"), col_names = FALSE)
 
 get_stats_wrapper <- function(incvec, bandwidth = 35, backward_only = FALSE, lag = 1) {
   get_stats(

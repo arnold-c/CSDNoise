@@ -222,20 +222,28 @@ sim_num = 1
 # Can use RCall to @rput, but write to csv so can put R code in own file
 # that can be run independently (as well as provide linting etc)
 DelimitedFiles.writedlm(
-    outdir("incidence-array_1d_sim-$(sim_num).csv"),
+    outdir(
+        "tycho",
+        "tests",
+        "incidence-array_1d_sim-$(sim_num).csv",
+    ),
     ensemble_single_incarr[:, 1, sim_num],
     ',',
 )
 
 DelimitedFiles.writedlm(
-    outdir("incidence-array_30d_sim-$(sim_num).csv"),
+    outdir(
+        "tycho",
+        "tests",
+        "incidence-array_30d_sim-$(sim_num).csv",
+    ),
     CSDNoise.aggregate_timeseries(ensemble_single_incarr[:, 1, sim_num], 30),
     ',',
 )
 
 #%%
 R"""
-source(here::here("scripts","spaero-ews.R"))
+source(here::here("scripts", "spaero-ews.R"))
 """
 
 @rget spaero_ews_backward_1d spaero_ews_backward_30d spaero_ews_centered_1d spaero_ews_centered_30d

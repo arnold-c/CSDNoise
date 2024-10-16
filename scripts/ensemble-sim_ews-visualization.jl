@@ -3,8 +3,6 @@ using DrWatson
 @quickactivate "CSDNoise"
 
 using UnPack
-using ColorSchemes
-using Dates
 
 using CSDNoise
 using StructArrays
@@ -15,11 +13,11 @@ using StatsBase: StatsBase
 using Random: Random
 using Distributions: Distributions
 using StyledStrings
+using Dates
 
 using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
-include(srcdir("ensemble-parameters.jl"))
 
 #%%
 ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
@@ -47,11 +45,11 @@ epsilon = calculate_import_rate(
 
 min_burnin_vaccination_coverage = calculate_vaccination_rate_to_achieve_Reff(
     0.9,
+    burnin_years * 2,
     ensemble_state_specification.init_states.S,
     ensemble_state_specification.init_states.N,
     R0,
     mu,
-    burnin_years * 2,
 )
 
 max_burnin_vaccination_coverage = 1.0
@@ -70,8 +68,8 @@ ensemble_dynamics_specification = DynamicsParameterSpecification(
     R0,
     min_burnin_vaccination_coverage,
     max_burnin_vaccination_coverage,
-    min_vaccination_coverage,
-    max_vaccination_coverage,
+    0.6,
+    0.8,
 )
 
 #%%
@@ -83,6 +81,10 @@ ensemble_specification = EnsembleSpecification(
     ensemble_dynamics_specification,
     ensemble_time_specification,
     ensemble_nsims,
+)
+
+ensemble_outbreak_specification = OutbreakSpecification(
+    5, 30, 500
 )
 
 #%%
@@ -135,21 +137,15 @@ ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
     Reff_alpha = 1,
 )
 
-plotpath = joinpath(
+Reff_incidence_plotpath = joinpath(
     ensemble_vax_plotpath,
     "ensemble-sim_single-scenario_incidence_Reff.png",
 )
 
 save(
-    plotpath,
+    Reff_incidence_plotpath,
     ensemble_single_scenario_incidence_Reff_plot;
     size = (2200, 1600),
-)
-
-#%%
-calculate_vaccination_rate_to_achieve_Reff(
-    0.9, ensemble_state_specification.init_states,
-    ensemble_dynamics_specification, 10,
 )
 
 #%%
@@ -162,13 +158,13 @@ ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
 
-plotpath = joinpath(
+incidence_prevalence_plotpath = joinpath(
     ensemble_vax_plotpath,
     "ensemble-sim_single-scenario_incidence_prevalence.png",
 )
 
 save(
-    plotpath,
+    incidence_prevalence_plotpath,
     ensemble_single_scenario_incidence_prevalence_plot;
     size = (2200, 1600),
 )
@@ -233,7 +229,7 @@ ews_df = DataFrame(
     noise_specification, percent_tested, ews_metric_specification
 ) in
                   Iterators.product(
-    [ensemble_noise_specification_vec[1]],
+    [PoissonNoiseSpecification(8.0)],
     percent_tested_vec,
     ews_spec_vec,
 )
@@ -383,12 +379,12 @@ ews_df = DataFrame(
                     "tau-distributions",
                 )
                 mkpath(plotdir)
-                plotpath = joinpath(
+                ews_plotpath = joinpath(
                     plotdir,
                     "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png",
                 )
 
-                if !isfile(plotpath) || force
+                if !isfile(ews_plotpath) || force
                     plot = simulation_tau_distribution(
                         ews_vals_sa,
                         inc_ews_vals_sa,
@@ -397,7 +393,7 @@ ews_df = DataFrame(
                     )
 
                     save(
-                        plotpath,
+                        ews_plotpath,
                         plot;
                         size = (2200, 1600),
                     )
@@ -505,7 +501,7 @@ ews_df = DataFrame(
             end
         end
 
-        plotpath = joinpath(
+        tau_heatmap_plotpath = joinpath(
             plotsdir(),
             "ensemble",
             "burnin-time-$(burnin_time)",
@@ -519,9 +515,9 @@ ews_df = DataFrame(
             ews_metric_specification.dirpath,
             ews_enddate_type_str,
         )
-        mkpath(plotpath)
-        plotpath = joinpath(
-            plotpath, "ews-tau-heatmap_mean.png"
+        mkpath(tau_heatmap_plotpath)
+        tau_heatmap_plotpath = joinpath(
+            tau_heatmap_plotpath, "ews-tau-heatmap_mean.png"
         )
 
         println(
@@ -539,7 +535,7 @@ ews_df = DataFrame(
         )
 
         save(
-            plotpath,
+            tau_heatmap_plotpath,
             tau_heatmap;
             size = (2200, 1600),
         )

@@ -25,11 +25,11 @@ plotxmax = cdc_week_to_date(plotxmax_year, 1; weekday = 6) + Day(bandwidth)
 
 #%%
 tycho_CA_measles_long_plotdata = CSV.read(
-    outdir("tycho_CA_measles_long_plotdata.csv"), DataFrame
+    outdir("tycho", "tycho_CA_measles_long_plotdata.csv"), DataFrame
 )
 
 tycho_CA_measles_wide_plotdata = CSV.read(
-    outdir("tycho_CA_measles_wide_plotdata.csv"), DataFrame
+    outdir("tycho", "tycho_CA_measles_wide_plotdata.csv"), DataFrame
 )
 
 plot_dates =

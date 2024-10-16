@@ -211,7 +211,7 @@ end
 
 struct DynamicsParameters{
     T1<:AbstractFloat,
-    T2<:Union{<:Integer,T1},
+    T2<:Real,
     T3<:Function,
 }
     beta_mean::T1

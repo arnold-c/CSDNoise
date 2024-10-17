@@ -236,9 +236,10 @@ ews_df = ews_hyperparam_optimization(
         ensemble_single_Reff_thresholds_vec,
         ensemble_single_periodsum_vecs,
     );
-    logfilepath = logfilepath,
-    filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
-    force = true,
+    filedir = outdir("ensemble", "hyperparam-optimization"),
+    filename_base = "ews-hyperparam-optimization.jld2",
+    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
+    force = false,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
 )

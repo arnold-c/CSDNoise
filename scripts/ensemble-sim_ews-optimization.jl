@@ -162,9 +162,7 @@ ensemble_vax_plotpath = joinpath(
 mkpath(ensemble_vax_plotpath)
 
 #%%
-io_file = scriptsdir("ensemble-sim_ews-optimization.log.txt")
-
-force = false
+logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
 noise_specification_vec = [PoissonNoiseSpecification(8.0)]
 
@@ -249,9 +247,9 @@ ews_df = ews_hyperparam_optimization(
         ensemble_single_Reff_thresholds_vec,
         ensemble_single_periodsum_vecs,
     );
-    io_file = io_file,
+    logfilepath = logfilepath,
     filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
-    force = false,
+    force = true,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
 )

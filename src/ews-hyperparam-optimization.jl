@@ -10,7 +10,7 @@ function ews_hyperparam_optimization(
     specification_vecs,
     data_arrs;
     filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
-    io_file = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
+    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     force = false,
     specification_vec_tuples = (
         noise_specification = NoiseSpecification[],
@@ -45,7 +45,7 @@ function ews_hyperparam_optimization(
         ews_df,
         specification_vecs,
         data_arrs;
-        io_file = io_file,
+        logfilepath = logfilepath,
         specification_vec_tuples = specification_vec_tuples,
     )
 
@@ -66,7 +66,7 @@ function ews_hyperparam_optimization!(
     ews_df,
     specification_vecs,
     data_arrs;
-    io_file = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
+    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     specification_vec_tuples = (
         noise_specification = NoiseSpecification[],
         test_specification = IndividualTestSpecification[],
@@ -120,7 +120,7 @@ function ews_hyperparam_optimization!(
 
     ensemble_nsims = size(ensemble_single_incarr, 3)
 
-    io = open(io_file, "a")
+    logfile = open(logfilepath, "a")
 
     @showprogress for noise_specification in missing_noise_specification_vec
         println(
@@ -263,11 +263,11 @@ function ews_hyperparam_optimization!(
                     else
                         failed_sims[sim] = sim
                         write(
-                            io,
+                            logfile,
                             "$(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))\n",
                         )
-                        write(io, "Error:\t$(Try.unwrap_err(enddate))\n")
-                        write(io, "Simulation:\t$(sim)\n\n")
+                        write(logfile, "Error:\t$(Try.unwrap_err(enddate))\n")
+                        write(logfile, "Simulation:\t$(sim)\n\n")
                     end
                 end
 

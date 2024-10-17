@@ -12,13 +12,15 @@ function ews_hyperparam_optimization(
     data_arrs;
     filedir = outdir("ensemble", "ews-hyperparam-optimization"),
     gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
-    gridsearch_output_filepath = filedir *
-                                 string(Dates.now()) *
-                                 gridsearch_filename_base,
+    gridsearch_output_filepath = joinpath(
+        filedir,
+        string(Dates.now()) * gridsearch_filename_base,
+    ),
     optimization_filename_base = "ews-hyperparam-optimization.jld2",
-    optimization_output_filepath = filedir *
-                                   string(Dates.now()) *
-                                   optimization_filename_base,
+    optimization_output_filepath = joinpath(
+        filedir,
+        string(Dates.now()) * optimization_filename_base,
+    ),
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     force = false,
     specification_vec_tuples = (

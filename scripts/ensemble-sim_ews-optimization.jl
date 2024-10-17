@@ -243,3 +243,38 @@ ews_df = ews_hyperparam_optimization(
     force = false,
     specification_vec_tuples = specification_vec_tuples,
 )
+
+#%%
+subset_ews_df = select(
+    subset(
+        ews_df,
+        :noise_specification => ByRow(==(PoissonNoiseSpecification(8.0))),
+        :test_specification =>
+            ByRow(==(IndividualTestSpecification(1.0, 1.0, 0))),
+        :percent_tested => ByRow(==(1.0)),
+        :ews_metric_specification => ByRow(
+            ==(
+                calculate_bandwidth_and_return_ews_metric_spec(
+                    Centered,
+                    7,
+                    52 * 7,
+                    1,
+                ),
+            ),
+        ),
+        :ews_enddate_type => ByRow(==(Reff_start)),
+        :ews_metric => ByRow(==("mean")),
+    ),
+    [
+        :ews_metric,
+        :ews_threshold_percentile,
+        :ews_threshold_burnin,
+        :ews_consecutive_thresholds,
+        :accuracy,
+        :sensitivity,
+        :specificity,
+    ],
+)
+
+nrow(subset_ews_df)
+names(ews_df)

@@ -150,18 +150,6 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 )["ensemble_Reff_thresholds_vec"]
 
 #%%
-ensemble_vax_plotpath = joinpath(
-    plotsdir(),
-    "ensemble",
-    "burnin-time-$(burnin_time)",
-    "min-burnin-vax_$(min_burnin_vaccination_coverage)",
-    "max-burnin-vax_$(max_burnin_vaccination_coverage)",
-    "min-vax_$(min_vaccination_coverage)",
-    "max-vax_$(max_vaccination_coverage)",
-)
-mkpath(ensemble_vax_plotpath)
-
-#%%
 logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
 noise_specification_vec = [PoissonNoiseSpecification(8.0)]
@@ -174,6 +162,7 @@ test_specification_vec = [
 
 percent_tested_vec = [1.0]
 
+#%%
 ews_method_vec = [
     Centered,
     Backward,

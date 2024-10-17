@@ -152,7 +152,10 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 #%%
 logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
-noise_specification_vec = [PoissonNoiseSpecification(8.0)]
+noise_specification_vec = [
+    PoissonNoiseSpecification(1.0),
+    PoissonNoiseSpecification(8.0),
+]
 
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
@@ -164,10 +167,14 @@ percent_tested_vec = [1.0]
 
 #%%
 ews_method_vec = [
-    Centered,
-    Backward,
+    # Centered,
+    Backward
 ]
-ews_aggregation_days_vec = [7, 14, 28]
+ews_aggregation_days_vec = [
+    7,
+    14,
+    28,
+]
 ews_bandwidth_days_vec = [52 * 7]
 ews_lag_days_vec = [1]
 
@@ -193,11 +200,14 @@ ews_metric_vec = [
 ]
 
 #%%
-ews_enddate_type_vec = [Reff_start, Reff_end]
+ews_enddate_type_vec = [
+    Reff_start
+    # Reff_end
+]
 ews_threshold_window_vec = [Main.Expanding]
 ews_threshold_percentile_vec = [collect(0.9:0.02:0.98)..., 0.99]
-ews_consecutive_thresholds_vec = [collect(2:1:10)..., collect(20:10:30)...]
-ews_threshold_burnin_vec = collect(10:1:15)
+ews_consecutive_thresholds_vec = [collect(2:1:30)...]
+ews_threshold_burnin_vec = [collect(10:1:15)..., 30, 50]
 
 #%%
 specification_vecs = (;
@@ -255,7 +265,7 @@ subset_ews_df = select(
         :ews_metric_specification => ByRow(
             ==(
                 calculate_bandwidth_and_return_ews_metric_spec(
-                    Centered,
+                    Backward,
                     7,
                     52 * 7,
                     1,
@@ -278,3 +288,37 @@ subset_ews_df = select(
 
 nrow(subset_ews_df)
 names(ews_df)
+
+subset_ews_df
+
+#%%
+select(
+    subset(
+        ews_df,
+        :noise_specification => ByRow(==(PoissonNoiseSpecification(8.0))),
+        :test_specification =>
+            ByRow(==(IndividualTestSpecification(1.0, 1.0, 0))),
+        :percent_tested => ByRow(==(1.0)),
+        :ews_metric_specification => ByRow(
+            ==(
+                calculate_bandwidth_and_return_ews_metric_spec(
+                    Backward,
+                    7,
+                    52 * 7,
+                    1,
+                ),
+            ),
+        ),
+        :ews_enddate_type => ByRow(==(Reff_start)),
+        :ews_metric => ByRow(==("variance")),
+    ),
+    [
+        :ews_metric,
+        :ews_threshold_percentile,
+        :ews_threshold_burnin,
+        :ews_consecutive_thresholds,
+        :accuracy,
+        :sensitivity,
+        :specificity,
+    ],
+)

@@ -24,6 +24,7 @@ function ews_hyperparam_optimization(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    time_per_run_s = 0.11,
     return_df = true,
 )
     if isfile(filepath) && !force
@@ -47,11 +48,23 @@ function ews_hyperparam_optimization(
         data_arrs;
         logfilepath = logfilepath,
         specification_vec_tuples = specification_vec_tuples,
+        time_per_run_s = time_per_run_s,
     )
 
     if Try.iserr(val)
         return val
     end
+
+    time_taken_s, missing_runs = Try.unwrap(val)
+    time_per_run_s = time_taken_s / missing_runs
+
+    time_taken_message = if time_taken_s < 60
+        "$(round(time_taken_s; digits = 0)) seconds"
+    else
+        "$(round(time_taken_s / 60; digits = 2)) minutes"
+    end
+
+    @info "🟡 ews_hyperparam_optimization.jl completed $(missing_runs) missing simulations in $(time_taken_message) ($(round(time_per_run_s; digits = 4)) seconds per run). 🟡"
 
     @tagsave(filepath, Dict("ews_df" => ews_df))
 
@@ -79,6 +92,7 @@ function ews_hyperparam_optimization!(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    time_per_run_s = 0.11,
 )
     @assert map(propertynames(specification_vecs)) do pn
         Symbol(match(r"(.*)(_vec)$", string(pn)).captures[1])
@@ -89,6 +103,7 @@ function ews_hyperparam_optimization!(
         ews_df,
         specification_vecs;
         specification_vec_tuples = specification_vec_tuples,
+        time_per_run_s = time_per_run_s,
     )
 
     if Try.iserr(missing_specification_vecs)
@@ -98,7 +113,7 @@ function ews_hyperparam_optimization!(
     @assert map(propertynames(Try.unwrap(missing_specification_vecs))) do pn
         Symbol(match(r"(missing_)(.*)$", string(pn)).captures[2])
     end ==
-        propertynames(specification_vecs)
+        (propertynames(specification_vecs)..., :runs)
 
     @unpack missing_noise_specification_vec,
     missing_test_specification_vec,
@@ -109,7 +124,8 @@ function ews_hyperparam_optimization!(
     missing_ews_threshold_burnin_vec,
     missing_ews_threshold_percentile_vec,
     missing_ews_consecutive_thresholds_vec,
-    missing_ews_metric_vec = Try.unwrap(missing_specification_vecs)
+    missing_ews_metric_vec,
+    missing_runs = Try.unwrap(missing_specification_vecs)
 
     @unpack ensemble_specification,
     ensemble_single_incarr,
@@ -122,6 +138,7 @@ function ews_hyperparam_optimization!(
 
     logfile = open(logfilepath, "a")
 
+    start_time = time()
     @showprogress for noise_specification in missing_noise_specification_vec
         println(
             styled"{green:\n=================================================================}"
@@ -306,7 +323,8 @@ function ews_hyperparam_optimization!(
             end
         end
     end
-    return Try.Ok()
+    end_time = time()
+    return Try.Ok((; time = end_time - start_time, missing_runs = missing_runs))
 end
 
 function check_missing_ews_hyperparameter_simulations(
@@ -324,6 +342,7 @@ function check_missing_ews_hyperparameter_simulations(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    time_per_run_s = 0.11,
 )
     run_params_df = DataFrame(
         specification_vec_tuples
@@ -364,13 +383,24 @@ function check_missing_ews_hyperparameter_simulations(
         on = [propertynames(specification_vec_tuples)...],
     )
 
-    if nrow(missing_run_params_df) == 0
+    missing_runs = nrow(missing_run_params_df)
+
+    if missing_runs == 0
         return Try.Err("No missing simulations")
     end
 
-    if nrow(missing_run_params_df) > 0
+    if missing_runs > 0
+        nrun_time_s = missing_runs * time_per_run_s
+        nrun_time_minutes = round(nrun_time_s / 60; digits = 2)
+        nrun_time_message = if nrun_time_s < 10
+            "less than 10 seconds"
+        elseif nrun_time_s < 60
+            "approximately $(round(nrun_time_s; digits = 0)) seconds"
+        else
+            "approximately $(nrun_time_minutes) minutes"
+        end
         choice = request(
-            "There are $(nrow(missing_run_params_df)) missing simulations. Do you want to continue?",
+            "There are $(missing_runs) missing simulations. This is estimated to take $(nrun_time_message). Do you want to continue?",
             RadioMenu(["No", "Yes"]; ctrl_c_interrupt = false),
         )
 
@@ -393,5 +423,7 @@ function create_missing_run_params_nt(missing_run_params_df)
         unique(missing_run_params_df[!, pn])
     end
 
-    return (; zip(output_pns, vals)...)
+    missing_runs = nrow(missing_run_params_df)
+
+    return (; zip(output_pns, vals)..., missing_runs)
 end

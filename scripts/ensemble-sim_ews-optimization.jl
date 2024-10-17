@@ -236,15 +236,10 @@ ews_df = ews_hyperparam_optimization(
         ensemble_single_Reff_thresholds_vec,
         ensemble_single_periodsum_vecs,
     );
-    filedir = outdir("ensemble", "hyperparam-optimization"),
-    filename_base = "ews-hyperparam-optimization.jld2",
+    filedir = outdir("ensemble", "ews-hyperparam-optimization"),
+    gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
+    optimization_filename_base = "ews-hyperparam-optimization.jld2",
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     force = false,
-    return_df = true,
     specification_vec_tuples = specification_vec_tuples,
 )
-
-#%%
-unique(ews_df.accuracy)
-unique(ews_df.sensitivity)
-unique(ews_df.specificity)

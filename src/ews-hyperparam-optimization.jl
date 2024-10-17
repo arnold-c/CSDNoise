@@ -10,8 +10,95 @@ using Try: Try
 function ews_hyperparam_optimization(
     specification_vecs,
     data_arrs;
-    filedir = outdir("ensemble", "hyperparam-optimization"),
-    filename_base = "ews-hyperparam-optimization.jld2",
+    filedir = outdir("ensemble", "ews-hyperparam-optimization"),
+    gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
+    gridsearch_output_filepath = filedir *
+                                 string(Dates.now()) *
+                                 gridsearch_filename_base,
+    optimization_filename_base = "ews-hyperparam-optimization.jld2",
+    optimization_output_filepath = filedir *
+                                   string(Dates.now()) *
+                                   optimization_filename_base,
+    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
+    force = false,
+    specification_vec_tuples = (
+        noise_specification = NoiseSpecification[],
+        test_specification = IndividualTestSpecification[],
+        percent_tested = Float64[],
+        ews_metric_specification = EWSMetricSpecification[],
+        ews_enddate_type = EWSEndDateType[],
+        ews_threshold_window = EWSThresholdWindow[],
+        ews_threshold_burnin = Int[],
+        ews_threshold_percentile = Float64[],
+        ews_consecutive_thresholds = Int[],
+        ews_metric = String[],
+    ),
+    time_per_run_s = 0.11,
+)
+    ews_df = ews_hyperparam_gridsearch(
+        specification_vecs,
+        data_arrs;
+        filedir = filedir,
+        filename_base = gridsearch_filename_base,
+        output_filepath = gridsearch_output_filepath,
+        logfilepath = logfilepath,
+        force = force,
+        specification_vec_tuples = specification_vec_tuples,
+        time_per_run_s = time_per_run_s,
+        return_df = true,
+    )
+
+    load_filepath = load_most_recent_hyperparam_gridsearch_file(
+        optimization_filename_base,
+        filedir,
+    )
+    optimal_ews_df = filter_optimal_ews_hyperparam_gridsearch(ews_df)
+
+    if Try.isok(load_filepath) && !force
+        previous_optimal_ews_df = load(Try.unwrap(load_filepath))["optimal_ews_df"]
+
+        if optimal_ews_df == previous_optimal_ews_df
+            @info "🟢 Previous optimal ews_df is the same as the current. No need to save a new version. 🟢"
+            return optimal_ews_df
+        end
+    end
+
+    @tagsave(
+        optimization_output_filepath,
+        Dict("optimal_ews_df" => optimal_ews_df)
+    )
+    @info "🟢 Saved optimal ews_df to $(optimization_output_filepath) 🟢"
+
+    return optimal_ews_df
+end
+
+function filter_optimal_ews_hyperparam_gridsearch(ews_df)
+    return map(
+        collect(
+            groupby(
+                ews_df,
+                [
+                    :noise_specification,
+                    :test_specification,
+                    :percent_tested,
+                    :ews_metric_specification,
+                    :ews_enddate_type,
+                    :ews_metric,
+                ],
+            ),
+        ),
+    ) do df
+        max_accuracy = maximum(df[!, :accuracy])
+        return subset(df, :accuracy => ByRow(==(max_accuracy)))
+    end |>
+           x -> vcat(x...; cols = :union)
+end
+
+function ews_hyperparam_gridsearch(
+    specification_vecs,
+    data_arrs;
+    filedir = outdir("ensemble", "ews-hyperparam-optimization"),
+    filename_base = "ews-hyperparam-gridsearch.jld2",
     output_filepath = filedir *
                       string(Dates.now()) *
                       filename_base,
@@ -32,9 +119,9 @@ function ews_hyperparam_optimization(
     time_per_run_s = 0.11,
     return_df = true,
 )
-    load_filepath = load_most_recent_optimization_file(
-        "ews-hyperparam-optimization.jld2",
-        outdir("ensemble", "ews-hyperparam-optimization");
+    load_filepath = load_most_recent_hyperparam_gridsearch_file(
+        filename_base,
+        filedir,
     )
 
     if Try.isok(load_filepath) && !force
@@ -52,7 +139,7 @@ function ews_hyperparam_optimization(
 )
     end
 
-    val = ews_hyperparam_optimization!(
+    val = ews_hyperparam_gridsearch!(
         ews_df,
         specification_vecs,
         data_arrs;
@@ -80,7 +167,7 @@ function ews_hyperparam_optimization(
         "$(round(time_taken_s / 60; digits = 2)) minutes"
     end
 
-    @info "🟡 ews_hyperparam_optimization.jl completed $(missing_runs) missing simulations in $(time_taken_message) ($(round(time_per_run_s; digits = 4)) seconds per run). 🟡"
+    @info "🟢 ews_hyperparam_optimization.jl completed $(missing_runs) missing simulations in $(time_taken_message) ($(round(time_per_run_s; digits = 4)) seconds per run). 🟢"
 
     @tagsave(output_filepath, Dict("ews_df" => ews_df))
 
@@ -91,7 +178,7 @@ function ews_hyperparam_optimization(
     return nothing
 end
 
-function load_most_recent_optimization_file(
+function load_most_recent_hyperparam_gridsearch_file(
     filename_base,
     filedir,
 )
@@ -157,7 +244,7 @@ function load_most_recent_optimization_file(
     return Try.Ok(most_recent_filepath)
 end
 
-function ews_hyperparam_optimization!(
+function ews_hyperparam_gridsearch!(
     ews_df,
     specification_vecs,
     data_arrs;

@@ -4,7 +4,7 @@ include config.mk
 all: ensemble-targets tycho-targets test-targets
 
 # Ensemble targets
-ENSEMBLE_TARGETS = ensemble-sim ensemble-sim-ews-visualization
+ENSEMBLE_TARGETS = ensemble-sim ensemble-sim-ews-visualization ensemble-hyperparam-optimization
 .PHONY: $(ENSEMBLE_TARGETS) ensemble-targets
 $(ENSEMBLE_TARGETS): %: tmp/%
 ensemble-targets: $(ENSEMBLE_TARGETS)
@@ -14,6 +14,10 @@ tmp/ensemble-sim: scripts/ensemble-sim.jl
 	@touch $@
 
 tmp/ensemble-sim-ews-visualization: scripts/ensemble-sim_ews-visualization.jl tmp/ensemble-sim
+	julia $<
+	@touch $@
+
+tmp/ensemble-hyperparam-optimization: scripts/ensemble-sim_ews-optimization.jl tmp/ensemble-sim
 	julia $<
 	@touch $@
 

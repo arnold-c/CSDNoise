@@ -35,7 +35,7 @@ function ews_hyperparam_optimization(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
-    time_per_run_s = 0.11,
+    time_per_run_s = 0.08,
 )
     ews_df = ews_hyperparam_gridsearch(
         specification_vecs,
@@ -119,7 +119,7 @@ function ews_hyperparam_gridsearch(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
-    time_per_run_s = 0.11,
+    time_per_run_s = 0.08,
     return_df = true,
 )
     load_filepath = load_most_recent_hyperparam_gridsearch_file(
@@ -264,7 +264,7 @@ function ews_hyperparam_gridsearch!(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
-    time_per_run_s = 0.11,
+    time_per_run_s = 0.08,
 )
     @assert map(propertynames(specification_vecs)) do pn
         Symbol(match(r"(.*)(_vec)$", string(pn)).captures[1])
@@ -514,7 +514,7 @@ function check_missing_ews_hyperparameter_simulations(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
-    time_per_run_s = 0.11,
+    time_per_run_s = 0.08,
 )
     run_params_df = DataFrame(
         specification_vec_tuples

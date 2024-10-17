@@ -273,10 +273,10 @@ function ews_hyperparam_optimization!(
 
                 for (j, ews_metric) in pairs(missing_ews_metric_vec)
                     true_positives = length(
-                        filter(!ismissing, detection_index_arr[:, j])
+                        filter(!isnothing, detection_index_arr[:, j])
                     )
                     true_negatives = length(
-                        filter(ismissing, null_detection_index_arr[:, j])
+                        filter(isnothing, null_detection_index_arr[:, j])
                     )
                     sensitivity = true_positives / ensemble_nsims
                     specificity = true_negatives / ensemble_nsims

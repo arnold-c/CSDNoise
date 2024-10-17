@@ -4,6 +4,7 @@ using ProgressMeter
 using UnPack: @unpack
 using REPL: REPL
 using REPL.TerminalMenus: RadioMenu, request
+using Try: Try
 
 function ews_hyperparam_optimization(
     specification_vecs,
@@ -40,14 +41,19 @@ function ews_hyperparam_optimization(
 )
     end
 
-    ews_hyperparam_optimization!(
+    val = ews_hyperparam_optimization!(
         ews_df,
         specification_vecs,
         data_arrs;
-        filepath = filepath,
         io_file = io_file,
         specification_vec_tuples = specification_vec_tuples,
     )
+
+    if Try.iserr(val)
+        return val
+    end
+
+    @tagsave(filepath, Dict("ews_df" => ews_df))
 
     if return_df
         return ews_df
@@ -60,7 +66,6 @@ function ews_hyperparam_optimization!(
     ews_df,
     specification_vecs,
     data_arrs;
-    filepath = outdir("ensemble", "ews-hyperparam-optimization.jld2"),
     io_file = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     specification_vec_tuples = (
         noise_specification = NoiseSpecification[],
@@ -86,11 +91,11 @@ function ews_hyperparam_optimization!(
         specification_vec_tuples = specification_vec_tuples,
     )
 
-    if isnothing(missing_specification_vecs)
-        return nothing
+    if Try.iserr(missing_specification_vecs)
+        return missing_specification_vecs
     end
 
-    @assert map(propertynames(missing_specification_vecs)) do pn
+    @assert map(propertynames(Try.unwrap(missing_specification_vecs))) do pn
         Symbol(match(r"(missing_)(.*)$", string(pn)).captures[2])
     end ==
         propertynames(specification_vecs)
@@ -104,7 +109,7 @@ function ews_hyperparam_optimization!(
     missing_ews_threshold_burnin_vec,
     missing_ews_threshold_percentile_vec,
     missing_ews_consecutive_thresholds_vec,
-    missing_ews_metric_vec = missing_specification_vecs
+    missing_ews_metric_vec = Try.unwrap(missing_specification_vecs)
 
     @unpack ensemble_specification,
     ensemble_single_incarr,
@@ -301,7 +306,7 @@ function ews_hyperparam_optimization!(
             end
         end
     end
-    @tagsave(filepath, Dict("ews_df" => ews_df))
+    return Try.Ok()
 end
 
 function check_missing_ews_hyperparameter_simulations(
@@ -360,8 +365,7 @@ function check_missing_ews_hyperparameter_simulations(
     )
 
     if nrow(missing_run_params_df) == 0
-        println("Found no missing simulations")
-        return nothing
+        return Try.Err("No missing simulations")
     end
 
     if nrow(missing_run_params_df) > 0
@@ -371,8 +375,7 @@ function check_missing_ews_hyperparameter_simulations(
         )
 
         if choice != 2
-            println("Aborting ...")
-            return nothing
+            return Try.Err("User aborted")
         end
 
         println("Continuing ...")
@@ -380,7 +383,7 @@ function check_missing_ews_hyperparameter_simulations(
 
     missing_params_nt = create_missing_run_params_nt(missing_run_params_df)
 
-    return missing_params_nt
+    return Try.Ok(missing_params_nt)
 end
 
 function create_missing_run_params_nt(missing_run_params_df)

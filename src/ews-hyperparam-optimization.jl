@@ -60,7 +60,7 @@ function ews_hyperparam_optimization(
         previous_optimal_ews_df = load(Try.unwrap(load_filepath))["optimal_ews_df"]
 
         if optimal_ews_df == previous_optimal_ews_df
-            @info "🟢 Previous optimal ews_df is the same as the current. No need to save a new version. 🟢"
+            @info "🟨 Previous optimal ews_df is the same as the current. No need to save a new version. 🟨"
             return optimal_ews_df
         end
     end

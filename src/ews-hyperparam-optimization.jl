@@ -54,7 +54,7 @@ function ews_hyperparam_optimization(
         return_df = true,
     )
 
-    load_filepath = load_most_recent_hyperparam_gridsearch_file(
+    load_filepath = get_most_recent_hyperparam_gridsearch_filepath(
         optimization_filename_base,
         filedir,
     )
@@ -126,7 +126,7 @@ function ews_hyperparam_gridsearch(
     time_per_run_s = 0.08,
     return_df = true,
 )
-    load_filepath = load_most_recent_hyperparam_gridsearch_file(
+    load_filepath = get_most_recent_hyperparam_gridsearch_filepath(
         filename_base,
         filedir,
     )
@@ -186,6 +186,22 @@ function ews_hyperparam_gridsearch(
 end
 
 function load_most_recent_hyperparam_gridsearch_file(
+    filename_base,
+    filedir,
+)
+    filepath = get_most_recent_hyperparam_gridsearch_filepath(
+        filename_base,
+        filedir,
+    )
+
+    if Try.iserr(filepath)
+        return filepath
+    end
+
+    return load(Try.unwrap(filepath))
+end
+
+function get_most_recent_hyperparam_gridsearch_filepath(
     filename_base,
     filedir,
 )

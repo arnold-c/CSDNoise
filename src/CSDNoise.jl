@@ -68,7 +68,8 @@ export ews_hyperparam_optimization,
     ews_hyperparam_gridsearch,
     ews_hyperparam_gridsearch!,
     check_missing_ews_hyperparameter_simulations,
-    load_most_recent_hyperparam_gridsearch_file
+    load_most_recent_hyperparam_gridsearch_file,
+    get_most_recent_hyperparam_gridsearch_filepath
 
 include(
     "tycho-cleaning.jl"

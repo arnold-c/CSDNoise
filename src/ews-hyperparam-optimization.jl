@@ -37,6 +37,10 @@ function ews_hyperparam_optimization(
     ),
     time_per_run_s = 0.08,
 )
+    if !isdir(filedir)
+        mkpath(filedir)
+    end
+
     ews_df = ews_hyperparam_gridsearch(
         specification_vecs,
         data_arrs;

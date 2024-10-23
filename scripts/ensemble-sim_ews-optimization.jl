@@ -255,7 +255,7 @@ optimal_ews_df = ews_hyperparam_optimization(
 )
 
 #%%
-@unpack ews_df = load_most_recent_hyperparam_gridsearch_file(
+@unpack ews_df = load_most_recent_hyperparam_file(
     "ews-hyperparam-gridsearch.jld2",
     outdir("ensemble", "ews-hyperparam-optimization"),
 )
@@ -302,7 +302,7 @@ combine(
     groupby(subset_ews_df, :ews_threshold_burnin),
     :accuracy => mean,
     :accuracy => minimum,
-    :accuracy => maximum
+    :accuracy => maximum,
 )
 
 #%%

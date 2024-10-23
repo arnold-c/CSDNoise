@@ -295,10 +295,15 @@ subset_ews_df = select(
     ],
 )
 
-nrow(subset_ews_df)
-names(ews_df)
+maximum(eubset_ews_df[!, :accuracy])
+maximum(subset_ews_df[!, :specificity])
 
-subset_ews_df
+combine(
+    groupby(subset_ews_df, :ews_threshold_burnin),
+    :accuracy => mean,
+    :accuracy => minimum,
+    :accuracy => maximum
+)
 
 #%%
 select(

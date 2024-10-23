@@ -23,6 +23,7 @@ function ews_hyperparam_optimization(
     ),
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     force = false,
+    return_df = true,
     specification_vec_tuples = (
         noise_specification = NoiseSpecification[],
         test_specification = IndividualTestSpecification[],
@@ -75,7 +76,11 @@ function ews_hyperparam_optimization(
     )
     @info "🟢 Saved optimal ews_df to $(optimization_output_filepath) 🟢"
 
-    return optimal_ews_df
+    if return_df
+        return optimal_ews_df
+    end
+
+    return nothing
 end
 
 function filter_optimal_ews_hyperparam_gridsearch(ews_df)

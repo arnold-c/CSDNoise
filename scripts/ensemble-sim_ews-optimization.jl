@@ -251,6 +251,7 @@ optimal_ews_df = ews_hyperparam_optimization(
     optimization_filename_base = "ews-hyperparam-optimization.jld2",
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
     force = false,
+    return_df = true,
     specification_vec_tuples = specification_vec_tuples,
 )
 

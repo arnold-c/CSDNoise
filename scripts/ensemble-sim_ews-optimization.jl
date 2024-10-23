@@ -237,7 +237,7 @@ specification_vec_tuples = (
 )
 
 #%%
-ews_df = ews_hyperparam_optimization(
+optimal_ews_df = ews_hyperparam_optimization(
     specification_vecs,
     (
         ; ensemble_specification,
@@ -253,6 +253,15 @@ ews_df = ews_hyperparam_optimization(
     force = false,
     specification_vec_tuples = specification_vec_tuples,
 )
+
+#%%
+@unpack ews_df = load_most_recent_hyperparam_gridsearch_file(
+    "ews-hyperparam-gridsearch.jld2",
+    outdir("ensemble", "ews-hyperparam-optimization"),
+)
+
+#%%
+optimal_ews_df
 
 #%%
 subset_ews_df = select(

@@ -239,8 +239,8 @@ specification_vec_tuples = (
 #%%
 optimal_ews_df = ews_hyperparam_optimization(
     specification_vecs,
-    (
-        ; ensemble_specification,
+    (;
+        ensemble_specification,
         ensemble_single_incarr,
         null_single_incarr,
         ensemble_single_Reff_thresholds_vec,
@@ -253,6 +253,7 @@ optimal_ews_df = ews_hyperparam_optimization(
     force = false,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
+    subset_optimal_parameters = [:ews_threshold_burnin => ByRow(==(50))],
 )
 
 #%%

@@ -36,6 +36,15 @@ function ews_hyperparam_optimization(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    subset_optimal_parameters = [],
+    optimal_grouping_parameters = [
+        :noise_specification,
+        :test_specification,
+        :percent_tested,
+        :ews_metric_specification,
+        :ews_enddate_type,
+        :ews_metric,
+    ],
     time_per_run_s = 0.08,
 )
     if !isdir(filedir)
@@ -59,7 +68,11 @@ function ews_hyperparam_optimization(
         optimization_filename_base,
         filedir,
     )
-    optimal_ews_df = filter_optimal_ews_hyperparam_gridsearch(ews_df)
+    optimal_ews_df = filter_optimal_ews_hyperparam_gridsearch(
+        ews_df;
+        subset_optimal_parameters = subset_optimal_parameters,
+        optimal_grouping_parameters = optimal_grouping_parameters,
+    )
 
     if Try.isok(load_filepath) && !force
         previous_optimal_ews_df = load(Try.unwrap(load_filepath))["optimal_ews_df"]
@@ -83,19 +96,23 @@ function ews_hyperparam_optimization(
     return nothing
 end
 
-function filter_optimal_ews_hyperparam_gridsearch(ews_df)
+function filter_optimal_ews_hyperparam_gridsearch(
+    ews_df;
+    subset_optimal_parameters = [],
+    optimal_grouping_parameters = [
+        :noise_specification,
+        :test_specification,
+        :percent_tested,
+        :ews_metric_specification,
+        :ews_enddate_type,
+        :ews_metric,
+    ],
+)
     return map(
         collect(
             groupby(
-                ews_df,
-                [
-                    :noise_specification,
-                    :test_specification,
-                    :percent_tested,
-                    :ews_metric_specification,
-                    :ews_enddate_type,
-                    :ews_metric,
-                ],
+                subset(ews_df, subset_optimal_parameters),
+                optimal_grouping_parameters,
             ),
         ),
     ) do df

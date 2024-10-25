@@ -285,11 +285,14 @@ optimal_ews_heatmap_plot(
 )
 
 #%%
-groupby(optimal_ews_df, :ews_threshold_burnin) |>
-dfs -> combine(
-    dfs,
-    nrow,
-    :accuracy => mean,
-    :accuracy => minimum,
-    :accuracy => maximum,
+enddate_vec, survival_df = create_ews_survival_data(
+    test_df,
+    ensemble_specification,
+    ensemble_single_incarr,
+    null_single_incarr,
+    ensemble_single_Reff_thresholds_vec;
+    ews_metric = "mean",
 )
+
+#%%
+hist(enddate_vec)

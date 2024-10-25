@@ -71,7 +71,9 @@ export ews_hyperparam_optimization,
     load_most_recent_hyperparam_file,
     get_most_recent_hyperparam_filepath,
     optimal_ews_heatmap_df,
-    optimal_ews_heatmap_plot
+    optimal_ews_heatmap_plot,
+    ews_survival_plot,
+    create_ews_survival_data
 
 include(
     "tycho-cleaning.jl"

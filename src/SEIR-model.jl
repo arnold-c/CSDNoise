@@ -129,7 +129,7 @@ function seir_mod_loop!(
         S_births = rand(Poisson(mu * (1 - vaccination_coverage) * N * timestep)) # Birth -> S
         S_death = rand(Poisson(mu * S * timestep)) # S -> death
         R_death = rand(Poisson(mu * R * timestep)) # R -> death
-        import_inf = rand(Poisson((epsilon * N / R_0) * timestep)) # Import: S -> E
+        import_inf = rand(Poisson((epsilon * N / 16.0) * timestep)) # Import: S -> E
         R_births = rand(Poisson(mu * vaccination_coverage * N * timestep)) # Birth -> R
         latent = rand(Binomial(E, sigma * timestep)) # E -> I
         E_death = rand(Binomial(E - latent, mu * timestep)) # E -> death

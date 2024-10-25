@@ -262,7 +262,14 @@ optimal_ews_df = ews_hyperparam_optimization(
 )
 
 #%%
-optimal_ews_df
+groupby(optimal_ews_df, :ews_threshold_burnin) |>
+dfs -> combine(
+    dfs,
+    nrow,
+    :accuracy => mean,
+    :accuracy => minimum,
+    :accuracy => maximum,
+)
 
 #%%
 subset_ews_df = select(
@@ -296,7 +303,7 @@ subset_ews_df = select(
     ],
 )
 
-maximum(eubset_ews_df[!, :accuracy])
+maximum(subset_ews_df[!, :accuracy])
 maximum(subset_ews_df[!, :specificity])
 
 combine(

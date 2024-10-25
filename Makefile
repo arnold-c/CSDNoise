@@ -54,6 +54,16 @@ tmp/runtests: test/runtests.jl ensemble-targets
 	julia $<
 	@touch $@
 
+# Backup targets
+BACKUP_TARGETS = backup-ensemble-sims
+.PHONY: $(BACKUP_TARGETS) backup-targets
+$(BACKUP_TARGETS): %: tmp/%
+backup-targets: $(BACKUP_TARGETS)
+
+tmp/backup-ensemble-sims:
+	@echo "Backing up ensemble simulation output files"
+	$(shell cp -r out/ensemble/ "out/BACKUPS/_{$(date +%Y-%m-%d_%H:%M:%S)}_ensemble")
+
 # Cleaning targets
 .PHONY: clean-tests clean-all clean-tmp clean-plots clean-all-ensemble clean-ensemble-sims clean-ensemble-sims-ews-visualization clean-tycho-visualization clean-tycho-data-prep clean-tycho-brett-visualization
 clean-all: clean-tests clean-tmp clean-plots clean-all-ensemble clean-ensemble-sims-ews-visualization clean-tycho-visualization clean-tycho-data-prep clean-tycho-brett-visualization

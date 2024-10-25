@@ -910,19 +910,6 @@ function ews_survival_plot(
 
     Legend(fig[1, 2], surv_ax; orientation = :vertical)
 
-    # enddate_ax = Axis(
-    #     fig[2, 1];
-    #     title = "Enddate",
-    #     subtitle = "",
-    #     xlabel = "Time (Years)",
-    #     ylabel = "Count",
-    # )
-
-    # hist!(
-    #     enddate_ax, enddate_vec ./ 365;
-    #     bins = 1:0.1:(maximum(enddate_vec) ./ 365),
-    # )
-
     return fig
 end
 

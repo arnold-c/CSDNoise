@@ -657,9 +657,9 @@ function optimal_ews_heatmap_df(
 )
     tiebreaker_args = Match.@match tiebreaker_preference begin
         "speed" => (:ews_consecutive_thresholds, false)
-        "accuracy" => (:specificity, true)
+        "specificity" => (:specificity, true)
         _ => error(
-            "Invalid preference: $tiebreaker_preference. Please choose either \"speed\" or \"accuracy\"."
+            "Invalid preference: $tiebreaker_preference. Please choose either \"speed\" or \"specificity\"."
         )
     end
 
@@ -821,11 +821,168 @@ function create_ews_heatmap_matrix(
 end
 
 function ews_survival_plot(
-    optimal_ews_df;
+    detection_survival_vecs,
+    null_survival_vecs,
+    enddate_vec;
+    plottitle = "Survival",
+    subtitle = "",
+    endpoint_aggregation = 30,
 )
+    @unpack detection_survival_vec, detection_indices_vec =
+        detection_survival_vecs
+    @unpack null_survival_vec, null_indices_vec = null_survival_vecs
+
+    filtered_enddate_vec = filter(isinteger, enddate_vec)
+    times = collect(1:maximum(filtered_enddate_vec)) ./ 365
+
+    detection_survival_times = vcat(
+        0,
+        times[detection_indices_vec[1]],
+        times[detection_indices_vec]...,
+        times[end],
+    )
+    null_survival_times = vcat(
+        0,
+        times[null_indices_vec[1]],
+        times[null_indices_vec]...,
+        times[end],
+    )
+
+    detection_survival_vec = vcat(
+        detection_survival_vec[1], detection_survival_vec[1],
+        detection_survival_vec..., detection_survival_vec[end],
+    )
+    null_survival_vec = vcat(
+        null_survival_vec[1],
+        null_survival_vec[1],
+        null_survival_vec...,
+        null_survival_vec[end],
+    )
+
+    enddate_vec = div.(enddate_vec, endpoint_aggregation)
+    unique_enddate_vec = sort(unique(enddate_vec))
+    enddate_times = (unique_enddate_vec .* endpoint_aggregation) ./ 365
+
+    enddate_counts = map(unique_enddate_vec) do enddate
+        sum(enddate_vec .== enddate)
+    end
+
+    fig = Figure()
+    surv_ax = Axis(
+        fig[1, 1];
+        title = plottitle,
+        subtitle = subtitle,
+        xlabel = "Time (Years)",
+        ylabel = "Survival Numbers",
+        xticks = 1:1:10,
+        limits = (0, maximum(enddate_times), 0, nothing),
+    )
+
+    hist_ax = Axis(
+        fig[1, 1];
+        limits = (0, maximum(enddate_times), nothing, nothing),
+    )
+    hidexdecorations!(hist_ax)
+    hideydecorations!(hist_ax)
+
+    barplot!(
+        hist_ax,
+        enddate_times,
+        enddate_counts;
+        color = (:darkgray, 1.0),
+    )
+
+    lines!(
+        surv_ax,
+        detection_survival_times,
+        detection_survival_vec;
+        color = :blue,
+        label = "Detection",
+    )
+
+    lines!(
+        surv_ax,
+        null_survival_times,
+        null_survival_vec;
+        color = (:red, 0.5),
+        label = "Null",
+    )
+
+    Legend(fig[1, 2], surv_ax; orientation = :vertical)
+
+    # enddate_ax = Axis(
+    #     fig[2, 1];
+    #     title = "Enddate",
+    #     subtitle = "",
+    #     xlabel = "Time (Years)",
+    #     ylabel = "Count",
+    # )
+
+    # hist!(
+    #     enddate_ax, enddate_vec ./ 365;
+    #     bins = 1:0.1:(maximum(enddate_vec) ./ 365),
+    # )
+
+    return fig
 end
 
 function create_ews_survival_data(
+    ews_optimal_simulation_df;
+    nsims = 100,
+)
+    unique_detection_indices = sort(
+        filter(
+            !isnothing, unique(ews_optimal_simulation_df.detection_index)
+        ),
+    )
+
+    unique_null_detection_indices = sort(
+        filter(
+            !isnothing,
+            unique(
+                ews_optimal_simulation_df.null_detection_index
+            ),
+        ),
+    )
+
+    detection_indices_counts = map(
+        ((i, v),) -> sum(ews_optimal_simulation_df.detection_index .== v),
+        enumerate(unique_detection_indices),
+    )
+
+    null_detection_indices_counts = map(
+        ((i, v),) -> sum(
+            ews_optimal_simulation_df.null_detection_index .== v
+        ),
+        enumerate(unique_null_detection_indices),
+    )
+
+    @assert nsims ==
+        sum(detection_indices_counts) +
+            sum(ews_optimal_simulation_df.detection_index .== nothing)
+
+    @assert nsims ==
+        sum(null_detection_indices_counts) +
+            sum(ews_optimal_simulation_df.null_detection_index .== nothing)
+
+    max_enddate = maximum(ews_optimal_simulation_df.enddate)
+
+    detection_survival_vec = nsims .- cumsum(detection_indices_counts)
+    null_survival_vec = nsims .- cumsum(null_detection_indices_counts)
+
+    return (
+        (;
+            detection_survival_vec,
+            detection_indices_vec = Int64.(unique_detection_indices),
+        ),
+        (;
+            null_survival_vec,
+            null_indices_vec = Int64.(unique_null_detection_indices),
+        ),
+    )
+end
+
+function simulate_ews_survival_data(
     optimal_ews_df,
     ensemble_specification,
     ensemble_single_incarr,
@@ -999,8 +1156,5 @@ function create_ews_survival_data(
         )
     end
 
-    if failed_sims > 0
-        return Try.unwrap.(enddate_vec), survival_df
-    end
-    return enddate_vec, survival_df
+    return survival_df
 end

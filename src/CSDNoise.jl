@@ -73,6 +73,7 @@ export ews_hyperparam_optimization,
     optimal_ews_heatmap_df,
     optimal_ews_heatmap_plot,
     ews_survival_plot,
+    simulate_ews_survival_data,
     create_ews_survival_data
 
 include(

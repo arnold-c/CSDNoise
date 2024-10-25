@@ -265,7 +265,7 @@ optimal_ews_df = ews_hyperparam_optimization(
 #%%
 optimal_heatmap_df = optimal_ews_heatmap_df(
     optimal_ews_df;
-    tiebreaker_preference = "accuracy",
+    tiebreaker_preference = "specificity",
 )
 
 #%%
@@ -281,17 +281,45 @@ test_df = subset(
 
 #%%
 optimal_ews_heatmap_plot(
-    test_df
+    subset(
+        optimal_heatmap_df,
+        :ews_metric_specification =>
+            ByRow(==(EWSMetricSpecification(Backward, 28, 52 ÷ 4, 1))),
+        :ews_enddate_type => ByRow(==(Reff_start)),
+        :ews_threshold_burnin => ByRow(==(50)),
+        :ews_threshold_window => ByRow(==(Main.Expanding)),
+        :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
+    ),
 )
 
 #%%
-enddate_vec, survival_df = create_ews_survival_data(
+survival_df = simulate_ews_survival_data(
     test_df,
     ensemble_specification,
     ensemble_single_incarr,
     null_single_incarr,
     ensemble_single_Reff_thresholds_vec;
     ews_metric = "mean",
+)
+
+#%%
+
+#%%
+subset_survival_df = subset(
+    survival_df,
+    :test_specification => ByRow(==(IndividualTestSpecification(1.0, 1.0, 0))),
+)
+
+#%%
+detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
+    subset_survival_df
+)
+
+#%%
+ews_survival_plot(
+    detection_survival_vecs,
+    null_survival_vecs,
+    subset_survival_df.enddate;
 )
 
 #%%

@@ -6,6 +6,7 @@ using UnPack: @unpack
 using REPL: REPL
 using REPL.TerminalMenus: RadioMenu, request
 using Try: Try
+using Match: Match
 
 function ews_hyperparam_optimization(
     specification_vecs,
@@ -640,4 +641,181 @@ function create_missing_run_params_nt(missing_run_params_df)
     missing_runs = nrow(missing_run_params_df)
 
     return (; zip(output_pns, vals)..., missing_runs)
+end
+
+function optimal_ews_heatmap_df(
+    optimal_ews_df;
+    tiebreaker_preference = "speed",
+    optimal_grouping_parameters = [
+        :noise_specification,
+        :test_specification,
+        :percent_tested,
+        :ews_metric_specification,
+        :ews_enddate_type,
+        :ews_metric,
+    ],
+)
+    tiebreaker_args = Match.@match tiebreaker_preference begin
+        "speed" => (:ews_consecutive_thresholds, false)
+        "accuracy" => (:specificity, true)
+        _ => error(
+            "Invalid preference: $tiebreaker_preference. Please choose either \"speed\" or \"accuracy\"."
+        )
+    end
+
+    return map(
+        collect(
+            groupby(
+                optimal_ews_df,
+                optimal_grouping_parameters,
+            ),
+        ),
+    ) do df
+        sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[1, :]
+    end |>
+           x -> vcat(DataFrame.(x)...; cols = :union)
+end
+
+function optimal_ews_heatmap_plot(
+    df;
+    outcome = :accuracy,
+    baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
+    colormap = :Blues,
+    textcolorthreshold = 0.6,
+    kwargs...,
+)
+    kwargs_dict = Dict{Symbol,Any}(kwargs)
+
+    outcome_str = titlecase(string(outcome))
+
+    if !haskey(kwargs_dict, :plottitle)
+        plottitle =
+            "Heatmap: " * titlecase(string(outcome))
+    end
+
+    if !haskey(kwargs_dict, :subtitle)
+        ews_enddate_type_str = split(string(df[1, :ews_enddate_type]), "::")[1]
+
+        subtitle =
+            "Noise: $(get_noise_magnitude_description(df[1, :noise_specification])), $(ews_enddate_type_str)" *
+            "\nP = Percentile Threshold, C = Consecutive Thresholds, S = Specificity"
+    end
+
+    df[!, :test_sens] =
+        getproperty.(df.test_specification, :sensitivity)
+    df[!, :test_spec] = getproperty.(df.test_specification, :sensitivity)
+    df[!, :test_result_lag] =
+        getproperty.(df.test_specification, :test_result_lag)
+    sort!(
+        df,
+        [:test_sens, :test_spec, :test_result_lag];
+        rev = [true, true, false],
+    )
+
+    unique_tests = unique(df.test_specification)
+    if mapreduce(x -> x == baseline_test, +, unique_tests) == 0
+        error("default_test $baseline_test must be in unique_tests")
+    end
+
+    default_test_metric_order, mat = create_ews_heatmap_matrix(
+        df,
+        outcome,
+    )
+
+    threshold_percentile_matrix = create_ews_heatmap_matrix(
+        df,
+        :ews_threshold_percentile,
+        default_test_metric_order,
+    )
+
+    consecutive_thresholds_df = create_ews_heatmap_matrix(
+        df,
+        :ews_consecutive_thresholds,
+        default_test_metric_order,
+    )
+
+    specificity_df = create_ews_heatmap_matrix(
+        df,
+        :specificity,
+        default_test_metric_order,
+    )
+
+    function test_axis_label(test)
+        return "($(test.sensitivity), $(test.specificity), $(test.test_result_lag))"
+    end
+
+    fig = Figure()
+    ax = Axis(
+        fig[1, 1];
+        title = plottitle,
+        subtitle = subtitle,
+        xlabel = "Test Specification (Sensitivity, Specificity, Lag)",
+        ylabel = "EWS Metric",
+        xticks = (1:length(unique_tests), test_axis_label.(unique_tests)),
+        yticks = (
+            1:length(default_test_metric_order), default_test_metric_order
+        ),
+    )
+
+    hmap = heatmap!(
+        ax,
+        mat;
+        colormap = colormap,
+        colorrange = (0, 1),
+    )
+
+    for j in axes(mat, 2), i in axes(mat, 1)
+        val = mat[i, j]
+        textcolor = abs(val) < textcolorthreshold ? :black : :white
+        acc = round(mat[i, j]; digits = 2)
+        perc = round(threshold_percentile_matrix[i, j]; digits = 2)
+        consec = consecutive_thresholds_df[i, j]
+        spec = round(specificity_df[i, j]; digits = 2)
+        text!(
+            ax,
+            "Accuracy: $(acc)\nP: $(perc) C: $(consec) S: $(spec)";
+            position = (i, j),
+            color = textcolor,
+            align = (:center, :center),
+        )
+    end
+
+    limits!(
+        ax,
+        (0, length(unique_tests) + 1),
+        (0, length(default_test_metric_order) + 1),
+    )
+    #
+    Colorbar(fig[1, 2], hmap; label = outcome_str, width = 15, ticksize = 15)
+    return fig
+end
+
+function create_ews_heatmap_matrix(
+    df, outcome::Symbol, ews_metric_order
+)
+    ordered_df =
+        unstack(
+            select(df, [:ews_metric, :test_specification, outcome]),
+            :test_specification,
+            outcome,
+        ) |>
+        df -> df[indexin(ews_metric_order, df.ews_metric), :]
+
+    return Matrix(ordered_df[:, 2:end])'
+end
+
+function create_ews_heatmap_matrix(
+    df, outcome::Symbol
+)
+    ordered_df =
+        unstack(
+            select(df, [:ews_metric, :test_specification, outcome]),
+            :test_specification,
+            outcome,
+        ) |>
+        df -> sort(df, order(2; rev = false))
+
+    default_test_metric_order = ordered_df.ews_metric
+
+    return default_test_metric_order, Matrix(ordered_df[:, 2:end])'
 end

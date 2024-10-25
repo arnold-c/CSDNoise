@@ -69,7 +69,9 @@ export ews_hyperparam_optimization,
     ews_hyperparam_gridsearch!,
     check_missing_ews_hyperparameter_simulations,
     load_most_recent_hyperparam_file,
-    get_most_recent_hyperparam_filepath
+    get_most_recent_hyperparam_filepath,
+    optimal_ews_heatmap_df,
+    optimal_ews_heatmap_plot
 
 include(
     "tycho-cleaning.jl"

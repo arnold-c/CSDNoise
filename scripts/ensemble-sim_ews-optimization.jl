@@ -263,6 +263,28 @@ optimal_ews_df = ews_hyperparam_optimization(
 )
 
 #%%
+optimal_heatmap_df = optimal_ews_heatmap_df(
+    optimal_ews_df;
+    tiebreaker_preference = "accuracy",
+)
+
+#%%
+test_df = subset(
+    optimal_heatmap_df,
+    :ews_metric_specification =>
+        ByRow(==(EWSMetricSpecification(Backward, 7, 52, 1))),
+    :ews_enddate_type => ByRow(==(Reff_start)),
+    :ews_threshold_burnin => ByRow(==(50)),
+    :ews_threshold_window => ByRow(==(Main.Expanding)),
+    :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
+)
+
+#%%
+optimal_ews_heatmap_plot(
+    test_df
+)
+
+#%%
 groupby(optimal_ews_df, :ews_threshold_burnin) |>
 dfs -> combine(
     dfs,

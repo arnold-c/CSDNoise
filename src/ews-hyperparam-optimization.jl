@@ -46,6 +46,7 @@ function ews_hyperparam_optimization(
         :ews_enddate_type,
         :ews_metric,
     ],
+    disable_time_check = false,
     time_per_run_s = 0.08,
 )
     if !isdir(filedir)
@@ -61,6 +62,7 @@ function ews_hyperparam_optimization(
         logfilepath = logfilepath,
         force = force,
         specification_vec_tuples = specification_vec_tuples,
+        disable_time_check = disable_time_check,
         time_per_run_s = time_per_run_s,
         return_df = true,
     )
@@ -146,6 +148,7 @@ function ews_hyperparam_gridsearch(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    disable_time_check = false,
     time_per_run_s = 0.08,
     return_df = true,
 )
@@ -175,6 +178,7 @@ function ews_hyperparam_gridsearch(
         data_arrs;
         logfilepath = logfilepath,
         specification_vec_tuples = specification_vec_tuples,
+        disable_time_check = disable_time_check,
         time_per_run_s = time_per_run_s,
     )
 
@@ -307,6 +311,7 @@ function ews_hyperparam_gridsearch!(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    disable_time_check = false,
     time_per_run_s = 0.08,
 )
     @assert map(propertynames(specification_vecs)) do pn
@@ -318,6 +323,7 @@ function ews_hyperparam_gridsearch!(
         ews_df,
         specification_vecs;
         specification_vec_tuples = specification_vec_tuples,
+        disable_time_check = disable_time_check,
         time_per_run_s = time_per_run_s,
     )
 
@@ -557,6 +563,7 @@ function check_missing_ews_hyperparameter_simulations(
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
     ),
+    disable_time_check = false,
     time_per_run_s = 0.08,
 )
     run_params_df = DataFrame(
@@ -604,7 +611,7 @@ function check_missing_ews_hyperparameter_simulations(
         return Try.Err("No missing simulations")
     end
 
-    if missing_runs > 0
+    if missing_runs > 0 && disable_time_check
         nrun_time_s = missing_runs * time_per_run_s
         nrun_time_minutes = round(nrun_time_s / 60; digits = 2)
         nrun_time_message = if nrun_time_s < 10

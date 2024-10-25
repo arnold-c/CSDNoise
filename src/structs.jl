@@ -11,6 +11,7 @@ using Match
 using SumTypes
 using Distributions: Distributions
 using Random: Random
+using UnPack: @unpack
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -68,9 +69,8 @@ function DynamicsParameterSpecification(
     annual_births_per_k,
     epsilon,
     R_0,
-    min_vaccination_coverage,
-    max_vaccination_coverage;
-    max_burnin_vaccination_coverage = 1.0,
+    burnin_vaccination_params::Tuple{<:Nothing,<:AbstractFloat},
+    vaccination_params::Tuple{<:AbstractFloat,<:AbstractFloat},
 )
     return DynamicsParameterSpecification(
         beta_mean,
@@ -83,96 +83,81 @@ function DynamicsParameterSpecification(
         epsilon,
         R_0,
         calculate_min_burnin_vaccination_coverage(R_0),
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+        burnin_vaccination_params[2],
+        vaccination_params[1],
+        vaccination_params[2],
     )
 end
 
 function calculate_min_burnin_vaccination_coverage(R_0; adjustment = 0.00)
-    return min(1 - 1 / R_0 + adjustment, 1.0)
+    return min(calculate_min_burnin_vaccination_coverage(R_0) + adjustment, 1.0)
+end
+
+function calculate_herd_immunity_threshold(R_0)
+    return (1 - 1 / R_0)
 end
 
 function DynamicsParameterSpecification(
-    sigma::Float64,
-    gamma::Float64,
-    R_0::Float64;
-    max_burnin_vaccination_coverage::Float64 = 1.0,
-    max_vaccination_coverage::Float64 = 0.8,
-    min_vaccination_coverage::Float64 = 0.0,
-    kwargs...,
+    beta_mean,
+    beta_force,
+    seasonality,
+    sigma,
+    gamma,
+    mu,
+    annual_births_per_k,
+    epsilon,
+    R_0,
+    burnin_vaccination_params::Tuple{
+        <:Nothing,<:AbstractFloat,<:AbstractFloat,<:Integer
+    },
+    vaccination_params::Union{
+        Tuple{<:AbstractFloat,<:AbstractFloat},Tuple{<:Nothing,<:Nothing}
+    },
+    initial_states,
 )
-    kwargs_dict = Dict(kwargs)
-
-    if haskey(kwargs_dict, :burnin_vaccination_coverage)
-        min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
-    else
-        if haskey(kwargs_dict, :burnin_adjustment)
-            burnin_adjustment = kwargs_dict[:burnin_adjustment]
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0; adjustment = burnin_adjustment
-            )
-        else
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0
-            )
-        end
-    end
-
     return DynamicsParameterSpecification(
-        BETA_MEAN,
-        BETA_FORCE,
-        cos,
+        beta_mean,
+        beta_force,
+        seasonality,
         sigma,
         gamma,
-        MU,
-        ANNUAL_BIRTHS_PER_K,
-        EPSILON,
+        mu,
+        annual_births_per_k,
+        epsilon,
         R_0,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+        calculate_vaccination_rate_to_achieve_Reff(
+            burnin_vaccination_params[3],
+            burnin_vaccination_params[4],
+            initial_states.S,
+            initial_states.N,
+            R_0,
+            mu,
+        ),
+        burnin_vaccination_params[2],
+        vaccination_params[1],
+        vaccination_params[2],
     )
 end
 
 function DynamicsParameterSpecification(
-    N::Int64,
-    annual_births_per_k::Int64,
-    beta_force::Float64,
-    sigma::Float64,
-    gamma::Float64,
-    R_0::Float64,
-    min_vaccination_coverage::Float64,
-    max_vaccination_coverage::Float64;
-    max_burnin_vaccination_coverage::Float64 = 1.0,
-    kwargs...,
-)
-    mu = calculate_mu(annual_births_per_k)
-    beta_mean = calculate_beta(R_0, gamma, mu, 1, N)
-    epsilon = calculate_import_rate(mu, R_0, N)
-
-    kwargs_dict = Dict(kwargs)
-
-    if haskey(kwargs_dict, :burnin_vaccination_coverage)
-        min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
-    else
-        if haskey(kwargs_dict, :burnin_adjustment)
-            burnin_adjustment = kwargs_dict[:burnin_adjustment]
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0; adjustment = burnin_adjustment
-            )
-        else
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R_0
-            )
-        end
-    end
-
+    beta_mean,
+    beta_force,
+    seasonality,
+    sigma,
+    gamma,
+    mu,
+    annual_births_per_k,
+    epsilon,
+    R_0,
+    min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage,
+    min_vaccination_coverage::T1,
+    max_vaccination_coverage::T1,
+) where {T1<:Nothing}
     return DynamicsParameterSpecification(
         beta_mean,
         beta_force,
-        cos,
+        seasonality,
         sigma,
         gamma,
         mu,
@@ -181,58 +166,52 @@ function DynamicsParameterSpecification(
         R_0,
         min_burnin_vaccination_coverage,
         max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+        min_burnin_vaccination_coverage,
+        max_burnin_vaccination_coverage,
     )
 end
 
-function DynamicsParameterSpecification(
-    N::Int64, annual_births_per_k::Int64, beta_force::Float64;
-    max_burnin_vaccination_coverage::Float64 = 1.0,
-    min_vaccination_coverage::Float64 = 0.0,
-    max_vaccination_coverage::Float64 = 0.8,
-    kwargs...,
-)
-    mu = calculate_mu(annual_births_per_k)
-    beta_mean = calculate_beta(R0, GAMMA, mu, 1, N)
-    epsilon = calculate_import_rate(mu, R0, N)
-
-    kwargs_dict = Dict(kwargs)
-    if haskey(kwargs_dict, :burnin_vaccination_coverage)
-        min_burnin_vaccination_coverage = kwargs_dict[:min_burnin_vaccination_coverage]
-    else
-        if haskey(kwargs_dict, :burnin_adjustment)
-            burnin_adjustment = kwargs_dict[:burnin_adjustment]
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R0; adjustment = burnin_adjustment
-            )
-        else
-            min_burnin_vaccination_coverage = calculate_min_burnin_vaccination_coverage(
-                R0
-            )
-        end
-    end
-
-    return DynamicsParameterSpecification(
-        beta_mean,
-        beta_force,
-        cos,
-        SIGMA,
-        GAMMA,
-        mu,
-        annual_births_per_k,
-        epsilon,
-        R0,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+"""
+    calculate_vaccination_rate_to_achieve_Reff(
+        target_Reff, target_years, initial_states, dynamics_specification
     )
+
+Assuming that in the burnin period the rate of infections is negligible, the time to reach a target Reff can be calculated by the difference in the rates in and out of the Susceptible group.
+
+μN(1-ρ) -> S -> μS
+dS/dt = μ(N - Nρ - S)
+"""
+function calculate_vaccination_rate_to_achieve_Reff(
+    target_Reff, target_years, initial_states, R_0, mu
+)
+    @unpack S, N = initial_states
+
+    return calculate_vaccination_rate_to_achieve_Reff(
+        target_Reff, target_years, S, N, R_0, mu
+    )
+end
+
+function calculate_vaccination_rate_to_achieve_Reff(
+    target_Reff, target_years, S, N, R_0, mu
+)
+    @assert target_Reff > 0
+    @assert target_Reff < 1.2
+
+    vaccination_coverage =
+        1 -
+        (((target_Reff * N) / R_0 - S) / (365 * target_years * mu) + S) / N
+
+    if vaccination_coverage > 1 || vaccination_coverage < 0
+        return error(
+            "Target Reff cannot be reached in the burn-in period. Initial Reff = $(R_0 * S/N). Try a longer burn-in period or a smaller target Reff."
+        )
+    end
+    return round(vaccination_coverage; digits = 4)
 end
 
 struct DynamicsParameters{
     T1<:AbstractFloat,
-    T2<:Union{<:Integer,T1},
+    T2<:Real,
     T3<:Function,
 }
     beta_mean::T1
@@ -263,14 +242,23 @@ function DynamicsParameters(
                 dynamic_parameter_specification.min_burnin_vaccination_coverage,
                 dynamic_parameter_specification.max_burnin_vaccination_coverage,
             ),
-        ); digits = 2)
+        ); digits = 4)
 
-    vaccination_coverage = round(
-        rand(
-            Distributions.Uniform(
-                dynamic_parameter_specification.min_vaccination_coverage,
-                dynamic_parameter_specification.max_vaccination_coverage),
-        ); digits = 2)
+    vaccination_coverage =
+        if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
+           dynamic_parameter_specification.min_vaccination_coverage &&
+            dynamic_parameter_specification.max_burnin_vaccination_coverage ==
+           dynamic_parameter_specification.max_vaccination_coverage
+            burnin_vaccination_coverage
+        else
+            round(
+                rand(
+                    Distributions.Uniform(
+                        dynamic_parameter_specification.min_vaccination_coverage,
+                        dynamic_parameter_specification.max_vaccination_coverage,
+                    ),
+                ); digits = 4)
+        end
 
     return DynamicsParameters(
         [
@@ -372,49 +360,6 @@ function EnsembleSpecification(
         nsims,
         dirpath,
     )
-end
-
-struct OutbreakThresholdChars{
-    T1<:AbstractFloat,
-    T2<:Integer,
-    T3<:Vector{<:AbstractFloat},
-    T4<:Vector{<:Integer},
-    T5<:AbstractMatrix{<:Integer},
-}
-    daily_sensitivity::T1
-    daily_specificity::T1
-    daily_ppv::T1
-    daily_npv::T1
-    accuracy::T1
-    matchedoutbreakbounds::T5
-    noutbreaks::T2
-    nalerts::T2
-    detected_outbreak_size::T4
-    missed_outbreak_size::T4
-    n_true_outbreaks_detected::T2
-    n_missed_outbreaks::T2
-    n_correct_alerts::T2
-    n_false_alerts::T2
-    n_alerts_per_outbreak::T4
-    period_sum_per_outbreak::T4
-    perc_true_outbreaks_detected::T1
-    perc_true_outbreaks_missed::T1
-    falsealert_trueoutbreak_prop::T1
-    correctalert_trueoutbreak_prop::T1
-    trueoutbreak_alerts_prop::T1
-    outbreaksmissed_alerts_prop::T1
-    perc_alerts_false::T1
-    perc_alerts_correct::T1
-    detectiondelays::T4
-    cases_before_alerts::T4
-    cases_perc_before_alerts::T3
-    cases_after_alerts::T4
-    cases_perc_after_alerts::T3
-    unavoidable_cases::T2
-    avoidable_cases::T2
-    n_outbreak_cases::T2
-    n_tests::T2
-    noise_rubella_prop::T1
 end
 
 struct OutbreakSpecification{T1<:Integer,T2<:AbstractString}
@@ -707,45 +652,6 @@ function ScenarioSpecification(
         ewsmetric_specification,
         dirpath,
     )
-end
-
-struct TestPositivity{T1<:AbstractArray{<:AbstractFloat}}
-    one_day::T1
-    seven_day::T1
-    fourteen_day::T1
-    thirty_day::T1
-end
-
-function TestPositivity(true_positive_vec, total_test_vec, alert_vec)
-    return TestPositivity(
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 1
-        ),
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 7
-        ),
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 14
-        ),
-        calculate_test_positivity(
-            true_positive_vec, total_test_vec, alert_vec, 30
-        ),
-    )
-end
-
-struct OptimalThresholdCharacteristics{
-    T1<:StructVector{<:OutbreakThresholdChars},
-    T2<:IndividualTestSpecification,
-    T3<:NoiseSpecification,
-    T4<:AbstractFloat,
-    T5<:Integer,
-}
-    outbreak_threshold_chars::T1
-    individual_test_specification::T2
-    noise_specification::T3
-    percent_clinic_tested::T4
-    alert_threshold::T5
-    accuracy::T4
 end
 
 # end

@@ -3,8 +3,6 @@ using DrWatson
 @quickactivate "CSDNoise"
 
 using UnPack
-using ColorSchemes
-using Dates
 
 using CSDNoise
 using StructArrays
@@ -15,11 +13,79 @@ using StatsBase: StatsBase
 using Random: Random
 using Distributions: Distributions
 using StyledStrings
+using Dates
 
 using ProgressMeter
 
 include(srcdir("makie-plotting-setup.jl"))
-include(srcdir("ensemble-parameters.jl"))
+
+#%%
+ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
+
+burnin_years = 5
+nyears = 20
+burnin_time = 365.0 * burnin_years
+ensemble_time_specification = SimTimeParameters(;
+    burnin = 365.0 * burnin_years, tmin = 0.0, tmax = 365.0 * nyears,
+    tstep = 1.0,
+)
+
+ensemble_state_specification = StateParameters(
+    500_000,
+    Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95),
+)
+
+mu = calculate_mu(27)
+beta_mean = calculate_beta(
+    R0, GAMMA, mu, 1, ensemble_state_specification.init_states.N
+)
+epsilon = calculate_import_rate(
+    mu, R0, ensemble_state_specification.init_states.N
+)
+
+min_burnin_vaccination_coverage = calculate_vaccination_rate_to_achieve_Reff(
+    0.9,
+    burnin_years * 2,
+    ensemble_state_specification.init_states.S,
+    ensemble_state_specification.init_states.N,
+    R0,
+    mu,
+)
+
+max_burnin_vaccination_coverage = 1.0
+min_vaccination_coverage = 0.0
+max_vaccination_coverage = 0.8
+
+ensemble_dynamics_specification = DynamicsParameterSpecification(
+    beta_mean,
+    0.0,
+    cos,
+    SIGMA,
+    GAMMA,
+    mu,
+    27,
+    epsilon,
+    R0,
+    min_burnin_vaccination_coverage,
+    max_burnin_vaccination_coverage,
+    0.6,
+    0.8,
+)
+
+#%%
+ensemble_nsims = 100
+
+ensemble_specification = EnsembleSpecification(
+    ensemble_model_type,
+    ensemble_state_specification,
+    ensemble_dynamics_specification,
+    ensemble_time_specification,
+    ensemble_nsims,
+)
+
+ensemble_outbreak_specification = OutbreakSpecification(
+    5, 30, 500
+)
 
 #%%
 ensemble_single_seir_arr = get_ensemble_file(
@@ -42,11 +108,24 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
 )["ensemble_Reff_thresholds_vec"]
 
 #%%
-nsims_plot = 5
+ensemble_vax_plotpath = joinpath(
+    plotsdir(),
+    "ensemble",
+    "burnin-time-$(burnin_time)",
+    "min-burnin-vax_$(min_burnin_vaccination_coverage)",
+    "max-burnin-vax_$(max_burnin_vaccination_coverage)",
+    "min-vax_$(min_vaccination_coverage)",
+    "max-vax_$(max_vaccination_coverage)",
+)
+mkpath(ensemble_vax_plotpath)
+
+#%%
+nsims_plot = 10
 Random.seed!(1234)
-selected_sims = rand(
-    Distributions.DiscreteUniform(1, size(ensemble_single_incarr, 3)),
-    nsims_plot,
+selected_sims = StatsBase.sample(
+    collect(1:size(ensemble_single_incarr, 3)),
+    nsims_plot;
+    replace = false,
 )
 
 ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
@@ -58,10 +137,13 @@ ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
     Reff_alpha = 1,
 )
 
+Reff_incidence_plotpath = joinpath(
+    ensemble_vax_plotpath,
+    "ensemble-sim_single-scenario_incidence_Reff.png",
+)
+
 save(
-    plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_incidence_Reff.png"
-    ),
+    Reff_incidence_plotpath,
     ensemble_single_scenario_incidence_Reff_plot;
     size = (2200, 1600),
 )
@@ -76,10 +158,13 @@ ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
 
+incidence_prevalence_plotpath = joinpath(
+    ensemble_vax_plotpath,
+    "ensemble-sim_single-scenario_incidence_prevalence.png",
+)
+
 save(
-    plotsdir(
-        "ensemble/single-scenario/ensemble_single_scenario_incidence_prevalence.png"
-    ),
+    incidence_prevalence_plotpath,
     ensemble_single_scenario_incidence_prevalence_plot;
     size = (2200, 1600),
 )
@@ -144,7 +229,7 @@ ews_df = DataFrame(
     noise_specification, percent_tested, ews_metric_specification
 ) in
                   Iterators.product(
-    [ensemble_noise_specification_vec[1]],
+    [PoissonNoiseSpecification(8.0)],
     percent_tested_vec,
     ews_spec_vec,
 )
@@ -154,16 +239,6 @@ ews_df = DataFrame(
     println(
         styled"Creating EWS visualization for:\n{green,inverse: $(getdirpath(noise_specification))}, {red,inverse: $(percent_tested)}, {blue,inverse: $(ews_metric_specification.dirpath)}"
     )
-
-    min_burnin_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.min_burnin_vaccination_coverage
-    max_burnin_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.max_burnin_vaccination_coverage
-    burnin_time = ensemble_specification.time_parameters.burnin
-    min_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.min_vaccination_coverage
-    max_vaccination_coverage =
-        ensemble_specification.dynamics_parameter_specification.max_vaccination_coverage
 
     noisearr = create_noise_arr(
         noise_specification,
@@ -178,8 +253,6 @@ ews_df = DataFrame(
         Main.Reff_start,
         Main.Reff_end,
         Main.Outbreak_start,
-        # Main.Outbreak_end,
-        # Main.Outbreak_middle,
     )
         ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
         println(
@@ -273,9 +346,6 @@ ews_df = DataFrame(
             filtered_inc_ews_vals_vec = filter(!ismissing, inc_ews_vals_vec)
             filter!(x -> x != 0, failed_sims)
 
-            # filter!(!isnan, ews_lead_time)
-            # percentile_tail = (1 - lead_time_percentile) / 2
-
             @assert length(ews_vals_vec) == length(inc_ews_vals_vec)
 
             ews_vals_sa = StructArray(
@@ -286,13 +356,7 @@ ews_df = DataFrame(
             )
 
             ensemble_noise_plotpath = joinpath(
-                plotsdir(),
-                "ensemble",
-                "burnin-time-$(burnin_time)",
-                "min-burnin-vax_$(min_burnin_vaccination_coverage)",
-                "max-burnin-vax_$(max_burnin_vaccination_coverage)",
-                "min-vax_$(min_vaccination_coverage)",
-                "max-vax_$(max_vaccination_coverage)",
+                ensemble_vax_plotpath,
                 noisedir,
                 "percent-tested_$(percent_tested)",
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
@@ -310,12 +374,12 @@ ews_df = DataFrame(
                     "tau-distributions",
                 )
                 mkpath(plotdir)
-                plotpath = joinpath(
+                ews_plotpath = joinpath(
                     plotdir,
                     "ensemble-sim_single-scenario_ews-$(ews_metric)-tau-distribution.png",
                 )
 
-                if !isfile(plotpath) || force
+                if !isfile(ews_plotpath) || force
                     plot = simulation_tau_distribution(
                         ews_vals_sa,
                         inc_ews_vals_sa,
@@ -324,7 +388,7 @@ ews_df = DataFrame(
                     )
 
                     save(
-                        plotpath,
+                        ews_plotpath,
                         plot;
                         size = (2200, 1600),
                     )
@@ -432,7 +496,7 @@ ews_df = DataFrame(
             end
         end
 
-        plotpath = joinpath(
+        tau_heatmap_plotpath = joinpath(
             plotsdir(),
             "ensemble",
             "burnin-time-$(burnin_time)",
@@ -446,9 +510,9 @@ ews_df = DataFrame(
             ews_metric_specification.dirpath,
             ews_enddate_type_str,
         )
-        mkpath(plotpath)
-        plotpath = joinpath(
-            plotpath, "ews-tau-heatmap_mean.png"
+        mkpath(tau_heatmap_plotpath)
+        tau_heatmap_plotpath = joinpath(
+            tau_heatmap_plotpath, "ews-tau-heatmap_mean.png"
         )
 
         println(
@@ -466,7 +530,7 @@ ews_df = DataFrame(
         )
 
         save(
-            plotpath,
+            tau_heatmap_plotpath,
             tau_heatmap;
             size = (2200, 1600),
         )
@@ -474,79 +538,3 @@ ews_df = DataFrame(
 end
 
 close(io)
-
-#%%
-#     for sim in sims
-#         enddate = enddate_vec[sim]
-#
-#         ews_vals = ews_vals_vec[sim]
-#
-#         aggregated_noise_vec = aggregate_timeseries(
-#             @view(noisearr[:, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_inc_vec = aggregate_timeseries(
-#             @view(ensemble_single_incarr[:, 1, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#         aggregated_outbreak_status_vec = aggregate_thresholds_vec(
-#             @view(ensemble_single_incarr[:, 3, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_test_vec = aggregate_timeseries(
-#             @view(testarr[:, 5, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_test_movingavg_vec = zeros(
-#             Int64, size(aggregated_test_vec)
-#         )
-#
-#         calculate_movingavg!(
-#             aggregated_test_movingavg_vec,
-#             aggregated_test_vec,
-#             ensemble_single_outbreak_detection_spec.moving_average_lag,
-#         )
-#
-#         aggregated_Reff_vec = aggregate_Reff_vec(
-#             @view(ensemble_single_Reff_arr[:, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_Reff_thresholds_arr =
-#             ensemble_single_Reff_thresholds_vec[sim] .÷
-#             ews_metric_specification.aggregation
-#
-#         aggregated_outbreak_thresholds_arr =
-#             ensemble_single_periodsum_vecs[sim][
-#                 (ensemble_single_periodsum_vecs[sim][:, 4] .== 1), [1, 2]
-#             ] .÷ ews_metric_specification.aggregation
-#
-#         plot_all_single_scenarios(
-#             aggregated_noise_vec,
-#             noisedir,
-#             aggregated_inc_vec,
-#             aggregated_outbreak_status_vec,
-#             aggregated_test_vec,
-#             aggregated_test_movingavg_vec,
-#             aggregated_Reff_vec,
-#             aggregated_Reff_thresholds_arr,
-#             aggregated_outbreak_thresholds_arr,
-#             ews_vals,
-#             ews_metric_specification.dirpath,
-#             split(string(ews_enddate_type), "::")[1],
-#             ensemble_single_individual_test_spec,
-#             ensemble_single_outbreak_detection_spec,
-#             ensemble_time_specification;
-#             aggregation = ews_metric_specification.aggregation,
-#             sim = sim,
-#             force = true,
-#         )
-#     end
-#
-#     GC.gc(true)
-#     @info "Finished plotting the single scenario for $(noisedir), $(ews_metric_specification.dirpath)"
-#     println("=================================================================")
-# end

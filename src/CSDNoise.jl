@@ -16,7 +16,7 @@ export calculate_beta, calculate_beta_amp,
 
 include("dynamics-constants.jl")
 export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
-    LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K, VACCINATION_COVERAGE,
+    LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K,
     MU, BETA_MEAN, BETA_FORCE, EPSILON
 
 # @reexport using .EWSMetrics
@@ -24,14 +24,15 @@ export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
 include("structs.jl")
 export SimTimeParameters, EnsembleSpecification,
     DynamicsParameterSpecification, DynamicsParameters,
-    StateParameters, OutbreakThresholdChars, OutbreakDetectionSpecification,
+    calculate_vaccination_rate_to_achieve_Reff,
+    StateParameters, OutbreakDetectionSpecification,
     OutbreakSpecification, IndividualTestSpecification, get_test_description,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
     get_noise_description, get_noise_magnitude, get_noise_magnitude_description,
     getdirpath,
     EWSMethod, Backward, Centered, method_string,
     EWSMetricSpecification,
-    ScenarioSpecification, TestPositivity, OptimalThresholdCharacteristics,
+    ScenarioSpecification,
     EWSMetrics
 # @reexport using .ODStructs
 
@@ -62,7 +63,19 @@ export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
     calculate_ews_lead_time, calculate_ews_trigger_index,
     ews_lead_time_df!
 
-include("tycho-cleaning.jl")
+include("ews-hyperparam-optimization.jl")
+export ews_hyperparam_optimization,
+    ews_hyperparam_gridsearch,
+    ews_hyperparam_gridsearch!,
+    check_missing_ews_hyperparameter_simulations,
+    load_most_recent_hyperparam_file,
+    get_most_recent_hyperparam_filepath,
+    optimal_ews_heatmap_df,
+    optimal_ews_heatmap_plot
+
+include(
+    "tycho-cleaning.jl"
+)
 export cdc_week_to_date,
     calculate_aggregation_cases, fill_aggregation_values,
     calculate_ews_enddate
@@ -74,10 +87,6 @@ include("SEIR-model.jl")
 export seir_mod, seir_mod!, seir_mod_loop!,
     convert_svec_to_matrix, convert_svec_to_matrix!, convert_svec_to_array
 # @reexport using .SEIRModel
-
-include("cleaning-functions.jl")
-export create_sir_df
-# @reexport using .CleaningFunctions
 
 include("detection-thresholds.jl")
 export create_inc_infec_arr,
@@ -92,17 +101,14 @@ export create_testing_arrs, create_testing_arrs!, calculate_tested!,
     calculate_true_positives!, calculate_noise_positives!,
     infer_true_positives, calculate_test_positivity_rate,
     calculate_movingavg, calculate_movingavg!,
-    detectoutbreak, detectoutbreak!, calculate_daily_detection_characteristics,
-    calculate_noutbreaks, calculate_OutbreakThresholdChars,
-    calculate_test_positivity, calculate_outbreak_detection_characteristics,
-    filter_first_matched_bounds, calculate_first_matched_bounds_index,
-    calculate_cases_before_after_alert!, calculate_cases_before_after_alert
+    calculate_test_positivity
 # @reexport using .DiagTestingFunctions
 
-include("ensemble-functions.jl")
+include(
+    "ensemble-functions.jl"
+)
 export create_combinations_vec, create_ensemble_spec_combinations,
     run_ensemble_jump_prob, run_jump_prob,
-    run_OutbreakThresholdChars_creation, OutbreakThresholdChars_creation,
     get_ensemble_file
 # @reexport using .EnsembleFunctions
 
@@ -110,53 +116,32 @@ include("noise-functions.jl")
 export create_noise_arr, add_poisson_noise_arr!
 # @reexport using .NoiseFunctions
 
+include("plotting-functions/helpers_plots.jl")
+export BASE_COLOR, OUTBREAK_COLOR, REFF_GT_ONE_COLOR,
+    line_and_hline!
+
+include("plotting-functions/single-simulation_plots.jl")
+export incidence_prevalence_plot,
+    Reff_plot,
+    incidence_testing_plot,
+    ensemble_incarr_Reff_plot
+
 include(
-    "plotting-functions.jl"
+    "plotting-functions/tycho_plots.jl"
 )
-export seircolors,
-    seir_state_labels, create_sir_plot, draw_sir_plot,
-    ACCURACY_COLOR, DAILY_SENSITIVITY_COLOR, DAILY_SPECIFICITY_COLOR,
-    DAILY_PPV_COLOR, DAILY_NPV_COLOR,
-    DETECTION_DELAY_COLOR, N_ALERTS_PER_OUTBREAK_COLOR,
-    N_FALSE_ALERTS_COLOR, N_ALERTS_COLOR, N_OUTBREAKS_COLOR,
-    N_MISSED_OUTBREAKS_COLOR, PERC_OUTBREAKS_DETECTED_COLOR,
-    PERC_OUTBREAKS_MISSED_COLOR, PERC_ALERTS_CORRECT_COLOR,
-    PERC_ALERTS_FALSE_COLOR,
-    sir_quantiles_array_base_plot, create_sir_quantiles_plot,
-    incidence_prevalence_plot, Reff_plot,
-    visualize_ensemble_noise, incidence_testing_plot,
-    testing_plot, ensemble_outbreak_distribution_plot, ensemble_OTChars_plot,
-    singlescenario_test_positivity_plot, test_positivity_distribution_plot,
-    ensemble_outbreak_detect_diff_plot, save_compare_ensemble_OTchars_plot,
-    compare_ensemble_OTchars_plots,
-    compare_optimal_thresholds_chars_plot, create_optimal_thresholds_chars_plot,
-    compare_optimal_thresholds_test_chars_plot,
-    create_optimal_thresholds_test_chars_plot,
-    Reff_ews_plot, ensemble_incarr_Reff_plot,
-    tycho_epicurve, tycho_noise_components_epicurve,
+export tycho_epicurve, tycho_noise_components_epicurve,
     tycho_test_positive_components_epicurve,
-    simulation_tau_distribution,
     tycho_tau_distribution,
     tycho_tau_heatmap_plot,
     ews_lead_time_plot
-# @reexport using .PlottingFunctions
+
+include(
+    "plotting-functions/simulation-ews_plots.jl"
+)
+export Reff_ews_plot, simulation_tau_distribution
 
 include("ensemble-sim_single-scenario_plots.jl")
 export plot_all_single_scenarios
-
-include("threshold_comparison_plots.jl")
-export collect_threshold_char_vec, plot_all_threshold_comparisons
-
-include("optimal-threshold-functions.jl")
-export calculate_optimal_threshold, calculate_OptimalThresholdCharacteristics,
-    calculate_optimal_threshold_summaries,
-    create_optimal_thresholds_df, create_wide_optimal_thresholds_df,
-    create_and_save_xlsx_optimal_threshold_summaries,
-    create_optimal_threshold_summary_df,
-    create_wide_optimal_threshold_summary_df,
-    create_all_wide_optimal_threshold_summary_dfs,
-    save_xlsx_optimal_threshold_summaries,
-    create_and_save_xlsx_optimal_threshold_summaries
 
 @static if false
     include("scripts/ensemble-sim.jl")

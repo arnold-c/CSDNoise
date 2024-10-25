@@ -254,7 +254,7 @@ optimal_ews_df = ews_hyperparam_optimization(
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
     subset_optimal_parameters = [:ews_threshold_burnin => ByRow(==(50))],
-    diable_time_check = true,
+    disable_time_check = true,
 )
 
 #%%

@@ -232,7 +232,7 @@ function run_jump_prob(ensemble_param_dict)
 
     run_define_outbreaks(outbreak_spec_dict; executor = executor)
 
-    return @strdict ensemble_seir_arr ensemble_spec ensemble_Reff_arr ensemble_Reff_thresholds_vec
+    return @strdict ensemble_seir_arr ensemble_spec dynamics_parameters ensemble_Reff_arr ensemble_Reff_thresholds_vec
 end
 
 function run_define_outbreaks(

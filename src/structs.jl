@@ -211,7 +211,7 @@ end
 
 struct DynamicsParameters{
     T1<:AbstractFloat,
-    T2<:Union{<:Integer,T1},
+    T2<:Real,
     T3<:Function,
 }
     beta_mean::T1
@@ -242,7 +242,7 @@ function DynamicsParameters(
                 dynamic_parameter_specification.min_burnin_vaccination_coverage,
                 dynamic_parameter_specification.max_burnin_vaccination_coverage,
             ),
-        ); digits = 2)
+        ); digits = 4)
 
     vaccination_coverage =
         if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
@@ -257,7 +257,7 @@ function DynamicsParameters(
                         dynamic_parameter_specification.min_vaccination_coverage,
                         dynamic_parameter_specification.max_vaccination_coverage,
                     ),
-                ); digits = 2)
+                ); digits = 4)
         end
 
     return DynamicsParameters(

@@ -63,7 +63,19 @@ export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
     calculate_ews_lead_time, calculate_ews_trigger_index,
     ews_lead_time_df!
 
-include("tycho-cleaning.jl")
+include("ews-hyperparam-optimization.jl")
+export ews_hyperparam_optimization,
+    ews_hyperparam_gridsearch,
+    ews_hyperparam_gridsearch!,
+    check_missing_ews_hyperparameter_simulations,
+    load_most_recent_hyperparam_file,
+    get_most_recent_hyperparam_filepath,
+    optimal_ews_heatmap_df,
+    optimal_ews_heatmap_plot
+
+include(
+    "tycho-cleaning.jl"
+)
 export cdc_week_to_date,
     calculate_aggregation_cases, fill_aggregation_values,
     calculate_ews_enddate

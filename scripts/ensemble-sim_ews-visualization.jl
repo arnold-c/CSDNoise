@@ -253,8 +253,6 @@ ews_df = DataFrame(
         Main.Reff_start,
         Main.Reff_end,
         Main.Outbreak_start,
-        # Main.Outbreak_end,
-        # Main.Outbreak_middle,
     )
         ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
         println(
@@ -347,9 +345,6 @@ ews_df = DataFrame(
             filtered_ews_vals_vec = filter(!ismissing, ews_vals_vec)
             filtered_inc_ews_vals_vec = filter(!ismissing, inc_ews_vals_vec)
             filter!(x -> x != 0, failed_sims)
-
-            # filter!(!isnan, ews_lead_time)
-            # percentile_tail = (1 - lead_time_percentile) / 2
 
             @assert length(ews_vals_vec) == length(inc_ews_vals_vec)
 
@@ -543,79 +538,3 @@ ews_df = DataFrame(
 end
 
 close(io)
-
-#%%
-#     for sim in sims
-#         enddate = enddate_vec[sim]
-#
-#         ews_vals = ews_vals_vec[sim]
-#
-#         aggregated_noise_vec = aggregate_timeseries(
-#             @view(noisearr[:, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_inc_vec = aggregate_timeseries(
-#             @view(ensemble_single_incarr[:, 1, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#         aggregated_outbreak_status_vec = aggregate_thresholds_vec(
-#             @view(ensemble_single_incarr[:, 3, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_test_vec = aggregate_timeseries(
-#             @view(testarr[:, 5, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_test_movingavg_vec = zeros(
-#             Int64, size(aggregated_test_vec)
-#         )
-#
-#         calculate_movingavg!(
-#             aggregated_test_movingavg_vec,
-#             aggregated_test_vec,
-#             ensemble_single_outbreak_detection_spec.moving_average_lag,
-#         )
-#
-#         aggregated_Reff_vec = aggregate_Reff_vec(
-#             @view(ensemble_single_Reff_arr[:, sim]),
-#             ews_metric_specification.aggregation,
-#         )
-#
-#         aggregated_Reff_thresholds_arr =
-#             ensemble_single_Reff_thresholds_vec[sim] .÷
-#             ews_metric_specification.aggregation
-#
-#         aggregated_outbreak_thresholds_arr =
-#             ensemble_single_periodsum_vecs[sim][
-#                 (ensemble_single_periodsum_vecs[sim][:, 4] .== 1), [1, 2]
-#             ] .÷ ews_metric_specification.aggregation
-#
-#         plot_all_single_scenarios(
-#             aggregated_noise_vec,
-#             noisedir,
-#             aggregated_inc_vec,
-#             aggregated_outbreak_status_vec,
-#             aggregated_test_vec,
-#             aggregated_test_movingavg_vec,
-#             aggregated_Reff_vec,
-#             aggregated_Reff_thresholds_arr,
-#             aggregated_outbreak_thresholds_arr,
-#             ews_vals,
-#             ews_metric_specification.dirpath,
-#             split(string(ews_enddate_type), "::")[1],
-#             ensemble_single_individual_test_spec,
-#             ensemble_single_outbreak_detection_spec,
-#             ensemble_time_specification;
-#             aggregation = ews_metric_specification.aggregation,
-#             sim = sim,
-#             force = true,
-#         )
-#     end
-#
-#     GC.gc(true)
-#     @info "Finished plotting the single scenario for $(noisedir), $(ews_metric_specification.dirpath)"
-#     println("=================================================================")
-# end

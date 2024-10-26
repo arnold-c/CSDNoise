@@ -322,6 +322,3 @@ ews_survival_plot(
     null_survival_vecs,
     subset_survival_df.enddate;
 )
-
-#%%
-hist(enddate_vec)

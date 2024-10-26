@@ -55,15 +55,25 @@ tmp/runtests: test/runtests.jl ensemble-targets
 	@touch $@
 
 # Backup targets
-BACKUP_TARGETS = backup-ensemble-sims
+BACKUP_TARGETS = backup-ensemble-sims-and-hyperparams backup-ensemble-sims backup-ensemble-hyperparam-optimization
 .PHONY: $(BACKUP_TARGETS) backup-targets
 $(BACKUP_TARGETS): %: tmp/%
 backup-targets: $(BACKUP_TARGETS)
 
+tmp/backup-ensemble-sims-and-hyperparams: backup-ensemble-sims backup-ensemble-hyperparam-optimization
+
 tmp/backup-ensemble-sims:
 	@echo "Backing up ensemble simulation output files"
-	$(shell cp -r out/ensemble/ "out/BACKUPS/_{$(date +%Y-%m-%d_%H:%M:%S)}_ensemble")
+	$(shell mkdir -p "out/BACKUPS/ensemble")
+	$(shell cp -r "out/ensemble/seasonal-infectivity-import" "out/BACKUPS/ensemble/$$(date +"%Y-%m-%d_%H:%M:%S")_seasonal-infectivity-import/")
 
+tmp/backup-ensemble-hyperparam-optimization:
+	@echo "Backing up ensemble hyperparameter optimization files"
+	$(shell mkdir -p "out/BACKUPS/ensemble")
+	$(shell cp -r "out/ensemble/ews-hyperparam-optimization" "out/BACKUPS/ensemble/$$(date +"%Y-%m-%d_%H:%M:%S")_ews-hyperparam-optimization")
+
+
+# $(shell mkdir -p out/BACKUPS/seasonal-infectivity-import)
 # Cleaning targets
 .PHONY: clean-tests clean-all clean-tmp clean-plots clean-all-ensemble clean-ensemble-sims clean-ensemble-sims-ews-visualization clean-tycho-visualization clean-tycho-data-prep clean-tycho-brett-visualization
 clean-all: clean-tests clean-tmp clean-plots clean-all-ensemble clean-ensemble-sims-ews-visualization clean-tycho-visualization clean-tycho-data-prep clean-tycho-brett-visualization

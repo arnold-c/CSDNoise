@@ -611,7 +611,7 @@ function check_missing_ews_hyperparameter_simulations(
         return Try.Err("No missing simulations")
     end
 
-    if missing_runs > 0 && disable_time_check
+    if missing_runs > 0 && !disable_time_check
         nrun_time_s = missing_runs * time_per_run_s
         nrun_time_minutes = round(nrun_time_s / 60; digits = 2)
         nrun_time_message = if nrun_time_s < 10

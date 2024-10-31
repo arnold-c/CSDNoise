@@ -32,7 +32,7 @@ function ews_hyperparam_optimization(
         ews_metric_specification = EWSMetricSpecification[],
         ews_enddate_type = EWSEndDateType[],
         ews_threshold_window = EWSThresholdWindow[],
-        ews_threshold_burnin = Int[],
+        ews_threshold_burnin = Vector{Union{Dates.Day,Dates.Year}}(),
         ews_threshold_percentile = Float64[],
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
@@ -143,7 +143,7 @@ function ews_hyperparam_gridsearch(
         ews_metric_specification = EWSMetricSpecification[],
         ews_enddate_type = EWSEndDateType[],
         ews_threshold_window = EWSThresholdWindow[],
-        ews_threshold_burnin = Int[],
+        ews_threshold_burnin = Vector{Union{Dates.Day,Dates.Year}}(),
         ews_threshold_percentile = Float64[],
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
@@ -306,7 +306,7 @@ function ews_hyperparam_gridsearch!(
         ews_metric_specification = EWSMetricSpecification[],
         ews_enddate_type = EWSEndDateType[],
         ews_threshold_window = EWSThresholdWindow[],
-        ews_threshold_burnin = Int[],
+        ews_threshold_burnin = Vector{Union{Dates.Day,Dates.Year}}(),
         ews_threshold_percentile = Float64[],
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],
@@ -413,6 +413,15 @@ function ews_hyperparam_gridsearch!(
                 missing_ews_threshold_percentile_vec,
                 missing_ews_consecutive_thresholds_vec,
             )
+                if isa(ews_threshold_burnin, Dates.Year)
+                    ews_threshold_burnin = Int64(
+                        Dates.days(ews_threshold_burnin) ÷
+                        ews_metric_specification.aggregation,
+                    )
+                end
+
+                ews_threshold_burnin = Dates.value(ews_threshold_burnin)
+
                 ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
                 println(
                     styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS window: $(ews_threshold_window), EWS burn-in: {yellow: $(ews_threshold_burnin)}, EWS percentile: {magenta,inverse: $(ews_threshold_percentile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
@@ -558,7 +567,7 @@ function check_missing_ews_hyperparameter_simulations(
         ews_metric_specification = EWSMetricSpecification[],
         ews_enddate_type = EWSEndDateType[],
         ews_threshold_window = EWSThresholdWindow[],
-        ews_threshold_burnin = Int[],
+        ews_threshold_burnin = Vector{Union{Dates.Day,Dates.Year}}(),
         ews_threshold_percentile = Float64[],
         ews_consecutive_thresholds = Int[],
         ews_metric = String[],

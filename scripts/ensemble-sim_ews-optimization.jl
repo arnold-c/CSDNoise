@@ -215,7 +215,7 @@ ews_enddate_type_vec = [
 ews_threshold_window_vec = [Main.Expanding]
 ews_threshold_percentile_vec = [collect(0.9:0.02:0.98)..., 0.99]
 ews_consecutive_thresholds_vec = [collect(2:1:30)...]
-ews_threshold_burnin_vec = [50]
+ews_threshold_burnin_vec = [Day(50), Year(5)]
 
 #%%
 specification_vecs = (;
@@ -238,7 +238,7 @@ specification_vec_tuples = (
     ews_metric_specification = EWSMetricSpecification[],
     ews_enddate_type = EWSEndDateType[],
     ews_threshold_window = EWSThresholdWindow[],
-    ews_threshold_burnin = Int[],
+    ews_threshold_burnin = Vector{Union{Dates.Day,Dates.Year}}[],
     ews_threshold_percentile = Float64[],
     ews_consecutive_thresholds = Int[],
     ews_metric = String[],

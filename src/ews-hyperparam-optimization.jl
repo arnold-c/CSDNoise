@@ -314,15 +314,18 @@ function ews_hyperparam_gridsearch!(
     disable_time_check = false,
     time_per_run_s = 0.08,
 )
-    @assert map(propertynames(specification_vecs)) do pn
-        Symbol(match(r"(.*)(_vec)$", string(pn)).captures[1])
-    end ==
-        propertynames(specification_vec_tuples)
+    specification_vec_names = [
+        Symbol(match(r"(.*)(_vec)$", string(pn)).captures[1]) for
+        pn in propertynames(specification_vecs)
+    ]
+
+    @assert specification_vec_names ==
+        [propertynames(specification_vec_tuples)...]
 
     missing_specification_vecs = check_missing_ews_hyperparameter_simulations(
         ews_df,
         specification_vecs;
-        specification_vec_tuples = specification_vec_tuples,
+        specification_vec_names = specification_vec_names,
         disable_time_check = disable_time_check,
         time_per_run_s = time_per_run_s,
     )
@@ -560,58 +563,61 @@ end
 function check_missing_ews_hyperparameter_simulations(
     ews_df,
     specification_vecs;
-    specification_vec_tuples = (
-        noise_specification = NoiseSpecification[],
-        test_specification = IndividualTestSpecification[],
-        percent_tested = Float64[],
-        ews_metric_specification = EWSMetricSpecification[],
-        ews_enddate_type = EWSEndDateType[],
-        ews_threshold_window = EWSThresholdWindow[],
-        ews_threshold_burnin = Vector{Union{Dates.Day,Dates.Year}}(),
-        ews_threshold_percentile = Float64[],
-        ews_consecutive_thresholds = Int[],
-        ews_metric = String[],
+    specification_vec_names = (
+        :noise_specification,
+        :test_specification,
+        :percent_tested,
+        :ews_metric_specification,
+        :ews_enddate_type,
+        :ews_threshold_window,
+        :ews_threshold_burnin,
+        :ews_threshold_percentile,
+        :ews_consecutive_thresholds,
+        :ews_metric,
     ),
     disable_time_check = false,
     time_per_run_s = 0.08,
 )
-    run_params_df = DataFrame(
-        specification_vec_tuples
-    )
+    # run_params_df = DataFrame(
+    #     specification_vec_tuples
+    # )
+    #
+    # for (
+    #     noise_specification,
+    #     test_specification,
+    #     percent_tested,
+    #     ews_metric_specification,
+    #     ews_enddate_type,
+    #     ews_threshold_window,
+    #     ews_threshold_burnin,
+    #     ews_threshold_percentile,
+    #     ews_consecutive_thresholds,
+    #     ews_metric,
+    # ) in
+    #     push!(
+    #         run_params_df,
+    #         (
+    #             noise_specification,
+    #             test_specification,
+    #             percent_tested,
+    #             ews_metric_specification,
+    #             ews_enddate_type,
+    #             ews_threshold_window,
+    #             ews_threshold_burnin,
+    #             ews_threshold_percentile,
+    #             ews_consecutive_thresholds,
+    #             ews_metric,
+    #         ),
+    #     )
+    # end
 
-    for (
-        noise_specification,
-        test_specification,
-        percent_tested,
-        ews_metric_specification,
-        ews_enddate_type,
-        ews_threshold_window,
-        ews_threshold_burnin,
-        ews_threshold_percentile,
-        ews_consecutive_thresholds,
-        ews_metric,
-    ) in Iterators.product(specification_vecs...)
-        push!(
-            run_params_df,
-            (
-                noise_specification,
-                test_specification,
-                percent_tested,
-                ews_metric_specification,
-                ews_enddate_type,
-                ews_threshold_window,
-                ews_threshold_burnin,
-                ews_threshold_percentile,
-                ews_consecutive_thresholds,
-                ews_metric,
-            ),
-        )
-    end
+    run_params_df = DataFrame(Iterators.product(specification_vecs...))
+    rename!(run_params_df, specification_vec_names)
 
     missing_run_params_df = antijoin(
         run_params_df,
         ews_df;
-        on = [propertynames(specification_vec_tuples)...],
+        on = specification_vec_names,
     )
 
     missing_runs = nrow(missing_run_params_df)

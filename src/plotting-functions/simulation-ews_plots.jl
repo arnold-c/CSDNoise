@@ -6,6 +6,102 @@ using DataFrames
 
 function Reff_ews_plot(
     incvec,
+    null_incvec,
+    Reffvec,
+    null_Reffvec,
+    Reff_thresholds,
+    null_Reff_thresholds,
+    ewsmetrics,
+    null_ewsmetrics,
+    ewsmetric::S,
+    thresholdsarr,
+    null_thresholdsarr,
+    exceeds_thresholds_vec,
+    null_exceeds_thresholds_vec,
+    detection_index,
+    null_detection_index,
+    timeparams;
+    outbreak_colormap = [
+        BASE_COLOR, OUTBREAK_COLOR
+    ],
+    Reff_colormap = [
+        BASE_COLOR, REFF_GT_ONE_COLOR
+    ],
+    Reff_color_labels = ["Reff < 1", "Reff >= 1"],
+    outbreak_color_labels = ["Not Outbreak", "Outbreak"],
+    threshold = 5,
+    metric_color = Makie.wong_colors()[1],
+    kwargs...,
+) where {S<:Symbol}
+    @unpack trange = timeparams
+    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
+    method = split(string(method), "::")[1]
+
+    @unpack trange = timeparams
+    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
+    method = split(string(method), "::")[1]
+
+    min_Reff, max_Reff = extrema(vcat(Reffvec, null_Reffvec))
+    ylims_Reff = (min_Reff - 0.1, max_Reff + 0.1)
+
+    fig = Figure()
+    gl_detection = fig[1, 1] = GridLayout()
+    gl_null = fig[1, 2] = GridLayout()
+
+    Reff_ews_plot_facet!(
+        gl_detection,
+        incvec,
+        Reffvec,
+        Reff_thresholds,
+        ewsmetrics,
+        ewsmetric,
+        thresholdsarr,
+        exceeds_thresholds_vec,
+        detection_index,
+        timeparams;
+        Reff_colormap = Reff_colormap,
+        Reff_color_labels = Reff_color_labels,
+        outbreak_colormap = outbreak_colormap,
+        outbreak_color_labels = outbreak_color_labels,
+        threshold = threshold,
+        metric_color = metric_color,
+        ylims_Reff = ylims_Reff,
+        kwargs...,
+    )
+
+    Reff_ews_plot_facet!(
+        gl_null,
+        null_incvec,
+        null_Reffvec,
+        null_Reff_thresholds,
+        null_ewsmetrics,
+        ewsmetric,
+        null_thresholdsarr,
+        null_exceeds_thresholds_vec,
+        null_detection_index,
+        timeparams;
+        Reff_colormap = Reff_colormap,
+        Reff_color_labels = Reff_color_labels,
+        outbreak_colormap = outbreak_colormap,
+        outbreak_color_labels = outbreak_color_labels,
+        threshold = threshold,
+        metric_color = metric_color,
+        ylims_Reff = ylims_Reff,
+        kwargs...,
+    )
+    Label(
+        fig[0, :],
+        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation) days\nEWS calculated for shaded region",
+    )
+
+    rowsize!(fig.layout, 0, Relative(0.05))
+    # colsize!(fig.layout, 1, Relative(1))
+
+    return fig
+end
+
+function Reff_ews_plot(
+    incvec,
     Reffvec,
     Reff_thresholds,
     ewsmetrics,
@@ -254,6 +350,69 @@ function Reff_ews_plot(
     Reff_colormap = [
         BASE_COLOR, REFF_GT_ONE_COLOR
     ],
+    Reff_color_labels = ["Reff < 1", "Reff >= 1"],
+    outbreak_color_labels = ["Not Outbreak", "Outbreak"],
+    threshold = 5,
+    metric_color = Makie.wong_colors()[1],
+    kwargs...,
+) where {S<:Symbol}
+    @unpack trange = timeparams
+    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
+    method = split(string(method), "::")[1]
+
+    fig = Figure()
+    gl = fig[1, 1] = GridLayout()
+
+    Reff_ews_plot_facet!(
+        gl,
+        incvec,
+        Reffvec,
+        Reff_thresholds,
+        ewsmetrics,
+        ewsmetric,
+        thresholdsarr,
+        exceeds_thresholds_vec,
+        detection_index,
+        timeparams;
+        Reff_colormap = Reff_colormap,
+        Reff_color_labels = Reff_color_labels,
+        outbreak_colormap = outbreak_colormap,
+        outbreak_color_labels = outbreak_color_labels,
+        threshold = threshold,
+        metric_color = metric_color,
+        kwargs...,
+    )
+
+    Label(
+        fig[0, :],
+        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation) days\nEWS calculated for shaded region",
+    )
+
+    rowsize!(fig.layout, 0, Relative(0.05))
+    colsize!(fig.layout, 1, Relative(1))
+
+    return fig
+end
+
+function Reff_ews_plot_facet!(
+    gl,
+    incvec,
+    Reffvec,
+    Reff_thresholds,
+    ewsmetrics,
+    ewsmetric::S,
+    thresholdsarr,
+    exceeds_thresholds_vec,
+    detection_index,
+    timeparams;
+    outbreak_colormap = [
+        BASE_COLOR, OUTBREAK_COLOR
+    ],
+    Reff_colormap = [
+        BASE_COLOR, REFF_GT_ONE_COLOR
+    ],
+    Reff_color_labels = ["Reff < 1", "Reff >= 1"],
+    outbreak_color_labels = ["Not Outbreak", "Outbreak"],
     threshold = 5,
     metric_color = Makie.wong_colors()[1],
     kwargs...,
@@ -284,15 +443,14 @@ function Reff_ews_plot(
         getproperty(ewsmetrics, propertynames(ewsmetrics)[2])
     )
 
-    fig = Figure()
     reffax = Axis(
-        fig[1, 1]; ylabel = "Reff"
+        gl[1, 1]; ylabel = "Reff"
     )
     incax = Axis(
-        fig[2, 1]; ylabel = "Incidence"
+        gl[2, 1]; ylabel = "Test Positives"
     )
     metric_ax = Axis(
-        fig[3, 1]; xlabel = "Time (years)", ylabel = String(ewsmetric)
+        gl[3, 1]; xlabel = "Time (years)", ylabel = String(ewsmetric)
     )
 
     linkxaxes!(incax, reffax, metric_ax)
@@ -305,6 +463,30 @@ function Reff_ews_plot(
             ),
         [incax, reffax, metric_ax],
     )
+
+    if length(unique(Reff_above_one)) > 1
+        Legend(
+            gl[1, 2],
+            [PolyElement(; color = col) for col in Reff_colormap],
+            Reff_color_labels,
+            "Reff Status",
+        )
+    else
+        Reff_colormap = [Reff_colormap[1]]
+        Reff_color_labels = [Reff_color_labels[1]]
+    end
+
+    if length(unique(outbreak_status_vec)) > 1
+        Legend(
+            gl[2, 2],
+            [PolyElement(; color = col) for col in outbreak_colormap],
+            outbreak_color_labels,
+            "True\nOutbreak Status",
+        )
+    else
+        outbreak_colormap = [outbreak_colormap[1]]
+        outbreak_color_labels = [outbreak_color_labels[1]]
+    end
 
     line_and_hline!(
         reffax,
@@ -351,36 +533,20 @@ function Reff_ews_plot(
         ylims!(incax, kwargs_dict[:ylims_inc])
     end
 
+    if haskey(kwargs_dict, :ylims_Reff)
+        ylims!(reffax, kwargs_dict[:ylims_Reff])
+    end
+
     map(hidexdecorations!, [incax, reffax])
 
     if haskey(kwargs_dict, :plottitle)
         Label(
-            fig[0, :, Top()],
+            gl[0, :, Top()],
             kwargs_dict[:plottitle],
         )
     end
-    Legend(
-        fig[1, 2],
-        [PolyElement(; color = col) for col in Reff_colormap],
-        ["Reff < 1", "Reff >= 1"],
-        "Reff Status",
-    )
 
-    Legend(
-        fig[2, 2],
-        [PolyElement(; color = col) for col in outbreak_colormap],
-        ["Not Outbreak", "Outbreak"],
-        "True\nOutbreak Status",
-    )
-
-    Label(
-        fig[0, :],
-        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation) days\nEWS calculated for shaded region",
-    )
-
-    rowsize!(fig.layout, 0, Relative(0.05))
-
-    return fig
+    return nothing
 end
 
 function Reff_ews_plot(

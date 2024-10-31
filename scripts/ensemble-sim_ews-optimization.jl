@@ -149,6 +149,14 @@ ensemble_single_Reff_thresholds_vec = get_ensemble_file(
     ensemble_specification
 )["ensemble_Reff_thresholds_vec"]
 
+null_single_Reff_arr = get_ensemble_file(
+    null_specification
+)["ensemble_Reff_arr"]
+
+null_single_Reff_thresholds_vec = get_ensemble_file(
+    null_specification
+)["ensemble_Reff_thresholds_vec"]
+
 #%%
 logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
@@ -319,7 +327,7 @@ test_index = findfirst(
 )
 
 #%%
-selected_sim = 2
+selected_sim = 5
 
 aggregated_inc_vec = aggregate_timeseries(
     @view(ensemble_single_incarr[:, 1, selected_sim]),
@@ -331,6 +339,16 @@ aggregated_outbreak_status_vec = aggregate_thresholds_vec(
     7,
 )
 
+aggregated_null_inc_vec = aggregate_timeseries(
+    @view(null_single_incarr[:, 1, selected_sim]),
+    7,
+)
+
+aggregated_null_outbreak_status_vec = aggregate_thresholds_vec(
+    @view(null_single_incarr[:, 3, selected_sim]),
+    7,
+)
+
 aggregated_Reff_vec = aggregate_Reff_vec(
     @view(ensemble_single_Reff_arr[:, selected_sim]),
     7,
@@ -339,9 +357,23 @@ aggregated_Reff_vec = aggregate_Reff_vec(
 aggregated_Reff_thresholds_arr =
     ensemble_single_Reff_thresholds_vec[selected_sim] .÷ 7
 
+aggregated_null_Reff_vec = aggregate_Reff_vec(
+    @view(null_single_Reff_arr[:, selected_sim]),
+    7,
+)
+
+aggregated_null_Reff_thresholds_arr =
+    null_single_Reff_thresholds_vec[selected_sim] .÷ 7
+
 aggregated_outbreak_thresholds_arr =
     ensemble_single_periodsum_vecs[selected_sim][
         (ensemble_single_periodsum_vecs[selected_sim][:, 4] .== 1),
+        [1, 2],
+    ] .÷ 7
+
+aggregated_null_outbreak_thresholds_arr =
+    null_single_periodsum_vecs[selected_sim][
+        (null_single_periodsum_vecs[selected_sim][:, 4] .== 1),
         [1, 2],
     ] .÷ 7
 
@@ -361,7 +393,7 @@ calculate_movingavg!(
 )
 
 # Shouldn't be many test positives with a perfect test!
-filter(x -> x != 0.0, vec_of_null_testarr[test_index][:, 5, selected_sim])
+# filter(x -> x != 0.0, vec_of_null_testarr[test_index][:, 5, selected_sim]);
 aggregated_null_test_vec = aggregate_timeseries(
     @view(vec_of_null_testarr[test_index][:, 5, selected_sim]),
     7,
@@ -377,32 +409,44 @@ calculate_movingavg!(
     7,
 )
 
-#%%
-# Add Reff method that plots both detection and null series
-Reff_ews_plot(
-    aggregated_inc_vec,
-    aggregated_Reff_vec,
-    aggregated_Reff_thresholds_arr,
-    vec_of_ews_vals_vec[test_index][selected_sim],
-    Symbol("mean"),
-    aggregated_outbreak_thresholds_arr,
-    vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
-    vec_of_detection_index_vec[test_index][selected_sim],
-    ensemble_time_specification,
-)
+# Reff_ews_plot(
+#     aggregated_inc_vec,
+#     aggregated_Reff_vec,
+#     aggregated_Reff_thresholds_arr,
+#     vec_of_ews_vals_vec[test_index][selected_sim],
+#     vec_of_null_ews_vals_vec[test_index][selected_sim],
+#     Symbol("mean"),
+#     aggregated_outbreak_thresholds_arr,
+#     vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
+#     vec_of_detection_index_vec[test_index][selected_sim],
+#     vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
+#     vec_of_null_detection_index_vec[test_index][selected_sim],
+#     ensemble_time_specification,
+# )
 
-#%%
 Reff_ews_plot(
     aggregated_inc_vec,
+    aggregated_null_inc_vec,
     aggregated_Reff_vec,
+    aggregated_null_Reff_vec,
     aggregated_Reff_thresholds_arr,
+    aggregated_null_Reff_thresholds_arr,
+    vec_of_ews_vals_vec[test_index][selected_sim],
     vec_of_null_ews_vals_vec[test_index][selected_sim],
     Symbol("mean"),
     aggregated_outbreak_thresholds_arr,
+    aggregated_null_outbreak_thresholds_arr,
+    vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
     vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
+    vec_of_detection_index_vec[test_index][selected_sim],
     vec_of_null_detection_index_vec[test_index][selected_sim],
-    ensemble_time_specification,
+    ensemble_time_specification;
+    xlims = (0, 12),
+    # ylims_metric = (0, 5.0),
+    # ylims_inc = (0, 20.0),
 )
+
+subset_survival_df
 
 #%%
 Reff_ews_plot(
@@ -410,11 +454,21 @@ Reff_ews_plot(
     aggregated_Reff_vec,
     aggregated_Reff_thresholds_arr,
     vec_of_ews_vals_vec[test_index][selected_sim],
-    vec_of_null_ews_vals_vec[test_index][selected_sim],
     Symbol("mean"),
     aggregated_outbreak_thresholds_arr,
     vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
     vec_of_detection_index_vec[test_index][selected_sim],
+    ensemble_time_specification,
+)
+
+#%%
+Reff_ews_plot(
+    aggregated_null_inc_vec,
+    aggregated_null_Reff_vec,
+    aggregated_null_Reff_thresholds_arr,
+    vec_of_null_ews_vals_vec[test_index][selected_sim],
+    Symbol("mean"),
+    aggregated_null_outbreak_thresholds_arr,
     vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
     vec_of_null_detection_index_vec[test_index][selected_sim],
     ensemble_time_specification,

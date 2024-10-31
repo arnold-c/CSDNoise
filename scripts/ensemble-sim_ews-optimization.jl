@@ -261,7 +261,7 @@ optimal_ews_df = ews_hyperparam_optimization(
     force = false,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
-    subset_optimal_parameters = [:ews_threshold_burnin => ByRow(==(50))],
+    subset_optimal_parameters = [:ews_threshold_burnin => ByRow(==(Year(5)))],
     disable_time_check = false,
 )
 
@@ -283,7 +283,7 @@ test_df = subset(
     :ews_metric_specification =>
         ByRow(==(EWSMetricSpecification(Backward, 7, 52, 1))),
     :ews_enddate_type => ByRow(==(Reff_start)),
-    :ews_threshold_burnin => ByRow(==(50)),
+    :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
     :ews_threshold_window => ByRow(==(Main.Expanding)),
     :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
 )

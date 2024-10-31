@@ -49,23 +49,8 @@ function Reff_ews_plot(
         Reff_above_one[lower:1:upper] .= 1
     end
 
-    ewsmetric_vec = getproperty(ewsmetrics, ewsmetric)
-    ewsmetric_endpoint = length(ewsmetric_vec)
-    ewsmetric_vec = vcat(
-        ewsmetric_vec,
-        fill(NaN, length(times) - ewsmetric_endpoint),
-    )
-    ewsmetric_tau = getproperty(ewsmetrics, Symbol(String(ewsmetric) * "_tau"))
-
-    null_ewsmetric_vec = getproperty(null_ewsmetrics, ewsmetric)
-    null_ewsmetric_endpoint = length(null_ewsmetric_vec)
-    null_ewsmetric_vec = vcat(
-        null_ewsmetric_vec,
-        fill(NaN, length(times) - null_ewsmetric_endpoint),
-    )
-
-    null_ewsmetric_tau = getproperty(
-        null_ewsmetrics, Symbol(String(ewsmetric) * "_tau")
+    ewsmetric_endpoint = length(
+        getproperty(ewsmetrics, propertynames(ewsmetrics)[2])
     )
 
     fig = Figure()
@@ -113,102 +98,26 @@ function Reff_ews_plot(
         colormap = outbreak_colormap,
     )
 
-    lines!(
+    add_ews_lines!(
         metric_ax,
-        times,
-        ewsmetric_vec;
-        color = metric_color,
-        linewidth = 3,
+        ewsmetrics,
+        ewsmetric,
+        ewsmetric_endpoint,
+        detection_index,
+        exceeds_thresholds_vec,
+        times;
+        metric_color = Makie.wong_colors()[1],
     )
-    if !isnothing(detection_index)
-        exceeds_threshold_indices = findall(
-            x -> x == true, exceeds_thresholds_vec
-        )
 
-        vlines!(metric_ax, times[detection_index]; color = :black)
-        scatter!(
-            metric_ax,
-            times[exceeds_threshold_indices],
-            ewsmetric_vec[exceeds_threshold_indices];
-            markersize = 10,
-            strokecolor = :grey20,
-            strokewidth = 2,
-            color = (:grey20, 0.4),
-        )
-    end
-
-    lines!(
+    add_ews_lines!(
         null_metric_ax,
-        times,
-        null_ewsmetric_vec;
-        color = metric_color,
-        linewidth = 3,
-    )
-    if !isnothing(null_detection_index)
-        null_exceeds_threshold_indices = findall(
-            x -> x == true, exceeds_thresholds_vec
-        )
-
-        vlines!(metric_ax, times[null_detection_index]; color = :black)
-        scatter!(
-            metric_ax,
-            times[null_exceeds_threshold_indices],
-            ewsmetric_vec[null_exceeds_threshold_indices];
-            markersize = 10,
-            strokecolor = :grey20,
-            strokewidth = 2,
-            color = (:grey20, 0.4),
-        )
-    end
-
-    ewsmetric_extrema = extrema(
-        replace(ewsmetric_vec[1:ewsmetric_endpoint], NaN => 0)
-    )
-    ewsmetric_range_buffer =
-        abs(ewsmetric_extrema[2] - ewsmetric_extrema[1]) / 10
-
-    ewsmetric_tau_yvalue =
-        if ewsmetric_vec[ewsmetric_endpoint] >=
-            ewsmetric_extrema[2] - ewsmetric_range_buffer
-            ewsmetric_extrema[2] - ewsmetric_range_buffer
-        elseif ewsmetric_vec[ewsmetric_endpoint] <=
-            ewsmetric_extrema[1] + ewsmetric_range_buffer
-            ewsmetric_extrema[1] + ewsmetric_range_buffer
-        else
-            ewsmetric_vec[ewsmetric_endpoint]
-        end
-
-    text!(
-        metric_ax,
-        times[ewsmetric_endpoint] + 0.5,
-        ewsmetric_tau_yvalue;
-        text = "τ = $(round(ewsmetric_tau; digits = 2))",
-        justification = :right,
-    )
-
-    null_ewsmetric_extrema = extrema(
-        replace(null_ewsmetric_vec[1:null_ewsmetric_endpoint], NaN => 0)
-    )
-    ewsmetric_range_buffer =
-        abs(null_ewsmetric_extrema[2] - null_ewsmetric_extrema[1]) / 10
-
-    null_ewsmetric_tau_yvalue =
-        if null_ewsmetric_vec[null_ewsmetric_endpoint] >=
-            null_ewsmetric_extrema[2] - ewsmetric_range_buffer
-            null_ewsmetric_extrema[2] - ewsmetric_range_buffer
-        elseif null_ewsmetric_vec[null_ewsmetric_endpoint] <=
-            null_ewsmetric_extrema[1] + ewsmetric_range_buffer
-            null_ewsmetric_extrema[1] + ewsmetric_range_buffer
-        else
-            null_ewsmetric_vec[null_ewsmetric_endpoint]
-        end
-
-    text!(
-        null_metric_ax,
-        times[null_ewsmetric_endpoint] + 0.5,
-        null_ewsmetric_tau_yvalue;
-        text = "τ = $(round(null_ewsmetric_tau; digits = 2))",
-        justification = :right,
+        null_ewsmetrics,
+        ewsmetric,
+        ewsmetric_endpoint,
+        null_detection_index,
+        null_exceeds_thresholds_vec,
+        times;
+        metric_color = Makie.wong_colors()[1],
     )
 
     if haskey(kwargs_dict, :xlims)
@@ -257,6 +166,76 @@ function Reff_ews_plot(
     rowsize!(fig.layout, 0, Relative(0.05))
 
     return fig
+end
+
+function add_ews_lines!(
+    ax,
+    ewsmetrics,
+    ewsmetric,
+    ewsmetric_endpoint,
+    detection_index,
+    exceeds_thresholds_vec,
+    times;
+    metric_color = Makie.wong_colors()[1],
+    kwargs...,
+)
+    ewsmetric_vec = getproperty(ewsmetrics, ewsmetric)
+    ewsmetric_vec = vcat(
+        ewsmetric_vec,
+        fill(NaN, length(times) - ewsmetric_endpoint),
+    )
+    ewsmetric_tau = getproperty(ewsmetrics, Symbol(String(ewsmetric) * "_tau"))
+
+    lines!(
+        ax,
+        times,
+        ewsmetric_vec;
+        color = metric_color,
+        linewidth = 3,
+    )
+    if !isnothing(detection_index)
+        exceeds_threshold_indices = findall(
+            x -> x == true, exceeds_thresholds_vec
+        )
+
+        vlines!(ax, times[detection_index]; color = :black)
+        scatter!(
+            ax,
+            times[exceeds_threshold_indices],
+            ewsmetric_vec[exceeds_threshold_indices];
+            markersize = 10,
+            strokecolor = :grey20,
+            strokewidth = 2,
+            color = (:grey20, 0.4),
+        )
+    end
+
+    ewsmetric_extrema = extrema(
+        replace(ewsmetric_vec[1:ewsmetric_endpoint], NaN => 0)
+    )
+    ewsmetric_range_buffer =
+        abs(ewsmetric_extrema[2] - ewsmetric_extrema[1]) / 10
+
+    ewsmetric_tau_yvalue =
+        if ewsmetric_vec[ewsmetric_endpoint] >=
+            ewsmetric_extrema[2] - ewsmetric_range_buffer
+            ewsmetric_extrema[2] - ewsmetric_range_buffer
+        elseif ewsmetric_vec[ewsmetric_endpoint] <=
+            ewsmetric_extrema[1] + ewsmetric_range_buffer
+            ewsmetric_extrema[1] + ewsmetric_range_buffer
+        else
+            ewsmetric_vec[ewsmetric_endpoint]
+        end
+
+    text!(
+        ax,
+        times[ewsmetric_endpoint] + 0.5,
+        ewsmetric_tau_yvalue;
+        text = "τ = $(round(ewsmetric_tau; digits = 2))",
+        justification = :right,
+    )
+
+    return nothing
 end
 
 function Reff_ews_plot(

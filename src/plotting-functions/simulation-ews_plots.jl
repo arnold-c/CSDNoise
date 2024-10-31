@@ -280,14 +280,9 @@ function Reff_ews_plot(
         Reff_above_one[lower:1:upper] .= 1
     end
 
-    ewsmetric_vec = getproperty(ewsmetrics, ewsmetric)
-    ewsmetric_endpoint = length(ewsmetric_vec)
-    ewsmetric_vec = vcat(
-        ewsmetric_vec,
-        fill(NaN, length(times) - ewsmetric_endpoint),
+    ewsmetric_endpoint = length(
+        getproperty(ewsmetrics, propertynames(ewsmetrics)[2])
     )
-
-    ewsmetric_tau = getproperty(ewsmetrics, Symbol(String(ewsmetric) * "_tau"))
 
     fig = Figure()
     reffax = Axis(
@@ -330,53 +325,15 @@ function Reff_ews_plot(
         colormap = outbreak_colormap,
     )
 
-    lines!(
+    add_ews_lines!(
         metric_ax,
-        times,
-        ewsmetric_vec;
-        color = metric_color,
-        linewidth = 3,
-    )
-    if !isnothing(detection_index)
-        exceeds_threshold_indices = findall(
-            x -> x == true, exceeds_thresholds_vec
-        )
-
-        vlines!(metric_ax, times[detection_index]; color = :black)
-        scatter!(
-            metric_ax,
-            times[exceeds_threshold_indices],
-            ewsmetric_vec[exceeds_threshold_indices];
-            markersize = 10,
-            strokecolor = :grey20,
-            strokewidth = 2,
-            color = (:grey20, 0.4),
-        )
-    end
-
-    ewsmetric_extrema = extrema(
-        replace(ewsmetric_vec[1:ewsmetric_endpoint], NaN => 0)
-    )
-    ewsmetric_range_buffer =
-        abs(ewsmetric_extrema[2] - ewsmetric_extrema[1]) / 10
-
-    ewsmetric_tau_yvalue =
-        if ewsmetric_vec[ewsmetric_endpoint] >=
-            ewsmetric_extrema[2] - ewsmetric_range_buffer
-            ewsmetric_extrema[2] - ewsmetric_range_buffer
-        elseif ewsmetric_vec[ewsmetric_endpoint] <=
-            ewsmetric_extrema[1] + ewsmetric_range_buffer
-            ewsmetric_extrema[1] + ewsmetric_range_buffer
-        else
-            ewsmetric_vec[ewsmetric_endpoint]
-        end
-
-    text!(
-        metric_ax,
-        times[ewsmetric_endpoint] + 0.5,
-        ewsmetric_tau_yvalue;
-        text = "τ = $(round(ewsmetric_tau; digits = 2))",
-        justification = :right,
+        ewsmetrics,
+        ewsmetric,
+        ewsmetric_endpoint,
+        detection_index,
+        exceeds_thresholds_vec,
+        times;
+        metric_color = Makie.wong_colors()[1],
     )
 
     if haskey(kwargs_dict, :xlims)

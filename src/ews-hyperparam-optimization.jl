@@ -921,9 +921,9 @@ function ews_survival_plot(
 end
 
 function create_ews_survival_data(
-    ews_optimal_simulation_df;
-    nsims = 100,
+    ews_optimal_simulation_df
 )
+    nsims = nrow(ews_optimal_simulation_df)
     unique_detection_indices = sort(
         filter(
             !isnothing, unique(ews_optimal_simulation_df.detection_index)
@@ -958,8 +958,6 @@ function create_ews_survival_data(
     @assert nsims ==
         sum(null_detection_indices_counts) +
             sum(ews_optimal_simulation_df.null_detection_index .== nothing)
-
-    max_enddate = maximum(ews_optimal_simulation_df.enddate)
 
     detection_survival_vec = nsims .- cumsum(detection_indices_counts)
     null_survival_vec = nsims .- cumsum(null_detection_indices_counts)
@@ -1043,7 +1041,32 @@ function simulate_ews_survival_data(
     end
     failed_sims = sum(Try.iserr.(enddate_vec))
 
-    for df_row in eachrow(subset_optimal_ews_df)
+    vec_of_testarr = Vector{Array{Float64,3}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_null_testarr = Vector{Array{Float64,3}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_ews_vals_vec = Vector{Vector{Union{Missing,EWSMetrics}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_null_ews_vals_vec = Vector{Vector{Union{Missing,EWSMetrics}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_exceed_thresholds = Vector{Vector{Matrix{Bool}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_null_exceed_thresholds = Vector{Vector{Matrix{Bool}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_detection_index_vec = Vector{Vector{Union{Nothing,Int64}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_null_detection_index_vec = Vector{Vector{Union{Nothing,Int64}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+
+    for (i, df_row) in pairs(eachrow(subset_optimal_ews_df))
         test_specification = df_row[:test_specification]
         ews_threshold_percentile = df_row[:ews_threshold_percentile]
         ews_consecutive_thresholds = df_row[:ews_consecutive_thresholds]
@@ -1055,12 +1078,15 @@ function simulate_ews_survival_data(
             test_specification,
         )
 
+        vec_of_testarr[i] = testarr
+
         null_testarr = create_testing_arrs(
             null_single_incarr,
             noisearr,
             percent_tested,
             test_specification,
         )
+        vec_of_null_testarr[i] = null_testarr
 
         ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
             undef, size(testarr, 3)
@@ -1135,6 +1161,13 @@ function simulate_ews_survival_data(
             end
         end
 
+        vec_of_ews_vals_vec[i] = ews_vals_vec
+        vec_of_null_ews_vals_vec[i] = null_ews_vals_vec
+        vec_of_exceed_thresholds[i] = exceeds_threshold_vec
+        vec_of_null_exceed_thresholds[i] = null_exceeds_threshold_vec
+        vec_of_detection_index_vec[i] = detection_index_vec
+        vec_of_null_detection_index_vec[i] = null_detection_index_vec
+
         append!(
             survival_df,
             DataFrame(;
@@ -1150,5 +1183,15 @@ function simulate_ews_survival_data(
         )
     end
 
-    return survival_df
+    return survival_df,
+    (
+        vec_of_testarr,
+        vec_of_null_testarr,
+        vec_of_ews_vals_vec,
+        vec_of_null_ews_vals_vec,
+        vec_of_exceed_thresholds,
+        vec_of_null_exceed_thresholds,
+        vec_of_detection_index_vec,
+        vec_of_null_detection_index_vec,
+    )
 end

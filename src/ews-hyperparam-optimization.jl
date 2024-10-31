@@ -363,7 +363,7 @@ function ews_hyperparam_gridsearch!(
     logfile = open(logfilepath, "a")
 
     start_time = time()
-    @showprogress for noise_specification in missing_noise_specification_vec
+    for noise_specification in missing_noise_specification_vec
         println(
             styled"{green:\n=================================================================}"
         )
@@ -421,9 +421,9 @@ function ews_hyperparam_gridsearch!(
                         Dates.days(ews_threshold_burnin) ÷
                         ews_metric_specification.aggregation,
                     )
+                else
+                    ews_threshold_burnin = Dates.value(ews_threshold_burnin)
                 end
-
-                ews_threshold_burnin = Dates.value(ews_threshold_burnin)
 
                 ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
                 println(

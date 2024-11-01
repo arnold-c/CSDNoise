@@ -212,7 +212,7 @@ ews_enddate_type_vec = [
     Reff_start
     # Reff_end
 ]
-ews_threshold_window_vec = [Main.Expanding]
+ews_threshold_window_vec = [ExpandingThresholdWindow]
 ews_threshold_percentile_vec = [collect(0.9:0.02:0.98)..., 0.99]
 ews_consecutive_thresholds_vec = [collect(2:1:30)...]
 ews_threshold_burnin_vec = [Day(50), Year(5)]
@@ -237,7 +237,7 @@ specification_vec_tuples = (
     percent_tested = Float64[],
     ews_metric_specification = EWSMetricSpecification[],
     ews_enddate_type = EWSEndDateType[],
-    ews_threshold_window = EWSThresholdWindow[],
+    ews_threshold_window = AbstractEWSThresholdWindow[],
     ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
     ews_threshold_percentile = Float64[],
     ews_consecutive_thresholds = Int[],
@@ -284,7 +284,7 @@ test_df = subset(
         ByRow(==(EWSMetricSpecification(Backward, 7, 52, 1))),
     :ews_enddate_type => ByRow(==(Reff_start)),
     :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-    :ews_threshold_window => ByRow(==(Main.Expanding)),
+    :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
     :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
 )
 
@@ -296,7 +296,7 @@ optimal_ews_heatmap_plot(
             ByRow(==(EWSMetricSpecification(Backward, 7, 52, 1))),
         :ews_enddate_type => ByRow(==(Reff_start)),
         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-        :ews_threshold_window => ByRow(==(Main.Expanding)),
+        :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
     ),
 )
@@ -309,7 +309,7 @@ optimal_ews_heatmap_plot(
             ByRow(==(EWSMetricSpecification(Backward, 28, 52 ÷ 4, 1))),
         :ews_enddate_type => ByRow(==(Reff_start)),
         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-        :ews_threshold_window => ByRow(==(Main.Expanding)),
+        :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
     ),
 )

@@ -14,6 +14,8 @@ function hyperparam_debugging_Reff_plot(
     vec_of_null_ews_vals_vec,
     vec_of_exceed_thresholds,
     vec_of_null_exceed_thresholds,
+    vec_of_threshold_percentiles,
+    vec_of_null_threshold_percentiles,
     vec_of_detection_index_vec,
     vec_of_null_detection_index_vec,
     ensemble_time_specification;
@@ -115,6 +117,8 @@ function hyperparam_debugging_Reff_plot(
         aggregated_null_outbreak_thresholds_arr,
         vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
         vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
+        vec(vec_of_threshold_percentiles[test_index][selected_sim, 1]),
+        vec(vec_of_null_threshold_percentiles[test_index][selected_sim, 1]),
         vec_of_detection_index_vec[test_index][selected_sim],
         vec_of_null_detection_index_vec[test_index][selected_sim],
         ensemble_time_specification;

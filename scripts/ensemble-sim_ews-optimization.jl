@@ -322,6 +322,8 @@ vec_of_ews_vals_vec,
 vec_of_null_ews_vals_vec,
 vec_of_exceed_thresholds,
 vec_of_null_exceed_thresholds,
+vec_of_threshold_percentiles,
+vec_of_null_threshold_percentiles,
 vec_of_detection_index_vec,
 vec_of_null_detection_index_vec
 ) = simulate_ews_survival_data(
@@ -358,6 +360,8 @@ hyperparam_debugging_Reff_plot(
     vec_of_null_ews_vals_vec,
     vec_of_exceed_thresholds,
     vec_of_null_exceed_thresholds,
+    vec_of_threshold_percentiles,
+    vec_of_null_threshold_percentiles,
     vec_of_detection_index_vec,
     vec_of_null_detection_index_vec,
     ensemble_time_specification;

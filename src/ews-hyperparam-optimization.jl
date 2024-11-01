@@ -1085,6 +1085,12 @@ function simulate_ews_survival_data(
     vec_of_null_exceed_thresholds = Vector{Vector{Matrix{Bool}}}(
         undef, nrow(subset_optimal_ews_df)
     )
+    vec_of_threshold_percentiles = Vector{Vector{Matrix{Float64}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
+    vec_of_null_threshold_percentiles = Vector{Vector{Matrix{Float64}}}(
+        undef, nrow(subset_optimal_ews_df)
+    )
     vec_of_detection_index_vec = Vector{Vector{Union{Nothing,Int64}}}(
         undef, nrow(subset_optimal_ews_df)
     )
@@ -1129,6 +1135,13 @@ function simulate_ews_survival_data(
         null_exceeds_threshold_vec = Vector{Matrix{Bool}}(
             undef, size(testarr, 3)
         )
+        threshold_percentiles_vec = Vector{Matrix{Float64}}(
+            undef, size(testarr, 3)
+        )
+        null_threshold_percentiles_vec = Vector{Matrix{Float64}}(
+            undef, size(testarr, 3)
+        )
+
         detection_index_vec = Vector{Union{Nothing,Int64}}(
             undef, size(testarr, 3)
         )
@@ -1159,6 +1172,14 @@ function simulate_ews_survival_data(
                     burn_in = ews_threshold_burnin_int,
                 )[2]
 
+                threshold_percentiles_vec[sim] = expanding_ews_thresholds(
+                    ews_vals_vec[sim],
+                    Symbol(ews_metric),
+                    ews_threshold_window;
+                    percentiles = ews_threshold_percentile,
+                    burn_in = ews_threshold_burnin_int,
+                )[1]
+
                 detection_index_vec[sim] = calculate_ews_trigger_index(
                     exceeds_threshold_vec[sim];
                     consecutive_thresholds = ews_consecutive_thresholds,
@@ -1171,6 +1192,14 @@ function simulate_ews_survival_data(
                     percentiles = ews_threshold_percentile,
                     burn_in = ews_threshold_burnin_int,
                 )[2]
+
+                null_threshold_percentiles_vec[sim] = expanding_ews_thresholds(
+                    null_ews_vals_vec[sim],
+                    Symbol(ews_metric),
+                    ews_threshold_window;
+                    percentiles = ews_threshold_percentile,
+                    burn_in = ews_threshold_burnin_int,
+                )[1]
 
                 null_detection_index_vec[sim] = calculate_ews_trigger_index(
                     null_exceeds_threshold_vec[sim];
@@ -1191,6 +1220,8 @@ function simulate_ews_survival_data(
         vec_of_null_ews_vals_vec[i] = null_ews_vals_vec
         vec_of_exceed_thresholds[i] = exceeds_threshold_vec
         vec_of_null_exceed_thresholds[i] = null_exceeds_threshold_vec
+        vec_of_threshold_percentiles[i] = threshold_percentiles_vec
+        vec_of_null_threshold_percentiles[i] = null_threshold_percentiles_vec
         vec_of_detection_index_vec[i] = detection_index_vec
         vec_of_null_detection_index_vec[i] = null_detection_index_vec
 
@@ -1217,6 +1248,8 @@ function simulate_ews_survival_data(
         vec_of_null_ews_vals_vec,
         vec_of_exceed_thresholds,
         vec_of_null_exceed_thresholds,
+        vec_of_threshold_percentiles,
+        vec_of_null_threshold_percentiles,
         vec_of_detection_index_vec,
         vec_of_null_detection_index_vec,
     )

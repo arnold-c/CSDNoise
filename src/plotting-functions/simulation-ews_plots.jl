@@ -18,6 +18,8 @@ function Reff_ews_plot(
     null_thresholdsarr,
     exceeds_thresholds_vec,
     null_exceeds_thresholds_vec,
+    thresholds_percentile_vec,
+    null_thresholds_percentile_vec,
     detection_index,
     null_detection_index,
     timeparams;
@@ -66,6 +68,7 @@ function Reff_ews_plot(
         threshold = threshold,
         metric_color = metric_color,
         ylims_Reff = ylims_Reff,
+        thresholds_percentile_vec = thresholds_percentile_vec,
         kwargs...,
     )
 
@@ -87,6 +90,7 @@ function Reff_ews_plot(
         threshold = threshold,
         metric_color = metric_color,
         ylims_Reff = ylims_Reff,
+        thresholds_percentile_vec = null_thresholds_percentile_vec,
         kwargs...,
     )
     Label(
@@ -517,6 +521,16 @@ function Reff_ews_plot_facet!(
         times;
         metric_color = Makie.wong_colors()[1],
     )
+
+    if haskey(kwargs_dict, :thresholds_percentile_vec)
+        lines!(
+            metric_ax,
+            times[1:ewsmetric_endpoint],
+            kwargs_dict[:thresholds_percentile_vec];
+            color = Makie.wong_colors()[2],
+            linewidth = 3,
+        )
+    end
 
     if haskey(kwargs_dict, :xlims)
         map(

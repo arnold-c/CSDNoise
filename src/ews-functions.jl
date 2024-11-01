@@ -46,7 +46,7 @@ function expanding_ews_thresholds(
     ews_vec = getproperty(ewsmetrics, metric)
 
     @unpack aggregation = ewsmetrics.ews_specification
-    burn_in_index = Dates.days(burn_in) ÷ Dates.days(aggregation)
+    burn_in_index = Int64(Dates.days(burn_in) ÷ Dates.days(aggregation))
 
     @assert burn_in_index >= 1 && burn_in_index <= length(ews_vec)
 

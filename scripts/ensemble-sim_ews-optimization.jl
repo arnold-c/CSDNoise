@@ -258,7 +258,7 @@ optimal_ews_df = ews_hyperparam_optimization(
     gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
     optimization_filename_base = "ews-hyperparam-optimization.jld2",
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-    force = true,
+    force = false,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
     subset_optimal_parameters = [:ews_threshold_burnin => ByRow(==(Year(5)))],
@@ -286,6 +286,19 @@ test_df = subset(
     :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
     :ews_threshold_window => ByRow(==(Main.Expanding)),
     :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
+)
+
+#%%
+optimal_ews_heatmap_plot(
+    subset(
+        optimal_heatmap_df,
+        :ews_metric_specification =>
+            ByRow(==(EWSMetricSpecification(Backward, 7, 52, 1))),
+        :ews_enddate_type => ByRow(==(Reff_start)),
+        :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
+        :ews_threshold_window => ByRow(==(Main.Expanding)),
+        :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
+    ),
 )
 
 #%%
@@ -327,151 +340,32 @@ test_index = findfirst(
 )
 
 #%%
-selected_sim = 5
+selected_sim = 6
 
-aggregated_inc_vec = aggregate_timeseries(
-    @view(ensemble_single_incarr[:, 1, selected_sim]),
-    7,
-)
-
-aggregated_outbreak_status_vec = aggregate_thresholds_vec(
-    @view(ensemble_single_incarr[:, 3, selected_sim]),
-    7,
-)
-
-aggregated_null_inc_vec = aggregate_timeseries(
-    @view(null_single_incarr[:, 1, selected_sim]),
-    7,
-)
-
-aggregated_null_outbreak_status_vec = aggregate_thresholds_vec(
-    @view(null_single_incarr[:, 3, selected_sim]),
-    7,
-)
-
-aggregated_Reff_vec = aggregate_Reff_vec(
-    @view(ensemble_single_Reff_arr[:, selected_sim]),
-    7,
-)
-
-aggregated_Reff_thresholds_arr =
-    ensemble_single_Reff_thresholds_vec[selected_sim] .÷ 7
-
-aggregated_null_Reff_vec = aggregate_Reff_vec(
-    @view(null_single_Reff_arr[:, selected_sim]),
-    7,
-)
-
-aggregated_null_Reff_thresholds_arr =
-    null_single_Reff_thresholds_vec[selected_sim] .÷ 7
-
-aggregated_outbreak_thresholds_arr =
-    ensemble_single_periodsum_vecs[selected_sim][
-        (ensemble_single_periodsum_vecs[selected_sim][:, 4] .== 1),
-        [1, 2],
-    ] .÷ 7
-
-aggregated_null_outbreak_thresholds_arr =
-    null_single_periodsum_vecs[selected_sim][
-        (null_single_periodsum_vecs[selected_sim][:, 4] .== 1),
-        [1, 2],
-    ] .÷ 7
-
-aggregated_test_vec = aggregate_timeseries(
-    @view(vec_of_testarr[test_index][:, 5, selected_sim]),
-    7,
-)
-
-aggregated_test_movingavg_vec = zeros(
-    Int64, size(aggregated_test_vec)
-)
-
-calculate_movingavg!(
-    aggregated_test_movingavg_vec,
-    aggregated_test_vec,
-    7,
-)
-
-# Shouldn't be many test positives with a perfect test!
-# filter(x -> x != 0.0, vec_of_null_testarr[test_index][:, 5, selected_sim]);
-aggregated_null_test_vec = aggregate_timeseries(
-    @view(vec_of_null_testarr[test_index][:, 5, selected_sim]),
-    7,
-)
-
-aggregated_null_test_movingavg_vec = zeros(
-    Int64, size(aggregated_null_test_vec)
-)
-
-calculate_movingavg!(
-    aggregated_null_test_movingavg_vec,
-    aggregated_null_test_vec,
-    7,
-)
-
-# Reff_ews_plot(
-#     aggregated_inc_vec,
-#     aggregated_Reff_vec,
-#     aggregated_Reff_thresholds_arr,
-#     vec_of_ews_vals_vec[test_index][selected_sim],
-#     vec_of_null_ews_vals_vec[test_index][selected_sim],
-#     Symbol("mean"),
-#     aggregated_outbreak_thresholds_arr,
-#     vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
-#     vec_of_detection_index_vec[test_index][selected_sim],
-#     vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
-#     vec_of_null_detection_index_vec[test_index][selected_sim],
-#     ensemble_time_specification,
-# )
-
-Reff_ews_plot(
-    aggregated_inc_vec,
-    aggregated_null_inc_vec,
-    aggregated_Reff_vec,
-    aggregated_null_Reff_vec,
-    aggregated_Reff_thresholds_arr,
-    aggregated_null_Reff_thresholds_arr,
-    vec_of_ews_vals_vec[test_index][selected_sim],
-    vec_of_null_ews_vals_vec[test_index][selected_sim],
+hyperparam_debugging_Reff_plot(
+    ensemble_single_incarr,
+    null_single_incarr,
+    ensemble_single_Reff_arr,
+    null_single_Reff_arr,
+    ensemble_single_Reff_thresholds_vec,
+    null_single_Reff_thresholds_vec,
+    ensemble_single_periodsum_vecs,
+    null_single_periodsum_vecs,
     Symbol("mean"),
-    aggregated_outbreak_thresholds_arr,
-    aggregated_null_outbreak_thresholds_arr,
-    vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
-    vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
-    vec_of_detection_index_vec[test_index][selected_sim],
-    vec_of_null_detection_index_vec[test_index][selected_sim],
+    vec_of_testarr,
+    vec_of_null_testarr,
+    vec_of_ews_vals_vec,
+    vec_of_null_ews_vals_vec,
+    vec_of_exceed_thresholds,
+    vec_of_null_exceed_thresholds,
+    vec_of_detection_index_vec,
+    vec_of_null_detection_index_vec,
     ensemble_time_specification;
+    selected_sim = selected_sim,
+    test_index = test_index,
     xlims = (0, 12),
-    # ylims_metric = (0, 5.0),
-    # ylims_inc = (0, 20.0),
-)
-
-subset_survival_df
-
-#%%
-Reff_ews_plot(
-    aggregated_inc_vec,
-    aggregated_Reff_vec,
-    aggregated_Reff_thresholds_arr,
-    vec_of_ews_vals_vec[test_index][selected_sim],
-    Symbol("mean"),
-    aggregated_outbreak_thresholds_arr,
-    vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
-    vec_of_detection_index_vec[test_index][selected_sim],
-    ensemble_time_specification,
-)
-
-#%%
-Reff_ews_plot(
-    aggregated_null_inc_vec,
-    aggregated_null_Reff_vec,
-    aggregated_null_Reff_thresholds_arr,
-    vec_of_null_ews_vals_vec[test_index][selected_sim],
-    Symbol("mean"),
-    aggregated_null_outbreak_thresholds_arr,
-    vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
-    vec_of_null_detection_index_vec[test_index][selected_sim],
-    ensemble_time_specification,
+    ylims_metric = (nothing, nothing),
+    ylims_inc = (nothing, nothing),
 )
 
 #%%
@@ -486,13 +380,26 @@ detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
 )
 
 #%%
-lines(aggregate_timeseries(ensemble_single_incarr[:, 1, 1], 7))
-
-#%%
 survival_df
 hist(filter(!isnothing, subset_survival_df.detection_index); bins = 0:7:500)
 hist!(
     filter(!isnothing, subset_survival_df.null_detection_index); bins = 0:7:500
+)
+
+#%%
+detections =
+    Int64.(sort(filter(!isnothing, subset_survival_df.detection_index)))
+detections[indexin(detections, unique(detections))]
+
+combine(
+    groupby(
+        subset(
+            subset_survival_df,
+            :detection_index => ByRow(!isnothing),
+            :null_detection_index => ByRow(!isnothing),
+        ),
+        [:detection_index, :null_detection_index],
+    ), nrow
 )
 
 #%%

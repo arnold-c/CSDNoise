@@ -146,6 +146,9 @@ export Reff_ews_plot, simulation_tau_distribution
 include("ensemble-sim_single-scenario_plots.jl")
 export plot_all_single_scenarios
 
+include("plotting-functions/hyperparam-debugging_plots.jl")
+export hyperparam_debugging_Reff_plot
+
 @static if false
     include("scripts/ensemble-sim.jl")
     include("scripts/ensemble-sim_single-scenario.jl")

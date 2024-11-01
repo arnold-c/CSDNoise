@@ -14,7 +14,7 @@ function EWSMetrics(
         timeseries, ews_spec.aggregation
     )
 
-    if length(aggregated_timeseries) < ews_spec.bandwidth
+    if length(aggregated_timeseries) < Dates.value(ews_spec.bandwidth)
         error(
             "Not enough data for bandwidth: bandwidth = $(ews_spec.bandwidth), aggregated time series length = $(length(aggregated_timeseries))\n",
             "ews_specification = $(ews_spec)",

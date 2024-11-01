@@ -840,6 +840,54 @@ function create_ews_heatmap_matrix(
 end
 
 function ews_survival_plot(
+    optimal_heatmap_df,
+    ews_metric_specification,
+    ews_enddate_type,
+    ews_threshold_burnin,
+    ews_threshold_window,
+    noise_specification,
+    ensemble_specification,
+    individual_test_specification,
+    ensemble_single_incarr,
+    null_single_incarr,
+    ensemble_single_Reff_thresholds_vec;
+    ews_metric = "mean",
+)
+    subset_df = subset(
+        optimal_heatmap_df,
+        :ews_metric_specification => ByRow(==(ews_metric_specification)),
+        :ews_enddate_type => ByRow(==(ews_enddate_type)),
+        :ews_threshold_burnin => ByRow(==(ews_threshold_burnin)),
+        :ews_threshold_window => ByRow(==(ews_threshold_window)),
+        :noise_specification => ByRow(==(noise_specification)),
+        :test_specification => ByRow(==(individual_test_specification)),
+    )
+
+    survival_df = simulate_ews_survival_data(
+        subset_df,
+        ensemble_specification,
+        ensemble_single_incarr,
+        null_single_incarr,
+        ensemble_single_Reff_thresholds_vec;
+        ews_metric = ews_metric,
+    )[1]
+
+    detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
+        survival_df
+    )
+
+    @unpack aggregation = ews_metric_specification
+
+    return ews_survival_plot(
+        detection_survival_vecs,
+        null_survival_vecs,
+        survival_df.enddate;
+        ews_aggregation = aggregation,
+        burnin = ews_threshold_burnin,
+    )
+end
+
+function ews_survival_plot(
     detection_survival_vecs,
     null_survival_vecs,
     enddate_vec;
@@ -1151,6 +1199,7 @@ function simulate_ews_survival_data(
         fill!(detection_index_vec, nothing)
         fill!(null_detection_index_vec, nothing)
 
+        Debugger.@bp
         for sim in axes(testarr, 3)
             if Try.isok(enddate_vec[sim])
                 enddate = Try.unwrap(enddate_vec[sim])

@@ -416,10 +416,16 @@ combine(
 
 #%%
 ews_survival_plot(
-    detection_survival_vecs,
-    null_survival_vecs,
-    subset_survival_df.enddate;
-    ews_aggregation = Day(7),
-    endpoint_aggregation = Day(30),
-    burnin = Year(5),
+    optimal_heatmap_df,
+    EWSMetricSpecification(Backward, Day(7), Week(52), 1),
+    Reff_start,
+    Dates.Year(5),
+    ExpandingThresholdWindow,
+    PoissonNoiseSpecification(1.0),
+    ensemble_specification,
+    IndividualTestSpecification(1.0, 1.0, 0),
+    ensemble_single_incarr,
+    null_single_incarr,
+    ensemble_single_Reff_thresholds_vec;
+    ews_metric = "mean",
 )

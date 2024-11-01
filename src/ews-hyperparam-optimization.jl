@@ -861,26 +861,13 @@ function ews_survival_plot(
 
     detection_survival_times = vcat(
         0,
-        times[detection_indices_vec[1]],
         times[detection_indices_vec]...,
         times[end],
     )
     null_survival_times = vcat(
         0,
-        times[null_indices_vec[1]],
         times[null_indices_vec]...,
         times[end],
-    )
-
-    detection_survival_vec = vcat(
-        detection_survival_vec[1], detection_survival_vec[1],
-        detection_survival_vec..., detection_survival_vec[end],
-    )
-    null_survival_vec = vcat(
-        null_survival_vec[1],
-        null_survival_vec[1],
-        null_survival_vec...,
-        null_survival_vec[end],
     )
 
     enddate_vec = div.(enddate_vec, Dates.days(endpoint_aggregation))
@@ -984,14 +971,30 @@ function create_ews_survival_data(
     detection_survival_vec = nsims .- cumsum(detection_indices_counts)
     null_survival_vec = nsims .- cumsum(null_detection_indices_counts)
 
+    detection_survival_vec = vcat(
+        nsims, nsims, detection_survival_vec..., detection_survival_vec[end]
+    )
+    null_survival_vec = vcat(
+        nsims, nsims, null_survival_vec..., null_survival_vec[end]
+    )
+
+    unique_detection_indices = Int64.(unique_detection_indices)
+    unique_null_detection_indices = Int64.(unique_null_detection_indices)
+
     return (
         (;
             detection_survival_vec,
-            detection_indices_vec = Int64.(unique_detection_indices),
+            detection_indices_vec = vcat(
+                unique_detection_indices[1],
+                unique_detection_indices,
+            ),
         ),
         (;
             null_survival_vec,
-            null_indices_vec = Int64.(unique_null_detection_indices),
+            null_indices_vec = vcat(
+                unique_null_detection_indices[1],
+                unique_null_detection_indices,
+            ),
         ),
     )
 end

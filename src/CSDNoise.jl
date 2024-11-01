@@ -156,6 +156,7 @@ export hyperparam_debugging_Reff_plot
     include("scripts/ensemble-sim_single-scenario.jl")
     include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
     include("scripts/tycho-visualizations.jl")
+    include("scripts/ensemble-sim_ews-optimization.jl")
 end
 
 end

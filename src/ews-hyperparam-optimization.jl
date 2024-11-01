@@ -848,6 +848,8 @@ function ews_survival_plot(
     enddate_vec;
     plottitle = "Survival",
     subtitle = "",
+    ews_aggregation = 7,
+    burnin = Year(5),
     endpoint_aggregation = 30,
     alpha = 1.0,
 )
@@ -856,7 +858,7 @@ function ews_survival_plot(
     @unpack null_survival_vec, null_indices_vec = null_survival_vecs
 
     filtered_enddate_vec = filter(isinteger, enddate_vec)
-    times = collect(1:maximum(filtered_enddate_vec)) ./ 365
+    times = collect(1:maximum(filtered_enddate_vec)) .* ews_aggregation ./ 365
 
     detection_survival_times = vcat(
         0,
@@ -929,6 +931,10 @@ function ews_survival_plot(
         null_survival_vec;
         color = (:red, alpha),
         label = "Null",
+    )
+
+    vlines!(
+        surv_ax, Int64(Dates.value(burnin)); color = :black, linestyle = :dash
     )
 
     Legend(fig[1, 2], surv_ax; orientation = :vertical)

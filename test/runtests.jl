@@ -14,4 +14,5 @@ using JET
         JET.test_package(CSDNoise; target_defined_modules = true)
     end
     include("ews-functions.jl")
+    include("ews-metrics.jl")
 end

@@ -118,21 +118,6 @@ function _aggregate_timeseries(
     return aggregate_timeseries
 end
 
-@testitem "Timeseries aggregation" begin
-    using CSDNoise
-
-    testvec = collect(1:10)
-    @test isequal(aggregate_timeseries(testvec, 1), testvec)
-    @test isequal(
-        aggregate_timeseries(testvec, 2),
-        [sum(1:2), sum(3:4), sum(5:6), sum(7:8), sum(9:10)],
-    )
-    @test isequal(
-        aggregate_timeseries(testvec, 3),
-        [sum(1:3), sum(4:6), sum(7:9)],
-    )
-end
-
 function spaero_mean(
     method::EWSMethod,
     timeseries,

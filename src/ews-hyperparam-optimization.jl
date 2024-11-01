@@ -845,9 +845,9 @@ function ews_survival_plot(
     enddate_vec;
     plottitle = "Survival",
     subtitle = "",
-    ews_aggregation = 7,
+    ews_aggregation = Day(7),
     burnin = Year(5),
-    endpoint_aggregation = 30,
+    endpoint_aggregation = Day(30),
     alpha = 1.0,
 )
     @unpack detection_survival_vec, detection_indices_vec =
@@ -855,7 +855,9 @@ function ews_survival_plot(
     @unpack null_survival_vec, null_indices_vec = null_survival_vecs
 
     filtered_enddate_vec = filter(isinteger, enddate_vec)
-    times = collect(1:maximum(filtered_enddate_vec)) .* ews_aggregation ./ 365
+    times =
+        collect(1:Dates.days(ews_aggregation):maximum(filtered_enddate_vec)) ./
+        365
 
     detection_survival_times = vcat(
         0,
@@ -881,9 +883,10 @@ function ews_survival_plot(
         null_survival_vec[end],
     )
 
-    enddate_vec = div.(enddate_vec, endpoint_aggregation)
+    enddate_vec = div.(enddate_vec, Dates.days(endpoint_aggregation))
     unique_enddate_vec = sort(unique(enddate_vec))
-    enddate_times = (unique_enddate_vec .* endpoint_aggregation) ./ 365
+    enddate_times =
+        (unique_enddate_vec .* Dates.days(endpoint_aggregation)) ./ 365
 
     enddate_counts = map(unique_enddate_vec) do enddate
         sum(enddate_vec .== enddate)

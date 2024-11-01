@@ -377,6 +377,7 @@ hyperparam_debugging_Reff_plot(
     xlims = (0, 12),
     ylims_metric = (nothing, nothing),
     ylims_inc = (nothing, nothing),
+    burnin_vline = Year(5),
 )
 
 #%%

@@ -567,10 +567,15 @@ function Reff_ews_plot_facet!(
     )
 
     if haskey(kwargs_dict, :burnin_vline)
+        burnin_vline = if typeof(kwargs_dict[:burnin_vline]) == Dates.Year
+            Dates.value(kwargs_dict[:burnin_vline])
+        else
+            Dates.days(kwargs_dict[:burnin_vline]) / 365
+        end
         map(
             ax -> vlines!(
                 ax,
-                kwargs_dict[:burnin_vline];
+                burnin_vline;
                 color = :darkred,
                 linestyle = :dash,
             ),

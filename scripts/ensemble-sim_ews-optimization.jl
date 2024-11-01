@@ -237,7 +237,9 @@ specification_vec_tuples = (
     percent_tested = Float64[],
     ews_metric_specification = EWSMetricSpecification[],
     ews_enddate_type = EWSEndDateType[],
-    ews_threshold_window = AbstractEWSThresholdWindow[],
+    ews_threshold_window = Union{
+        Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
+    }[],
     ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
     ews_threshold_percentile = Float64[],
     ews_consecutive_thresholds = Int[],

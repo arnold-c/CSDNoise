@@ -31,7 +31,9 @@ function ews_hyperparam_optimization(
         percent_tested = Float64[],
         ews_metric_specification = EWSMetricSpecification[],
         ews_enddate_type = EWSEndDateType[],
-        ews_threshold_window = EWSThresholdWindow[],
+        ews_threshold_window = Union{
+            Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
+        }[],
         ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
         ews_threshold_percentile = Float64[],
         ews_consecutive_thresholds = Int[],
@@ -142,7 +144,9 @@ function ews_hyperparam_gridsearch(
         percent_tested = Float64[],
         ews_metric_specification = EWSMetricSpecification[],
         ews_enddate_type = EWSEndDateType[],
-        ews_threshold_window = EWSThresholdWindow[],
+        ews_threshold_window = Union{
+            Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
+        }[],
         ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
         ews_threshold_percentile = Float64[],
         ews_consecutive_thresholds = Int[],
@@ -305,7 +309,9 @@ function ews_hyperparam_gridsearch!(
         percent_tested = Float64[],
         ews_metric_specification = EWSMetricSpecification[],
         ews_enddate_type = EWSEndDateType[],
-        ews_threshold_window = EWSThresholdWindow[],
+        ews_threshold_window = Union{
+            Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
+        }[],
         ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
         ews_threshold_percentile = Float64[],
         ews_consecutive_thresholds = Int[],

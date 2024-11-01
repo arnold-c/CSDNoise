@@ -35,6 +35,8 @@ function Reff_ews_plot(
     metric_color = Makie.wong_colors()[1],
     kwargs...,
 ) where {S<:Symbol}
+    kwargs_dict = Dict{Symbol,Any}(kwargs)
+
     @unpack trange = timeparams
     @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
     method = split(string(method), "::")[1]
@@ -45,6 +47,43 @@ function Reff_ews_plot(
 
     min_Reff, max_Reff = extrema(vcat(Reffvec, null_Reffvec))
     ylims_Reff = (min_Reff - 0.1, max_Reff + 0.1)
+
+    function calculate_ylims(
+        ylims, kwargs_dict, detection_vec, null_detection_vec; link = true
+    )
+        if !link
+            return (nothing, nothing)
+        end
+        if !haskey(kwargs_dict, ylims)
+            min_metric, max_metric = extrema(
+                vcat(detection_vec, null_detection_vec)
+            )
+            return (min_metric - 0.1, max_metric + 0.1)
+        end
+        return kwargs_dict[ylims]
+    end
+
+    ylims_metric = calculate_ylims(
+        :ylims_metric,
+        kwargs_dict,
+        getproperty(ewsmetrics, ewsmetric),
+        getproperty(null_ewsmetrics, ewsmetric),
+    )
+
+    ylims_Reff = calculate_ylims(
+        :ylims_Reff,
+        kwargs_dict,
+        Reffvec,
+        null_Reffvec,
+    )
+
+    ylims_inc = calculate_ylims(
+        :ylims_inc,
+        kwargs_dict,
+        incvec,
+        null_incvec;
+        link = false,
+    )
 
     fig = Figure()
     gl_detection = fig[1, 1] = GridLayout()
@@ -68,6 +107,8 @@ function Reff_ews_plot(
         threshold = threshold,
         metric_color = metric_color,
         ylims_Reff = ylims_Reff,
+        ylims_inc = ylims_inc,
+        ylims_metric = ylims_metric,
         thresholds_percentile_vec = thresholds_percentile_vec,
         kwargs...,
     )
@@ -90,9 +131,12 @@ function Reff_ews_plot(
         threshold = threshold,
         metric_color = metric_color,
         ylims_Reff = ylims_Reff,
+        ylims_inc = ylims_inc,
+        ylims_metric = ylims_metric,
         thresholds_percentile_vec = null_thresholds_percentile_vec,
         kwargs...,
     )
+
     Label(
         fig[0, :],
         "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation) days\nEWS calculated for shaded region",
@@ -521,6 +565,18 @@ function Reff_ews_plot_facet!(
         times;
         metric_color = Makie.wong_colors()[1],
     )
+
+    if haskey(kwargs_dict, :burnin_vline)
+        map(
+            ax -> vlines!(
+                ax,
+                kwargs_dict[:burnin_vline];
+                color = :darkred,
+                linestyle = :dash,
+            ),
+            [incax, reffax, metric_ax],
+        )
+    end
 
     if haskey(kwargs_dict, :thresholds_percentile_vec)
         lines!(

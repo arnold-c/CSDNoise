@@ -22,8 +22,7 @@ function hyperparam_debugging_Reff_plot(
     selected_sim = 1,
     test_index = 1,
     xlims = (0, 12),
-    ylims_metric = (nothing, nothing),
-    ylims_inc = (nothing, nothing),
+    kwargs...,
 )
     aggregated_inc_vec = aggregate_timeseries(
         @view(ensemble_single_incarr[:, 1, selected_sim]),
@@ -123,7 +122,6 @@ function hyperparam_debugging_Reff_plot(
         vec_of_null_detection_index_vec[test_index][selected_sim],
         ensemble_time_specification;
         xlims = xlims,
-        ylims_metric = ylims_metric,
-        ylims_inc = ylims_inc,
+        kwargs...,
     )
 end

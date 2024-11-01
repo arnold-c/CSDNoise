@@ -849,6 +849,7 @@ function ews_survival_plot(
     plottitle = "Survival",
     subtitle = "",
     endpoint_aggregation = 30,
+    alpha = 1.0,
 )
     @unpack detection_survival_vec, detection_indices_vec =
         detection_survival_vecs
@@ -890,6 +891,10 @@ function ews_survival_plot(
     end
 
     fig = Figure()
+    hist_ax = Axis(
+        fig[1, 1];
+        limits = (0, maximum(enddate_times), nothing, nothing),
+    )
     surv_ax = Axis(
         fig[1, 1];
         title = plottitle,
@@ -900,10 +905,6 @@ function ews_survival_plot(
         limits = (0, maximum(enddate_times), 0, nothing),
     )
 
-    hist_ax = Axis(
-        fig[1, 1];
-        limits = (0, maximum(enddate_times), nothing, nothing),
-    )
     hidexdecorations!(hist_ax)
     hideydecorations!(hist_ax)
 
@@ -918,7 +919,7 @@ function ews_survival_plot(
         surv_ax,
         detection_survival_times,
         detection_survival_vec;
-        color = :blue,
+        color = (:blue, alpha),
         label = "Detection",
     )
 
@@ -926,7 +927,7 @@ function ews_survival_plot(
         surv_ax,
         null_survival_times,
         null_survival_vec;
-        color = (:red, 0.5),
+        color = (:red, alpha),
         label = "Null",
     )
 
@@ -1035,6 +1036,16 @@ function simulate_ews_survival_data(
     ews_enddate_type = subset_optimal_ews_df[1, :ews_enddate_type]
     ews_threshold_window = subset_optimal_ews_df[1, :ews_threshold_window]
     ews_threshold_burnin = subset_optimal_ews_df[1, :ews_threshold_burnin]
+
+    if isa(ews_threshold_burnin, Dates.Year)
+        ews_threshold_burnin_int = Int64(
+            Dates.days(ews_threshold_burnin) ÷
+            ews_metric_specification.aggregation,
+        )
+    else
+        ews_threshold_burnin_int = Dates.value(ews_threshold_burnin)
+    end
+
     ews_metric = subset_optimal_ews_df[1, :ews_metric]
 
     noisearr = create_noise_arr(
@@ -1145,7 +1156,7 @@ function simulate_ews_survival_data(
                     Symbol(ews_metric),
                     ews_threshold_window;
                     percentiles = ews_threshold_percentile,
-                    burn_in = ews_threshold_burnin,
+                    burn_in = ews_threshold_burnin_int,
                 )[2]
 
                 detection_index_vec[sim] = calculate_ews_trigger_index(
@@ -1158,7 +1169,7 @@ function simulate_ews_survival_data(
                     Symbol(ews_metric),
                     ews_threshold_window;
                     percentiles = ews_threshold_percentile,
-                    burn_in = ews_threshold_burnin,
+                    burn_in = ews_threshold_burnin_int,
                 )[2]
 
                 null_detection_index_vec[sim] = calculate_ews_trigger_index(

@@ -295,7 +295,7 @@ optimal_ews_heatmap_plot(
         :ews_metric_specification =>
             ByRow(==(EWSMetricSpecification(Backward, 28, 52 ÷ 4, 1))),
         :ews_enddate_type => ByRow(==(Reff_start)),
-        :ews_threshold_burnin => ByRow(==(50)),
+        :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
         :ews_threshold_window => ByRow(==(Main.Expanding)),
         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
     ),

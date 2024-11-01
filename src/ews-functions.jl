@@ -6,6 +6,7 @@ using DataFrames
 using Debugger: Debugger
 using Try: Try
 using TryExperimental: trygetindex
+using Dates
 
 @sum_type EWSThresholdWindow begin
     Expanding
@@ -42,10 +43,24 @@ function expanding_ews_thresholds(
     burn_in = 10,
 ) where {T1<:EWSMetrics,T2<:Symbol,T3<:EWSThresholdWindow}
     ews_vec = getproperty(ewsmetrics, metric)
+    return expanding_ews_thresholds(
+        ews_vec,
+        window_type;
+        percentiles = percentiles,
+        burn_in = burn_in,
+    )
+end
 
+function expanding_ews_thresholds(
+    ews_vec,
+    window_type::T1;
+    percentiles = (0.8, 0.95),
+    burn_in = 10,
+) where {T1<:EWSThresholdWindow}
+    @assert burn_in >= 1
     ews_distributions = fill(NaN, length(ews_vec), length(percentiles))
     ews_worker_vec = fill(
-        NaN, sum((!isnan).(@view(ews_vec[(burn_in + 1):end])))
+        NaN, sum((!isnan).(ews_vec))
     )
     exceeds_thresholds = zeros(Bool,
         length(ews_vec), length(percentiles),
@@ -53,18 +68,24 @@ function expanding_ews_thresholds(
 
     worker_ind = 0
     for i in eachindex(ews_vec)
-        if i <= burn_in || isnan(ews_vec[i])
+        if isnan(ews_vec[i])
+            if i > burn_in
+                ews_distributions[i, :] .= ews_distributions[(i - 1), :]
+            end
             continue
         end
         worker_ind += 1
         # use online stats to build up new distribution to avoid computing quantiles for vectors containing NaNs
         ews_worker_vec[worker_ind] = ews_vec[i]
-        ews_distributions[i, :] .= map(
-            p -> StatsBase.quantile(@view(ews_worker_vec[1:worker_ind]), p),
-            percentiles,
-        )
+        if i > burn_in
+            ews_distributions[i, :] .= map(
+                p -> StatsBase.quantile(@view(ews_worker_vec[1:worker_ind]), p),
+                percentiles,
+            )
 
-        exceeds_thresholds[i, :] .= ews_vec[i] .>= ews_distributions[(i - 1), :]
+            exceeds_thresholds[i, :] .=
+                ews_vec[i] .>= ews_distributions[(i - 1), :]
+        end
     end
 
     @assert worker_ind == length(ews_worker_vec)
@@ -179,7 +200,7 @@ function tycho_testing_plots(
 
     plot_dates =
         unique(long_plotdata[!, :date]) |>
-        x -> collect(minimum(x):Day(1):(maximum(x) + Day(6)))
+        x -> collect(minimum(x):Dates.Day(1):(maximum(x) + Dates.Day(6)))
 
     weekly_test_arr = create_testing_arrs(
         weekly_cases_arr,

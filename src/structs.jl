@@ -578,11 +578,11 @@ function EWSMetricSpecification(
         aggregation,
         bandwidth,
         lag,
-        joinpath(
-            "ewsmethod_$(method_string(method))",
-            "ewsaggregationdays_$(aggregation_days_val)",
-            "ewsbandwidth_$(bandwidth_days_val)",
-            "ewslag_$(lag)",
+        _EWSMetricSpecification_path(
+            method,
+            aggregation_days_val,
+            bandwidth_days_val,
+            lag,
         ),
     )
 end
@@ -604,12 +604,26 @@ function EWSMetricSpecification(
         aggregation_days,
         bandwidth_days,
         lag,
-        joinpath(
-            "ewsmethod_$(method_string(method))",
-            "ewsaggregationdays_$(aggregation_days_val)",
-            "ewsbandwidth_$(bandwidth_days_val)",
-            "ewslag_$(lag)",
+        _EWSMetricSpecification_path(
+            method,
+            aggregation_days_val,
+            bandwidth_days_val,
+            lag,
         ),
+    )
+end
+
+function _EWSMetricSpecification_path(
+    method::EWSMethod,
+    aggregation::T1,
+    bandwidth::T1,
+    lag::T1,
+) where {T1<:Integer}
+    return joinpath(
+        "ews-method_$(method_string(method))",
+        "ews-aggregation-days_$(aggregation)",
+        "ews-bandwidth-days_$(bandwidth)",
+        "ews-lag_$(lag)",
     )
 end
 

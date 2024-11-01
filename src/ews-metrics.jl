@@ -76,7 +76,11 @@ function EWSMetrics(
 end
 
 function aggregate_bandwidth(ews_spec::EWSMetricSpecification)
-    return ews_spec.bandwidth ÷ Dates.days(ews_spec.aggregation)
+    aggregate_bandwidth = ews_spec.bandwidth ÷ ews_spec.aggregation
+    @assert aggregate_bandwidth > 0
+    @assert isinteger(aggregate_bandwidth)
+
+    return aggregate_bandwidth
 end
 
 function aggregate_thresholds_vec(thresholdsvec, aggregation)

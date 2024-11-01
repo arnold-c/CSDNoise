@@ -12,6 +12,7 @@ using SumTypes
 using Distributions: Distributions
 using Random: Random
 using UnPack: @unpack
+using Dates: Dates
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -555,17 +556,23 @@ end
     Centered
 end
 
-struct EWSMetricSpecification{T1<:Integer,T2<:AbstractString}
+struct EWSMetricSpecification{T1<:Dates.Day,T2<:Integer,T3<:AbstractString}
     method::EWSMethod
     aggregation::T1
     bandwidth::T1
-    lag::T1
-    dirpath::T2
+    lag::T2
+    dirpath::T3
 end
 
 function EWSMetricSpecification(
-    method::EWSMethod, aggregation::T1, bandwidth::T1, lag::T1
+    method::EWSMethod,
+    aggregation::Dates.Day,
+    bandwidth::Dates.Day,
+    lag::T1,
 ) where {T1<:Integer}
+    aggregation_days_val = Dates.value(aggregation)
+    bandwidth_days_val = Dates.value(bandwidth)
+
     return EWSMetricSpecification(
         method,
         aggregation,
@@ -573,8 +580,34 @@ function EWSMetricSpecification(
         lag,
         joinpath(
             "ewsmethod_$(method_string(method))",
-            "ewsaggregationdays_$(aggregation)",
-            "ewsbandwidth_$(bandwidth)",
+            "ewsaggregationdays_$(aggregation_days_val)",
+            "ewsbandwidth_$(bandwidth_days_val)",
+            "ewslag_$(lag)",
+        ),
+    )
+end
+
+function EWSMetricSpecification(
+    method::EWSMethod, aggregation::T1, bandwidth::T2, lag::T3
+) where {
+    T1<:Dates.DatePeriod,
+    T2<:Dates.DatePeriod,
+    T3<:Integer,
+}
+    aggregation_days_val = Dates.days(aggregation)
+    bandwidth_days_val = Dates.days(bandwidth)
+    aggregation_days = Dates.Day(aggregation_days_val)
+    bandwidth_days = Dates.Day(bandwidth_days_val)
+
+    return EWSMetricSpecification(
+        method,
+        aggregation_days,
+        bandwidth_days,
+        lag,
+        joinpath(
+            "ewsmethod_$(method_string(method))",
+            "ewsaggregationdays_$(aggregation_days_val)",
+            "ewsbandwidth_$(bandwidth_days_val)",
             "ewslag_$(lag)",
         ),
     )

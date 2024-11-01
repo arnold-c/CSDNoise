@@ -178,20 +178,20 @@ ews_method_vec = [
     # Centered,
     Backward
 ]
-ews_aggregation_days_vec = [
-    7,
-    14,
-    28,
+ews_aggregation_vec = [
+    Day(7),
+    Day(14),
+    Day(28),
 ]
-ews_bandwidth_days_vec = [52 * 7]
+ews_bandwidth_vec = [Week(52)]
 ews_lag_days_vec = [1]
 
 ews_metric_specification_vec = create_combinations_vec(
-    calculate_bandwidth_and_return_ews_metric_spec,
+    EWSMetricSpecification,
     (
         ews_method_vec,
-        ews_aggregation_days_vec,
-        ews_bandwidth_days_vec,
+        ews_aggregation_vec,
+        ews_bandwidth_vec,
         ews_lag_days_vec,
     ),
 )
@@ -258,11 +258,11 @@ optimal_ews_df = ews_hyperparam_optimization(
     gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
     optimization_filename_base = "ews-hyperparam-optimization.jld2",
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-    force = false,
+    force = true,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
     subset_optimal_parameters = [:ews_threshold_burnin => ByRow(==(Year(5)))],
-    disable_time_check = false,
+    disable_time_check = true,
 )
 
 #%%

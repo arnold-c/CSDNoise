@@ -411,4 +411,7 @@ ews_survival_plot(
     detection_survival_vecs,
     null_survival_vecs,
     subset_survival_df.enddate;
+    ews_aggregation = 7,
+    endpoint_aggregation = 30,
+    burnin = Year(5),
 )

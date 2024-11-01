@@ -14,14 +14,14 @@ function EWSMetrics(
         timeseries, ews_spec.aggregation
     )
 
-    if length(aggregated_timeseries) < Dates.value(ews_spec.bandwidth)
+    aggregated_bandwidth = aggregate_bandwidth(ews_spec)
+
+    if length(aggregated_timeseries) < aggregated_bandwidth
         error(
-            "Not enough data for bandwidth: bandwidth = $(ews_spec.bandwidth), aggregated time series length = $(length(aggregated_timeseries))\n",
+            "Not enough data for bandwidth: bandwidth = $(ews_spec.bandwidth), aggregated bandwidth = $(aggregated_bandwidth), aggregation = $(ews_spec.aggregation), aggregated time series length = $(length(aggregated_timeseries))\n",
             "ews_specification = $(ews_spec)",
         )
     end
-
-    aggregated_bandwidth = aggregate_bandwidth(ews_spec)
 
     mean_vec = spaero_mean(
         ews_spec.method, aggregated_timeseries, aggregated_bandwidth

@@ -7,6 +7,7 @@ using Debugger: Debugger
 using Try: Try
 using TryExperimental: trygetindex
 using Dates
+using UnPack: @unpack
 
 @sum_type EWSThresholdWindow begin
     Expanding
@@ -38,26 +39,31 @@ end
 function expanding_ews_thresholds(
     ewsmetrics::T1,
     metric::T2,
-    window_type::T3;
+    window_type::Type{<:AbstractEWSThresholdWindow};
     percentiles = (0.8, 0.95),
-    burn_in = 10,
-) where {T1<:EWSMetrics,T2<:Symbol,T3<:EWSThresholdWindow}
+    burn_in = Dates.Day(10),
+) where {T1<:EWSMetrics,T2<:Symbol}
     ews_vec = getproperty(ewsmetrics, metric)
-    return expanding_ews_thresholds(
+
+    @unpack aggregation = ewsmetrics.ews_specification
+    burn_in_index = Dates.days(burn_in) ÷ Dates.days(aggregation)
+
+    @assert burn_in_index >= 1 && burn_in_index <= length(ews_vec)
+
+    return _expanding_ews_thresholds(
         ews_vec,
-        window_type;
-        percentiles = percentiles,
-        burn_in = burn_in,
+        window_type,
+        percentiles,
+        burn_in_index,
     )
 end
 
-function expanding_ews_thresholds(
+function _expanding_ews_thresholds(
     ews_vec,
-    window_type::T1;
-    percentiles = (0.8, 0.95),
-    burn_in = 10,
-) where {T1<:EWSThresholdWindow}
-    @assert burn_in >= 1
+    ::Type{ExpandingThresholdWindow},
+    percentiles,
+    burn_in_index::T1,
+) where {T1<:Integer}
     ews_distributions = fill(NaN, length(ews_vec), length(percentiles))
     ews_worker_vec = fill(
         NaN, sum((!isnan).(ews_vec))
@@ -69,7 +75,7 @@ function expanding_ews_thresholds(
     worker_ind = 0
     for i in eachindex(ews_vec)
         if isnan(ews_vec[i])
-            if i > burn_in
+            if i > burn_in_index
                 ews_distributions[i, :] .= ews_distributions[(i - 1), :]
             end
             continue
@@ -77,7 +83,7 @@ function expanding_ews_thresholds(
         worker_ind += 1
         # use online stats to build up new distribution to avoid computing quantiles for vectors containing NaNs
         ews_worker_vec[worker_ind] = ews_vec[i]
-        if i > burn_in
+        if i > burn_in_index
             ews_distributions[i, :] .= map(
                 p -> StatsBase.quantile(@view(ews_worker_vec[1:worker_ind]), p),
                 percentiles,

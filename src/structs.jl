@@ -653,6 +653,12 @@ struct EWSMetrics{
     autocorrelation_tau::T2
 end
 
+abstract type AbstractEWSThresholdWindow end
+
+struct ExpandingThresholdWindow <: AbstractEWSThresholdWindow end
+
+struct RollingThresholdWindow <: AbstractEWSThresholdWindow end
+
 struct ScenarioSpecification{
     T1<:EnsembleSpecification,
     T2<:OutbreakSpecification,

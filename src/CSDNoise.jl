@@ -32,6 +32,9 @@ export SimTimeParameters, EnsembleSpecification,
     getdirpath,
     EWSMethod, Backward, Centered, method_string,
     EWSMetricSpecification,
+    AbstractEWSThresholdWindow,
+    ExpandingThresholdWindow,
+    RollingThresholdWindow,
     ScenarioSpecification,
     EWSMetrics
 # @reexport using .ODStructs
@@ -52,8 +55,7 @@ export aggregate_Reff_vec, aggregate_thresholds_vec, aggregate_timeseries,
 
 include("ews-functions.jl")
 export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
-    EWSThresholdWindow,
-    Rolling, Expanding, expanding_ews_thresholds,
+    expanding_ews_thresholds,
     EWSEndDateType, Reff_start, Reff_end, Outbreak_start, Outbreak_end,
     Outbreak_middle,
     calculate_ews_enddate,

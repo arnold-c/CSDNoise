@@ -1040,15 +1040,6 @@ function simulate_ews_survival_data(
     ews_threshold_window = subset_optimal_ews_df[1, :ews_threshold_window]
     ews_threshold_burnin = subset_optimal_ews_df[1, :ews_threshold_burnin]
 
-    if isa(ews_threshold_burnin, Dates.Year)
-        ews_threshold_burnin_int = Int64(
-            Dates.days(ews_threshold_burnin) ÷
-            ews_metric_specification.aggregation,
-        )
-    else
-        ews_threshold_burnin_int = Dates.value(ews_threshold_burnin)
-    end
-
     ews_metric = subset_optimal_ews_df[1, :ews_metric]
 
     noisearr = create_noise_arr(
@@ -1172,7 +1163,7 @@ function simulate_ews_survival_data(
                     Symbol(ews_metric),
                     ews_threshold_window;
                     percentiles = ews_threshold_percentile,
-                    burn_in = ews_threshold_burnin_int,
+                    burn_in = ews_threshold_burnin,
                 )[2]
 
                 threshold_percentiles_vec[sim] = expanding_ews_thresholds(
@@ -1180,7 +1171,7 @@ function simulate_ews_survival_data(
                     Symbol(ews_metric),
                     ews_threshold_window;
                     percentiles = ews_threshold_percentile,
-                    burn_in = ews_threshold_burnin_int,
+                    burn_in = ews_threshold_burnin,
                 )[1]
 
                 detection_index_vec[sim] = calculate_ews_trigger_index(
@@ -1193,7 +1184,7 @@ function simulate_ews_survival_data(
                     Symbol(ews_metric),
                     ews_threshold_window;
                     percentiles = ews_threshold_percentile,
-                    burn_in = ews_threshold_burnin_int,
+                    burn_in = ews_threshold_burnin,
                 )[2]
 
                 null_threshold_percentiles_vec[sim] = expanding_ews_thresholds(
@@ -1201,7 +1192,7 @@ function simulate_ews_survival_data(
                     Symbol(ews_metric),
                     ews_threshold_window;
                     percentiles = ews_threshold_percentile,
-                    burn_in = ews_threshold_burnin_int,
+                    burn_in = ews_threshold_burnin,
                 )[1]
 
                 null_detection_index_vec[sim] = calculate_ews_trigger_index(

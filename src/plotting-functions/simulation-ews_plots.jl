@@ -37,12 +37,8 @@ function Reff_ews_plot(
 ) where {S<:Symbol}
     kwargs_dict = Dict{Symbol,Any}(kwargs)
 
-    @unpack trange = timeparams
-    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
-    method = split(string(method), "::")[1]
-
-    @unpack trange = timeparams
-    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
+    @unpack ews_specification = ewsmetrics
+    @unpack aggregation, bandwidth, lag, method = ews_specification
     method = split(string(method), "::")[1]
 
     min_Reff, max_Reff = extrema(vcat(Reffvec, null_Reffvec))
@@ -139,7 +135,7 @@ function Reff_ews_plot(
 
     Label(
         fig[0, :],
-        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation) days\nEWS calculated for shaded region",
+        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation)\nEWS calculated for shaded region",
     )
 
     rowsize!(fig.layout, 0, Relative(0.05))
@@ -466,12 +462,16 @@ function Reff_ews_plot_facet!(
     kwargs...,
 ) where {S<:Symbol}
     @unpack trange = timeparams
-    @unpack aggregation, bandwidth, lag, method = ewsmetrics.ews_specification
+    @unpack aggregation, method =
+        ewsmetrics.ews_specification
     method = split(string(method), "::")[1]
 
-    times = collect(trange) ./ 365
+    aggregation_int = Dates.days(aggregation)
+
     aggregated_vec_length = length(Reffvec)
-    times = times[1:aggregation:(aggregation * aggregated_vec_length)]
+    times =
+        collect(1:aggregation_int:(aggregated_vec_length * aggregation_int)) ./
+        365
 
     kwargs_dict = Dict(kwargs)
 
@@ -506,7 +506,7 @@ function Reff_ews_plot_facet!(
     map(
         ax ->
             vspan!(
-                ax, 0, (ewsmetric_endpoint - 1) * aggregation / 365;
+                ax, 0, (ewsmetric_endpoint - 1) * aggregation_int / 365;
                 color = (:lightgrey, 0.5),
             ),
         [incax, reffax, metric_ax],
@@ -545,7 +545,7 @@ function Reff_ews_plot_facet!(
         colormap = Reff_colormap,
     )
 
-    outbreak_threshold_hline = aggregation == 1 ? threshold : NaN
+    outbreak_threshold_hline = aggregation_int == 1 ? threshold : NaN
     line_and_hline!(
         incax,
         times,
@@ -563,7 +563,7 @@ function Reff_ews_plot_facet!(
         detection_index,
         exceeds_thresholds_vec,
         times;
-        metric_color = Makie.wong_colors()[1],
+        metric_color = metric_color,
     )
 
     if haskey(kwargs_dict, :burnin_vline)

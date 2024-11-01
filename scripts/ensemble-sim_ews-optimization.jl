@@ -280,10 +280,15 @@ optimal_heatmap_df = optimal_ews_heatmap_df(
 )
 
 #%%
+test_ews_metric_specification = EWSMetricSpecification(
+    Backward, Day(7), Week(52), 1
+)
+
+#%%
 test_df = subset(
     optimal_heatmap_df,
     :ews_metric_specification =>
-        ByRow(==(EWSMetricSpecification(Backward, 7, 52, 1))),
+        ByRow(==(test_ews_metric_specification)),
     :ews_enddate_type => ByRow(==(Reff_start)),
     :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
     :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
@@ -295,7 +300,7 @@ optimal_ews_heatmap_plot(
     subset(
         optimal_heatmap_df,
         :ews_metric_specification =>
-            ByRow(==(EWSMetricSpecification(Backward, 7, 52, 1))),
+            ByRow(==(test_ews_metric_specification)),
         :ews_enddate_type => ByRow(==(Reff_start)),
         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
         :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
@@ -308,7 +313,7 @@ optimal_ews_heatmap_plot(
     subset(
         optimal_heatmap_df,
         :ews_metric_specification =>
-            ByRow(==(EWSMetricSpecification(Backward, 28, 52 ÷ 4, 1))),
+            ByRow(==(EWSMetricSpecification(Backward, Day(28), Week(52), 1))),
         :ews_enddate_type => ByRow(==(Reff_start)),
         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
         :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),

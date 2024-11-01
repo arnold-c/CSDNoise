@@ -1,3 +1,5 @@
+using UnPack: @unpack
+
 function hyperparam_debugging_Reff_plot(
     ensemble_single_incarr,
     null_single_incarr,
@@ -24,57 +26,51 @@ function hyperparam_debugging_Reff_plot(
     xlims = (0, 12),
     kwargs...,
 )
+    ews_specification = vec_of_ews_vals_vec[1][1].ews_specification
+    @unpack aggregation = ews_specification
+    aggregation_int = Dates.days(aggregation)
+
     aggregated_inc_vec = aggregate_timeseries(
         @view(ensemble_single_incarr[:, 1, selected_sim]),
-        7,
-    )
-
-    aggregated_outbreak_status_vec = aggregate_thresholds_vec(
-        @view(ensemble_single_incarr[:, 3, selected_sim]),
-        7,
+        aggregation,
     )
 
     aggregated_null_inc_vec = aggregate_timeseries(
         @view(null_single_incarr[:, 1, selected_sim]),
-        7,
-    )
-
-    aggregated_null_outbreak_status_vec = aggregate_thresholds_vec(
-        @view(null_single_incarr[:, 3, selected_sim]),
-        7,
+        aggregation,
     )
 
     aggregated_Reff_vec = aggregate_Reff_vec(
         @view(ensemble_single_Reff_arr[:, selected_sim]),
-        7,
+        aggregation,
     )
 
     aggregated_Reff_thresholds_arr =
-        ensemble_single_Reff_thresholds_vec[selected_sim] .÷ 7
+        ensemble_single_Reff_thresholds_vec[selected_sim] .÷ aggregation_int
 
     aggregated_null_Reff_vec = aggregate_Reff_vec(
         @view(null_single_Reff_arr[:, selected_sim]),
-        7,
+        aggregation,
     )
 
     aggregated_null_Reff_thresholds_arr =
-        null_single_Reff_thresholds_vec[selected_sim] .÷ 7
+        null_single_Reff_thresholds_vec[selected_sim] .÷ aggregation_int
 
     aggregated_outbreak_thresholds_arr =
         ensemble_single_periodsum_vecs[selected_sim][
             (ensemble_single_periodsum_vecs[selected_sim][:, 4] .== 1),
             [1, 2],
-        ] .÷ 7
+        ] .÷ aggregation_int
 
     aggregated_null_outbreak_thresholds_arr =
         null_single_periodsum_vecs[selected_sim][
             (null_single_periodsum_vecs[selected_sim][:, 4] .== 1),
             [1, 2],
-        ] .÷ 7
+        ] .÷ aggregation_int
 
     aggregated_test_vec = aggregate_timeseries(
         @view(vec_of_testarr[test_index][:, 5, selected_sim]),
-        7,
+        aggregation,
     )
 
     aggregated_test_movingavg_vec = zeros(
@@ -89,7 +85,7 @@ function hyperparam_debugging_Reff_plot(
 
     aggregated_null_test_vec = aggregate_timeseries(
         @view(vec_of_null_testarr[test_index][:, 5, selected_sim]),
-        7,
+        aggregation,
     )
 
     aggregated_null_test_movingavg_vec = zeros(

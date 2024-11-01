@@ -5,6 +5,7 @@ using Bumper
 using StrideArrays
 using Printf: @sprintf
 using TestItems
+using Dates: Dates
 
 function EWSMetrics(
     ews_spec::EWSMetricSpecification, timeseries
@@ -20,26 +21,30 @@ function EWSMetrics(
         )
     end
 
+    aggregated_bandwidth = aggregate_bandwidth(ews_spec)
+
     mean_vec = spaero_mean(
-        ews_spec.method, aggregated_timeseries, ews_spec.bandwidth
+        ews_spec.method, aggregated_timeseries, aggregated_bandwidth
     )
     var_vec = spaero_var(
-        ews_spec.method, mean_vec, aggregated_timeseries, ews_spec.bandwidth
+        ews_spec.method, mean_vec, aggregated_timeseries, aggregated_bandwidth
     )
     var2_vec = var_vec .^ 2
     sd_vec = sqrt.(var_vec)
     sd3_vec = sd_vec .^ 3
     m3_vec = _spaero_moment(
-        ews_spec.method, mean_vec, aggregated_timeseries, 3, ews_spec.bandwidth
+        ews_spec.method, mean_vec, aggregated_timeseries, 3,
+        aggregated_bandwidth,
     )
     m4_vec = _spaero_moment(
-        ews_spec.method, mean_vec, aggregated_timeseries, 4, ews_spec.bandwidth
+        ews_spec.method, mean_vec, aggregated_timeseries, 4,
+        aggregated_bandwidth,
     )
     autocov_vec = spaero_autocov(
         ews_spec.method,
         mean_vec,
         aggregated_timeseries,
-        ews_spec.bandwidth;
+        aggregated_bandwidth;
         lag = ews_spec.lag,
     )
 
@@ -70,6 +75,10 @@ function EWSMetrics(
     )
 end
 
+function aggregate_bandwidth(ews_spec::EWSMetricSpecification)
+    return ews_spec.bandwidth ÷ Dates.days(ews_spec.aggregation)
+end
+
 function aggregate_thresholds_vec(thresholdsvec, aggregation)
     return aggregate_timeseries(thresholdsvec, aggregation, x -> sum(x) >= 1)
 end
@@ -78,21 +87,32 @@ function aggregate_Reff_vec(Reff_vec, aggregation)
     return aggregate_timeseries(Reff_vec, aggregation, mean)
 end
 
-function aggregate_timeseries(timeseries, aggregation, stat_function = sum)
-    if aggregation == 1
+function aggregate_timeseries(
+    timeseries,
+    aggregation::T1,
+    stat_function = sum,
+) where {T1<:Dates.DatePeriod}
+    if aggregation == Dates.Day(1)
         return timeseries
     end
     return _aggregate_timeseries(timeseries, aggregation, stat_function)
 end
 
-function _aggregate_timeseries(timeseries, aggregation, stat_function = mean)
+function _aggregate_timeseries(
+    timeseries,
+    aggregation::T1,
+    stat_function = mean,
+) where {T1<:Dates.DatePeriod}
+    aggregation_days = Dates.days(aggregation)
     aggregate_timeseries = zeros(
         eltype(stat_function(@view(timeseries[1:2]))),
-        length(timeseries) ÷ aggregation,
+        length(timeseries) ÷ aggregation_days,
     )
     for i in eachindex(aggregate_timeseries)
         aggregate_timeseries[i] = stat_function(
-            @view(timeseries[((i - 1) * aggregation + 1):(i * aggregation)])
+            @view(
+                timeseries[((i - 1) * aggregation_days + 1):(i * aggregation_days)]
+            )
         )
     end
     return aggregate_timeseries
@@ -113,15 +133,22 @@ end
     )
 end
 
-function spaero_mean(method::EWSMethod, timeseries, bandwidth)
+function spaero_mean(
+    method::EWSMethod,
+    timeseries,
+    bandwidth::T1,
+) where {T1<:Integer}
     mean_vec = zeros(Float64, length(timeseries))
     spaero_mean!(mean_vec, method, timeseries, bandwidth)
     return mean_vec
 end
 
 function spaero_mean!(
-    mean_vec, method::EWSMethod, timeseries, bandwidth
-)
+    mean_vec,
+    method::EWSMethod,
+    timeseries,
+    bandwidth::T1,
+) where {T1<:Integer}
     mean_func! = _get_mean_func(method)
     mean_func!(mean_vec, timeseries, bandwidth)
     return nothing

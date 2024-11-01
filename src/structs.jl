@@ -556,12 +556,12 @@ end
     Centered
 end
 
-struct EWSMetricSpecification{T1<:Dates.Day,T2<:Integer,T3<:AbstractString}
+struct EWSMetricSpecification{T1<:Integer,T2<:AbstractString}
     method::EWSMethod
-    aggregation::T1
-    bandwidth::T1
-    lag::T2
-    dirpath::T3
+    aggregation::Dates.Day
+    bandwidth::Dates.Day
+    lag::T1
+    dirpath::T2
 end
 
 function EWSMetricSpecification(

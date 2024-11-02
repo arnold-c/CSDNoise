@@ -260,10 +260,19 @@ optimal_ews_df = ews_hyperparam_optimization(
     gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
     optimization_filename_base = "ews-hyperparam-optimization.jld2",
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-    force = true,
+    force = false,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
-    # subset_optimal_parameters = [:ews_threshold_burnin => ByRow(==(Year(5)))],
+    optimal_grouping_parameters = [
+        :noise_specification,
+        :test_specification,
+        :percent_tested,
+        :ews_metric_specification,
+        :ews_enddate_type,
+        :ews_metric,
+        :ews_threshold_window,
+        :ews_threshold_burnin,
+    ],
     disable_time_check = false,
 )
 
@@ -285,16 +294,15 @@ create_optimal_ews_plots(
     ],
 )
 
-#%%
+# #%%
 # @unpack ews_df = load_most_recent_hyperparam_file(
 #     "ews-hyperparam-gridsearch.jld2",
 #     outdir("ensemble", "ews-hyperparam-optimization"),
 # )
 #
-# #%%
 # test_optimal_df = CSDNoise.filter_optimal_ews_hyperparam_gridsearch(
 #     ews_df;
-#     optimal_grouping_parameters = optimal_grouping_parameters = [
+#     optimal_grouping_parameters = [
 #         :noise_specification,
 #         :test_specification,
 #         :percent_tested,
@@ -307,18 +315,7 @@ create_optimal_ews_plots(
 # )
 # #     tiebreaker_preference = "specificity",
 # # )
-#
-# optimal_ews_heatmap_plot(
-#     subset(
-#         test_optimal_df,
-#         :ews_metric_specification =>
-#             ByRow(==(EWSMetricSpecification(Backward, Day(28), Week(52), 1))),
-#         :ews_enddate_type => ByRow(==(Reff_start)),
-#         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-#         :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
-#         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
-#     ),
-# )
+# #
 #
 # #%%
 # grouped_test_optimal_df = groupby(
@@ -345,7 +342,20 @@ create_optimal_ews_plots(
 #     )
 # end
 #
-# #%%
+#%%
+# optimal_ews_heatmap_plot(
+#     subset(
+#         test_optimal_df,
+#         :ews_metric_specification =>
+#             ByRow(==(EWSMetricSpecification(Backward, Day(28), Week(52), 1))),
+#         :ews_enddate_type => ByRow(==(Reff_start)),
+#         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
+#         :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
+#         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
+#     ),
+# )
+
+#%%
 # optimal_heatmap_df = optimal_ews_heatmap_df(
 #     optimal_ews_df;
 #     tiebreaker_preference = "specificity",

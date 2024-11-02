@@ -54,9 +54,12 @@ function create_optimal_ews_plots(
             optimal_grouping_parameters = optimal_grouping_parameters,
         )
 
+        @show nrow(optimal_heatmap_df)
+        @show length(ews_metrics) *
+            length(unique(optimal_ews_df.test_specification))
         @assert nrow(optimal_heatmap_df) ==
             length(ews_metrics) *
-                unique(grouped_optimal_ews_df.test_specification)
+                length(unique(optimal_ews_df.test_specification))
 
         noise_plotdir = getdirpath(noise_specification)
         percent_tested = optimal_ews_df[1, :percent_tested]

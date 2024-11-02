@@ -47,6 +47,8 @@ function ews_hyperparam_optimization(
         :ews_metric_specification,
         :ews_enddate_type,
         :ews_metric,
+        :ews_threshold_window,
+        :ews_threshold_burnin,
     ],
     disable_time_check = false,
     time_per_run_s = 0.08,

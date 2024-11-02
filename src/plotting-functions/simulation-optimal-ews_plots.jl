@@ -94,6 +94,7 @@ function create_optimal_ews_plots(
             "optimal-heatmaps",
             ews_metric_specification.dirpath,
             ews_enddate_type_str,
+            "ews-threshold-burnin_$(ews_threshold_burnin)",
         )
         mkpath(ews_plotdir)
 
@@ -110,7 +111,7 @@ function create_optimal_ews_plots(
 
             heatmap_subtitle =
                 "Noise: $(noise_descripton), Percent Tested: $(percent_tested), $(ews_enddate_type)" *
-                "\n$(get_ews_metric_specification_description(ews_metric_specification))" *
+                "\n$(get_ews_metric_specification_description(ews_metric_specification)), Threshold Burnin: $(ews_threshold_burnin), Tiebreaker: $(tiebreaker_preference)" *
                 "\nP = Percentile Threshold, C = Consecutive Thresholds, S = Specificity"
 
             optimal_heatmap_plot = optimal_ews_heatmap_plot(
@@ -130,8 +131,7 @@ function create_optimal_ews_plots(
                 survival_plottitle = "Metric: $(ews_metric)"
                 survival_subtitle =
                     "\nNoise: $(noise_descripton), Percent Tested: $(percent_tested), $(ews_enddate_type)" *
-                    "\n$(get_ews_metric_specification_description(ews_metric_specification))" *
-                    test_description
+                    "\n$(get_ews_metric_specification_description(ews_metric_specification)), Threshold Burnin: $(ews_threshold_burnin), Tiebreaker: $(tiebreaker_preference), $(test_description)"
 
                 test_plotdir = joinpath(
                     noise_plotdir,
@@ -143,6 +143,7 @@ function create_optimal_ews_plots(
                     "survival",
                     ews_metric_specification.dirpath,
                     ews_enddate_type_str,
+                    "ews-threshold-burnin_$(ews_threshold_burnin)",
                     "tiebreaker-$(tiebreaker_preference)",
                 )
                 mkpath(survival_plotdir)

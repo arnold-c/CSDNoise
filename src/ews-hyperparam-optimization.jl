@@ -1001,55 +1001,61 @@ function create_ews_survival_data(
         ),
     )
 
-    detection_indices_counts = map(
-        ((i, v),) -> sum(ews_optimal_simulation_df.detection_index .== v),
-        enumerate(unique_detection_indices),
+    detection_survival_vec, detection_indices_vec = calculate_detection_indices_and_survival(
+        ews_optimal_simulation_df.detection_index,
+        unique_detection_indices,
+        nsims,
     )
 
-    null_detection_indices_counts = map(
-        ((i, v),) -> sum(
-            ews_optimal_simulation_df.null_detection_index .== v
-        ),
-        enumerate(unique_null_detection_indices),
+    null_survival_vec, null_indices_vec = calculate_detection_indices_and_survival(
+        ews_optimal_simulation_df.null_detection_index,
+        unique_null_detection_indices,
+        nsims,
     )
-
-    @assert nsims ==
-        sum(detection_indices_counts) +
-            sum(ews_optimal_simulation_df.detection_index .== nothing)
-
-    @assert nsims ==
-        sum(null_detection_indices_counts) +
-            sum(ews_optimal_simulation_df.null_detection_index .== nothing)
-
-    detection_survival_vec = nsims .- cumsum(detection_indices_counts)
-    null_survival_vec = nsims .- cumsum(null_detection_indices_counts)
-
-    detection_survival_vec = vcat(
-        nsims, nsims, detection_survival_vec..., detection_survival_vec[end]
-    )
-    null_survival_vec = vcat(
-        nsims, nsims, null_survival_vec..., null_survival_vec[end]
-    )
-
-    unique_detection_indices = Int64.(unique_detection_indices)
-    unique_null_detection_indices = Int64.(unique_null_detection_indices)
 
     return (
-        (;
-            detection_survival_vec,
-            detection_indices_vec = vcat(
-                unique_detection_indices[1],
-                unique_detection_indices,
-            ),
-        ),
-        (;
-            null_survival_vec,
-            null_indices_vec = vcat(
-                unique_null_detection_indices[1],
-                unique_null_detection_indices,
-            ),
-        ),
+        (; detection_survival_vec, detection_indices_vec),
+        (; null_survival_vec, null_indices_vec),
     )
+end
+
+function calculate_detection_indices_and_survival(
+    detection_vec,
+    detection_indices,
+    nsims,
+)
+    if isempty(detection_indices)
+        @assert nsims ==
+            sum(detection_vec .== nothing)
+
+        survival_vec = [nsims, nsims]
+        indices_vec = Int64[]
+    else
+        detection_indices_counts = map(
+            ((i, v),) -> sum(
+                detection_vec .== v
+            ),
+            enumerate(detection_indices),
+        )
+
+        @assert nsims ==
+            sum(detection_indices_counts) +
+                sum(detection_vec .== nothing)
+
+        survival_vec = nsims .- cumsum(detection_indices_counts)
+
+        survival_vec = vcat(
+            nsims, nsims, survival_vec..., survival_vec[end]
+        )
+        detection_indices = Int64.(detection_indices)
+
+        indices_vec = vcat(
+            detection_indices[1],
+            detection_indices,
+        )
+    end
+
+    return survival_vec, indices_vec
 end
 
 function simulate_ews_survival_data(
@@ -1204,7 +1210,6 @@ function simulate_ews_survival_data(
         fill!(detection_index_vec, nothing)
         fill!(null_detection_index_vec, nothing)
 
-        Debugger.@bp
         for sim in axes(testarr, 3)
             if Try.isok(enddate_vec[sim])
                 enddate = Try.unwrap(enddate_vec[sim])

@@ -829,6 +829,7 @@ function simulate_and_plot_ews_survival(
     null_single_incarr,
     ensemble_single_Reff_thresholds_vec;
     ews_metric = "mean",
+    plottitle = "Survival",
 )
     subset_df = subset(
         optimal_heatmap_df,
@@ -849,6 +850,7 @@ function simulate_and_plot_ews_survival(
         null_single_incarr,
         ensemble_single_Reff_thresholds_vec;
         ews_metric = ews_metric,
+        plottitle = plottitle,
     )
 end
 
@@ -862,6 +864,7 @@ function simulate_and_plot_ews_survival(
     null_single_incarr,
     ensemble_single_Reff_thresholds_vec;
     ews_metric = "mean",
+    plottitle = "Survival",
 )
     test_subset_df = subset(
         subset_df,
@@ -889,6 +892,7 @@ function simulate_and_plot_ews_survival(
         survival_df.enddate;
         ews_aggregation = aggregation,
         burnin = ews_threshold_burnin,
+        plottitle = plottitle,
     )
 end
 

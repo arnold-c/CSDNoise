@@ -80,7 +80,6 @@ function create_optimal_ews_plots(
             ensemble_vax_plotpath,
             noise_dirpath,
             "percent-tested_$(percent_tested)",
-            # "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
         )
         ews_metric_specification = optimal_heatmap_df.ews_metric_specification[1]
         ews_enddate_type = optimal_heatmap_df.ews_enddate_type[1]
@@ -124,6 +123,12 @@ function create_optimal_ews_plots(
         for test_specification in unique(optimal_heatmap_df.test_specification)
             test_description = get_test_description(test_specification)
 
+            survival_plottitle =
+                "Noise: $(noise_descripton), Percent Tested: $(percent_tested), $(ews_enddate_type)" *
+                "\n$(get_ews_metric_specification_description(ews_metric_specification))" *
+                "\nP = Percentile Threshold, C = Consecutive Thresholds, S = Specificity\n" *
+                test_description
+
             test_plotdir = joinpath(
                 noise_plotdir,
                 "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
@@ -154,6 +159,7 @@ function create_optimal_ews_plots(
                         null_single_incarr,
                         ensemble_single_Reff_thresholds_vec;
                         ews_metric = ews_metric,
+                        plottitle = survival_plottitle,
                     )
                     save(
                         plotpath,

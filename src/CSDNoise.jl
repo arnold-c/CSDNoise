@@ -32,6 +32,7 @@ export SimTimeParameters, EnsembleSpecification,
     getdirpath,
     EWSMethod, Backward, Centered, method_string,
     EWSMetricSpecification,
+    get_ews_metric_specification_description,
     AbstractEWSThresholdWindow,
     ExpandingThresholdWindow,
     RollingThresholdWindow,
@@ -74,6 +75,7 @@ export ews_hyperparam_optimization,
     get_most_recent_hyperparam_filepath,
     optimal_ews_heatmap_df,
     optimal_ews_heatmap_plot,
+    simulate_and_plot_ews_survival,
     ews_survival_plot,
     simulate_ews_survival_data,
     create_ews_survival_data
@@ -148,15 +150,17 @@ export Reff_ews_plot, simulation_tau_distribution
 include("ensemble-sim_single-scenario_plots.jl")
 export plot_all_single_scenarios
 
+include("plotting-functions/simulation-optimal-ews_plots.jl")
+export create_optimal_ews_plots
+
 include("plotting-functions/hyperparam-debugging_plots.jl")
 export hyperparam_debugging_Reff_plot
 
 @static if false
-    include("scripts/ensemble-sim.jl")
-    include("scripts/ensemble-sim_single-scenario.jl")
-    include("scripts/ensemble-sim_inferred-scenario-visualizations.jl")
-    include("scripts/tycho-visualizations.jl")
-    include("scripts/ensemble-sim_ews-optimization.jl")
+    include("../scripts/ensemble-sim.jl")
+    include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")
+    include("../scripts/tycho-visualization.jl")
+    include("../scripts/ensemble-sim_ews-optimization.jl")
 end
 
 end

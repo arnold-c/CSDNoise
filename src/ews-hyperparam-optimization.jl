@@ -111,6 +111,8 @@ function filter_optimal_ews_hyperparam_gridsearch(
         :ews_metric_specification,
         :ews_enddate_type,
         :ews_metric,
+        :ews_threshold_window,
+        :ews_threshold_burnin,
     ],
 )
     return map(
@@ -575,39 +577,6 @@ function check_missing_ews_hyperparameter_simulations(
     disable_time_check = false,
     time_per_run_s = 0.08,
 )
-    # run_params_df = DataFrame(
-    #     specification_vec_tuples
-    # )
-    #
-    # for (
-    #     noise_specification,
-    #     test_specification,
-    #     percent_tested,
-    #     ews_metric_specification,
-    #     ews_enddate_type,
-    #     ews_threshold_window,
-    #     ews_threshold_burnin,
-    #     ews_threshold_percentile,
-    #     ews_consecutive_thresholds,
-    #     ews_metric,
-    # ) in
-    #     push!(
-    #         run_params_df,
-    #         (
-    #             noise_specification,
-    #             test_specification,
-    #             percent_tested,
-    #             ews_metric_specification,
-    #             ews_enddate_type,
-    #             ews_threshold_window,
-    #             ews_threshold_burnin,
-    #             ews_threshold_percentile,
-    #             ews_consecutive_thresholds,
-    #             ews_metric,
-    #         ),
-    #     )
-    # end
-
     run_params_df = DataFrame(Iterators.product(specification_vecs...))
     rename!(run_params_df, specification_vec_names)
 
@@ -671,6 +640,8 @@ function optimal_ews_heatmap_df(
         :percent_tested,
         :ews_metric_specification,
         :ews_enddate_type,
+        :ews_threshold_window,
+        :ews_threshold_burnin,
         :ews_metric,
     ],
 )
@@ -710,6 +681,8 @@ function optimal_ews_heatmap_plot(
     if !haskey(kwargs_dict, :plottitle)
         plottitle =
             "Heatmap: " * titlecase(string(outcome))
+    else
+        plottitle = kwargs_dict[:plottitle]
     end
 
     if !haskey(kwargs_dict, :subtitle)
@@ -718,6 +691,8 @@ function optimal_ews_heatmap_plot(
         subtitle =
             "Noise: $(get_noise_magnitude_description(df[1, :noise_specification])), $(ews_enddate_type_str)" *
             "\nP = Percentile Threshold, C = Consecutive Thresholds, S = Specificity"
+    else
+        subtitle = kwargs_dict[:subtitle]
     end
 
     df[!, :test_sens] =
@@ -839,7 +814,7 @@ function create_ews_heatmap_matrix(
     return default_test_metric_order, Matrix(ordered_df[:, 2:end])'
 end
 
-function ews_survival_plot(
+function simulate_and_plot_ews_survival(
     optimal_heatmap_df,
     ews_metric_specification,
     ews_enddate_type,
@@ -860,11 +835,39 @@ function ews_survival_plot(
         :ews_threshold_burnin => ByRow(==(ews_threshold_burnin)),
         :ews_threshold_window => ByRow(==(ews_threshold_window)),
         :noise_specification => ByRow(==(noise_specification)),
+    )
+
+    return simulate_and_plot_ews_survival(
+        subset_df,
+        ews_metric_specification,
+        ews_threshold_burnin,
+        ensemble_specification,
+        individual_test_specification,
+        ensemble_single_incarr,
+        null_single_incarr,
+        ensemble_single_Reff_thresholds_vec;
+        ews_metric = ews_metric,
+    )
+end
+
+function simulate_and_plot_ews_survival(
+    subset_df,
+    ews_metric_specification,
+    ews_threshold_burnin,
+    ensemble_specification,
+    individual_test_specification,
+    ensemble_single_incarr,
+    null_single_incarr,
+    ensemble_single_Reff_thresholds_vec;
+    ews_metric = "mean",
+)
+    test_subset_df = subset(
+        subset_df,
         :test_specification => ByRow(==(individual_test_specification)),
     )
 
     survival_df = simulate_ews_survival_data(
-        subset_df,
+        test_subset_df,
         ensemble_specification,
         ensemble_single_incarr,
         null_single_incarr,

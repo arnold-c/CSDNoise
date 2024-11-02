@@ -42,8 +42,11 @@ function create_optimal_ews_plots(
         ],
     )
 
-    @showprogress for (gdf, tiebreaker_preference) in
-                      Iterators.product(
+    ngroups = length(grouped_optimal_ews_df)
+
+    prog = Progress(ngroups)
+    for (gdf, tiebreaker_preference) in
+        Iterators.product(
         grouped_optimal_ews_df, tiebreaker_preference_vec
     )
         optimal_heatmap_df = optimal_ews_heatmap_df(
@@ -168,6 +171,7 @@ function create_optimal_ews_plots(
                 end
             end
         end
+        next!(prog)
     end
     return nothing
 end

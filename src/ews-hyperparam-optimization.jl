@@ -927,6 +927,8 @@ function ews_survival_plot(
         times[end],
     )
 
+    nsims = detection_survival_vec[1]
+
     enddate_vec = div.(enddate_vec, Dates.days(endpoint_aggregation))
     unique_enddate_vec = sort(unique(enddate_vec))
     enddate_times =
@@ -948,7 +950,7 @@ function ews_survival_plot(
         xlabel = "Time (Years)",
         ylabel = "Survival Numbers",
         xticks = 1:1:10,
-        limits = (0, maximum(enddate_times), 0, nothing),
+        limits = (0, maximum(enddate_times), 0, ceil(1.1 * nsims)),
     )
 
     hidexdecorations!(hist_ax)

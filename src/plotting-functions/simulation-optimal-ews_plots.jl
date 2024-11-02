@@ -1,4 +1,5 @@
 using DataFrames: DataFrames
+using ProgressMeter
 
 function create_optimal_ews_plots(
     optimal_ews_df,
@@ -43,8 +44,10 @@ function create_optimal_ews_plots(
         ],
     )
 
-    for (gdf, tiebreaker_preference) in
-        Iterators.product(grouped_optimal_ews_df, tiebreaker_preference_vec)
+    @showprogress for (gdf, tiebreaker_preference) in
+                      Iterators.product(
+        grouped_optimal_ews_df, tiebreaker_preference_vec
+    )
         optimal_heatmap_df = optimal_ews_heatmap_df(
             gdf;
             tiebreaker_preference = tiebreaker_preference,

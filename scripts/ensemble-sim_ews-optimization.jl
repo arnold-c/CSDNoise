@@ -294,220 +294,88 @@ create_optimal_ews_plots(
     ],
 )
 
-# #%%
-# @unpack ews_df = load_most_recent_hyperparam_file(
-#     "ews-hyperparam-gridsearch.jld2",
-#     outdir("ensemble", "ews-hyperparam-optimization"),
-# )
-#
-# test_optimal_df = CSDNoise.filter_optimal_ews_hyperparam_gridsearch(
-#     ews_df;
-#     optimal_grouping_parameters = [
-#         :noise_specification,
-#         :test_specification,
-#         :percent_tested,
-#         :ews_metric_specification,
-#         :ews_enddate_type,
-#         :ews_metric,
-#         :ews_threshold_window,
-#         :ews_threshold_burnin,
-#     ],
-# )
-# #     tiebreaker_preference = "specificity",
-# # )
-# #
-#
-# #%%
-# grouped_test_optimal_df = groupby(
-#     test_optimal_df,
-#     [
-#         :noise_specification,
-#         :percent_tested,
-#         :ews_metric_specification,
-#         :ews_enddate_type,
-#         :ews_threshold_burnin,
-#     ],
-# )
-#
-# for gdf in grouped_test_optimal_df
-#     test_optimal_heatmap_df = optimal_ews_heatmap_df(
-#         gdf;
-#         tiebreaker_preference = "specificity",
-#     )
-#     println(
-#         "nrow(gdf) = ",
-#         nrow(gdf),
-#         ", nrow(test_optimal_heatmap_df) = ",
-#         nrow(test_optimal_heatmap_df),
-#     )
-# end
-#
 #%%
-# optimal_ews_heatmap_plot(
-#     subset(
-#         test_optimal_df,
-#         :ews_metric_specification =>
-#             ByRow(==(EWSMetricSpecification(Backward, Day(28), Week(52), 1))),
-#         :ews_enddate_type => ByRow(==(Reff_start)),
-#         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-#         :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
-#         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
-#     ),
-# )
+debug_Reff_plots = false
 
-#%%
-# optimal_heatmap_df = optimal_ews_heatmap_df(
-#     optimal_ews_df;
-#     tiebreaker_preference = "specificity",
-# )
-#
-# #%%
-# test_ews_metric_specification = EWSMetricSpecification(
-#     Backward, Day(7), Week(52), 1
-# )
-#
-# #%%
-# test_df = subset(
-#     optimal_heatmap_df,
-#     :ews_metric_specification =>
-#         ByRow(==(test_ews_metric_specification)),
-#     :ews_enddate_type => ByRow(==(Reff_start)),
-#     :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-#     :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
-#     :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
-# )
-#
-# #%%
-# optimal_ews_heatmap_plot(
-#     subset(
-#         optimal_heatmap_df,
-#         :ews_metric_specification =>
-#             ByRow(==(test_ews_metric_specification)),
-#         :ews_enddate_type => ByRow(==(Reff_start)),
-#         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-#         :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
-#         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
-#     ),
-# )
-#
-# #%%
-# optimal_ews_heatmap_plot(
-#     subset(
-#         optimal_heatmap_df,
-#         :ews_metric_specification =>
-#             ByRow(==(EWSMetricSpecification(Backward, Day(28), Week(52), 1))),
-#         :ews_enddate_type => ByRow(==(Reff_start)),
-#         :ews_threshold_burnin => ByRow(==(Dates.Year(5))),
-#         :ews_threshold_window => ByRow(==(ExpandingThresholdWindow)),
-#         :noise_specification => ByRow(==(PoissonNoiseSpecification(1.0))),
-#     ),
-# )
-#
-# #%%
-# survival_df, (
-# vec_of_testarr,
-# vec_of_null_testarr,
-# vec_of_ews_vals_vec,
-# vec_of_null_ews_vals_vec,
-# vec_of_exceed_thresholds,
-# vec_of_null_exceed_thresholds,
-# vec_of_threshold_percentiles,
-# vec_of_null_threshold_percentiles,
-# vec_of_detection_index_vec,
-# vec_of_null_detection_index_vec
-# ) = simulate_ews_survival_data(
-#     test_df,
-#     ensemble_specification,
-#     ensemble_single_incarr,
-#     null_single_incarr,
-#     ensemble_single_Reff_thresholds_vec;
-#     ews_metric = "mean",
-# );
-#
-# #%%
-# test_index = findfirst(
-#     t -> t == IndividualTestSpecification(1.0, 1.0, 0),
-#     subset(test_df, :ews_metric => ByRow(==("mean"))).test_specification,
-# )
-#
-# #%%
-# selected_sim = 6
-#
-# hyperparam_debugging_Reff_plot(
-#     ensemble_single_incarr,
-#     null_single_incarr,
-#     ensemble_single_Reff_arr,
-#     null_single_Reff_arr,
-#     ensemble_single_Reff_thresholds_vec,
-#     null_single_Reff_thresholds_vec,
-#     ensemble_single_periodsum_vecs,
-#     null_single_periodsum_vecs,
-#     Symbol("mean"),
-#     vec_of_testarr,
-#     vec_of_null_testarr,
-#     vec_of_ews_vals_vec,
-#     vec_of_null_ews_vals_vec,
-#     vec_of_exceed_thresholds,
-#     vec_of_null_exceed_thresholds,
-#     vec_of_threshold_percentiles,
-#     vec_of_null_threshold_percentiles,
-#     vec_of_detection_index_vec,
-#     vec_of_null_detection_index_vec,
-#     ensemble_time_specification;
-#     selected_sim = selected_sim,
-#     test_index = test_index,
-#     xlims = (0, 12),
-#     ylims_metric = (nothing, nothing),
-#     ylims_inc = (nothing, nothing),
-#     burnin_vline = Year(5),
-# )
-#
-# #%%
-# subset_survival_df = subset(
-#     survival_df,
-#     :test_specification => ByRow(==(IndividualTestSpecification(1.0, 1.0, 0))),
-# )
-#
-# #%%
-# detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
-#     subset_survival_df
-# )
-#
-# #%%
-# survival_df
-# hist(filter(!isnothing, subset_survival_df.detection_index); bins = 0:7:500)
-# hist!(
-#     filter(!isnothing, subset_survival_df.null_detection_index); bins = 0:7:500
-# )
-#
-# #%%
-# detections =
-#     Int64.(sort(filter(!isnothing, subset_survival_df.detection_index)))
-# detections[indexin(detections, unique(detections))]
-#
-# combine(
-#     groupby(
-#         subset(
-#             subset_survival_df,
-#             :detection_index => ByRow(!isnothing),
-#             :null_detection_index => ByRow(!isnothing),
-#         ),
-#         [:detection_index, :null_detection_index],
-#     ), nrow
-# )
-#
-# #%%
-# simulate_and_plot_ews_survival(
-#     optimal_heatmap_df,
-#     EWSMetricSpecification(Backward, Day(7), Week(52), 1),
-#     Reff_start,
-#     Dates.Year(5),
-#     ExpandingThresholdWindow,
-#     PoissonNoiseSpecification(1.0),
-#     ensemble_specification,
-#     IndividualTestSpecification(1.0, 1.0, 0),
-#     ensemble_single_incarr,
-#     null_single_incarr,
-#     ensemble_single_Reff_thresholds_vec;
-#     ews_metric = "mean",
-# )
+if debug_Reff_plots
+    selected_sim = 8
+    test_noise_specification = PoissonNoiseSpecification(1.0)
+    test_specification = IndividualTestSpecification(1.0, 1.0, 0)
+    test_ews_metric = "variance"
+    test_ews_metric_specification = EWSMetricSpecification(
+        Backward, Day(7), Week(52), 1
+    )
+    test_ews_enddate_type = Reff_start
+    test_ews_threshold_burnin = Dates.Year(5)
+    test_ews_threshold_window = ExpandingThresholdWindow
+    percent_tested = 1.0
+    test_tiebreaker_preference = "specificity"
+
+    optimal_heatmap_df = optimal_ews_heatmap_df(
+        optimal_ews_df;
+        tiebreaker_preference = test_tiebreaker_preference,
+    )
+
+    test_df = subset(
+        optimal_heatmap_df,
+        :ews_metric_specification =>
+            ByRow(==(test_ews_metric_specification)),
+        :ews_enddate_type => ByRow(==(test_ews_enddate_type)),
+        :ews_threshold_burnin => ByRow(==(test_ews_threshold_burnin)),
+        :ews_threshold_window => ByRow(==(test_ews_threshold_window)),
+        :noise_specification => ByRow(==(test_noise_specification)),
+        :test_specification => ByRow(==(test_specification)),
+        :percent_tested => ByRow(==(percent_tested)),
+    )
+
+    survival_df, (
+    vec_of_testarr,
+    vec_of_null_testarr,
+    vec_of_ews_vals_vec,
+    vec_of_null_ews_vals_vec,
+    vec_of_exceed_thresholds,
+    vec_of_null_exceed_thresholds,
+    vec_of_threshold_percentiles,
+    vec_of_null_threshold_percentiles,
+    vec_of_detection_index_vec,
+    vec_of_null_detection_index_vec
+) = simulate_ews_survival_data(
+        test_df,
+        ensemble_specification,
+        ensemble_single_incarr,
+        null_single_incarr,
+        ensemble_single_Reff_thresholds_vec;
+        ews_metric = test_ews_metric,
+    )
+
+    plottitle =
+        "Noise: $(get_noise_magnitude_description(test_noise_specification)), Percent Tested: $(percent_tested), $(split(string(test_ews_enddate_type), "::")[1])" *
+        "\nEWS Metric: $(test_ews_metric), $(get_ews_metric_specification_description(test_ews_metric_specification)), Threshold Burnin: $(test_ews_threshold_burnin), Tiebreaker: $(test_tiebreaker_preference)" *
+        "\nEWS calculated for shaded region"
+
+    hyperparam_debugging_Reff_plot(
+        ensemble_single_incarr[:, 1, selected_sim],
+        null_single_incarr[:, 1, selected_sim],
+        ensemble_single_Reff_arr[:, selected_sim],
+        null_single_Reff_arr[:, selected_sim],
+        ensemble_single_Reff_thresholds_vec[selected_sim],
+        null_single_Reff_thresholds_vec[selected_sim],
+        ensemble_single_periodsum_vecs[selected_sim],
+        null_single_periodsum_vecs[selected_sim],
+        Symbol(test_ews_metric),
+        vec_of_testarr[1][:, 5, selected_sim],
+        vec_of_null_testarr[1][:, 5, selected_sim],
+        vec_of_ews_vals_vec[1][selected_sim],
+        vec_of_null_ews_vals_vec[1][selected_sim],
+        vec(vec_of_exceed_thresholds[1][selected_sim, 1]),
+        vec(vec_of_null_exceed_thresholds[1][selected_sim, 1]),
+        vec(vec_of_threshold_percentiles[1][selected_sim, 1]),
+        vec(vec_of_null_threshold_percentiles[1][selected_sim, 1]),
+        vec_of_detection_index_vec[1][selected_sim],
+        vec_of_null_detection_index_vec[1][selected_sim],
+        ensemble_time_specification;
+        xlims = (0, 12),
+        burnin_vline = test_ews_threshold_burnin,
+        plottitle = plottitle,
+    )
+end

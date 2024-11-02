@@ -23,6 +23,7 @@ function Reff_ews_plot(
     detection_index,
     null_detection_index,
     timeparams;
+    plottitle = "",
     outbreak_colormap = [
         BASE_COLOR, OUTBREAK_COLOR
     ],
@@ -132,10 +133,13 @@ function Reff_ews_plot(
         thresholds_percentile_vec = null_thresholds_percentile_vec,
         kwargs...,
     )
+    if plottitle == ""
+        plottitle = "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation)\nEWS calculated for shaded region"
+    end
 
     Label(
         fig[0, :],
-        "EWS Metric: $(string(ewsmetric)), $(method), Lag: $(lag), Bandwidth: $(bandwidth), Aggregation: $(aggregation)\nEWS calculated for shaded region",
+        plottitle,
     )
 
     rowsize!(fig.layout, 0, Relative(0.05))

@@ -1,77 +1,55 @@
 using UnPack: @unpack
 
 function hyperparam_debugging_Reff_plot(
-    ensemble_single_incarr,
-    null_single_incarr,
-    ensemble_single_Reff_arr,
-    null_single_Reff_arr,
-    ensemble_single_Reff_thresholds_vec,
-    null_single_Reff_thresholds_vec,
-    ensemble_single_periodsum_vecs,
-    null_single_periodsum_vecs,
+    inc_vec,
+    null_inc_vec,
+    Reff_vec,
+    null_Reff_vec,
+    Reff_thresholds,
+    null_Reff_thresholds,
+    outbreak_bounds,
+    null_outbreak_bounds,
     ewsmetric,
-    vec_of_testarr,
-    vec_of_null_testarr,
-    vec_of_ews_vals_vec,
-    vec_of_null_ews_vals_vec,
-    vec_of_exceed_thresholds,
-    vec_of_null_exceed_thresholds,
-    vec_of_threshold_percentiles,
-    vec_of_null_threshold_percentiles,
-    vec_of_detection_index_vec,
-    vec_of_null_detection_index_vec,
+    test_positive_vec,
+    null_test_positive_vec,
+    ews_vals_vec,
+    null_ews_vals_vec,
+    exceed_thresholds_vec,
+    null_exceed_thresholds_vec,
+    threshold_percentiles_vec,
+    null_threshold_percentiles_vec,
+    detection_index_vec,
+    null_detection_index_vec,
     ensemble_time_specification;
-    selected_sim = 1,
-    test_index = 1,
+    plottitle = "",
     xlims = (0, 12),
     kwargs...,
 )
-    ews_specification = vec_of_ews_vals_vec[1][1].ews_specification
+    ews_specification = ews_vals_vec.ews_specification
     @unpack aggregation = ews_specification
     aggregation_int = Dates.days(aggregation)
 
-    aggregated_inc_vec = aggregate_timeseries(
-        @view(ensemble_single_incarr[:, 1, selected_sim]),
-        aggregation,
-    )
+    aggregated_inc_vec = aggregate_timeseries(inc_vec, aggregation)
+    aggregated_null_inc_vec = aggregate_timeseries(null_inc_vec, aggregation)
 
-    aggregated_null_inc_vec = aggregate_timeseries(
-        @view(null_single_incarr[:, 1, selected_sim]),
-        aggregation,
-    )
-
-    aggregated_Reff_vec = aggregate_Reff_vec(
-        @view(ensemble_single_Reff_arr[:, selected_sim]),
-        aggregation,
-    )
-
-    aggregated_Reff_thresholds_arr =
-        ensemble_single_Reff_thresholds_vec[selected_sim] .÷ aggregation_int
+    aggregated_Reff_vec = aggregate_Reff_vec(Reff_vec, aggregation)
+    aggregated_Reff_thresholds = Reff_thresholds .÷ aggregation_int
 
     aggregated_null_Reff_vec = aggregate_Reff_vec(
-        @view(null_single_Reff_arr[:, selected_sim]),
-        aggregation,
+        null_Reff_vec, aggregation
     )
+    aggregated_null_Reff_thresholds =
+        null_Reff_thresholds .÷ aggregation_int
 
-    aggregated_null_Reff_thresholds_arr =
-        null_single_Reff_thresholds_vec[selected_sim] .÷ aggregation_int
+    aggregated_outbreak_bounds =
+        outbreak_bounds[(outbreak_bounds[:, 4] .== 1), [1, 2]] .÷
+        aggregation_int
 
-    aggregated_outbreak_thresholds_arr =
-        ensemble_single_periodsum_vecs[selected_sim][
-            (ensemble_single_periodsum_vecs[selected_sim][:, 4] .== 1),
-            [1, 2],
-        ] .÷ aggregation_int
+    aggregated_null_outbreak_bounds =
+        null_outbreak_bounds[(null_outbreak_bounds[:, 4] .== 1), [1, 2]] .÷
+        aggregation_int
 
-    aggregated_null_outbreak_thresholds_arr =
-        null_single_periodsum_vecs[selected_sim][
-            (null_single_periodsum_vecs[selected_sim][:, 4] .== 1),
-            [1, 2],
-        ] .÷ aggregation_int
-
-    aggregated_test_vec = aggregate_timeseries(
-        @view(vec_of_testarr[test_index][:, 5, selected_sim]),
-        aggregation,
-    )
+    aggregated_test_vec = aggregate_timeseries(test_positive_vec, aggregation)
 
     aggregated_test_movingavg_vec = zeros(
         Int64, size(aggregated_test_vec)
@@ -84,8 +62,7 @@ function hyperparam_debugging_Reff_plot(
     )
 
     aggregated_null_test_vec = aggregate_timeseries(
-        @view(vec_of_null_testarr[test_index][:, 5, selected_sim]),
-        aggregation,
+        null_test_positive_vec, aggregation
     )
 
     aggregated_null_test_movingavg_vec = zeros(
@@ -103,20 +80,21 @@ function hyperparam_debugging_Reff_plot(
         aggregated_null_inc_vec,
         aggregated_Reff_vec,
         aggregated_null_Reff_vec,
-        aggregated_Reff_thresholds_arr,
-        aggregated_null_Reff_thresholds_arr,
-        vec_of_ews_vals_vec[test_index][selected_sim],
-        vec_of_null_ews_vals_vec[test_index][selected_sim],
+        aggregated_Reff_thresholds,
+        aggregated_null_Reff_thresholds,
+        ews_vals_vec,
+        null_ews_vals_vec,
         ewsmetric,
-        aggregated_outbreak_thresholds_arr,
-        aggregated_null_outbreak_thresholds_arr,
-        vec(vec_of_exceed_thresholds[test_index][selected_sim, 1]),
-        vec(vec_of_null_exceed_thresholds[test_index][selected_sim, 1]),
-        vec(vec_of_threshold_percentiles[test_index][selected_sim, 1]),
-        vec(vec_of_null_threshold_percentiles[test_index][selected_sim, 1]),
-        vec_of_detection_index_vec[test_index][selected_sim],
-        vec_of_null_detection_index_vec[test_index][selected_sim],
+        aggregated_outbreak_bounds,
+        aggregated_null_outbreak_bounds,
+        exceed_thresholds_vec,
+        null_exceed_thresholds_vec,
+        threshold_percentiles_vec,
+        null_threshold_percentiles_vec,
+        detection_index_vec,
+        null_detection_index_vec,
         ensemble_time_specification;
+        plottitle = plottitle,
         xlims = xlims,
         kwargs...,
     )

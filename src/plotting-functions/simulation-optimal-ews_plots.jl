@@ -126,27 +126,27 @@ function create_optimal_ews_plots(
         for test_specification in unique(optimal_heatmap_df.test_specification)
             test_description = get_test_description(test_specification)
 
-            survival_plottitle =
-                "Noise: $(noise_descripton), Percent Tested: $(percent_tested), $(ews_enddate_type)" *
-                "\n$(get_ews_metric_specification_description(ews_metric_specification))" *
-                "\nP = Percentile Threshold, C = Consecutive Thresholds, S = Specificity\n" *
-                test_description
-
-            test_plotdir = joinpath(
-                noise_plotdir,
-                "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
-            )
-
-            survival_plotdir = joinpath(
-                test_plotdir,
-                "survival",
-                ews_metric_specification.dirpath,
-                ews_enddate_type_str,
-                "tiebreaker-$(tiebreaker_preference)",
-            )
-            mkpath(survival_plotdir)
-
             for ews_metric in ews_metrics
+                survival_plottitle =
+                    "Metric: $(ews_metric)" *
+                    "\nNoise: $(noise_descripton), Percent Tested: $(percent_tested), $(ews_enddate_type)" *
+                    "\n$(get_ews_metric_specification_description(ews_metric_specification))" *
+                    test_description
+
+                test_plotdir = joinpath(
+                    noise_plotdir,
+                    "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)",
+                )
+
+                survival_plotdir = joinpath(
+                    test_plotdir,
+                    "survival",
+                    ews_metric_specification.dirpath,
+                    ews_enddate_type_str,
+                    "tiebreaker-$(tiebreaker_preference)",
+                )
+                mkpath(survival_plotdir)
+
                 plotpath = joinpath(
                     survival_plotdir,
                     "ews_survival_$(ews_metric).png",

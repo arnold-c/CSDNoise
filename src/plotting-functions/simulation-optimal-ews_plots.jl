@@ -127,8 +127,8 @@ function create_optimal_ews_plots(
             test_description = get_test_description(test_specification)
 
             for ews_metric in ews_metrics
-                survival_plottitle =
-                    "Metric: $(ews_metric)" *
+                survival_plottitle = "Metric: $(ews_metric)"
+                survival_subtitle =
                     "\nNoise: $(noise_descripton), Percent Tested: $(percent_tested), $(ews_enddate_type)" *
                     "\n$(get_ews_metric_specification_description(ews_metric_specification))" *
                     test_description
@@ -163,6 +163,7 @@ function create_optimal_ews_plots(
                         ensemble_single_Reff_thresholds_vec;
                         ews_metric = ews_metric,
                         plottitle = survival_plottitle,
+                        subtitle = survival_subtitle,
                     )
                     save(
                         plotpath,

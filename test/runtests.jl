@@ -1,15 +1,18 @@
-using DrWatson
-@quickactivate "CSDNoise"
-
-using TestItemRunner
 using CSDNoise
+using Test
+using Aqua
+using JET
 
-println("Starting tests")
-ti = time()
-
-@run_package_tests filter = ti -> (occursin("CSDNoise", ti.filename)) verbose =
-    true
-
-ti = time() - ti
-println("\nTest took total time of:")
-println(round(ti / 60; digits = 3), " minutes")
+@testset "CSDNoise.jl" begin
+    @testset "Code quality (Aqua.jl)" begin
+        Aqua.test_all(CSDNoise; ambiguities = false)
+        @testset "Ambiguities" begin
+            Aqua.test_ambiguities(CSDNoise)
+        end
+    end
+    @testset "Code linting (JET.jl)" begin
+        JET.test_package(CSDNoise; target_defined_modules = true)
+    end
+    include("ews-functions.jl")
+    include("ews-metrics.jl")
+end

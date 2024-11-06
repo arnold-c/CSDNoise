@@ -12,6 +12,7 @@ using SumTypes
 using Distributions: Distributions
 using Random: Random
 using UnPack: @unpack
+using Dates: Dates
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -557,27 +558,77 @@ end
 
 struct EWSMetricSpecification{T1<:Integer,T2<:AbstractString}
     method::EWSMethod
-    aggregation::T1
-    bandwidth::T1
+    aggregation::Dates.Day
+    bandwidth::Dates.Day
     lag::T1
     dirpath::T2
 end
 
 function EWSMetricSpecification(
-    method::EWSMethod, aggregation::T1, bandwidth::T1, lag::T1
+    method::EWSMethod,
+    aggregation::Dates.Day,
+    bandwidth::Dates.Day,
+    lag::T1,
 ) where {T1<:Integer}
+    aggregation_days_val = Dates.value(aggregation)
+    bandwidth_days_val = Dates.value(bandwidth)
+
     return EWSMetricSpecification(
         method,
         aggregation,
         bandwidth,
         lag,
-        joinpath(
-            "ewsmethod_$(method_string(method))",
-            "ewsaggregationdays_$(aggregation)",
-            "ewsbandwidth_$(bandwidth)",
-            "ewslag_$(lag)",
+        _EWSMetricSpecification_path(
+            method,
+            aggregation_days_val,
+            bandwidth_days_val,
+            lag,
         ),
     )
+end
+
+function EWSMetricSpecification(
+    method::EWSMethod, aggregation::T1, bandwidth::T2, lag::T3
+) where {
+    T1<:Dates.DatePeriod,
+    T2<:Dates.DatePeriod,
+    T3<:Integer,
+}
+    aggregation_days_val = Dates.days(aggregation)
+    bandwidth_days_val = Dates.days(bandwidth)
+    aggregation_days = Dates.Day(aggregation_days_val)
+    bandwidth_days = Dates.Day(bandwidth_days_val)
+
+    return EWSMetricSpecification(
+        method,
+        aggregation_days,
+        bandwidth_days,
+        lag,
+        _EWSMetricSpecification_path(
+            method,
+            aggregation_days_val,
+            bandwidth_days_val,
+            lag,
+        ),
+    )
+end
+
+function _EWSMetricSpecification_path(
+    method::EWSMethod,
+    aggregation::T1,
+    bandwidth::T1,
+    lag::T1,
+) where {T1<:Integer}
+    return joinpath(
+        "ews-method_$(method_string(method))",
+        "ews-aggregation-days_$(aggregation)",
+        "ews-bandwidth-days_$(bandwidth)",
+        "ews-lag_$(lag)",
+    )
+end
+
+function get_ews_metric_specification_description(ews_metric_specification)
+    return "Method: $(method_string(ews_metric_specification.method)), Aggregation: $(ews_metric_specification.aggregation), Bandwidth: $(ews_metric_specification.bandwidth), Lag: $(ews_metric_specification.lag)"
 end
 
 method_string(method::EWSMethod) = lowercase(split(string(method), "::")[1])
@@ -605,6 +656,12 @@ struct EWSMetrics{
     autocovariance_tau::T2
     autocorrelation_tau::T2
 end
+
+abstract type AbstractEWSThresholdWindow end
+
+struct ExpandingThresholdWindow <: AbstractEWSThresholdWindow end
+
+struct RollingThresholdWindow <: AbstractEWSThresholdWindow end
 
 struct ScenarioSpecification{
     T1<:EnsembleSpecification,

@@ -44,6 +44,21 @@ tmp/tycho-brett-visualization-R: scripts/tycho-brett-visualization.R tmp/tycho-d
 	Rscript $^
 	@touch $@
 
+# Manuscript targets
+MANUSCRIPT_TARGETS = manuscript
+.PHONY: $(MANUSCRIPT_TARGETS) manuscript-targets
+$(MANUSCRIPT_TARGETS): %: tmp/%
+manuscript-targets: $(MANUSCRIPT_TARGETS)
+
+tmp/manuscript: manuscript/manuscript.typ tmp/ensemble-sim
+	@echo "Recomputing schematic, and optimal threshold tables and plots"
+	# julia manuscript/scripts/.jl
+	@echo "Compiling manuscript"
+	typst compile manuscript/manuscript.typ
+	@echo "Compiling supplemental appendix"
+	typst compile manuscript/supplemental-appendix.typ
+	@touch $@
+
 # Test targets
 TEST_TARGETS = runtests
 .PHONY: $(TEST_TARGETS) test-targets

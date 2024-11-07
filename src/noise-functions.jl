@@ -49,9 +49,12 @@ function create_noise_arr(
             state_parameters.init_states.N,
         ),
         noise_specification.R_0,
-        0.0,
-        0.0,
-        0.0,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
     )
 
     ensemble_seir_vecs = Array{typeof(state_parameters.init_states),2}(

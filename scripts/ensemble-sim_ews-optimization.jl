@@ -163,6 +163,8 @@ logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 noise_specification_vec = [
     PoissonNoiseSpecification(1.0),
     PoissonNoiseSpecification(8.0),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8538),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.0492),
 ]
 
 test_specification_vec = [

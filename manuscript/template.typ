@@ -36,6 +36,9 @@
   // The paper's abstract.
   abstract: [],
 
+  // The paper's abstract.
+  author-summary: [],
+
   // The paper's keywords.
   keywords: (),
 
@@ -50,25 +53,39 @@
   // Line numbers
   line-numbers: false,
 
+  font: "Libertinus Serif",
+  font-size: 11pt,
+
   // Paper's content
   body
 ) = {
-  // Line numbers have not yet been implemented in a release version, but are coming soon
-  // https://github.com/typst/typst/issues/352
-  // https://github.com/typst/typst/pull/4516
-  //if line-numbers {
-  //  set par.line(numbering: "1")
-  //  show figure: set par.line(numbering: none)
-  //}
-
   set document(title: title, author: authors.keys())
   set page(numbering: "1", number-align: center)
-  // set text(font: ("Linux Libertine", "STIX Two Text", "serif"), lang: "en")
+
+  set text(font: font, size: font-size)
+  show heading.where(level: 1): it => block(above: 1.5em, below: 0.5em)[
+    #set text(1.03em, weight: "black")
+    #it.body
+  ]
+
+  show heading.where(level: 2): it => block(above: 1em, below: 0.5em)[
+    #set text(1.01em, weight: "black")
+    #it.body
+  ]
+
+  show heading.where(level: 3): it => block(above: 1em, below: 0.5em)[
+    #set text(1.01em, weight: "bold", style: "italic")
+    #it.body
+  ]
+
+  set par(first-line-indent: 0em)
+
   show footnote.entry: it => [
     #set par(hanging-indent: 0.7em)
     #set align(left)
     #numbering(it.note.numbering, ..counter(footnote).at(it.note.location())) #it.note.body
   ]
+
   show figure.caption: emph
   set table(
     fill: (x, y) => {
@@ -177,7 +194,7 @@
     ],
   )
   if word-count {
-    import "@preview/wordometer:0.1.2": word-count, total-words
+    import "@preview/wordometer:0.1.4": word-count, total-words
     show: word-count.with(exclude: (heading, table, figure.caption))
   }
 
@@ -186,12 +203,12 @@
     pagebreak()
 
     block([
-        #if word-count {
-        import "@preview/wordometer:0.1.2": word-count, word-count-of, total-words
+      #if word-count {
+        import "@preview/wordometer:0.1.4": word-count, word-count-of, total-words
         text(weight: "bold", [Word count: ])
         text([#word-count-of(exclude: (heading))[#abstract].words])
       }
-      #heading([Abstract])
+      #heading(level: 1)[Abstract]
       #abstract
 
       #if keywords.len() > 0 {
@@ -204,30 +221,41 @@
     v(1em)
   }
 
+  // Author summary
+  if author-summary != [] {
+    block([
+      #if word-count {
+        import "@preview/wordometer:0.1.4": word-count, word-count-of, total-words
+        text(weight: "bold", [Word count: ])
+        text([#word-count-of(exclude: (heading))[#author-summary].words])
+      }
+      #heading(level: 1)[Author Summary]
+      #author-summary
+    ])
+
+    v(1em)
+  }
+
   // Display contents
 
   pagebreak()
 
-      show heading.where(level: 1): it => block(above: 1.5em, below: 0.5em)[
-      #set text(13pt, weight: "black")
-      #it.body
-    ]
-
-  show heading.where(level: 2): it => block(above: 1em, below: 0.5em)[
-      #set text(11pt, weight: "black")
-      #it.body
-    ]
-
-
-  set par(first-line-indent: 0em)
 
   if word-count {
-      import "@preview/wordometer:0.1.2": word-count, word-count-of, total-words
+      import "@preview/wordometer:0.1.4": word-count, word-count-of, total-words
       text(weight: "bold", [Word count: ])
-      text([#word-count-of(exclude: (heading, table, figure.caption))[#body].words])
+      text([#word-count-of(exclude: (heading, table, figure.caption, <additional-info>))[#body].words])
   }
 
-  body
+  if line-numbers {
+    set par.line(numbering: "1")
+    show figure: set par.line(
+      numbering: none
+    )
+    body
+  } else {
+    body
+  }
 
 }
 

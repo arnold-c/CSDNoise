@@ -237,13 +237,19 @@ function DynamicsParameters(
 ) where {T1<:DynamicsParameterSpecification}
     Random.seed!(seed)
 
-    burnin_vaccination_coverage = round(
-        rand(
-            Distributions.Uniform(
-                dynamic_parameter_specification.min_burnin_vaccination_coverage,
-                dynamic_parameter_specification.max_burnin_vaccination_coverage,
-            ),
-        ); digits = 4)
+    burnin_vaccination_coverage =
+        if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
+            dynamic_parameter_specification.max_burnin_vaccination_coverage
+            dynamic_parameter_specification.min_burnin_vaccination_coverage
+        else
+            round(
+                rand(
+                    Distributions.Uniform(
+                        dynamic_parameter_specification.min_burnin_vaccination_coverage,
+                        dynamic_parameter_specification.max_burnin_vaccination_coverage,
+                    ),
+                ); digits = 4)
+        end
 
     vaccination_coverage =
         if dynamic_parameter_specification.min_burnin_vaccination_coverage ==

@@ -162,9 +162,9 @@ logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
 noise_specification_vec = [
     PoissonNoiseSpecification(1.0),
-    PoissonNoiseSpecification(8.0),
-    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8538),
-    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.0492),
+    PoissonNoiseSpecification(7.0),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
 ]
 
 test_specification_vec = [
@@ -297,13 +297,17 @@ create_optimal_ews_plots(
 )
 
 #%%
-debug_Reff_plots = false
+debug_Reff_plots = true
 
 if debug_Reff_plots
-    selected_sim = 8
-    test_noise_specification = PoissonNoiseSpecification(1.0)
-    test_specification = IndividualTestSpecification(1.0, 1.0, 0)
-    test_ews_metric = "variance"
+    selected_sim = 5
+    test_noise_specification = DynamicalNoiseSpecification(
+        5.0, 7, 14, "in-phase", 0.15, 0.8734
+    )
+    # test_noise_specification = PoissonNoiseSpecification(1.0)
+    test_specification = IndividualTestSpecification(0.8, 0.8, 0)
+    # test_specification = IndividualTestSpecification(1.0, 1.0, 0)
+    test_ews_metric = "mean"
     test_ews_metric_specification = EWSMetricSpecification(
         Backward, Day(7), Week(52), 1
     )

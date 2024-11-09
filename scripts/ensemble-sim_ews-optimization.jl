@@ -262,7 +262,7 @@ optimal_ews_df = ews_hyperparam_optimization(
     gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
     optimization_filename_base = "ews-hyperparam-optimization.jld2",
     logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-    force = true,
+    force = false,
     return_df = true,
     specification_vec_tuples = specification_vec_tuples,
     optimal_grouping_parameters = [
@@ -300,7 +300,6 @@ create_optimal_ews_plots(
 debug_Reff_plots = true
 
 if debug_Reff_plots
-    selected_sim = 5
     test_noise_specification = DynamicalNoiseSpecification(
         5.0, 7, 14, "in-phase", 0.15, 0.8734
     )
@@ -345,7 +344,7 @@ if debug_Reff_plots
     vec_of_null_threshold_percentiles,
     vec_of_detection_index_vec,
     vec_of_null_detection_index_vec
-) = simulate_ews_survival_data(
+), noisearr = simulate_ews_survival_data(
         test_df,
         ensemble_specification,
         ensemble_single_incarr,
@@ -353,7 +352,11 @@ if debug_Reff_plots
         ensemble_single_Reff_thresholds_vec;
         ews_metric = test_ews_metric,
     )
+end
 
+#%%
+if debug_Reff_plots
+    selected_sim = 70
     plottitle =
         "Noise: $(get_noise_magnitude_description(test_noise_specification)), Percent Tested: $(percent_tested), $(split(string(test_ews_enddate_type), "::")[1])" *
         "\nEWS Metric: $(test_ews_metric), $(get_ews_metric_specification_description(test_ews_metric_specification)), Threshold Burnin: $(test_ews_threshold_burnin), Tiebreaker: $(test_tiebreaker_preference)" *

@@ -1321,5 +1321,6 @@ function simulate_ews_survival_data(
         vec_of_null_threshold_percentiles,
         vec_of_detection_index_vec,
         vec_of_null_detection_index_vec,
-    )
+    ),
+    noisearr
 end

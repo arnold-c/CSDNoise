@@ -76,8 +76,10 @@ function hyperparam_debugging_Reff_plot(
     )
 
     return Reff_ews_plot(
-        aggregated_inc_vec,
-        aggregated_null_inc_vec,
+        aggregated_test_vec,
+        aggregated_null_test_vec,
+        # aggregated_inc_vec,
+        # aggregated_null_inc_vec,
         aggregated_Reff_vec,
         aggregated_null_Reff_vec,
         aggregated_Reff_thresholds,

@@ -170,6 +170,8 @@ noise_specification_vec = [
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
     IndividualTestSpecification(0.8, 0.8, 0),
+    IndividualTestSpecification(0.9, 0.9, 0),
+    IndividualTestSpecification(0.95, 0.95, 0),
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
 
@@ -304,9 +306,11 @@ if debug_Reff_plots
         5.0, 7, 14, "in-phase", 0.15, 0.8734
     )
     # test_noise_specification = PoissonNoiseSpecification(1.0)
-    test_specification = IndividualTestSpecification(0.8, 0.8, 0)
+    # test_specification = IndividualTestSpecification(0.8, 0.8, 0)
+    # test_specification = IndividualTestSpecification(0.9, 0.9, 0)
+    test_specification = IndividualTestSpecification(0.95, 0.95, 0)
     # test_specification = IndividualTestSpecification(1.0, 1.0, 0)
-    test_ews_metric = "mean"
+    test_ews_metric = "skewness"
     test_ews_metric_specification = EWSMetricSpecification(
         Backward, Day(7), Week(52), 1
     )

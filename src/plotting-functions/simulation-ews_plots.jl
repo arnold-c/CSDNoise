@@ -53,7 +53,10 @@ function Reff_ews_plot(
         end
         if !haskey(kwargs_dict, ylims)
             min_metric, max_metric = extrema(
-                vcat(detection_vec, null_detection_vec)
+                vcat(
+                    filter(!isnan, detection_vec),
+                    filter(!isnan, null_detection_vec),
+                )
             )
             return (min_metric - 0.1, max_metric + 0.1)
         end

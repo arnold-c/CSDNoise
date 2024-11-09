@@ -35,7 +35,9 @@ function create_noise_arr(
         _ => dynamics_parameter_specification.seasonality
     end
 
-    noise_dynamics_parameters = DynamicsParameters(
+    noise_dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
+
+    noise_dynamics_parameter_specification = DynamicsParameterSpecification(
         dynamics_parameter_specification.beta_mean,
         noise_beta_force,
         noise_seasonality,
@@ -49,9 +51,10 @@ function create_noise_arr(
             state_parameters.init_states.N,
         ),
         noise_specification.R_0,
-        0.0,
-        0.0,
-        0.0,
+        noise_specification.min_vaccination_coverage,
+        noise_specification.max_vaccination_coverage,
+        noise_specification.min_vaccination_coverage,
+        noise_specification.max_vaccination_coverage,
     )
 
     ensemble_seir_vecs = Array{typeof(state_parameters.init_states),2}(
@@ -71,12 +74,16 @@ function create_noise_arr(
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
 
+        noise_dynamics_parameters[sim] = DynamicsParameters(
+            noise_dynamics_parameter_specification; seed = run_seed
+        )
+
         seir_mod!(
             @view(ensemble_seir_vecs[:, sim]),
             @view(ensemble_inc_vecs[:, sim]),
             ensemble_beta_arr,
             state_parameters.init_states,
-            noise_dynamics_parameters,
+            noise_dynamics_parameters[sim],
             time_parameters;
             seed = run_seed,
         )
@@ -93,18 +100,29 @@ function create_noise_arr(
         )
     end
 
-    poisson_noise = zeros(Float64, size(incarr, 1), size(incarr, 3))
+    poisson_noise = zeros(
+        Float64, size(ensemble_inc_arr, 1), size(ensemble_inc_arr, 3)
+    )
 
     add_poisson_noise_arr!(
-        poisson_noise, incarr, noise_specification.noise_mean_scaling;
+        poisson_noise, ensemble_inc_arr, noise_specification.noise_mean_scaling;
         seed = seed,
     )
 
+    mean_poisson_noise = NaNMath.mean(poisson_noise)
+    mean_rubella_noise = StatsBase.mean(ensemble_inc_arr)
+
+    poisson_noise_prop = mean_poisson_noise / mean_rubella_noise
+
     ensemble_inc_arr .+= poisson_noise
 
-    noise_rubella_prop = poisson_noise ./ ensemble_inc_arr
-
-    return ensemble_inc_arr, noise_rubella_prop
+    return ensemble_inc_arr,
+    (;
+        mean_noise = mean_rubella_noise + mean_poisson_noise,
+        mean_poisson_noise = mean_poisson_noise,
+        mean_rubella_noise = mean_rubella_noise,
+        poisson_noise_prop = poisson_noise_prop,
+    )
 end
 
 function create_noise_arr(

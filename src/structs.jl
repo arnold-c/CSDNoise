@@ -237,13 +237,19 @@ function DynamicsParameters(
 ) where {T1<:DynamicsParameterSpecification}
     Random.seed!(seed)
 
-    burnin_vaccination_coverage = round(
-        rand(
-            Distributions.Uniform(
-                dynamic_parameter_specification.min_burnin_vaccination_coverage,
-                dynamic_parameter_specification.max_burnin_vaccination_coverage,
-            ),
-        ); digits = 4)
+    burnin_vaccination_coverage =
+        if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
+            dynamic_parameter_specification.max_burnin_vaccination_coverage
+            dynamic_parameter_specification.min_burnin_vaccination_coverage
+        else
+            round(
+                rand(
+                    Distributions.Uniform(
+                        dynamic_parameter_specification.min_burnin_vaccination_coverage,
+                        dynamic_parameter_specification.max_burnin_vaccination_coverage,
+                    ),
+                ); digits = 4)
+        end
 
     vaccination_coverage =
         if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
@@ -492,6 +498,8 @@ struct DynamicalNoiseSpecification{
     duration_infection::T3
     correlation::T1
     noise_mean_scaling::T2
+    min_vaccination_coverage::T2
+    max_vaccination_coverage::T2
 end
 
 function DynamicalNoiseSpecification(
@@ -500,6 +508,8 @@ function DynamicalNoiseSpecification(
     duration_infection::T3,
     correlation::T1,
     noise_mean_scaling::T2,
+    min_vaccination_coverage::T2,
+    max_vaccination_coverage::T2,
 ) where {T1<:AbstractString,T2<:AbstractFloat,T3<:Integer}
     return DynamicalNoiseSpecification(
         "dynamical",
@@ -508,7 +518,53 @@ function DynamicalNoiseSpecification(
         duration_infection,
         correlation,
         noise_mean_scaling,
+        min_vaccination_coverage,
+        max_vaccination_coverage,
     )
+end
+
+function DynamicalNoiseSpecification(
+    R_0::T2,
+    latent_period::T3,
+    duration_infection::T3,
+    correlation::T1,
+    noise_mean_scaling::T2,
+    mean_vaccination_coverage::T2;
+    max_vaccination_range = 0.2,
+) where {T1<:AbstractString,T2<:AbstractFloat,T3<:Integer}
+    return DynamicalNoiseSpecification(
+        "dynamical",
+        R_0,
+        latent_period,
+        duration_infection,
+        correlation,
+        noise_mean_scaling,
+        calculate_min_max_vaccination_range(
+            mean_vaccination_coverage,
+            max_vaccination_range,
+        )...,
+    )
+end
+
+function calculate_min_max_vaccination_range(
+    mean_vaccination_coverage,
+    max_vaccination_range = 0.2,
+)
+    @assert mean_vaccination_coverage <= 1.0
+
+    min_vaccination_range = minimum([
+        max_vaccination_range,
+        1.0 - mean_vaccination_coverage,
+        mean_vaccination_coverage,
+    ])
+
+    min_vaccination_coverage = round(
+        mean_vaccination_coverage - min_vaccination_range; digits = 4
+    )
+    max_vaccination_coverage = round(
+        mean_vaccination_coverage + min_vaccination_range; digits = 4
+    )
+    return min_vaccination_coverage, max_vaccination_coverage
 end
 
 function get_noise_description(

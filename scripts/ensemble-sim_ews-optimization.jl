@@ -162,12 +162,16 @@ logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
 noise_specification_vec = [
     PoissonNoiseSpecification(1.0),
-    PoissonNoiseSpecification(8.0),
+    PoissonNoiseSpecification(7.0),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
 ]
 
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
     IndividualTestSpecification(0.8, 0.8, 0),
+    IndividualTestSpecification(0.9, 0.9, 0),
+    IndividualTestSpecification(0.95, 0.95, 0),
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
 
@@ -295,13 +299,18 @@ create_optimal_ews_plots(
 )
 
 #%%
-debug_Reff_plots = false
+debug_Reff_plots = true
 
 if debug_Reff_plots
-    selected_sim = 8
-    test_noise_specification = PoissonNoiseSpecification(1.0)
-    test_specification = IndividualTestSpecification(1.0, 1.0, 0)
-    test_ews_metric = "variance"
+    test_noise_specification = DynamicalNoiseSpecification(
+        5.0, 7, 14, "in-phase", 0.15, 0.8734
+    )
+    # test_noise_specification = PoissonNoiseSpecification(1.0)
+    # test_specification = IndividualTestSpecification(0.8, 0.8, 0)
+    # test_specification = IndividualTestSpecification(0.9, 0.9, 0)
+    test_specification = IndividualTestSpecification(0.95, 0.95, 0)
+    # test_specification = IndividualTestSpecification(1.0, 1.0, 0)
+    test_ews_metric = "skewness"
     test_ews_metric_specification = EWSMetricSpecification(
         Backward, Day(7), Week(52), 1
     )
@@ -339,7 +348,7 @@ if debug_Reff_plots
     vec_of_null_threshold_percentiles,
     vec_of_detection_index_vec,
     vec_of_null_detection_index_vec
-) = simulate_ews_survival_data(
+), noisearr = simulate_ews_survival_data(
         test_df,
         ensemble_specification,
         ensemble_single_incarr,
@@ -347,7 +356,11 @@ if debug_Reff_plots
         ensemble_single_Reff_thresholds_vec;
         ews_metric = test_ews_metric,
     )
+end
 
+#%%
+if debug_Reff_plots
+    selected_sim = 70
     plottitle =
         "Noise: $(get_noise_magnitude_description(test_noise_specification)), Percent Tested: $(percent_tested), $(split(string(test_ews_enddate_type), "::")[1])" *
         "\nEWS Metric: $(test_ews_metric), $(get_ews_metric_specification_description(test_ews_metric_specification)), Threshold Burnin: $(test_ews_threshold_burnin), Tiebreaker: $(test_tiebreaker_preference)" *

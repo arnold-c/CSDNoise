@@ -17,8 +17,6 @@ using Dates
 
 using ProgressMeter
 
-include(srcdir("makie-plotting-setup.jl"))
-
 #%%
 ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
 
@@ -296,6 +294,7 @@ create_optimal_ews_plots(
         :ews_enddate_type,
         :ews_metric,
     ],
+    output_format = "pdf",
 )
 
 #%%

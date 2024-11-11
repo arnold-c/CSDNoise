@@ -307,14 +307,25 @@ debug_Reff_plots = true
 
 if debug_Reff_plots
     test_noise_specification = DynamicalNoiseSpecification(
-        5.0, 7, 14, "in-phase", 0.15, 0.8734
+        5.0,
+        7,
+        14,
+        "in-phase",
+        0.15,
+        # 0.8734
+        0.102,
     )
     # test_noise_specification = PoissonNoiseSpecification(1.0)
     # test_specification = IndividualTestSpecification(0.8, 0.8, 0)
     # test_specification = IndividualTestSpecification(0.9, 0.9, 0)
-    test_specification = IndividualTestSpecification(0.95, 0.95, 0)
+    # test_specification = IndividualTestSpecification(0.95, 0.95, 0)
+    # test_specification = IndividualTestSpecification(0.97, 0.97, 0)
+    test_specification = IndividualTestSpecification(0.98, 0.98, 0)
+    # test_specification = IndividualTestSpecification(0.99, 0.99, 0)
     # test_specification = IndividualTestSpecification(1.0, 1.0, 0)
-    test_ews_metric = "skewness"
+    # test_ews_metric = "mean"
+    test_ews_metric = "variance"
+    # test_ews_metric = "skewness"
     test_ews_metric_specification = EWSMetricSpecification(
         Backward, Day(7), Week(52), 1
     )
@@ -364,7 +375,7 @@ end
 
 #%%
 if debug_Reff_plots
-    selected_sim = 70
+    selected_sim = 96
     plottitle =
         "Noise: $(get_noise_magnitude_description(test_noise_specification)), Percent Tested: $(percent_tested), $(split(string(test_ews_enddate_type), "::")[1])" *
         "\nEWS Metric: $(test_ews_metric), $(get_ews_metric_specification_description(test_ews_metric_specification)), Threshold Burnin: $(test_ews_threshold_burnin), Tiebreaker: $(test_tiebreaker_preference)" *
@@ -382,6 +393,7 @@ if debug_Reff_plots
         Symbol(test_ews_metric),
         vec_of_testarr[1][:, 5, selected_sim],
         vec_of_null_testarr[1][:, 5, selected_sim],
+        noisearr[:, selected_sim],
         vec_of_ews_vals_vec[1][selected_sim],
         vec_of_null_ews_vals_vec[1][selected_sim],
         vec(vec_of_exceed_thresholds[1][selected_sim, 1]),

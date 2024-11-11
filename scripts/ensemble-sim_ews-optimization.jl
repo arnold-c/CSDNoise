@@ -297,7 +297,7 @@ create_optimal_ews_plots(
         :ews_enddate_type,
         :ews_metric,
     ],
-    output_format = "pdf",
+    output_format = "png",
     force_heatmap = true,
     force_survival = false,
 )

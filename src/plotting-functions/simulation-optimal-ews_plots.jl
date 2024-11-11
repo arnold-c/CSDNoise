@@ -35,6 +35,7 @@ function create_optimal_ews_plots(
     output_format = "png",
     pt_per_unit = 0.75,
     px_per_unit = 2,
+    size = (1220, 640),
 )
     Match.@match output_format begin
         "pdf" || "svg" => include(srcdir("cairomakie-plotting-setup.jl"))
@@ -72,9 +73,10 @@ function create_optimal_ews_plots(
             optimal_grouping_parameters = optimal_grouping_parameters,
         )
 
+        n_unique_tests = length(unique(optimal_heatmap_df.test_specification))
+
         @assert nrow(optimal_heatmap_df) ==
-            length(ews_metrics) *
-                length(unique(optimal_ews_df.test_specification))
+            length(ews_metrics) * n_unique_tests
 
         burnin_time = ensemble_specification.time_parameters.burnin
         @unpack min_burnin_vaccination_coverage,
@@ -134,10 +136,14 @@ function create_optimal_ews_plots(
             optimal_heatmap_plot = optimal_ews_heatmap_plot(
                 optimal_heatmap_df; subtitle = heatmap_subtitle
             )
+            if n_unique_tests > 5
+                size = (2200, 1600)
+            end
 
             save(
                 plotpath,
-                optimal_heatmap_plot,
+                optimal_heatmap_plot;
+                size = size,
             )
         end
 
@@ -183,6 +189,7 @@ function create_optimal_ews_plots(
                         plottitle = survival_plottitle,
                         subtitle = survival_subtitle,
                     )
+
                     save(
                         plotpath,
                         survival_plot,

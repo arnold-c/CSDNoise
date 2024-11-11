@@ -146,4 +146,35 @@
             @test isequal(outer_exceeds_thresholds, exceeds_thresholds)
         end
     end
+
+    @testset "Threshold trigger index" begin
+        thresholds = [
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            false,
+            true,
+            true,
+            true,
+        ]
+
+        @test isequal(
+            calculate_ews_trigger_index(thresholds; consecutive_thresholds = 1),
+            3,
+        )
+
+        @test isequal(
+            calculate_ews_trigger_index(thresholds; consecutive_thresholds = 2),
+            7,
+        )
+
+        @test isequal(
+            calculate_ews_trigger_index(thresholds; consecutive_thresholds = 3),
+            11,
+        )
+    end
 end

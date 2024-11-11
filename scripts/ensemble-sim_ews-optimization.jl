@@ -218,7 +218,9 @@ ews_enddate_type_vec = [
     # Reff_end
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
-ews_threshold_percentile_vec = [collect(0.9:0.02:0.98)..., 0.99]
+ews_threshold_percentile_vec = [
+    collect(0.5:0.05:0.85)..., collect(0.9:0.02:0.98)..., 0.99
+]
 ews_consecutive_thresholds_vec = [collect(2:1:30)...]
 ews_threshold_burnin_vec = [Day(50), Year(5)]
 

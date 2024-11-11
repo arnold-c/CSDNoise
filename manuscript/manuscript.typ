@@ -19,7 +19,7 @@
   ),
   keywords: ("Rapid-Diagnostic Tests","ELISA","Infectious Disease Surveillance","Outbreak Detection"),
   abstract: [
-300 words\
+    300 words\
   ],
   author-summary: [
     200 words\
@@ -54,7 +54,58 @@
 - Kendall's Tau:
   - 
 - Thresholds:
-  -
+  - For a perfect test, detection isn't affected by noise structure or magnitude
+- Variance and mean both produce the highest accuracy (73%), with autocovariance close behind (71%)
+    - Mean is more specific (71% vs 65%), with a longer delay (more consecutive thresholds required)
+  - Poisson noise:
+
+== Tau Heatmaps
+=== Full Length
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x noise]
+)
+
+=== After 5yr Burn in
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x noise]
+)
+
+
+== Optimal Threshold Accuracies
 
 #figure(
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_1.0x.svg"),
@@ -75,7 +126,6 @@
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
-
 
 = Discussion
 
@@ -124,6 +174,9 @@ $$$
   - Select combinations that produce the highest accuracy:
     - Distribution threshold percentile (P) $in [0.9, 1.0)$
     - Number of consecutive flags (C) to trigger an alert $in [2, 30]$
+    - Multiple combinations of hyperparameters may produce the same accuracy
+      - Show the results of the hyperparameters that are the most specific
+        - Combination that is the most sensitive (fastest) shown in supplement
 
 ]<additional-info>
 

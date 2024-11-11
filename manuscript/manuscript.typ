@@ -52,10 +52,27 @@
 = Results
 
 - Kendall's Tau:
-  - 
+  - Ranked order for perfect test - descending Tau (correlation)
+    - #table(
+      columns: 2,
+      [Full Length],[After 5yr Burnin],
+      [Autocovariance (+)], [Variance (+++)],
+      [Variance (+)], [Autocovariance (+++)],
+      [Mean (+)],[ Kurtosis (+++)],
+      [Iod (+)], [Iod (+++)],
+      [Autocorrelation (+)], [Mean (+++)],
+      [Kurtosis (-)], [Skewness (++)],
+      [CoV (-)], [Autocorrelation (+)],
+      [Skewness (-)], [CoV (-)]
+    )
+  - Full length:
+    - As test accuracy decreases, tau generally decreases with high Poisson noise, but not much change when noise is low
+    - For dynamical noise, much more drastic decrease in tau, particularly with high noise
+  - After burnin:
+    - No consistency to change in tau as test accuracy decreases, particularly for high values of (either) noise
 - Thresholds:
   - For a perfect test, detection isn't affected by noise structure or magnitude
-- Variance and mean both produce the highest accuracy (73%), with autocovariance close behind (71%)
+    - Variance and mean both produce the highest accuracy (73%), with autocovariance close behind (71%)
     - Mean is more specific (71% vs 65%), with a longer delay (more consecutive thresholds required)
   - Poisson noise:
 

@@ -1,5 +1,6 @@
 using DataFrames: DataFrames
 using ProgressMeter
+using Match: Match
 
 function create_optimal_ews_plots(
     optimal_ews_df,
@@ -30,7 +31,22 @@ function create_optimal_ews_plots(
     ],
     force = false,
     base_plotpath = joinpath(plotsdir(), "ensemble"),
+    output_format = "png",
+    pt_per_unit = 0.75,
+    px_per_unit = 2,
 )
+    Match.@match output_format begin
+        "pdf" || "svg" => include(srcdir("cairomakie-plotting-setup.jl"))
+        "png" || "jpg" || "jpeg" => include(srcdir("makie-plotting-setup.jl"))
+    end
+
+    Match.@match output_format begin
+        "pdf" => CairoMakie.activate!(; type = "pdf", pt_per_unit = pt_per_unit)
+        "svg" => CairoMakie.activate!(; type = "svg", pt_per_unit = pt_per_unit)
+        "png" || "jpg" || "jpeg" =>
+            GLMakie.activate!(; px_per_unit = px_per_unit)
+    end
+
     grouped_optimal_ews_df = DataFrames.groupby(
         optimal_ews_df,
         [
@@ -42,7 +58,7 @@ function create_optimal_ews_plots(
         ],
     )
 
-    ngroups = length(grouped_optimal_ews_df)
+    ngroups = length(grouped_optimal_ews_df) * length(tiebreaker_preference_vec)
 
     prog = Progress(ngroups)
     for (gdf, tiebreaker_preference) in
@@ -102,7 +118,7 @@ function create_optimal_ews_plots(
 
         plotpath = joinpath(
             ews_plotdir,
-            "ews-heatmap_tiebreaker-$(tiebreaker_preference).png",
+            "ews-heatmap_tiebreaker-$(tiebreaker_preference).$(output_format)",
         )
 
         if !isfile(plotpath) || force
@@ -150,7 +166,7 @@ function create_optimal_ews_plots(
 
                 plotpath = joinpath(
                     survival_plotdir,
-                    "ews_survival_$(ews_metric).png",
+                    "ews_survival_$(ews_metric).$(output_format)",
                 )
                 if !isfile(plotpath) || force
                     survival_plot = simulate_and_plot_ews_survival(

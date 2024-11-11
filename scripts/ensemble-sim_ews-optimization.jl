@@ -170,6 +170,9 @@ test_specification_vec = [
     IndividualTestSpecification(0.8, 0.8, 0),
     IndividualTestSpecification(0.9, 0.9, 0),
     IndividualTestSpecification(0.95, 0.95, 0),
+    IndividualTestSpecification(0.97, 0.97, 0),
+    IndividualTestSpecification(0.98, 0.98, 0),
+    IndividualTestSpecification(0.99, 0.99, 0),
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
 
@@ -295,6 +298,8 @@ create_optimal_ews_plots(
         :ews_metric,
     ],
     output_format = "pdf",
+    force_heatmap = true,
+    force_survival = false,
 )
 
 #%%

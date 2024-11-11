@@ -29,7 +29,8 @@ function create_optimal_ews_plots(
         "skewness",
         "variance",
     ],
-    force = false,
+    force_heatmap = true,
+    force_survival = false,
     base_plotpath = joinpath(plotsdir(), "ensemble"),
     output_format = "png",
     pt_per_unit = 0.75,
@@ -121,7 +122,7 @@ function create_optimal_ews_plots(
             "ews-heatmap_tiebreaker-$(tiebreaker_preference).$(output_format)",
         )
 
-        if !isfile(plotpath) || force
+        if !isfile(plotpath) || force_heatmap
             @unpack method, aggregation, bandwidth, lag =
                 ews_metric_specification
 
@@ -168,7 +169,7 @@ function create_optimal_ews_plots(
                     survival_plotdir,
                     "ews_survival_$(ews_metric).$(output_format)",
                 )
-                if !isfile(plotpath) || force
+                if !isfile(plotpath) || force_survival
                     survival_plot = simulate_and_plot_ews_survival(
                         optimal_heatmap_df,
                         ews_metric_specification,

@@ -57,22 +57,22 @@
   -
 
 #figure(
-  image("manuscript_files/plots/optimal_heatmap_poisson_1.0x.svg"),
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_1.0x.svg"),
   caption: [Poisson noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/optimal_heatmap_poisson_7.0x.svg"),
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_7.0x.svg"),
   caption: [Poisson noise, 7x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/optimal_heatmap_dynamical_0.8734.svg"),
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.8734.svg"),
   caption: [Dynamical noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/optimal_heatmap_dynamical_0.102.svg"),
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
 

@@ -28,179 +28,34 @@
   line-numbers: true
 )
 
-#[
-#align(center)[#text(size: 16pt)[#smallcaps("Outline")]]
 = Introduction
 
-- Infectious disease surveillance has primarily focussed on converting cases into alerts that trigger an outbreak response: reactive in nature
-- Growing interest and research on the converting case data into early warning signals: proactive & can signal that a state is at risk of an outbreak in the future
-  - Wide range of fields, but primarily originated in climatic research, thinking about ecosystem collapse and ecological systems @schefferEarlywarningSignalsCritical2009 @schefferForeseeingTippingPoints2010 @dakosSlowingEarlyWarning2008 @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012
-- Prior work has demonstrated that EWS metrics are theoretically correlated with a critical transition for infectious disease systems ($R#sub[effective] = 1$) @oreganTheoryEarlyWarning2013 @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEmergenceInfectious2017 @brettAnticipatingEpidemicTransitions2018
-- Much of this work has focussed on identifying metrics that are correlated with transitions (a necessary first step to prove that it is an avenue worth exploring further). Does this using Kendall's Tau @kendallNEWMEASURERANK1938 @brettAnticipatingEpidemicTransitions2018 @brettDetectingCriticalSlowing2020
-  - Useful, but doesn't tell us about how far away we are from the transition, or when to act
-- To address this, people have used various threshold based approaches:
-  - Build distribution of metric values, and when crossed 2 #sym.sigma, trigger flag @drakeEarlyWarningSignals2010
-    - Sometimes require multiple consecutive flags for an alert @delecroixPotentialResilienceIndicators2023 @southallHowEarlyCan2022
-    - Can be calculated on a weighted composite of multiple metrics @brettDetectingCriticalSlowing2020 @clementsIncludingTraitbasedEarly2016 @drakeEarlyWarningSignals2010 @clementsIndicatorsTransitionsBiological2018
-      - Can use statistical model to define threshold that maximizes accuracy
-  - Calculate p-value of Kendall's Tau @southallHowEarlyCan2022 @harrisEarlyWarningSignals2020
-    - Bootstrap time series to produce null distribution to compare observed against
-- While some has addressed under-reporting, haven't addressed uncertainty from imperfect tests
-  - both under and over-reporting
+Despite sustained advances over decades, infectious diseases still pose a substantial threat to human life, causing an estimated X number of infections, and Y deaths, per annum _*[REF]*_.
+For many diseases, effective and affordable vaccines have played a substantial role in reducing this burden, averting 154 million deaths since the introduction of the Expanded Programme on Immunization in 1974 @shattockContributionVaccinationImproved2024.
+On the path to elimination, complex non-linear dynamics may cause an increase in the variability of annual incidence, such as the so-called "canonical path" of measles @grahamMeaslesCanonicalPath2019.
+As a result, episodic outbreaks become increasingly important to the total burden of disease, and are therefore vital to detect and respond to if elimination is to be reached.
+Infectious disease surveillance systems are the mechanism for this action @murrayInfectiousDiseaseSurveillance2016 @DiseaseSurveillance.
 
+Traditional infectious disease surveillance systems are reactive in nature; suspected and laboratory confirmed cases are collated, counted, and if a pre-determined threshold is met or breached, an action is undertaken (e.g., preliminary investigation, or reactive vaccination campaign) _*[REF]*_.
+However, due to the exponential trajectory of incidence often observed in the early stages of an outbreak, the reactive nature necessarily results in excess infections that cannot be prevented _*[REF]*_.
+To limit the burden of disease, ideally, epidemiologists could utilize the output of a surveillance system (e.g., the trend in cases of a pathogen) to predict the risk of a future outbreak, triggering a _proactive_ action, such as a preventative vaccination campaign.
 
-= Results
+There has been growing interest in this line of reasoning, with many fields trying to identify and develop early warning signals (EWS) that are predictive of a critical transition @schefferEarlywarningSignalsCritical2009 @schefferForeseeingTippingPoints2010 @dakosSlowingEarlyWarning2008 @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012.
+For infectious diseases, this critical transition occurs when the effective reproduction number crosses the bifurcation threshold $R_"effective" = 1$, observed during both elimination and emergence of disease.
+The appeal of an alert system based upon EWS metrics is that they are model-free, only requiring the calculation of summary statistics of a time series; in the case of infectious diseases, either the incidence or prevalence data @southallProspectsDetectingEarly2020.
+If an EWS is predictive, critical slowing down theory suggests that the EWS values will drastically change in value as a transition is approached, such as an increase in the variance.
+This is the result of a slowed recovery from perturbations to the system @delecroixPotentialResilienceIndicators2023 @dakosSlowingEarlyWarning2008 @schefferEarlywarningSignalsCritical2009, e.g., an imported infection.
+Prior work has demonstrated that EWS metrics are theoretically correlated with a critical transition for infectious disease systems, under emergent and extinction conditions @oreganTheoryEarlyWarning2013 @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEmergenceInfectious2017 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020 @drakeMonitoringPathElimination2017.
+While identifying EWS that are correlated with a transition is an important first step, there are some important limitations that arise when designing a surveillance system, as noted by Southall _et al._ @southallEarlyWarningSignals2021.
+Notably, the correlation with a transition provides no information about the expected time until that transition, which is vital for any planning and preventative actions.
+To address these shortcomings, various threshold-based and statistical learning based approaches have been developed, with a 2#sym.sigma threshold most commonly employed @southallHowEarlyCan2022 @drakeEarlyWarningSignals2010 @brettDynamicalFootprintsEnable2020 @clementsIncludingTraitbasedEarly2016 @obrienEarlyWarningSignal2021.
+This threshold could be calculated from a single metric, or a composite of multiple EWS metrics @drakeEarlyWarningSignals2010 @obrienEarlyWarningSignal2021, with prior working demonstrating that requiring multiple consecutive flags to trigger an alert improves the accuracy in a 'noisy' system by reducing the false positive rate @southallHowEarlyCan2022 @clementsBodySizeShifts2017 @clementsEarlyWarningSignals2019.
 
-- Kendall's Tau:
-  - Ranked order for perfect test - descending Tau (correlation)
-    - #table(
-      columns: 2,
-      [Full Length],[After 5yr Burnin],
-      [Autocovariance (+)], [Variance (+++)],
-      [Variance (+)], [Autocovariance (+++)],
-      [Mean (+)],[ Kurtosis (+++)],
-      [Iod (+)], [Iod (+++)],
-      [Autocorrelation (+)], [Mean (+++)],
-      [Kurtosis (-)], [Skewness (++)],
-      [CoV (-)], [Autocorrelation (+)],
-      [Skewness (-)], [CoV (-)]
-    )
-  - Full length:
-    - As test accuracy decreases, tau generally decreases with high Poisson noise, but not much change when noise is low
-    - For dynamical noise, much more drastic decrease in tau, particularly with high noise
-  - After burnin:
-    - No consistency to change in tau as test accuracy decreases, particularly for high values of (either) noise
-- Thresholds:
-  - For a perfect test, detection isn't affected by noise structure or magnitude
-    - Variance and mean both produce the highest accuracy (73%), with autocovariance close behind (71%)
-    - Mean is more specific (71% vs 65%), with a longer delay (more consecutive thresholds required)
-  - Poisson noise:
+Until now, the relatively nascent topic of EWS has only explored 'noise' in the observational process of an outbreak, such as under-reporting and aggregation of case data @brettAnticipatingEpidemicTransitions2018 @brettDetectingCriticalSlowing2020.
+Our goal is to characterize the performance of EWS metrics in detecting the risk of disease emergence in a system with imperfect diagnostic tests and background infections that may be misdiagnosed as the target disease and inappropriately tested.
+For diseases with non-specific symptoms, e.g., measles and rubella often co-circulate and present clinically similarly, an imperfect diagnostic test will result in false positive and negative cases.
+In this paper we show the conditions under which diagnostic uncertainty overwhelms the time series used to calculate EWS summary statistics, limiting the ability to predict epidemic transitions.
 
-== Tau Heatmaps
-=== Full Length
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x noise]
-)
-
-=== After 5yr Burn in
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x noise]
-)
-
-
-== Optimal Threshold Accuracies
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x noise]
-)
-
-= Discussion
-
-- Kendall's tau most affected by length of time, not test accuracy
-  - Doing it too early degrades performance
-
-
-== Limitations and Strengths
-= Materials & Methods
-
-- Simulated measles with parameters ...
-- Noise simulated as Poisson or dynamical
-  - Dynamical with rubella-like parameters
-- Diagnostic tests applied to produce time series of test positives
-  - Perfect test
-  - 90/90 RDT
-  - 80/80 RDT
-- 100 simulations
-  - Create paired simulations where Reff crosses 1, and null
-    - Paired null simulations use same end point
-  - Simulations have vaccination burn-in period of 5 years
-    - Between 92.69% and 100% at birth
-    - Ensures Reff won't cross threshold until 10 years
-  - Vaccination rates identical between null and example time series for burn-in periods (5 years)
-    - Also simulated for a burn-in of 50 days (see supplement)
-    - In null simulations, vaccination rate set to same as in burnin period
-- EWS use backward looking method
-  - Calculated on test positive time series
-  - Bandwidth of 52 weeks worth of data
-  - Aggregate either weekly or monthly data
-
-$$$
-hat(mu)_t &= sum_(s = t-(2b-1) delta)^(t) X_s / (2b - 1)\
-hat(sigma)^2_t &= sum_(s = t-(2b-1) delta)^(t) (X_s - hat(mu)_s)^2 / (2b - 1)
-$$$
-
-- Thresholds:
-  - Build distribution of EWS metric during burn in period (5 years)
-  - If EWS at time $t$ exceeds percentile (P) of distribution until $t-1$, considered a flag
-    - where $t gt.eq 5$ years
-  - Calculate sensitivity, specificity, and accuracy
-    - Sensitivity: % of outbreak series that flag
-    - Specificity: 100 - % of null series that flag
-    - Accuracy: mean(sens + spec)
-- Optimal threshold parameters:
-  - Select combinations that produce the highest accuracy:
-    - Distribution threshold percentile (P) $in [0.9, 1.0)$
-    - Number of consecutive flags (C) to trigger an alert $in [2, 30]$
-    - Multiple combinations of hyperparameters may produce the same accuracy
-      - Show the results of the hyperparameters that are the most specific
-        - Combination that is the most sensitive (fastest) shown in supplement
-
-]<additional-info>
-
-
-#pagebreak()
-
-= Introduction
 
 = Results
 

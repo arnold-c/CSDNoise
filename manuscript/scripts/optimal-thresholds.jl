@@ -301,73 +301,12 @@ for gdf in gdfs
         end
 
         if i == 1
-            ews_df = DataFrame(
+            auc_df = DataFrame(
                 "ews_metric" => String[],
                 "test_specification" => IndividualTestSpecification[],
-                "ews_metric_specification" => EWSMetricSpecification[],
-                "ews_enddate_type" => EWSEndDateType[],
-                "ews_metric_value" => Float64[],
-                "ews_metric_vector" => Vector{Float64}[],
-            )
-
-            unique_tests = unique(survival_df.test_specification)
-
-            for test_ind in eachindex(vec_of_ews_vals_vec)
-                test_specification = unique_tests[test_ind]
-                sv = StructVector(
-                    convert(Vector{EWSMetrics}, vec_of_ews_vals_vec[test_ind])
-                )
-                for metric in ews_metrics
-                    simulation_tau_heatmap_df!(
-                        ews_df,
-                        sv,
-                        metric;
-                        individual_test_specification = test_specification,
-                        ews_metric_specification = ews_metric_specification,
-                        ews_enddate_type = ews_enddate_type,
-                        statistic_function = StatsBase.mean,
-                    )
-                end
-            end
-
-            tau_heatmap = tycho_tau_heatmap_plot(
-                subset(
-                    ews_df,
-                    :ews_enddate_type => ByRow(==(ews_enddate_type)),
-                    :ews_metric_specification =>
-                        ByRow(==(ews_metric_specification)),
-                ),
-            )
-
-            tau_heatmap_plot_name =
-                "tau-heatmap_" *
-                plot_noise_filename(noise_specification) *
-                ".svg"
-
-            tau_heatmap_plotdir = projectdir(
-                "manuscript",
-                "manuscript_files",
-                "plots",
-                "tau-heatmaps",
-                "full-length",
-            )
-
-            mkpath(tau_heatmap_plotdir)
-
-            save(
-                joinpath(tau_heatmap_plotdir, tau_heatmap_plot_name),
-                tau_heatmap,
-            )
-        end
-
-        if i == 1
-            ews_df = DataFrame(
-                "ews_metric" => String[],
-                "test_specification" => IndividualTestSpecification[],
-                "ews_metric_specification" => EWSMetricSpecification[],
-                "ews_enddate_type" => EWSEndDateType[],
-                "ews_metric_value" => Float64[],
-                "ews_metric_vector" => Vector{Float64}[],
+                "auc" => Float64[],
+                "emergent_tau" => Vector{Float64}[],
+                "null_tau" => Vector{Float64}[],
             )
 
             unique_tests = unique(survival_df.test_specification)
@@ -378,15 +317,22 @@ for gdf in gdfs
                 subset_testarr = vec_of_testarr[test_ind][
                     :, 5, :,
                 ]
-                sv =
-                    map(axes(subset_testarr, 3)) do sim
-                        enddate = Try.unwrap(
-                            calculate_ews_enddate(
-                                ensemble_single_Reff_thresholds_vec[sim],
-                                ews_enddate_type,
-                            ),
-                        )
+                subset_null_testarr = vec_of_null_testarr[test_ind][
+                    :, 5, :,
+                ]
 
+                enddate_vec = map(axes(subset_testarr, 2)) do sim
+                    Try.unwrap(
+                        calculate_ews_enddate(
+                            ensemble_single_Reff_thresholds_vec[sim],
+                            ews_enddate_type,
+                        ),
+                    )
+                end
+
+                emergent_sv =
+                    map(axes(subset_testarr, 2)) do sim
+                        enddate = enddate_vec[sim]
                         EWSMetrics(
                             ews_metric_specification,
                             subset_testarr[subset_start_ind:enddate, sim],
@@ -394,58 +340,245 @@ for gdf in gdfs
                     end |>
                     v -> StructVector(v)
 
+                null_sv =
+                    map(axes(subset_null_testarr, 2)) do sim
+                        enddate = enddate_vec[sim]
+                        EWSMetrics(
+                            ews_metric_specification,
+                            subset_null_testarr[subset_start_ind:enddate, sim],
+                        )
+                    end |>
+                    v -> StructVector(v)
+
                 for metric in ews_metrics
-                    simulation_tau_heatmap_df!(
-                        ews_df,
-                        sv,
-                        metric;
-                        individual_test_specification = test_specification,
-                        ews_metric_specification = ews_metric_specification,
-                        ews_enddate_type = ews_enddate_type,
-                        statistic_function = StatsBase.mean,
+                    metric_tau = Symbol(metric * "_tau")
+                    emergent_tau = getproperty(emergent_sv, metric_tau)
+                    null_tau = getproperty(null_sv, metric_tau)
+                    auc = calculate_auc(
+                        emergent_tau,
+                        null_tau,
+                    )
+                    push!(
+                        auc_df,
+                        (
+                            ews_metric = metric,
+                            test_specification = test_specification,
+                            auc = auc,
+                            emergent_tau = emergent_tau,
+                            null_tau = null_tau,
+                        ),
                     )
                 end
             end
 
-            tau_heatmap = tycho_tau_heatmap_plot(
-                subset(
-                    ews_df,
-                    :ews_enddate_type => ByRow(==(ews_enddate_type)),
-                    :ews_metric_specification =>
-                        ByRow(==(ews_metric_specification)),
-                ),
-            )
+            auc_heatmap = tau_auc_heatmap(auc_df)
 
-            tau_heatmap_plot_name =
-                "tau-heatmap_" *
+            tau_auc_heatmap_plot_name =
+                "tau_auc-heatmap_" *
                 plot_noise_filename(noise_specification) *
                 ".svg"
 
-            tau_heatmap_plotdir = projectdir(
+            tau_auc_heatmap_plotdir = projectdir(
                 "manuscript",
                 "manuscript_files",
                 "plots",
-                "tau-heatmaps",
+                "tau_auc-heatmaps",
                 "after-burnin",
             )
 
-            mkpath(tau_heatmap_plotdir)
+            mkpath(tau_auc_heatmap_plotdir)
 
             save(
-                joinpath(tau_heatmap_plotdir, tau_heatmap_plot_name),
-                tau_heatmap,
+                joinpath(tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name),
+                auc_heatmap
             )
+
         end
+
+        # if i == 1
+        #     ews_df = DataFrame(
+        #         "ews_metric" => String[],
+        #         "test_specification" => IndividualTestSpecification[],
+        #         "ews_metric_specification" => EWSMetricSpecification[],
+        #         "ews_enddate_type" => EWSEndDateType[],
+        #         "ews_metric_value" => Float64[],
+        #         "ews_metric_vector" => Vector{Float64}[],
+        #     )
+        #
+        #     unique_tests = unique(survival_df.test_specification)
+        #
+        #     for test_ind in eachindex(vec_of_ews_vals_vec)
+        #         test_specification = unique_tests[test_ind]
+        #         sv = StructVector(
+        #             convert(Vector{EWSMetrics}, vec_of_ews_vals_vec[test_ind])
+        #         )
+        #         for metric in ews_metrics
+        #             simulation_tau_heatmap_df!(
+        #                 ews_df,
+        #                 sv,
+        #                 metric;
+        #                 individual_test_specification = test_specification,
+        #                 ews_metric_specification = ews_metric_specification,
+        #                 ews_enddate_type = ews_enddate_type,
+        #                 statistic_function = StatsBase.mean,
+        #             )
+        #         end
+        #     end
+        #
+        #     tau_heatmap = tycho_tau_heatmap_plot(
+        #         subset(
+        #             ews_df,
+        #             :ews_enddate_type => ByRow(==(ews_enddate_type)),
+        #             :ews_metric_specification =>
+        #                 ByRow(==(ews_metric_specification)),
+        #         ),
+        #     )
+        #
+        #     tau_heatmap_plot_name =
+        #         "tau-heatmap_" *
+        #         plot_noise_filename(noise_specification) *
+        #         ".svg"
+        #
+        #     tau_heatmap_plotdir = projectdir(
+        #         "manuscript",
+        #         "manuscript_files",
+        #         "plots",
+        #         "tau-heatmaps",
+        #         "full-length",
+        #     )
+        #
+        #     mkpath(tau_heatmap_plotdir)
+        #
+        #     save(
+        #         joinpath(tau_heatmap_plotdir, tau_heatmap_plot_name),
+        #         tau_heatmap,
+        #     )
+        # end
+
+        # if i == 1
+        #     ews_df = DataFrame(
+        #         "ews_metric" => String[],
+        #         "test_specification" => IndividualTestSpecification[],
+        #         "ews_metric_specification" => EWSMetricSpecification[],
+        #         "ews_enddate_type" => EWSEndDateType[],
+        #         "ews_metric_value" => Float64[],
+        #         "ews_metric_vector" => Vector{Float64}[],
+        #     )
+        #
+        #     unique_tests = unique(survival_df.test_specification)
+        #     subset_start_ind = Int64(round(Dates.days(Year(5))))
+        #
+        #     for test_ind in eachindex(vec_of_ews_vals_vec)
+        #         test_specification = unique_tests[test_ind]
+        #         subset_testarr = vec_of_testarr[test_ind][
+        #             :, 5, :,
+        #         ]
+        #         sv =
+        #             map(axes(subset_testarr, 3)) do sim
+        #                 enddate = Try.unwrap(
+        #                     calculate_ews_enddate(
+        #                         ensemble_single_Reff_thresholds_vec[sim],
+        #                         ews_enddate_type,
+        #                     ),
+        #                 )
+        #
+        #                 EWSMetrics(
+        #                     ews_metric_specification,
+        #                     subset_testarr[subset_start_ind:enddate, sim],
+        #                 )
+        #             end |>
+        #             v -> StructVector(v)
+        #
+        #         for metric in ews_metrics
+        #             simulation_tau_heatmap_df!(
+        #                 ews_df,
+        #                 sv,
+        #                 metric;
+        #                 individual_test_specification = test_specification,
+        #                 ews_metric_specification = ews_metric_specification,
+        #                 ews_enddate_type = ews_enddate_type,
+        #                 statistic_function = StatsBase.mean,
+        #             )
+        #         end
+        #     end
+        #
+        #     tau_heatmap = tycho_tau_heatmap_plot(
+        #         subset(
+        #             ews_df,
+        #             :ews_enddate_type => ByRow(==(ews_enddate_type)),
+        #             :ews_metric_specification =>
+        #                 ByRow(==(ews_metric_specification)),
+        #         ),
+        #     )
+        #
+        #     tau_heatmap_plot_name =
+        #         "tau-heatmap_" *
+        #         plot_noise_filename(noise_specification) *
+        #         ".svg"
+        #
+        #     tau_heatmap_plotdir = projectdir(
+        #         "manuscript",
+        #         "manuscript_files",
+        #         "plots",
+        #         "tau-heatmaps",
+        #         "after-burnin",
+        #     )
+        #
+        #     mkpath(tau_heatmap_plotdir)
+        #
+        #     save(
+        #         joinpath(tau_heatmap_plotdir, tau_heatmap_plot_name),
+        #         tau_heatmap,
+        #     )
+        # end
     end
 end
 
 #%%
 lineplot_df = similar(gdfs[1], 0)
-for gdf in gdfs, ewsmetric in ["mean", "variance", "autocovariance"]
+for gdf in gdfs, ewsmetric in ["mean", "variance", "autocovariance", "autocorrelation"]
     prepare_line_plot_df!(lineplot_df, gdf, ewsmetric)
 end
 
-line_plot(
-    lineplot_df;
-    plottitle = "Mean",
+accuracy_line_plot = line_plot(lineplot_df)
+
+line_plotdir = projectdir("manuscript", "manuscript_files", "plots")
+
+save(
+    joinpath(
+        line_plotdir,
+        "accuracy-line-plot.svg",
+    ),
+    accuracy_line_plot,
 )
+
+#%%
+individual_line_plotdir = joinpath(line_plotdir, "individual-line-plots")
+mkpath(individual_line_plotdir)
+
+for ewsmetric in [
+    "autocovariance",
+    "variance",
+    "index_of_dispersion",
+    "mean",
+    "kurtosis",
+    "skewness",
+    "coefficient_of_variation"
+]
+
+    lineplot_df = similar(gdfs[1], 0)
+    for gdf in gdfs
+        prepare_line_plot_df!(lineplot_df, gdf, ewsmetric)
+    end
+
+    accuracy_line_plot = line_plot(
+        lineplot_df;
+    )
+
+
+
+    save(
+        joinpath(individual_line_plotdir, "$(ewsmetric)_accuracy-line-plot.svg"),
+        accuracy_line_plot,
+    )
+end

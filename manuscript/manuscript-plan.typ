@@ -31,7 +31,50 @@
     - Bootstrap time series to produce null distribution to compare observed against
 - While some has addressed under-reporting, haven't addressed uncertainty from imperfect tests
   - both under and over-reporting
-- 
+
+= Materials & Methods
+
+- Simulated measles with parameters ...
+- Noise simulated as Poisson or dynamical
+  - Dynamical with rubella-like parameters
+- Diagnostic tests applied to produce time series of test positives
+  - Perfect test
+  - 90/90 RDT
+  - 80/80 RDT
+- 100 simulations
+  - Create paired simulations where Reff crosses 1, and null
+    - Paired null simulations use same end point
+  - Simulations have vaccination burn-in period of 5 years
+    - Between 92.69% and 100% at birth
+    - Ensures Reff won't cross threshold until 10 years
+  - Vaccination rates identical between null and example time series for burn-in periods (5 years)
+    - Also simulated for a burn-in of 50 days (see supplement)
+    - In null simulations, vaccination rate set to same as in burnin period
+- EWS use backward looking method
+  - Calculated on test positive time series
+  - Bandwidth of 52 weeks worth of data
+  - Aggregate either weekly or monthly data
+
+$$$
+hat(mu)_t &= sum_(s = t-(b-1) delta)^(s = t) X_s / b \
+hat(sigma)^2_t &= sum_(s = t-(b-1) delta)^(s=t) (X_s - hat(mu)_s)^2 / b
+$$$
+
+- Thresholds:
+  - Build distribution of EWS metric during burn in period (5 years)
+  - If EWS at time $t$ exceeds percentile (P) of distribution until $t-1$, considered a flag
+    - where $t gt.eq 5$ years
+  - Calculate sensitivity, specificity, and accuracy
+    - Sensitivity: % of outbreak series that flag
+    - Specificity: 100 - % of null series that flag
+    - Accuracy: mean(sens + spec)
+- Optimal threshold parameters:
+  - Select combinations that produce the highest accuracy:
+    - Distribution threshold percentile (P) $in [0.5, 1.0)$
+    - Number of consecutive flags (C) to trigger an alert $in [2, 30]$
+    - Multiple combinations of hyperparameters may produce the same accuracy
+      - Show the results of the hyperparameters that are the most specific
+        - Combination that is the most sensitive (fastest) shown in supplement
 
 
 = Results
@@ -103,49 +146,6 @@
 - Weekly vs monthly aggregation makes little difference to the qualitative results, but does allow for marginally higher accuracies with imperfect tests
 
 == Limitations and Strengths
-= Materials & Methods
-
-- Simulated measles with parameters ...
-- Noise simulated as Poisson or dynamical
-  - Dynamical with rubella-like parameters
-- Diagnostic tests applied to produce time series of test positives
-  - Perfect test
-  - 90/90 RDT
-  - 80/80 RDT
-- 100 simulations
-  - Create paired simulations where Reff crosses 1, and null
-    - Paired null simulations use same end point
-  - Simulations have vaccination burn-in period of 5 years
-    - Between 92.69% and 100% at birth
-    - Ensures Reff won't cross threshold until 10 years
-  - Vaccination rates identical between null and example time series for burn-in periods (5 years)
-    - Also simulated for a burn-in of 50 days (see supplement)
-    - In null simulations, vaccination rate set to same as in burnin period
-- EWS use backward looking method
-  - Calculated on test positive time series
-  - Bandwidth of 52 weeks worth of data
-  - Aggregate either weekly or monthly data
-
-$$$
-hat(mu)_t &= sum_(s = t-(2b-1) delta)^(t) X_s / (2b - 1)\
-hat(sigma)^2_t &= sum_(s = t-(2b-1) delta)^(t) (X_s - hat(mu)_s)^2 / (2b - 1)
-$$$
-
-- Thresholds:
-  - Build distribution of EWS metric during burn in period (5 years)
-  - If EWS at time $t$ exceeds percentile (P) of distribution until $t-1$, considered a flag
-    - where $t gt.eq 5$ years
-  - Calculate sensitivity, specificity, and accuracy
-    - Sensitivity: % of outbreak series that flag
-    - Specificity: 100 - % of null series that flag
-    - Accuracy: mean(sens + spec)
-- Optimal threshold parameters:
-  - Select combinations that produce the highest accuracy:
-    - Distribution threshold percentile (P) $in [0.5, 1.0)$
-    - Number of consecutive flags (C) to trigger an alert $in [2, 30]$
-    - Multiple combinations of hyperparameters may produce the same accuracy
-      - Show the results of the hyperparameters that are the most specific
-        - Combination that is the most sensitive (fastest) shown in supplement
 
 = Results Plots
 == Tau Heatmaps

@@ -224,7 +224,11 @@ for gdf in gdfs
     noise_description = heatmap_noise_description(noise_specification)
 
     optimal_heatmap_plot = optimal_ews_heatmap_plot(
-        optimal_heatmap_df; subtitle = noise_description
+        optimal_heatmap_df;
+        subtitle = noise_description,
+        colormap = :Blues,
+        colorrange = (0.5, 0.8),
+        textcolorthreshold = 0.68,
     )
 
     optimal_heatmap_plot_name =

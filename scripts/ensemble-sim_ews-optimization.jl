@@ -218,9 +218,10 @@ ews_enddate_type_vec = [
     # Reff_end
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
-ews_threshold_percentile_vec = [
-    collect(0.5:0.02:0.98)..., 0.99
-]
+ews_threshold_percentile_vec = collect(0.5:0.01:0.99)
+#     [
+#     collect(0.5:0.02:0.98)..., 0.99
+# ]
 ews_consecutive_thresholds_vec = [collect(2:1:30)...]
 ews_threshold_burnin_vec = [
     # Day(50),
@@ -317,8 +318,8 @@ if debug_Reff_plots
         14,
         "in-phase",
         0.15,
-        # 0.8734
-        0.102,
+        0.8734,
+        # 0.102,
     )
     # test_noise_specification = PoissonNoiseSpecification(1.0)
     # test_specification = IndividualTestSpecification(0.8, 0.8, 0)
@@ -332,7 +333,8 @@ if debug_Reff_plots
     test_ews_metric = "variance"
     # test_ews_metric = "skewness"
     test_ews_metric_specification = EWSMetricSpecification(
-        Backward, Day(7), Week(52), 1
+        # Backward, Day(7), Week(52), 1
+        Backward, Day(28), Week(52), 1
     )
     test_ews_enddate_type = Reff_start
     test_ews_threshold_burnin = Dates.Year(5)
@@ -380,7 +382,10 @@ end
 
 #%%
 if debug_Reff_plots
-    selected_sim = 96
+    # include(srcdir("makie-plotting-setup.jl"))
+    include(srcdir("cairomakie-plotting-setup.jl"))
+
+    selected_sim = 90
     plottitle =
         "Noise: $(get_noise_magnitude_description(test_noise_specification)), Percent Tested: $(percent_tested), $(split(string(test_ews_enddate_type), "::")[1])" *
         "\nEWS Metric: $(test_ews_metric), $(get_ews_metric_specification_description(test_ews_metric_specification)), Threshold Burnin: $(test_ews_threshold_burnin), Tiebreaker: $(test_tiebreaker_preference)" *

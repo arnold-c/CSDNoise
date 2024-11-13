@@ -672,8 +672,9 @@ function optimal_ews_heatmap_plot(
     df;
     outcome = :accuracy,
     baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
-    colormap = :Blues,
-    textcolorthreshold = 0.6,
+    colormap = :RdBu,
+    colorrange = (0.2, 0.8),
+    textcolorthreshold = (0.4, 0.68),
     kwargs...,
 )
     kwargs_dict = Dict{Symbol,Any}(kwargs)
@@ -718,6 +719,13 @@ function optimal_ews_heatmap_plot(
         outcome,
     )
 
+    if minimum(mat) < colorrange[1]
+        colorrange[1] = floor(minimum(mat); digits = 1)
+    end
+    if maximum(mat) > colorrange[2]
+        colorrange[2] = ceil(maximum(mat); digits = 1)
+    end
+
     threshold_percentile_matrix = create_ews_heatmap_matrix(
         df,
         :ews_threshold_percentile,
@@ -757,12 +765,25 @@ function optimal_ews_heatmap_plot(
         ax,
         mat;
         colormap = colormap,
-        colorrange = (0, 1),
+        colorrange = colorrange,
     )
 
     for j in axes(mat, 2), i in axes(mat, 1)
         val = mat[i, j]
-        textcolor = abs(val) < textcolorthreshold ? :black : :white
+        if length(textcolorthreshold) == 1
+            textcolor = val <= textcolorthreshold ? :black : :white
+        elseif length(textcolorthreshold) == 2
+            textcolor =
+                if val >= textcolorthreshold[1] && val <= textcolorthreshold[2]
+                    :black
+                else
+                    :white
+                end
+        else
+            error(
+                "variable `textcolorthreshold` should be length 1 or 2. Instead received length $(length(textcolorthreshold))"
+            )
+        end
         acc = round(mat[i, j]; digits = 2)
         perc = round(threshold_percentile_matrix[i, j]; digits = 2)
         consec = consecutive_thresholds_df[i, j]

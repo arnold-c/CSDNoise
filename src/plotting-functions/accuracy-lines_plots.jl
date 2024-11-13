@@ -4,13 +4,6 @@ using StatsBase: StatsBase
 using Match: Match
 using StructArrays
 
-lineplot_colors = [
-    "#56B4E9"
-    "#E69F00"
-    repeat(["#483248"], 2)...
-    repeat(["#000000"], 2)...
-]
-
 function prepare_line_plot_df!(
     output_df,
     gdf::T1,
@@ -27,8 +20,7 @@ function prepare_line_plot_df!(
     ];
     tiebreaker_preference = "specificity",
 ) where {T1<:Union{<:DataFrame,<:SubDataFrame}}
-
-        tiebreaker_args = Match.@match tiebreaker_preference begin
+    tiebreaker_args = Match.@match tiebreaker_preference begin
         "speed" => (:ews_consecutive_thresholds, false)
         "specificity" => (:specificity, true)
         _ => error(
@@ -36,21 +28,26 @@ function prepare_line_plot_df!(
         )
     end
 
-
     metric_df = subset(
         gdf,
         :ews_metric => ByRow(==(ewsmetric)),
-        :test_specification => ByRow(in(tests))
+        :test_specification => ByRow(in(tests)),
     )
 
-    filtered_test_df = map(collect(groupby(metric_df, :test_specification))) do df
-        sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[1, :]
-    end |>
-    x -> vcat(DataFrame.(x)...; cols = :union)
+    filtered_test_df =
+        map(collect(groupby(metric_df, :test_specification))) do df
+            sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[
+                1, :,
+            ]
+        end |>
+        x -> vcat(DataFrame.(x)...; cols = :union)
 
-    filtered_test_df[!, :test_sens] = getproperty.(filtered_test_df.test_specification, :sensitivity)
-    filtered_test_df[!, :test_spec] = getproperty.(filtered_test_df.test_specification, :sensitivity)
-    filtered_test_df[!, :test_result_lag] = getproperty.(filtered_test_df.test_specification, :test_result_lag)
+    filtered_test_df[!, :test_sens] =
+        getproperty.(filtered_test_df.test_specification, :sensitivity)
+    filtered_test_df[!, :test_spec] =
+        getproperty.(filtered_test_df.test_specification, :sensitivity)
+    filtered_test_df[!, :test_result_lag] =
+        getproperty.(filtered_test_df.test_specification, :test_result_lag)
     sort!(
         filtered_test_df,
         [:test_sens, :test_spec, :test_result_lag];
@@ -65,9 +62,9 @@ end
 function line_plot(
     df;
     legend_rowsize = Relative(0.05),
-    kwargs...
+    kwargs...,
 )
-    kwargs_dict = Dict{Symbol, Any}(kwargs)
+    kwargs_dict = Dict{Symbol,Any}(kwargs)
 
     if !haskey(kwargs_dict, :ylims)
         ylims = (
@@ -78,7 +75,8 @@ function line_plot(
         ylims = kwargs_dict[:ylims]
     end
 
-    noise_descriptions = heatmap_noise_description.(unique(df.noise_specification))
+    noise_descriptions =
+        heatmap_noise_description.(unique(df.noise_specification))
     num_noise_descriptions = length(noise_descriptions)
 
     if !haskey(kwargs_dict, :nbanks)
@@ -91,7 +89,9 @@ function line_plot(
 
     num_metrics = length(ewsmetric_grouped_dfs)
     if num_metrics > 4
-        error("Trying to plot too many metric facets $(length(ewsmetric_grouped_dfs)). Max allowed is 4")
+        error(
+            "Trying to plot too many metric facets $(length(ewsmetric_grouped_dfs)). Max allowed is 4",
+        )
     end
 
     fig = Figure()
@@ -110,17 +110,19 @@ function line_plot(
             ax_position = ax_position,
             num_metrics = num_metrics,
             facet_title = metric_gdf[1, :ews_metric],
-            ylims = ylims
+            ylims = ylims,
         )
     end
 
-
     Legend(
         fig[0, :],
-        [PolyElement(; color = col) for col in Makie.wong_colors()[1:num_noise_descriptions]],
+        [
+            PolyElement(; color = col) for
+            col in Makie.wong_colors()[1:num_noise_descriptions]
+        ],
         noise_descriptions,
         "";
-        nbanks = nbanks
+        nbanks = nbanks,
     )
 
     rowsize!(fig.layout, 0, legend_rowsize)
@@ -134,35 +136,35 @@ function line_plot_facet!(
     ax_position = (1, 1),
     num_metrics = 1,
     facet_title = "",
-    ylims = nothing
+    ylims = nothing,
 )
     grouped_dfs = groupby(df, :noise_specification)
     unique_tests = unique(df[!, :test_specification])
     test_labels = map(
-        test -> "[$(test.sensitivity), $(test.specificity), $(test.test_result_lag)]",
-        unique_tests
+        test ->
+            "[$(test.sensitivity), $(test.test_result_lag)]",
+        unique_tests,
     )
 
     ax = Axis(
         gl[1, 1];
         title = facet_title,
-        xlabel = "Test Specification ([Sensitivity, Specificity, Lag])",
+        xlabel = "Test Specification ([Sensitivity/Specificity, Lag])",
         ylabel = "EWS Accuracy",
-        xticks = (collect(1:length(test_labels)), test_labels,),
+        xticks = (collect(1:length(test_labels)), test_labels),
     )
 
     for gdf in grouped_dfs
         lines!(
             ax,
             1:nrow(gdf),
-            gdf.accuracy
+            gdf.accuracy,
         )
     end
 
     if !(isnothing(ylims))
         ylims!(ax, ylims)
     end
-
 
     if ax_position[2] != 1
         hideydecorations!(ax)

@@ -1,8 +1,10 @@
+using Match: @match
 function tau_auc_heatmap(
     df,
-    outcome = :auc_magnitude;
+    textoutcome = :auc_magnitude,
+    coloroutcome = :auc_magnitude;
     baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
-    plottitle = "Kendall's Tau $(replace(titlecase(replace(string(outcome), "_" => " ")), "Auc" => "AUC")) Heatmap",
+    plottitle = "Kendall's Tau $(replace(titlecase(replace(string(textoutcome), "_" => " ")), "Auc" => "AUC")) Heatmap",
     colormap = :RdBu,
     colorrange = [0.2, 0.8],
     textcolorthreshold = (0.4, 0.68),
@@ -25,23 +27,38 @@ function tau_auc_heatmap(
         )
     end
 
-    ordered_df =
+    text_ordered_df =
         unstack(
-            select(df, [:ews_metric, :test_specification, outcome]),
+            select(df, [:ews_metric, :test_specification, textoutcome]),
             :test_specification,
-            outcome,
+            textoutcome,
         ) |>
         df -> sort(df, order(2; rev = false))
 
-    default_test_metric_order = ordered_df.ews_metric
+    default_test_metric_order = text_ordered_df.ews_metric
 
-    mat = Matrix(ordered_df[:, 2:end])'
+    textmat = Matrix(text_ordered_df[:, 2:end])'
 
-    if minimum(mat) < colorrange[1]
-        colorrange[1] = floor(minimum(mat); digits = 1)
+    if textoutcome == coloroutcome
+        colormat = textmat
+    else
+        color_ordered_df =
+            unstack(
+                select(df, [:ews_metric, :test_specification, coloroutcome]),
+                :test_specification,
+                coloroutcome,
+            ) |>
+            df -> df[indexin(default_test_metric_order, df.ews_metric), :]
+        @assert text_ordered_df.ews_metric == color_ordered_df.ews_metric
+
+        colormat = Matrix(color_ordered_df[:, 2:end])'
     end
-    if maximum(mat) > colorrange[2]
-        colorrange[2] = ceil(maximum(mat); digits = 1)
+
+    if minimum(colormat) < colorrange[1]
+        colorrange[1] = floor(minimum(colormat); digits = 1)
+    end
+    if maximum(colormat) > colorrange[2]
+        colorrange[2] = ceil(maximum(colormat); digits = 1)
     end
 
     function test_axis_label(test)
@@ -62,13 +79,13 @@ function tau_auc_heatmap(
 
     hmap = heatmap!(
         ax,
-        mat;
+        colormat;
         colormap = colormap,
         colorrange = colorrange,
     )
 
-    for j in axes(mat, 2), i in axes(mat, 1)
-        val = mat[i, j]
+    for j in axes(textmat, 2), i in axes(textmat, 1)
+        val = textmat[i, j]
         if length(textcolorthreshold) == 1
             textcolor = val <= textcolorthreshold ? :black : :white
         elseif length(textcolorthreshold) == 2
@@ -85,7 +102,7 @@ function tau_auc_heatmap(
         end
         text!(
             ax,
-            "$(round(mat[i,j], digits = 5))";
+            "$(round(textmat[i,j], digits = 5))";
             position = (i, j),
             color = textcolor,
             align = (:center, :center),
@@ -97,6 +114,12 @@ function tau_auc_heatmap(
         (0, length(unique_tests) + 1),
         (0, length(default_test_metric_order) + 1),
     )
-    Colorbar(fig[1, 2], hmap; label = "values", width = 15, ticksize = 15)
+
+    colorlabel = @match coloroutcome begin
+        :auc => "AUC"
+        :auc_magnitude => "|AUC - 0.5|"
+    end
+
+    Colorbar(fig[1, 2], hmap; label = colorlabel, width = 15, ticksize = 15)
     return fig
 end

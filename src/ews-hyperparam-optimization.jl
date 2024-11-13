@@ -673,7 +673,7 @@ function optimal_ews_heatmap_plot(
     outcome = :accuracy,
     baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
     colormap = :RdBu,
-    colorrange = (0.2, 0.8),
+    colorrange = [0.2, 0.8],
     textcolorthreshold = (0.4, 0.68),
     kwargs...,
 )

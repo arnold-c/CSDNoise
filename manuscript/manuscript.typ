@@ -167,6 +167,7 @@ Additionally, the speed and timing of detection relative to the critical thresho
 The strength and direction of the correlation between EWS metrics and the approach to the critical threshold in emergent time series is more strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test, @tbl-tau-ranking-rdt-comparison).
 Decreasing the length of the emergent time series used to evaluate the correlation increased the strength of the association with all EWS metrics, except the coefficient of variation which is theoretically is uncorrelated with $R_"effective"$, according to the simplified Birth-Death-Immigration process @brettAnticipatingEpidemicTransitions2018.
 
+
 #figure(
   table(
     columns: 2,
@@ -209,6 +210,51 @@ Decreasing the length of the emergent time series used to evaluate the correlati
 <fig-accuracy-line-plot>
 
 = Additional Results Plots
+== AUC Heatmaps
+=== Full Length
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x]
+)
+
+
+=== After 5yr Burn in
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x]
+)
+
 == Tau Heatmaps
 === Full Length
 

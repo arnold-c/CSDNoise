@@ -301,98 +301,111 @@ for gdf in gdfs
         end
 
         if i == 1
-            auc_df = DataFrame(
-                "ews_metric" => String[],
-                "test_specification" => IndividualTestSpecification[],
-                "auc" => Float64[],
-                "emergent_tau" => Vector{Float64}[],
-                "null_tau" => Vector{Float64}[],
+            for (start_ind, timelength_label) in zip(
+                [1, Int64(round(Dates.days(Year(5))))],
+                ["full-length", "after-burnin"]
             )
+                auc_df = DataFrame(
+                    "ews_metric" => String[],
+                    "test_specification" => IndividualTestSpecification[],
+                    "auc" => Float64[],
+                    "auc_magnitude" => Float64[],
+                    "emergent_tau" => Vector{Float64}[],
+                    "null_tau" => Vector{Float64}[],
+                )
 
-            unique_tests = unique(survival_df.test_specification)
-            subset_start_ind = Int64(round(Dates.days(Year(5))))
+                unique_tests = unique(survival_df.test_specification)
+                subset_start_ind = Int64(round(Dates.days(Year(5))))
 
-            for test_ind in eachindex(vec_of_ews_vals_vec)
-                test_specification = unique_tests[test_ind]
-                subset_testarr = vec_of_testarr[test_ind][
-                    :, 5, :,
-                ]
-                subset_null_testarr = vec_of_null_testarr[test_ind][
-                    :, 5, :,
-                ]
+                for test_ind in eachindex(vec_of_ews_vals_vec)
+                    test_specification = unique_tests[test_ind]
+                    subset_testarr = vec_of_testarr[test_ind][
+                        :, 5, :,
+                    ]
+                    subset_null_testarr = vec_of_null_testarr[test_ind][
+                        :, 5, :,
+                    ]
 
-                enddate_vec = map(axes(subset_testarr, 2)) do sim
-                    Try.unwrap(
-                        calculate_ews_enddate(
-                            ensemble_single_Reff_thresholds_vec[sim],
-                            ews_enddate_type,
-                        ),
-                    )
+                    enddate_vec = map(axes(subset_testarr, 2)) do sim
+                        Try.unwrap(
+                            calculate_ews_enddate(
+                                ensemble_single_Reff_thresholds_vec[sim],
+                                ews_enddate_type,
+                            ),
+                        )
+                    end
+
+                    emergent_sv =
+                        map(axes(subset_testarr, 2)) do sim
+                            enddate = enddate_vec[sim]
+                            EWSMetrics(
+                                ews_metric_specification,
+                                subset_testarr[start_ind:enddate, sim],
+                            )
+                        end |>
+                        v -> StructVector(v)
+
+                    null_sv =
+                        map(axes(subset_null_testarr, 2)) do sim
+                            enddate = enddate_vec[sim]
+                            EWSMetrics(
+                                ews_metric_specification,
+                                subset_null_testarr[start_ind:enddate, sim],
+                            )
+                        end |>
+                        v -> StructVector(v)
+
+                    for metric in ews_metrics
+                        metric_tau = Symbol(metric * "_tau")
+                        emergent_tau = getproperty(emergent_sv, metric_tau)
+                        null_tau = getproperty(null_sv, metric_tau)
+                        auc = calculate_auc(
+                            emergent_tau,
+                            null_tau,
+                        )
+                        auc_magnitude = abs(auc - 0.5)
+                        push!(
+                            auc_df,
+                            (
+                                ews_metric = metric,
+                                test_specification = test_specification,
+                                auc = auc,
+                                auc_magnitude,
+                                emergent_tau = emergent_tau,
+                                null_tau = null_tau,
+                            ),
+                        )
+                    end
                 end
 
-                emergent_sv =
-                    map(axes(subset_testarr, 2)) do sim
-                        enddate = enddate_vec[sim]
-                        EWSMetrics(
-                            ews_metric_specification,
-                            subset_testarr[subset_start_ind:enddate, sim],
-                        )
-                    end |>
-                    v -> StructVector(v)
+                auc_heatmap = tau_auc_heatmap(
+                    auc_df,
+                    :auc_magnitude;
+                    colormap = :Blues,
+                    colorrange = [0, 0.5],
+                    textcolorthreshold = 0.3
+                )
 
-                null_sv =
-                    map(axes(subset_null_testarr, 2)) do sim
-                        enddate = enddate_vec[sim]
-                        EWSMetrics(
-                            ews_metric_specification,
-                            subset_null_testarr[subset_start_ind:enddate, sim],
-                        )
-                    end |>
-                    v -> StructVector(v)
+                tau_auc_heatmap_plot_name =
+                    "tau_auc-heatmap_" *
+                    plot_noise_filename(noise_specification) *
+                    ".svg"
 
-                for metric in ews_metrics
-                    metric_tau = Symbol(metric * "_tau")
-                    emergent_tau = getproperty(emergent_sv, metric_tau)
-                    null_tau = getproperty(null_sv, metric_tau)
-                    auc = calculate_auc(
-                        emergent_tau,
-                        null_tau,
-                    )
-                    push!(
-                        auc_df,
-                        (
-                            ews_metric = metric,
-                            test_specification = test_specification,
-                            auc = auc,
-                            emergent_tau = emergent_tau,
-                            null_tau = null_tau,
-                        ),
-                    )
-                end
+                tau_auc_heatmap_plotdir = projectdir(
+                    "manuscript",
+                    "manuscript_files",
+                    "plots",
+                    "tau_auc-heatmaps",
+                    timelength_label
+                )
+
+                mkpath(tau_auc_heatmap_plotdir)
+
+                save(
+                    joinpath(tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name),
+                    auc_heatmap
+                )
             end
-
-            auc_heatmap = tau_auc_heatmap(auc_df)
-
-            tau_auc_heatmap_plot_name =
-                "tau_auc-heatmap_" *
-                plot_noise_filename(noise_specification) *
-                ".svg"
-
-            tau_auc_heatmap_plotdir = projectdir(
-                "manuscript",
-                "manuscript_files",
-                "plots",
-                "tau_auc-heatmaps",
-                "after-burnin",
-            )
-
-            mkpath(tau_auc_heatmap_plotdir)
-
-            save(
-                joinpath(tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name),
-                auc_heatmap
-            )
-
         end
 
         # if i == 1

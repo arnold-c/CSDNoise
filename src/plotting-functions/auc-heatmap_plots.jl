@@ -1,9 +1,12 @@
 function tau_auc_heatmap(
-    df;
+    df,
+    outcome = :auc_magnitude;
     baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
+    plottitle = "Kendall's Tau $(replace(titlecase(replace(string(outcome), "_" => " ")), "Auc" => "AUC")) Heatmap",
     colormap = :RdBu,
-    textcolorthreshold = 0.6,
-    plottitle = "Kendall's Tau AUC Heatmap",
+    colorrange = [0.2, 0.8],
+    textcolorthreshold = (0.4, 0.68),
+    kwargs...,
 )
     df[!, :test_sens] = getproperty.(df.test_specification, :sensitivity)
     df[!, :test_spec] = getproperty.(df.test_specification, :sensitivity)
@@ -24,15 +27,22 @@ function tau_auc_heatmap(
 
     ordered_df =
         unstack(
-            select(df, [:ews_metric, :test_specification, :auc]),
+            select(df, [:ews_metric, :test_specification, outcome]),
             :test_specification,
-            :auc,
+            outcome,
         ) |>
         df -> sort(df, order(2; rev = false))
 
     default_test_metric_order = ordered_df.ews_metric
 
     mat = Matrix(ordered_df[:, 2:end])'
+
+    if minimum(mat) < colorrange[1]
+        colorrange[1] = floor(minimum(mat); digits = 1)
+    end
+    if maximum(mat) > colorrange[2]
+        colorrange[2] = ceil(maximum(mat); digits = 1)
+    end
 
     function test_axis_label(test)
         return "($(test.sensitivity), $(test.specificity), $(test.test_result_lag))"
@@ -54,12 +64,25 @@ function tau_auc_heatmap(
         ax,
         mat;
         colormap = colormap,
-        colorrange = (-1, 1),
+        colorrange = colorrange,
     )
 
     for j in axes(mat, 2), i in axes(mat, 1)
         val = mat[i, j]
-        textcolor = abs(val) < textcolorthreshold ? :black : :white
+        if length(textcolorthreshold) == 1
+            textcolor = val <= textcolorthreshold ? :black : :white
+        elseif length(textcolorthreshold) == 2
+            textcolor =
+                if val >= textcolorthreshold[1] && val <= textcolorthreshold[2]
+                    :black
+                else
+                    :white
+                end
+        else
+            error(
+                "variable `textcolorthreshold` should be length 1 or 2. Instead received length $(length(textcolorthreshold))"
+            )
+        end
         text!(
             ax,
             "$(round(mat[i,j], digits = 5))";

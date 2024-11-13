@@ -420,88 +420,83 @@ if debug_Reff_plots
 end
 
 #%%
-auc_df = DataFrame(
-    "ews_metric" => String[],
-    "test_specification" => IndividualTestSpecification[],
-    # "ews_metric_specification" => EWSMetricSpecification[],
-    # "ews_enddate_type" => EWSEndDateType[],
-    "auc" => Float64[],
-    "emergent_tau" => Vector{Float64}[],
-    "null_tau" => Vector{Float64}[],
-)
+if debug_Reff_plots
+    auc_df = DataFrame(
+        "ews_metric" => String[],
+        "test_specification" => IndividualTestSpecification[],
+        # "ews_metric_specification" => EWSMetricSpecification[],
+        # "ews_enddate_type" => EWSEndDateType[],
+        "auc" => Float64[],
+        "auc_magnitude" => Float64[],
+        "emergent_tau" => Vector{Float64}[],
+        "null_tau" => Vector{Float64}[],
+    )
 
-unique_tests = unique(survival_df.test_specification)
-subset_start_ind = Int64(round(Dates.days(Year(5))))
+    unique_tests = unique(survival_df.test_specification)
+    subset_start_ind = Int64(round(Dates.days(Year(5))))
 
-for test_ind in eachindex(vec_of_ews_vals_vec)
-    test_specification = unique_tests[test_ind]
-    subset_testarr = vec_of_testarr[test_ind][
-        :, 5, :,
-    ]
-    subset_null_testarr = vec_of_null_testarr[test_ind][
-        :, 5, :,
-    ]
+    for test_ind in eachindex(vec_of_ews_vals_vec)
+        test_specification = unique_tests[test_ind]
+        subset_testarr = vec_of_testarr[test_ind][
+            :, 5, :,
+        ]
+        subset_null_testarr = vec_of_null_testarr[test_ind][
+            :, 5, :,
+        ]
 
-    enddate_vec = map(axes(subset_testarr, 2)) do sim
-        Try.unwrap(
-            calculate_ews_enddate(
-                ensemble_single_Reff_thresholds_vec[sim],
-                ews_enddate_type,
-            ),
-        )
+        enddate_vec = map(axes(subset_testarr, 2)) do sim
+            Try.unwrap(
+                calculate_ews_enddate(
+                    ensemble_single_Reff_thresholds_vec[sim],
+                    ews_enddate_type,
+                ),
+            )
+        end
+
+        emergent_sv =
+            map(axes(subset_testarr, 2)) do sim
+                enddate = enddate_vec[sim]
+                EWSMetrics(
+                    ews_metric_specification,
+                    subset_testarr[subset_start_ind:enddate, sim],
+                )
+            end |>
+            v -> StructVector(v)
+
+        null_sv =
+            map(axes(subset_null_testarr, 2)) do sim
+                enddate = enddate_vec[sim]
+                EWSMetrics(
+                    ews_metric_specification,
+                    subset_null_testarr[subset_start_ind:enddate, sim],
+                )
+            end |>
+            v -> StructVector(v)
+
+        for metric in ews_metrics
+            metric_tau = Symbol(metric * "_tau")
+            emergent_tau = getproperty(emergent_sv, metric_tau)
+            null_tau = getproperty(null_sv, metric_tau)
+            auc = calculate_auc(
+                emergent_tau,
+                null_tau,
+            )
+            auc_magnitude = abs(auc - 0.5)
+            push!(
+                auc_df,
+                (
+                    ews_metric = metric,
+                    test_specification = test_specification,
+                    # ews_metric_specification = ews_metric_specification,
+                    # ews_enddate_type = ews_enddate_type,
+                    auc = auc,
+                    auc_magnitude,
+                    emergent_tau = emergent_tau,
+                    null_tau = null_tau,
+                ),
+            )
+        end
     end
 
-    emergent_sv =
-        map(axes(subset_testarr, 2)) do sim
-            enddate = enddate_vec[sim]
-            EWSMetrics(
-                ews_metric_specification,
-                subset_testarr[subset_start_ind:enddate, sim],
-            )
-        end |>
-        v -> StructVector(v)
-
-    null_sv =
-        map(axes(subset_null_testarr, 2)) do sim
-            enddate = enddate_vec[sim]
-            EWSMetrics(
-                ews_metric_specification,
-                subset_null_testarr[subset_start_ind:enddate, sim],
-            )
-        end |>
-        v -> StructVector(v)
-
-    for metric in ews_metrics
-        metric_tau = Symbol(metric * "_tau")
-        emergent_tau = getproperty(emergent_sv, metric_tau)
-        null_tau = getproperty(null_sv, metric_tau)
-        auc = calculate_auc(
-            emergent_tau,
-            null_tau,
-        )
-        push!(
-            auc_df,
-            (
-                ews_metric = metric,
-                test_specification = test_specification,
-                # ews_metric_specification = ews_metric_specification,
-                # ews_enddate_type = ews_enddate_type,
-                auc = auc,
-                emergent_tau = emergent_tau,
-                null_tau = null_tau,
-            ),
-        )
-    end
+    tau_auc_heatmap(auc_df; baseline_test = test_specification)
 end
-
-auc_df
-
-#%%
-tau_heatmap = tycho_tau_heatmap_plot(
-    subset(
-        ews_df,
-        :ews_enddate_type => ByRow(==(ews_enddate_type)),
-        :ews_metric_specification =>
-            ByRow(==(ews_metric_specification)),
-    ),
-)

@@ -24,8 +24,8 @@
   author-summary: [
     200 words\
   ],
-  word-count: true,
-  line-numbers: true
+  word-count: false,
+  line-numbers: false
 )
 
 = Introduction
@@ -42,7 +42,8 @@ To limit the burden of disease, ideally, epidemiologists could utilize the outpu
 
 There has been growing interest in this line of reasoning, with many fields trying to identify and develop early warning signals (EWS) that are predictive of a critical transition @schefferEarlywarningSignalsCritical2009 @schefferForeseeingTippingPoints2010 @dakosSlowingEarlyWarning2008 @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012.
 For infectious diseases, this critical transition occurs when the effective reproduction number crosses the bifurcation threshold $R_"effective" = 1$, observed during both elimination and emergence of disease.
-The appeal of an alert system based upon EWS metrics is that they are model-free, only requiring the calculation of summary statistics of a time series; in the case of infectious diseases, either the incidence or prevalence data @southallProspectsDetectingEarly2020.
+The appeal of an alert system based upon EWS metrics is that they are model-free, only requiring the calculation of summary statistics of a time series.
+Prior work has demonstrated that for infectious disease systems, computing EWS metrics on the progression of population susceptibility may be most predictive @drakeStatisticsEpidemicTransitions2019, but collecting this information is often intractable, and utilizing either the incidence or prevalence data has provided similarly useful predictions @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020.
 If an EWS is predictive, critical slowing down theory suggests that the EWS values will drastically change in value as a transition is approached, such as an increase in the variance.
 This is the result of a slowed recovery from perturbations to the system @delecroixPotentialResilienceIndicators2023 @dakosSlowingEarlyWarning2008 @schefferEarlywarningSignalsCritical2009, e.g., an imported infection.
 Prior work has demonstrated that EWS metrics are theoretically correlated with a critical transition for infectious disease systems, under emergent and extinction conditions @oreganTheoryEarlyWarning2013 @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEmergenceInfectious2017 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020 @drakeMonitoringPathElimination2017.
@@ -77,8 +78,8 @@ Under dynamical noise simulations, the vaccination rate at birth was selected to
     [R0],table.cell(colspan: 2, align: center, "16"),[5],
     [Latent period (s)],table.cell(colspan: 2, align: center, "10 days"),[7 days],
     [Infectious period (g)],table.cell(colspan: 2, align: center, "8 days"),[14 days],
-    [Vaccination rate at birth \ during burn-in period (r#sub[i])],table.cell(colspan: 2, align: center, "Unif(92.69%, 100%)"),[10.20%, 83.74%],
-    [Vaccination rate at birth \ after burn-in period (r#sub[e])],[Unif(60%, 80%)],[Unif(92.69%, 100%)],[10.20%, 83.74%],
+    [Vaccination rate at birth \ during burn-in period (r#sub[i])],table.cell(colspan: 2, align: center, "Unif (92.69%, 100%)"),[10.20%, 83.74%],
+    [Vaccination rate at birth \ after burn-in period (r#sub[e])],[Unif (60%, 80%)],[Unif (92.69%, 100%)],[10.20%, 83.74%],
     [Birth/death rate (m)],table.cell(colspan: 3, align: center, "27 per 1000 per annum"),
     [Importation rate], table.cell(colspan: 3, align: center, $(1.06*μ*R_0)/(√(N))$),
     [Population size (N)], table.cell(colspan: 3, align: center, "500,000"),
@@ -104,19 +105,19 @@ Each of the 100 emergent and 100 null time series are paired during the pre-proc
 All simulations and analysis was completed in Julia version 1.10.5 @bezansonJuliaFreshApproach2017, with all code stored at #link("https://github.com/arnold-c/CSDNoise").
 
 == Computing & Evaluating EWS
-Each set of null and emergent time series are aggregated by month, before computing the EWS (see supplement for weekly and bi-weekly aggregation results).
-Numerical estimates of the EWS metrics were then calculated on the aggregated time series, de-trended using backwards-facing moving averages with bandwidth $b = 52$ weeks.
-For example, the EWS metric mean is given by the expectation:
+Each set of null and emergent time series are aggregated by month and numerical estimates of the EWS metrics were then calculated on the aggregated time series, de-trended using backwards-facing moving averages with bandwidth $b = 52$ weeks (see supplement for weekly and bi-weekly aggregation results).
+For example, the EWS metric, the mean, is given by the expectation:
 
 $$$
-hat(mu)_t &= sum_(s = t-(b-1) delta)^(s = t) X_s / b
+hat(mu)_t &= sum_(s = t-b delta)^(s = t) X_s / b
 $$$
 
-where $X_t$ represents the aggregated incidence, and $delta = 1$ time step (in the simulation results presented, 1 month).
+where $X_s$ represents the aggregated incidence at time point (month) $s$, and $delta = 1$ time step (in the simulation results presented, 1 month).
 At the beginning of the time series when $t < b$, $b$ is set equal to $t$.
 
-Many of the EWS metrics rely on the prior computation of others e.g., the variance requires the calculation of the mean, so are computed in an iterative pattern.
-The full list of EWS metrics and formulas can be found in @tbl-ews-formulas
+In this paper we evaluate the performance of the following EWS metrics: the mean, variance, coefficient of variation, index of dispersion, skewness, kurtosis, autocovariance, and autocorrelation at lag-1, as they have been some evidence in the literature that they are correlated or predictive of disease emergence @brettAnticipatingEpidemicTransitions2018 @drakeStatisticsEpidemicTransitions2019 @southallEarlyWarningSignals2021 @southallEarlyWarningSignals2021 @brettDetectingCriticalSlowing2020, or commonly evaluated in critical slowing down literature at large.
+Many of the EWS metrics rely on the prior computation of others e.g., the variance requires the calculation of the detrended mean, so are computed in an iterative pattern.
+The full list of numerical formulas for each EWS metric can be found in @tbl-ews-formulas.
 
 #let table_math(content) = table.cell(text(size: 16pt, content))
 
@@ -124,13 +125,13 @@ The full list of EWS metrics and formulas can be found in @tbl-ews-formulas
   table(
     columns: 2, align: center, inset: 10pt,
     [EWS Metric],[Formula],
-    [Mean ($hat(mu)_t$)],table_math[$sum_(s = t-(b-1) delta)^(s = t) X_s / b$],
-    [Variance ($hat(sigma)^2_t$)], table_math[$sum_(s = t-(b-1) delta)^(s=t) (X_s - hat(mu)_s)^2 / b$],
+    [Mean ($hat(mu)_t$)],table_math[$sum_(s = t-b delta)^(s = t) X_s / b$],
+    [Variance ($hat(sigma)^2_t$)], table_math[$sum_(s = t-b delta)^(s=t) (X_s - hat(mu)_s)^2 / b$],
     [Coefficient of Variation ($hat("CV")_t$) ], table_math[$hat(sigma)_t / hat(mu)_t$],
     [Index of Dispersion ($hat("IoD")_t$) ], table_math[$hat(sigma)^2_t / hat(mu)_t$],
-    [Skewness ($hat("Skew")_t$)], table_math[$1/(hat(sigma)^3_t) sum_(s = t-(b-1) delta)^(s = t) (X_s - hat(mu)_s)^3 / b$],
-    [Kurtosis ($hat("Kurt")_t$)], table_math[$1/(hat(sigma)^4_t) sum_(s = t-(b-1) delta)^(s = t) (X_s - hat(mu)_s)^4 / b$],
-    [Autocovariance ($hat("ACov")_t$)], table_math[$sum_(s = t-(b-1) delta)^(s=t) ((X_s - hat(mu)_s)(X_(s-delta) - hat(mu)_(s-delta))) / b$],
+    [Skewness ($hat("Skew")_t$)], table_math[$1/(hat(sigma)^3_t) sum_(s = t-b delta)^(s = t) (X_s - hat(mu)_s)^3 / b$],
+    [Kurtosis ($hat("Kurt")_t$)], table_math[$1/(hat(sigma)^4_t) sum_(s = t-b delta)^(s = t) (X_s - hat(mu)_s)^4 / b$],
+    [Autocovariance ($hat("ACov")_t$)], table_math[$sum_(s = t-b delta)^(s=t) ((X_s - hat(mu)_s)(X_(s-delta) - hat(mu)_(s-delta))) / b$],
     [Autocorrelation lag-1 ($hat("AC-1")_t$)], table_math[$hat("ACov")_t / (hat(sigma)_t hat(sigma)_(t-delta)) $],
   ),
   caption: [Numerical computations for EWS metrics, where $delta = 1$ time step, $b = 52$ weeks]
@@ -139,13 +140,24 @@ The full list of EWS metrics and formulas can be found in @tbl-ews-formulas
 
 Once the EWS metrics have been computed, the correlation within emergent time series is computed using Kendall's Tau-B, signifying if an EWS metric consistently increases (or decreases) in magnitude throughout the time series @kendallTREATMENTTIESRANKING1945 @knightComputerMethodCalculating1966.
 Kendall's Tau is computed on two lengths of time series: from the beginning of the simulation until the critical transition is met, and from the completion of the burn-in period until the critical transition.
+To evaluate the strength of the correlation, we use the area under the receiver operator curve (AUC), as described in prior papers @brettAnticipatingEpidemicTransitions2018 @southallEarlyWarningSignals2021 @southallProspectsDetectingEarly2020.
+Briefly, the calculation of the AUC compares whether the distributions of Kendall's Tau differ substantially between emergent and null simulations for a given alert scenario and EWS metric.
+AUC is calculated using the rank order of the EWS metrics for both emergent and null time series using the equation @flachROCAnalysis2016
+
+$$$
+(r_"null" - n_"null" (n_"null" + 1) \/ 2) / (n_"emergent" n_"null")
+$$$
+
+where $r_"null"$ equals the sum of ranks for the null time series, and $n_"null"$ and $n_"emergent"$ refer to the number of null and emergent simulations, respectively.
+An AUC of 0.5 indicates the EWS is similarly correlated with both emergent and null time series, offering no benefit; values > 0.5 indicate a positive correlation with emergent time series, and < 0.5 indicate the EWS metric is more strongly correlated with the null simulations.
+AUC values are commonly transformed to $|"AUC" - 0.5|$ to highlight the strength of the correlation with emergence, with values close to 0 exhibiting poor performance @brettAnticipatingEpidemicTransitions2018.
 
 The primary mode of evaluation for the EWS metrics relies on computing and triggering an alert based upon a set of conditions.
 The alert scenario is defined as the combination of diagnostic test, noise structure and magnitude, and EWS metric.
-The combination of the alert scenario and EWS alert hyperparameters (the threshold value of the long-running metric distribution that must be exceeded to create a flag, and the number of consecutive flags required to trigger an alert), produce distinct counts of emergent and null time series that result in an alert.
+The combination of the alert scenario and EWS alert hyperparameters (the percentile threshold value of the long-running metric distribution that must be exceeded to create a flag, and the number of consecutive flags required to trigger an alert), produce distinct counts of emergent and null time series that result in an alert.
 The sensitivity of the system is defined as the proportion of the emergent simulations that result in an alert, and the specificity is the proportion of the null simulations that do not result in an alert.
 Taking the mean of the sensitivity and specificity produces the accuracy of the system.
-For each alert scenario, a grid search over the EWS hyperparameters (threshold $in [0.5, 0.99]$, consecutive flags $in [2, 30]$) is performed to identify the set of EWS hyperparameters that maximizes alert accuracy for a given alert scenario.
+For each alert scenario, a grid search over the EWS hyperparameters (percentile threshold $in [0.5, 0.99]$, consecutive flags $in [2, 30]$) is performed to identify the set of EWS hyperparameters that maximizes alert accuracy for a given alert scenario.
 If multiple hyperparameter combinations produce identical alert system accuracies, the combination with the highest specificity is selected.
 After the optimal EWS hyperparameters have been selected, the accuracy of each EWS metric are compared across alert scenarios, at their respective maximal values.
 Additionally, the speed and timing of detection relative to the critical threshold is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
@@ -153,7 +165,7 @@ Additionally, the speed and timing of detection relative to the critical thresho
 = Results
 
 The strength and direction of the correlation between EWS metrics and the approach to the critical threshold in emergent time series is more strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test, @tbl-tau-ranking-rdt-comparison).
-De
+Decreasing the length of the emergent time series used to evaluate the correlation increased the strength of the association with all EWS metrics, except the coefficient of variation which is theoretically is uncorrelated with $R_"effective"$, according to the simplified Birth-Death-Immigration process @brettAnticipatingEpidemicTransitions2018.
 
 #figure(
   table(
@@ -190,25 +202,80 @@ De
 <tbl-tau-ranking-rdt-comparison>
 
 
-// #figure(
-//   image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_1.0x.svg"),
-//   caption: [Poisson noise, 1x noise]
-// )
+#figure(
+  image("./manuscript_files/plots/accuracy-line-plot.svg"),
+  caption: [Accuracy line plot]
+)
+<fig-accuracy-line-plot>
 
-// #figure(
-//   image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_7.0x.svg"),
-//   caption: [Poisson noise, 7x noise]
-// )
+= Additional Results Plots
+== Tau Heatmaps
+=== Full Length
 
-// #figure(
-//   image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.8734.svg"),
-//   caption: [Dynamical noise, 1x noise]
-// )
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x noise]
+)
 
-// #figure(
-//   image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.102.svg"),
-//   caption: [Dynamical noise, 7x noise]
-// )
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x noise]
+)
+
+=== After 5yr Burn in
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x noise]
+)
+
+
+== Optimal Threshold Accuracies
+
+#figure(
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x noise]
+)
+
+#figure(
+  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x noise]
+)
 
 
 = Discussion
@@ -216,9 +283,9 @@ De
 
 #pagebreak()
 
-#set par.line(
-  numbering: none
-)
+// #set par.line(
+//   numbering: none
+// )
 
 #[
 = Funding

@@ -418,3 +418,104 @@ if debug_Reff_plots
         plottitle = plottitle,
     )
 end
+
+#%%
+auc_df = DataFrame(
+    "ews_metric" => String[],
+    "test_specification" => IndividualTestSpecification[],
+    # "ews_metric_specification" => EWSMetricSpecification[],
+    # "ews_enddate_type" => EWSEndDateType[],
+    "auc" => Float64[],
+    "emergent_tau" => Vector{Float64}[],
+    "null_tau" => Vector{Float64}[],
+)
+
+unique_tests = unique(survival_df.test_specification)
+subset_start_ind = Int64(round(Dates.days(Year(5))))
+
+function calculate_auc(
+    emergent_tau,
+    null_tau,
+)
+    combined_taus = vcat(emergent_tau, null_tau)
+
+    ranks = StatsBase.ordinalrank(combined_taus)
+    n_emergent = length(emergent_tau)
+    n_null = length(null_tau)
+    sum_emergent_ranks = sum(ranks[1:n_emergent])
+    return (sum_emergent_ranks - n_emergent * (n_emergent + 1) / 2) /
+           (n_emergent * n_null)
+end
+
+for test_ind in eachindex(vec_of_ews_vals_vec)
+    test_specification = unique_tests[test_ind]
+    subset_testarr = vec_of_testarr[test_ind][
+        :, 5, :,
+    ]
+    subset_null_testarr = vec_of_null_testarr[test_ind][
+        :, 5, :,
+    ]
+
+    enddate_vec = map(axes(subset_testarr, 2)) do sim
+        Try.unwrap(
+            calculate_ews_enddate(
+                ensemble_single_Reff_thresholds_vec[sim],
+                ews_enddate_type,
+            ),
+        )
+    end
+
+    emergent_sv =
+        map(axes(subset_testarr, 2)) do sim
+            enddate = enddate_vec[sim]
+            EWSMetrics(
+                ews_metric_specification,
+                subset_testarr[subset_start_ind:enddate, sim],
+            )
+        end |>
+        v -> StructVector(v)
+
+    null_sv =
+        map(axes(subset_null_testarr, 2)) do sim
+            enddate = enddate_vec[sim]
+            EWSMetrics(
+                ews_metric_specification,
+                subset_null_testarr[subset_start_ind:enddate, sim],
+            )
+        end |>
+        v -> StructVector(v)
+
+    for metric in ews_metrics
+        metric_tau = Symbol(metric * "_tau")
+        emergent_tau = getproperty(emergent_sv, metric_tau)
+        null_tau = getproperty(null_sv, metric_tau)
+        auc = calculate_auc(
+            emergent_tau,
+            null_tau,
+        )
+        push!(
+            auc_df,
+            (
+                ews_metric = metric,
+                test_specification = test_specification,
+                # ews_metric_specification = ews_metric_specification,
+                # ews_enddate_type = ews_enddate_type,
+                auc = auc,
+                emergent_tau = emergent_tau,
+                null_tau = null_tau,
+            ),
+        )
+    end
+end
+
+auc_df
+
+#%%
+tau_heatmap = tycho_tau_heatmap_plot(
+    subset(
+        ews_df,
+        :ews_enddate_type => ByRow(==(ews_enddate_type)),
+        :ews_metric_specification =>
+            ByRow(==(ews_metric_specification)),
+    ),
+)

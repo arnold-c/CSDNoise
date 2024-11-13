@@ -433,20 +433,6 @@ auc_df = DataFrame(
 unique_tests = unique(survival_df.test_specification)
 subset_start_ind = Int64(round(Dates.days(Year(5))))
 
-function calculate_auc(
-    emergent_tau,
-    null_tau,
-)
-    combined_taus = vcat(emergent_tau, null_tau)
-
-    ranks = StatsBase.ordinalrank(combined_taus)
-    n_emergent = length(emergent_tau)
-    n_null = length(null_tau)
-    sum_emergent_ranks = sum(ranks[1:n_emergent])
-    return (sum_emergent_ranks - n_emergent * (n_emergent + 1) / 2) /
-           (n_emergent * n_null)
-end
-
 for test_ind in eachindex(vec_of_ews_vals_vec)
     test_specification = unique_tests[test_ind]
     subset_testarr = vec_of_testarr[test_ind][

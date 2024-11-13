@@ -65,7 +65,8 @@ export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
     simulation_tau_heatmap_df!,
     tycho_tau_heatmap_df,
     calculate_ews_lead_time, calculate_ews_trigger_index,
-    ews_lead_time_df!
+    ews_lead_time_df!,
+    calculate_auc
 
 include("ews-hyperparam-optimization.jl")
 export ews_hyperparam_optimization,
@@ -159,6 +160,9 @@ export hyperparam_debugging_Reff_plot
 
 include("plotting-functions/accuracy-lines_plots.jl")
 export prepare_line_plot_df!, line_plot, heatmap_noise_description
+
+include("plotting-functions/auc-heatmap_plots.jl")
+export tau_auc_heatmap
 
 @static if false
     include("../scripts/ensemble-sim.jl")

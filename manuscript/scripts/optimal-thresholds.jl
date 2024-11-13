@@ -153,27 +153,6 @@ subset_optimal_df = subset(
 )
 
 #%%
-function heatmap_noise_description(
-    noise_specification::T
-) where {T<:PoissonNoiseSpecification}
-    return string(
-        "Poisson noise: ", noise_specification.noise_mean_scaling, "x Measles"
-    )
-end
-
-function heatmap_noise_description(
-    noise_specification::T
-) where {T<:DynamicalNoiseSpecification}
-    mean_vaccination_coverage = mean([
-        noise_specification.min_vaccination_coverage,
-        noise_specification.max_vaccination_coverage,
-    ])
-
-    return string(
-        "Dynamical noise: mean vaccination $(mean_vaccination_coverage)"
-    )
-end
-
 function plot_noise_filename(
     noise_specification::T
 ) where {T<:PoissonNoiseSpecification}
@@ -459,3 +438,14 @@ for gdf in gdfs
         end
     end
 end
+
+#%%
+lineplot_df = similar(gdfs[1], 0)
+for gdf in gdfs, ewsmetric in ["mean", "variance", "autocovariance"]
+    prepare_line_plot_df!(lineplot_df, gdf, ewsmetric)
+end
+
+line_plot(
+    lineplot_df;
+    plottitle = "Mean",
+)

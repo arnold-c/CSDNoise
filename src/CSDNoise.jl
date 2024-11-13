@@ -157,6 +157,9 @@ export create_optimal_ews_plots
 include("plotting-functions/hyperparam-debugging_plots.jl")
 export hyperparam_debugging_Reff_plot
 
+include("plotting-functions/accuracy-lines_plots.jl")
+export prepare_line_plot_df!, line_plot, heatmap_noise_description
+
 @static if false
     include("../scripts/ensemble-sim.jl")
     include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")

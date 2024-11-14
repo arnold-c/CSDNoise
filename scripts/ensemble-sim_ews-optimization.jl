@@ -355,7 +355,7 @@ if debug_Reff_plots
         :ews_threshold_burnin => ByRow(==(test_ews_threshold_burnin)),
         :ews_threshold_window => ByRow(==(test_ews_threshold_window)),
         :noise_specification => ByRow(==(test_noise_specification)),
-        :test_specification => ByRow(==(test_specification)),
+        # :test_specification => ByRow(==(test_specification)),
         :percent_tested => ByRow(==(percent_tested)),
     )
 
@@ -498,5 +498,10 @@ if debug_Reff_plots
         end
     end
 
-    tau_auc_heatmap(auc_df; baseline_test = test_specification)
+    tau_auc_heatmap(
+        auc_df,
+        :auc,
+        :auc;
+        baseline_test = test_specification,
+    )
 end

@@ -519,7 +519,17 @@ for (noise_num, gdf) in enumerate(gdfs)
                         rev = true,
                     )
 
+
                     perfect_test_auc = extract_tau_auc_metric(
+                        auc_df,
+                        IndividualTestSpecification(1.0, 1.0, 0),
+                        :auc,
+                        "$timelength_label AUC";
+                        rev = true,
+                    )
+
+
+                    perfect_test_auc_magnitude = extract_tau_auc_metric(
                         auc_df,
                         IndividualTestSpecification(1.0, 1.0, 0),
                         :auc_magnitude,
@@ -530,7 +540,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                     perfect_test_df = hcat(
                         perfect_test_df,
                         perfect_test_tau,
-                        perfect_test_auc,
+                        perfect_test_auc_magnitude,
                     )
 
                     if timelength_plotdir == "after-burnin"
@@ -544,7 +554,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                         )
                         auc_magnitude_comparison_df = hcat(
                             auc_magnitude_comparison_df,
-                            rename(perfect_test_auc, 1 => "All Noise"),
+                            rename(perfect_test_auc_magnitude, 1 => "All Noise"),
                         )
                     end
                 end

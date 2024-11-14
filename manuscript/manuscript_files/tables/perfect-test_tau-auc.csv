@@ -1,0 +1,9 @@
+Rank,Full Time Series Tau,After Burn-in Period Tau,Full Time Series |AUC-0.5|,After Burn-in Period |AUC-0.5|
+1,Index of dispersion (0.26),Variance (0.62),Mean (0.19),Autocovariance (0.2)
+2,Autocovariance (0.25),Index of dispersion (0.58),Autocovariance (0.17),Variance (0.2)
+3,Variance (0.25),Autocovariance (0.58),Variance (0.17),Mean (0.18)
+4,Mean (0.22),Autocorrelation (0.38),Index of dispersion (0.14),Index of dispersion (0.13)
+5,Autocorrelation (0.17),Mean (0.38),Coefficient of variation (0.12),Autocorrelation (0.12)
+6,Coefficient of variation (-0.01),Coefficient of variation (0.15),Autocorrelation (0.1),Coefficient of variation (0.11)
+7,Kurtosis (-0.04),Skewness (0.06),Skewness (0.1),Skewness (0.1)
+8,Skewness (-0.08),Kurtosis (-0.02),Kurtosis (0.02),Kurtosis (0.03)

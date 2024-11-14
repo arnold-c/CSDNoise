@@ -147,49 +147,94 @@ $$$
 
 == Limitations and Strengths
 
-= Results Plots
+= Additional Results Plots
+== AUC Heatmaps
+=== Full Length
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x]
+)
+
+
+=== After 5yr Burn in
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x]
+)
+
 == Tau Heatmaps
 === Full Length
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_1.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_1.0x.svg"),
   caption: [Poisson noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_7.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_7.0x.svg"),
   caption: [Poisson noise, 7x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.8734.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.8734.svg"),
   caption: [Dynamical noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.102.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
 
 === After 5yr Burn in
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_1.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_1.0x.svg"),
   caption: [Poisson noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_7.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_7.0x.svg"),
   caption: [Poisson noise, 7x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.8734.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.8734.svg"),
   caption: [Dynamical noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.102.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
 
@@ -215,6 +260,7 @@ $$$
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
+
 
 #pagebreak()
 

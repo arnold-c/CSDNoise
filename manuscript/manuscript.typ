@@ -149,8 +149,8 @@ $$$
 $$$
 
 where $r_"null"$ equals the sum of ranks for the null time series, and $n_"null"$ and $n_"emergent"$ refer to the number of null and emergent simulations, respectively.
-An AUC of 0.5 indicates the EWS is similarly correlated with both emergent and null time series, offering no benefit; values > 0.5 indicate a positive correlation with emergent time series, and < 0.5 indicate the EWS metric is more strongly correlated with the null simulations.
-AUC values are commonly transformed to $|"AUC" - 0.5|$ to highlight the strength of the correlation with emergence, with values close to 0 exhibiting poor performance @brettAnticipatingEpidemicTransitions2018.
+An AUC of 0.5 indicates the EWS is similarly correlated with both emergent and null time series, offering no benefit; values > 0.5 indicate a positive correlation with emergent time series, and < 0.5 indicates the EWS metric is negatively correlated with the emergent simulations.
+AUC values are commonly transformed as $|"AUC" - 0.5|$ to highlight the strength of the correlation with emergence, with values close to 0 exhibiting poor performance, and a value of 0.5 indicating perfect correlation @brettAnticipatingEpidemicTransitions2018.
 
 The primary mode of evaluation for the EWS metrics relies on computing and triggering an alert based upon a set of conditions.
 The alert scenario is defined as the combination of diagnostic test, noise structure and magnitude, and EWS metric.
@@ -167,104 +167,43 @@ Finally, the speed and timing of detection relative to the critical threshold is
 The strength and direction of the correlation between EWS metrics and the approach to the critical threshold in emergent time series is more strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test, @tbl-tau-ranking-rdt-comparison).
 Decreasing the length of the emergent time series used to evaluate the correlation increased the strength of the association with all EWS metrics, except the coefficient of variation which is theoretically is uncorrelated with $R_"effective"$, according to the simplified Birth-Death-Immigration process @brettAnticipatingEpidemicTransitions2018.
 
+#let two_header_table = table
+#set two_header_table(
+    fill: (x, y) => {
+      if y == 0 or y == 1 {gray}
+    }
+  )
 
+#let perfect_tau_auc_table = csv("./manuscript_files/tables/perfect-test_tau-auc.csv")
 #figure(
-  table(
+    two_header_table(
     columns: 5,
-    table.cell(rowspan: 2, align: horizon, "Rank"), table.cell(colspan: 2, "Tau"), table.cell(colspan: 2, "|AUC - 0.5|"),
-    table.cell(fill: gray, "Full Time Series"),table.cell(fill:gray, "After Burn-in Period"), table.cell(fill: gray, "Full Time Series"),table.cell(fill:gray, "After Burn-in Period"),
-    [1],[Index of dispersion (0.26)], [Autocovariance (0.78)], [Mean (0.19)], [Autocovariance (0.20)],
-    [2],[Autocovariance (0.25)], [Variance (0.69)], [Autocovariance (0.17)], [Variance (0.20)],
-    [3],[Variance (0.25)], [Autocorrelation (0.68)], [Variance (0.17)], [Mean (0.18)],
-    [4],[Mean (0.22)], [Index of dispersion (0.67)], [Index of dispersion (0.14)], [Index of dispersion (0.13)],
-    [5],[Autocorrelation (0.17)], [Mean (0.47)], [Coefficient of variation (0.12)], [Autocorrelation (0.12)],
-    [6],[Coefficient of variation (-0.01)], [Kurtosis (0.40)], [Autocorrelation (0.10)], [Coefficient of variation (0.11)],
-    [7],[Kurtosis (-0.04)], [Skewness (0.20)], [Skewness (0.10)], [Skewness (0.10)],
-    [8],[Skewness (-0.08)], [Coefficient of variation (-0.01)], [Kurtosis (0.02)], [Kurtosis (0.03)],
+    table.cell(rowspan: 2, align: horizon)[Rank], table.cell(colspan: 2)[Tau], table.cell(colspan: 2)[|AUC - 0.5|],
+    ..perfect_tau_auc_table.flatten().slice(1)
   ),
   caption: [The ranking and mean value of Kendall's #sym.tau computed on emergent time series, and the $|"AUC" - 0.5|$ for each metric. The values are computed on the full time series, and the subset from after the completion of the burn-in period, with a perfect test]
 )
 <tbl-tau-ranking-perfect-test>
 
+
+#let tau_comparison_table = csv("./manuscript_files/tables/tau-comparison.csv")
 #figure(
-  table(
+  two_header_table(
     columns: 6,
-    table.cell(rowspan: 2, align: horizon, "Rank"), [Perfect Test], table.cell(colspan: 4)[90% sensitivity, 90% specificity RDT],
-    table.cell(fill: gray)[All Noise],
-    table.cell(fill: gray)[1x Poisson],
-    table.cell(fill: gray)[7x Poisson],
-    table.cell(fill: gray)[1x Dynamical],
-    table.cell(fill: gray)[7x Dynamical],
-    [1], [Autocovariance \ (0.78)], [Autocovariance \ (0.71)], [Autocovariance \ (0.70)], [Mean \ (0.86)], [Skewness \ (0.94)],
-    [2], [Variance \ (0.69)], [Variance \ (0.64)], [Mean \ (0.66)], [Variance \ (0.71)], [Index of dispersion \ (0.87)],
-    [3], [Autocorrelation \ (0.68)], [Autocorrelation \ (0.64)], [Autocorrelation \ (0.61)], [Autocovariance \ (0.70)], [Variance \ (0.81)],
-    [4], [Index of dispersion \ (0.67)], [Index of dispersion \ (0.57)],[Variance \ (0.56)], [Autocorrelation \ (0.64)], [Autocovariance \ (0.81)],
-    [5], [Mean \ (0.47)], [Coefficient of variation \ (0.54)], [Index of dispersion \ (0.54)], [Index of dispersion \ (0.46)], [Autocorrelation \ (0.55)],
-    [6], [Kurtosis \ (0.40)], [Mean \ (0.51)], [Coefficient of variation \ (0.53)], [Skewness \ (0.36)], [Coefficient of variation \ (0.51)],
-    [7], [Skewness \ (0.20)], [Kurtosis \ (0.45)], [Skewness \ (0.29)], [Kurtosis \ (0.30)], [Kurtosis \ (-0.14)],
-    [8], [Coefficient of variation \ (-0.01)], [Skewness \ (0.23)], [Kurtosis \ (0.20)], [Coefficient of variation \ (-0.49)], [Mean \ (-0.31)],
+    table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
+    ..tau_comparison_table.flatten().slice(1)
   ),
   caption: [The ranking and mean value of Kendall's #sym.tau computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
 <tbl-tau-ranking-rdt-comparison>
 
+
+#let auc_comparison_table = csv("./manuscript_files/tables/auc-comparison.csv")
 #figure(
-  table(
+  two_header_table(
     columns: 6,
-    table.cell(rowspan: 2, align: horizon, "Rank"), [Perfect Test], table.cell(colspan: 4)[90% sensitivity, 90% specificity RDT],
-    table.cell(fill: gray)[All Noise],
-    table.cell(fill: gray)[1x Poisson],
-    table.cell(fill: gray)[7x Poisson],
-    table.cell(fill: gray)[1x Dynamical],
-    table.cell(fill: gray)[7x Dynamical],
-    [1],
-    [Autocovariance \ (0.20)],
-    [Autocovariance \ (0.23)],
-    [Autocovariance \ (0.22)],
-    [Autocovariance \ (0.16)],
-    [Mean \ (0.05)],
-    [2],
-    [Variance \ (0.20)],
-    [Variance \ (0.21)],
-    [Mean \ (0.20)],
-    [Variance \ (0.14)],
-    [Variance \ (0.08)],
-    [3],
-    [Mean \ (0.18)],
-    [Mean \ (0.20)],
-    [Variance \ (0.18)],
-    [Mean \ (0.13)],
-    [Autocovariance \ (0.03)],
-    [4],
-    [Index of dispersion \ (0.13)],
-    [Index of dispersion \ (0.17)],
-    [Index of dispersion \ (0.18)],
-    [Index of dispersion \ (0.09)],
-    [Coefficient of variation \ (0.02)],
-    [5],
-    [Autocorrelation \ (0.12)],
-    [Autocorrelation \ (0.17)],
-    [Coefficient of variation \ (0.17)],
-    [Autocorrelation \ (0.07)],
-    [Skewness \ (0.01)],
-    [6],
-    [Coefficient of variation \ (0.11)],
-    [Coefficient of variation \ (0.10)],
-    [Autocorrelation \ (0.16)],
-    [Skewness \ (0.06)],
-    [Autocorrelation \ (0.01)],
-    [7],
-    [Skewness \ (0.10)],
-    [Skewness \ (0.08)],
-    [Skewness \ (0.10)],
-    [Coefficient of variation \ (0.05)],
-    [Kurtosis \ (0.01)],
-    [8],
-    [Kurtosis\ (0.03)],
-    [Kurtosis \ (0.05)],
-    [Kurtosis \ (0.03)],
-    [Kurtosis \ (0.01)],
-    [Index of dispersion \ (0.00)],
+    table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
+    ..auc_comparison_table.flatten().slice(1)
   ),
   caption: [The ranking of $|"AUC" - 0.5|$ computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
@@ -318,53 +257,53 @@ Decreasing the length of the emergent time series used to evaluate the correlati
   caption: [Dynamical noise, 1x]
 )
 
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
-//   caption: [Dynamical noise, 7x]
-// )
+#figure(
+  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x]
+)
 
 == Tau Heatmaps
 === Full Length
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_1.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_1.0x.svg"),
   caption: [Poisson noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_poisson_7.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_7.0x.svg"),
   caption: [Poisson noise, 7x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.8734.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.8734.svg"),
   caption: [Dynamical noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/full-length/tau-heatmap_dynamical_0.102.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
 
 === After 5yr Burn in
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_1.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_1.0x.svg"),
   caption: [Poisson noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_poisson_7.0x.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_7.0x.svg"),
   caption: [Poisson noise, 7x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.8734.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.8734.svg"),
   caption: [Dynamical noise, 1x noise]
 )
 
 #figure(
-  image("manuscript_files/plots/tau-heatmaps/after-burnin/tau-heatmap_dynamical_0.102.svg"),
+  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
 

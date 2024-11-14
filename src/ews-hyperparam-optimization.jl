@@ -922,11 +922,154 @@ function simulate_and_plot_ews_survival(
 end
 
 function ews_survival_plot(
+    survival_df::T1;
+    test_specification_vec = [
+        IndividualTestSpecification(1.0, 1.0, 0),
+        IndividualTestSpecification(0.9, 0.9, 0),
+    ],
+    noise_specification_vec = [
+        PoissonNoiseSpecification(1.0),
+        PoissonNoiseSpecification(7.0),
+        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+    ],
+    ews_aggregation = Dates.Day(7),
+    burnin = Dates.Year(5),
+    endpoint_aggregation = Dates.Day(30),
+    alpha = 1.0,
+    trim_burnin = true,
+    plottitle = "Survival",
+    subtitle = "",
+) where {T1<:DataFrames.DataFrame}
+    if sum(
+        filter(
+            !isnothing,
+            indexin(
+                unique(survival_df.test_specification),
+                test_specification_vec,
+            ),
+        ),
+    ) != sum(eachindex(test_specification_vec))
+        error(
+            "Not all test specified are present in the dataframe.\nTrying to plot survival curves for:\n$(test_specification_vec).\nFound these in the dataframe:\n$(unique(survival_df.test_specification))"
+        )
+    end
+
+    if sum(
+        filter(
+            !isnothing,
+            indexin(
+                unique(survival_df.noise_specification),
+                noise_specification_vec,
+            ),
+        ),
+    ) != sum(eachindex(noise_specification_vec))
+        error(
+            "Not all noise structures specified are present in the dataframe.\nTrying to plot survival curves for:\n$(noise_specification_vec).\nFound these in the dataframe:\n$(unique(survival_df.noise_specification))"
+        )
+    end
+
+    subset_survival_df = subset(
+        survival_df,
+        :test_specification => ByRow(in(test_specification_vec)),
+        :noise_specification => ByRow(in(noise_specification_vec)),
+    )
+
+    fig = Figure()
+
+    noise_grouped_dfs = groupby(subset_survival_df, :noise_specification)
+
+    num_noise = length(noise_specification_vec)
+
+    if num_noise > 4
+        error(
+            "Trying to plot too many metric facets $(length(ewsmetric_grouped_dfs)). Max allowed is 4"
+        )
+    end
+
+    fig = Figure()
+
+    for (noise_num, noise_gdf) in enumerate(noise_grouped_dfs)
+        noise_description = get_noise_description(
+            noise_gdf.noise_specification[1]
+        )
+        ax_position = Match.@match noise_num begin
+            1 => (1, 1)
+            2 => (1, 2)
+            3 => (2, 1)
+            4 => (2, 2)
+        end
+        gl = fig[ax_position...] = GridLayout()
+        for (i, test_specification) in pairs(test_specification_vec)
+            @show test_specification
+
+            detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
+                noise_gdf
+            )
+
+            times,
+            enddate_times,
+            enddate_counts,
+            detection_survival_times,
+            detection_survival_vec,
+            null_survival_times,
+            null_survival_vec,
+            nsims = prepare_survival_facet_params(
+                detection_survival_vecs,
+                null_survival_vecs,
+                noise_gdf.enddate;
+                ews_aggregation = ews_aggregation,
+                endpoint_aggregation = endpoint_aggregation,
+            )
+
+            if i == 1
+                survival_plot_histogram!(
+                    gl,
+                    enddate_times,
+                    enddate_counts;
+                    trim_burnin = trim_burnin,
+                    burnin = burnin,
+                )
+            end
+
+            survival_plot_lines!(
+                gl,
+                times,
+                detection_survival_times,
+                detection_survival_vec,
+                null_survival_times,
+                null_survival_vec;
+                alpha = alpha,
+                nsims = nsims,
+                facet_title = noise_description,
+                trim_burnin = trim_burnin,
+                burnin = burnin,
+            )
+        end
+    end
+
+    return fig
+end
+
+# function ews_survival_facet!(
+#     gl,
+#     gdf::T1;
+#     facet_title = "Survival",
+#     subtitle = "",
+#     ews_aggregation = Day(7),
+#     burnin = Year(5),
+#     endpoint_aggregation = Day(30),
+#     alpha = 1.0,
+#     trim_burnin = true,
+# ) where {T1<:DataFrames.DataFrame}
+#     return nothing
+# end
+
+function ews_survival_plot(
     detection_survival_vecs,
     null_survival_vecs,
     enddate_vec;
-    plottitle = "Survival",
-    subtitle = "",
+    facet_title = "Survival",
     ews_aggregation = Day(7),
     burnin = Year(5),
     endpoint_aggregation = Day(30),
@@ -942,8 +1085,7 @@ function ews_survival_plot(
         detection_survival_vecs,
         null_survival_vecs,
         enddate_vec;
-        plottitle = plottitle,
-        subtitle = subtitle,
+        facet_title = facet_title,
         ews_aggregation = ews_aggregation,
         burnin = burnin,
         endpoint_aggregation = endpoint_aggregation,
@@ -965,17 +1107,66 @@ function ews_survival_facet!(
     detection_survival_vecs,
     null_survival_vecs,
     enddate_vec;
-    plottitle = "Survival",
-    subtitle = "",
+    facet_title = "Survival",
     ews_aggregation = Day(7),
     burnin = Year(5),
     endpoint_aggregation = Day(30),
     alpha = 1.0,
     trim_burnin = true,
 )
+    times,
+    enddate_times,
+    enddate_counts,
+    detection_survival_times,
+    detection_survival_vec,
+    null_survival_times,
+    null_survival_vec,
+    nsims = prepare_survival_facet_params(
+        detection_survival_vecs,
+        null_survival_vecs,
+        enddate_vec;
+        ews_aggregation = ews_aggregation,
+        endpoint_aggregation = endpoint_aggregation,
+    )
+
+    survival_plot_histogram!(
+        gl,
+        enddate_times,
+        enddate_counts;
+        trim_burnin = trim_burnin,
+        burnin = burnin,
+    )
+
+    survival_plot_lines!(
+        gl,
+        enddate_times,
+        detection_survival_times,
+        detection_survival_vec,
+        null_survival_times,
+        null_survival_vec;
+        alpha = alpha,
+        nsims = nsims,
+        facet_title = facet_title,
+        trim_burnin = trim_burnin,
+        burnin = burnin,
+    )
+
+    return nothing
+end
+
+function prepare_survival_facet_params(
+    detection_survival_vecs,
+    null_survival_vecs,
+    enddate_vec;
+    ews_aggregation = Day(7),
+    endpoint_aggregation = Day(30),
+)
     @unpack detection_survival_vec, detection_indices_vec =
         detection_survival_vecs
     @unpack null_survival_vec, null_indices_vec = null_survival_vecs
+
+    @show detection_survival_vec
+    @show detection_survival_vec
 
     filtered_enddate_vec = filter(isinteger, enddate_vec)
 
@@ -1005,18 +1196,25 @@ function ews_survival_facet!(
         sum(enddate_vec .== enddate)
     end
 
+    return times, enddate_times,
+    enddate_counts,
+    detection_survival_times,
+    detection_survival_vec,
+    null_survival_times,
+    null_survival_vec,
+    nsims
+end
+
+function survival_plot_histogram!(
+    gl,
+    enddate_times,
+    enddate_counts;
+    trim_burnin = true,
+    burnin = Dates.Year(5),
+)
     hist_ax = Axis(
         gl[1, 1];
         limits = (0, maximum(enddate_times), nothing, nothing),
-    )
-    surv_ax = Axis(
-        gl[1, 1];
-        title = plottitle,
-        subtitle = subtitle,
-        xlabel = "Time (Years)",
-        ylabel = "Survival Numbers",
-        xticks = 1:1:10,
-        limits = (0, maximum(enddate_times), 0, ceil(1.1 * nsims)),
     )
 
     hidexdecorations!(hist_ax)
@@ -1027,6 +1225,35 @@ function ews_survival_facet!(
         enddate_times,
         enddate_counts;
         color = (:darkgray, 1.0),
+    )
+
+    if trim_burnin
+        xlims!(hist_ax, Dates.value(burnin), enddate_times[end])
+    end
+
+    return nothing
+end
+
+function survival_plot_lines!(
+    gl,
+    times,
+    detection_survival_times,
+    detection_survival_vec,
+    null_survival_times,
+    null_survival_vec;
+    alpha = 1.0,
+    nsims = 100,
+    facet_title = "Survival",
+    trim_burnin = true,
+    burnin = Dates.Year(5),
+)
+    surv_ax = Axis(
+        gl[1, 1];
+        title = facet_title,
+        xlabel = "Time (Years)",
+        ylabel = "Survival Numbers",
+        xticks = 1:1:10,
+        limits = (0, maximum(times), 0, ceil(1.1 * nsims)),
     )
 
     lines!(
@@ -1046,14 +1273,13 @@ function ews_survival_facet!(
     )
 
     if trim_burnin
-        xlims!(Dates.value(burnin), times[end])
+        xlims!(surv_ax, Dates.value(burnin), times[end])
     else
         vlines!(
             surv_ax, Int64(Dates.value(burnin)); color = :black,
             linestyle = :dash,
         )
     end
-
     return nothing
 end
 
@@ -1146,6 +1372,9 @@ function simulate_ews_survival_data(
 
     survival_df = DataFrame(
     (
+        noise_specification = Union{
+            <:PoissonNoiseSpecification,<:DynamicalNoiseSpecification
+        }[],
         test_specification = IndividualTestSpecification[],
         ews_metric = String[],
         enddate = Vector{Union{Int64,Try.Err}}(),
@@ -1362,6 +1591,9 @@ function simulate_ews_survival_data(
         append!(
             survival_df,
             DataFrame(;
+                noise_specification = repeat(
+                    [noise_specification], length(detection_index_vec)
+                ),
                 test_specification = repeat(
                     [test_specification], length(detection_index_vec)
                 ),

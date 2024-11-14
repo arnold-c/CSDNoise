@@ -933,6 +933,46 @@ function ews_survival_plot(
     alpha = 1.0,
     trim_burnin = true,
 )
+    fig = Figure()
+
+    gl = fig[1, 1] = GridLayout()
+
+    ews_survival_facet!(
+        gl,
+        detection_survival_vecs,
+        null_survival_vecs,
+        enddate_vec;
+        plottitle = plottitle,
+        subtitle = subtitle,
+        ews_aggregation = ews_aggregation,
+        burnin = burnin,
+        endpoint_aggregation = endpoint_aggregation,
+        alpha = alpha,
+        trim_burnin = trim_burnin,
+    )
+
+    Legend(
+        fig[1, 2],
+        contents(gl)[2];
+        orientation = :vertical,
+    )
+
+    return fig
+end
+
+function ews_survival_facet!(
+    gl,
+    detection_survival_vecs,
+    null_survival_vecs,
+    enddate_vec;
+    plottitle = "Survival",
+    subtitle = "",
+    ews_aggregation = Day(7),
+    burnin = Year(5),
+    endpoint_aggregation = Day(30),
+    alpha = 1.0,
+    trim_burnin = true,
+)
     @unpack detection_survival_vec, detection_indices_vec =
         detection_survival_vecs
     @unpack null_survival_vec, null_indices_vec = null_survival_vecs
@@ -965,13 +1005,12 @@ function ews_survival_plot(
         sum(enddate_vec .== enddate)
     end
 
-    fig = Figure()
     hist_ax = Axis(
-        fig[1, 1];
+        gl[1, 1];
         limits = (0, maximum(enddate_times), nothing, nothing),
     )
     surv_ax = Axis(
-        fig[1, 1];
+        gl[1, 1];
         title = plottitle,
         subtitle = subtitle,
         xlabel = "Time (Years)",
@@ -1011,13 +1050,11 @@ function ews_survival_plot(
     else
         vlines!(
             surv_ax, Int64(Dates.value(burnin)); color = :black,
-            linestyle = :dash
+            linestyle = :dash,
         )
     end
 
-    Legend(fig[1, 2], surv_ax; orientation = :vertical)
-
-    return fig
+    return nothing
 end
 
 function create_ews_survival_data(

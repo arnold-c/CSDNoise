@@ -175,11 +175,6 @@ function plot_test_filename(test_specification)
     return "sens-$(test_specification.sensitivity)_spec-$(test_specification.specificity)_lag-$(test_specification.test_result_lag)"
 end
 
-function sentencecase(s)
-    @assert length(s) >= 2
-    return uppercase(s[1]) * s[2:end]
-end
-
 function extract_tau_auc_metric(
     df,
     test_specification,

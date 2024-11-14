@@ -5,8 +5,8 @@ They are just listed here for convenience of sourcing one file.
 module CSDNoise
 
 # using Reexport
-include("DrWatson-helpers.jl")
-export outdir
+include("helpers.jl")
+export outdir, sentencecase
 
 include("transmission-functions.jl")
 export calculate_beta, calculate_beta_amp,

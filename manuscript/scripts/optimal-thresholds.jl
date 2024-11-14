@@ -180,26 +180,41 @@ function extract_tau_auc_metric(
     test_specification,
     tau_auc_metric,
     header_label;
-    rev = true
+    rev = true,
 )
     return combine(
         sort(
             subset(
                 df,
-                :test_specification => ByRow(==(test_specification))
+                :test_specification => ByRow(==(test_specification)),
             ),
-            order(tau_auc_metric, rev=rev)
+            order(tau_auc_metric; rev = rev),
         ),
-        [:ews_metric, tau_auc_metric] => ByRow((x, y) -> sentencecase(replace(x, "_" => " ")) * " ($(round(y; digits = 2)))") => header_label,
+        [:ews_metric, tau_auc_metric] =>
+            ByRow(
+                (x, y) ->
+                    sentencecase(replace(x, "_" => " ")) *
+                    " ($(round(y; digits = 2)))",
+            ) => header_label,
     )
 end
 
-function noise_table_description(noise_specification::T1) where {T1<:PoissonNoiseSpecification}
+function noise_table_description(
+    noise_specification::T1
+) where {T1<:PoissonNoiseSpecification}
     return "$(Int64(noise_specification.noise_mean_scaling))x Poisson Noise"
 end
 
-function noise_table_description(noise_specification::T1) where {T1<:DynamicalNoiseSpecification}
-    avg_vaccination = round(mean([noise_specification.min_vaccination_coverage, noise_specification.max_vaccination_coverage]); digits = 4)
+function noise_table_description(
+    noise_specification::T1
+) where {T1<:DynamicalNoiseSpecification}
+    avg_vaccination = round(
+        mean([
+            noise_specification.min_vaccination_coverage,
+            noise_specification.max_vaccination_coverage,
+        ]);
+        digits = 4,
+    )
     noise_scaling = @match avg_vaccination begin
         0.1020 => 7
         0.8734 => 1
@@ -215,8 +230,8 @@ gdfs = groupby(
     ],
 )
 
-tau_comparison_df = DataFrame(Rank = collect(1:8))
-auc_comparison_df = DataFrame(Rank = collect(1:8))
+tau_comparison_df = DataFrame(; Rank = collect(1:8))
+auc_comparison_df = DataFrame(; Rank = collect(1:8))
 for (noise_num, gdf) in enumerate(gdfs)
     @assert length(unique(gdf.noise_specification)) == 1
     noise_specification = gdf.noise_specification[1]
@@ -274,17 +289,17 @@ for (noise_num, gdf) in enumerate(gdfs)
 
     for (i, survival_ews_metric) in pairs(["mean", "variance"])
         survival_df, (
-            vec_of_testarr,
-            vec_of_null_testarr,
-            vec_of_ews_vals_vec,
-            vec_of_null_ews_vals_vec,
-            vec_of_exceed_thresholds,
-            vec_of_null_exceed_thresholds,
-            vec_of_threshold_percentiles,
-            vec_of_null_threshold_percentiles,
-            vec_of_detection_index_vec,
-            vec_of_null_detection_index_vec
-        ), noisearr = simulate_ews_survival_data(
+        vec_of_testarr,
+        vec_of_null_testarr,
+        vec_of_ews_vals_vec,
+        vec_of_null_ews_vals_vec,
+        vec_of_exceed_thresholds,
+        vec_of_null_exceed_thresholds,
+        vec_of_threshold_percentiles,
+        vec_of_null_threshold_percentiles,
+        vec_of_detection_index_vec,
+        vec_of_null_detection_index_vec
+), noisearr = simulate_ews_survival_data(
             test_df,
             ensemble_specification,
             ensemble_single_incarr,
@@ -336,7 +351,7 @@ for (noise_num, gdf) in enumerate(gdfs)
         end
 
         if i == 1
-            perfect_test_df = DataFrame(Rank = collect(1:length(ews_metrics)))
+            perfect_test_df = DataFrame(; Rank = collect(1:length(ews_metrics)))
             for (start_ind, timelength_plotdir, timelength_label) in zip(
                 [1, Int64(round(Dates.days(Year(5))))],
                 ["full-length", "after-burnin"],
@@ -415,14 +430,12 @@ for (noise_num, gdf) in enumerate(gdfs)
                     end
                 end
 
-
-
                 auc_heatmap = tau_auc_heatmap(
                     auc_df,
                     :auc_magnitude;
                     colormap = :Blues,
                     colorrange = [0, 0.5],
-                    textcolorthreshold = 0.3
+                    textcolorthreshold = 0.3,
                 )
 
                 tau_auc_heatmap_plot_name =
@@ -435,26 +448,34 @@ for (noise_num, gdf) in enumerate(gdfs)
                     "manuscript_files",
                     "plots",
                     "tau_auc-heatmaps",
-                    timelength_plotdir
+                    timelength_plotdir,
                 )
 
                 mkpath(tau_auc_heatmap_plotdir)
 
                 save(
-                    joinpath(tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name),
-                    auc_heatmap
+                    joinpath(
+                        tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name
+                    ),
+                    auc_heatmap,
                 )
 
                 emergent_tau_df = hcat(
                     select(auc_df, Cols(1:2)),
-                    combine(auc_df, :emergent_tau => ByRow(x -> mean(x)) => :ews_metric_value),
+                    combine(
+                        auc_df,
+                        :emergent_tau =>
+                            ByRow(x -> mean(x)) => :ews_metric_value,
+                    ),
                 )
 
                 null_tau_df = hcat(
                     select(auc_df, Cols(1:2)),
-                    combine(auc_df, :null_tau => ByRow(x -> mean(x)) => :ews_metric_value),
+                    combine(
+                        auc_df,
+                        :null_tau => ByRow(x -> mean(x)) => :ews_metric_value,
+                    ),
                 )
-
 
                 if noise_num == 1
                     perfect_test_tau = extract_tau_auc_metric(
@@ -462,7 +483,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                         IndividualTestSpecification(1.0, 1.0, 0),
                         :ews_metric_value,
                         "$timelength_label Tau";
-                        rev = true
+                        rev = true,
                     )
 
                     perfect_test_auc = extract_tau_auc_metric(
@@ -470,7 +491,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                         IndividualTestSpecification(1.0, 1.0, 0),
                         :auc_magnitude,
                         "$timelength_label |AUC-0.5|";
-                        rev = true
+                        rev = true,
                     )
 
                     perfect_test_df = hcat(
@@ -482,11 +503,11 @@ for (noise_num, gdf) in enumerate(gdfs)
                     if timelength_plotdir == "after-burnin"
                         tau_comparison_df = hcat(
                             tau_comparison_df,
-                            rename(perfect_test_tau, 1 => "All Noise")
+                            rename(perfect_test_tau, 1 => "All Noise"),
                         )
                         auc_comparison_df = hcat(
                             auc_comparison_df,
-                            rename(perfect_test_auc, 1 => "All Noise")
+                            rename(perfect_test_auc, 1 => "All Noise"),
                         )
                     end
                 end
@@ -497,7 +518,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                         IndividualTestSpecification(0.9, 0.9, 0),
                         :ews_metric_value,
                         "$noise_description";
-                        rev = true
+                        rev = true,
                     )
 
                     tau_comparison_df = hcat(
@@ -510,14 +531,13 @@ for (noise_num, gdf) in enumerate(gdfs)
                         IndividualTestSpecification(0.9, 0.9, 0),
                         :auc_magnitude,
                         "$noise_description";
-                        rev = true
+                        rev = true,
                     )
 
                     auc_comparison_df = hcat(
                         auc_comparison_df,
                         rdt_auc,
                     )
-
                 end
 
                 emergent_tau_heatmap = tycho_tau_heatmap_plot(
@@ -535,14 +555,17 @@ for (noise_num, gdf) in enumerate(gdfs)
                     "plots",
                     "tau_heatmaps",
                     "emergent",
-                    timelength_plotdir
+                    timelength_plotdir,
                 )
 
                 mkpath(emergent_tau_heatmap_plotdir)
 
                 save(
-                    joinpath(emergent_tau_heatmap_plotdir, emergent_tau_heatmap_plot_name),
-                    emergent_tau_heatmap
+                    joinpath(
+                        emergent_tau_heatmap_plotdir,
+                        emergent_tau_heatmap_plot_name,
+                    ),
+                    emergent_tau_heatmap,
                 )
 
                 null_tau_heatmap = tycho_tau_heatmap_plot(
@@ -560,31 +583,32 @@ for (noise_num, gdf) in enumerate(gdfs)
                     "plots",
                     "tau_heatmaps",
                     "null",
-                    timelength_plotdir
+                    timelength_plotdir,
                 )
 
                 mkpath(null_tau_heatmap_plotdir)
 
                 save(
-                    joinpath(null_tau_heatmap_plotdir, null_tau_heatmap_plot_name),
-                    null_tau_heatmap
+                    joinpath(
+                        null_tau_heatmap_plotdir, null_tau_heatmap_plot_name
+                    ),
+                    null_tau_heatmap,
                 )
-
             end
 
             if noise_num == 1
                 select!(perfect_test_df, :Rank, Cols(r"Tau"), Cols(r"AUC"))
-                tables_path = projectdir("manuscript", "manuscript_files", "tables")
+                tables_path = projectdir(
+                    "manuscript", "manuscript_files", "tables"
+                )
                 mkpath(tables_path)
 
                 CSV.write(
                     joinpath(tables_path, "perfect-test_tau-auc.csv"),
-                    perfect_test_df
+                    perfect_test_df,
                 )
             end
-
         end
-
     end
 end
 
@@ -594,19 +618,19 @@ mkpath(tables_path)
 select!(tau_comparison_df, :Rank, Cols("All Noise"), All())
 CSV.write(
     joinpath(tables_path, "tau-comparison.csv"),
-    tau_comparison_df
+    tau_comparison_df,
 )
 
 select!(auc_comparison_df, :Rank, Cols("All Noise"), All())
 CSV.write(
     joinpath(tables_path, "auc-comparison.csv"),
-    auc_comparison_df
+    auc_comparison_df,
 )
-
 
 #%%
 lineplot_df = similar(gdfs[1], 0)
-for gdf in gdfs, ewsmetric in ["mean", "variance", "autocovariance", "autocorrelation"]
+for gdf in gdfs,
+    ewsmetric in ["autocovariance", "variance", "mean", "index_of_dispersion"]
     prepare_line_plot_df!(lineplot_df, gdf, ewsmetric)
 end
 
@@ -633,9 +657,8 @@ for ewsmetric in [
     "mean",
     "kurtosis",
     "skewness",
-    "coefficient_of_variation"
+    "coefficient_of_variation",
 ]
-
     individual_lineplot_df = similar(gdfs[1], 0)
     for gdf in gdfs
         prepare_line_plot_df!(individual_lineplot_df, gdf, ewsmetric)
@@ -645,10 +668,10 @@ for ewsmetric in [
         individual_lineplot_df;
     )
 
-
-
     save(
-        joinpath(individual_line_plotdir, "$(ewsmetric)_accuracy-line-plot.svg"),
+        joinpath(
+            individual_line_plotdir, "$(ewsmetric)_accuracy-line-plot.svg"
+        ),
         individual_accuracy_line_plot,
     )
 end

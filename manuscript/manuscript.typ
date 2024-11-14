@@ -1,4 +1,4 @@
-#import "template.typ": article
+#import "template.typ": article, two_header_table
 
 #show: article.with(
   title: "Diagnostic Uncertainty Limits the Potential of Early Warning Signals for Epidemic Transitions",
@@ -164,39 +164,23 @@ Finally, the speed and timing of detection relative to the critical threshold is
 
 = Results
 
-The strength and direction of the correlation between EWS metrics and the approach to the critical threshold in emergent time series is more strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test, @tbl-tau-ranking-rdt-comparison).
-Decreasing the length of the emergent time series used to evaluate the correlation increased the strength of the association with all EWS metrics, except the coefficient of variation which is theoretically is uncorrelated with $R_"effective"$, according to the simplified Birth-Death-Immigration process @brettAnticipatingEpidemicTransitions2018.
-
-#let two_header_table = table
-#set two_header_table(
-    fill: (x, y) => {
-      if y == 0 or y == 1 {gray}
-    }
-  )
+The strength and direction of the raw correlation between EWS metrics and the approach to the critical threshold in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test).
+However, when calculating AUC to compare against the correlations observed in null simulations, this affect disappears (@tbl-tau-ranking-perfect-test).
+Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.2, 0.2, 0.18$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
 
 #let perfect_tau_auc_table = csv("./manuscript_files/tables/perfect-test_tau-auc.csv")
+
 #figure(
     two_header_table(
     columns: 5,
     table.cell(rowspan: 2, align: horizon)[Rank], table.cell(colspan: 2)[Tau], table.cell(colspan: 2)[|AUC - 0.5|],
-    ..perfect_tau_auc_table.flatten().slice(1)
+    [Full Time Series], [After Burn-In Period],
+    [Full Time Series], [After Burn-In Period],
+    ..perfect_tau_auc_table.slice(1).flatten()
   ),
-  caption: [The ranking and mean value of Kendall's #sym.tau computed on emergent time series, and the $|"AUC" - 0.5|$ for each metric. The values are computed on the full time series, and the subset from after the completion of the burn-in period, with a perfect test]
+  caption: [The ranking and mean value of Kendall's Tau computed on emergent time series, and the $|"AUC" - 0.5|$ for each metric. The values are computed on the full time series, and the subset from after the completion of the burn-in period, with a perfect test]
 )
 <tbl-tau-ranking-perfect-test>
-
-
-#let tau_comparison_table = csv("./manuscript_files/tables/tau-comparison.csv")
-#figure(
-  two_header_table(
-    columns: 6,
-    table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
-    ..tau_comparison_table.flatten().slice(1)
-  ),
-  caption: [The ranking and mean value of Kendall's #sym.tau computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
-)
-<tbl-tau-ranking-rdt-comparison>
-
 
 #let auc_comparison_table = csv("./manuscript_files/tables/auc-comparison.csv")
 #figure(
@@ -215,120 +199,6 @@ Decreasing the length of the emergent time series used to evaluate the correlati
   caption: [Accuracy line plot]
 )
 <fig-accuracy-line-plot>
-
-= Additional Results Plots
-== AUC Heatmaps
-=== Full Length
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x]
-)
-
-
-=== After 5yr Burn in
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x]
-)
-
-== Tau Heatmaps
-=== Full Length
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x noise]
-)
-
-=== After 5yr Burn in
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x noise]
-)
-
-
-== Optimal Threshold Accuracies
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x noise]
-)
-
-#figure(
-  image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x noise]
-)
 
 
 = Discussion
@@ -358,8 +228,6 @@ Decreasing the length of the emergent time series used to evaluate the correlati
 #emph[Investigation:] CA, MJF
 
 #emph[Methodology:] CA, MJF
-
-All code and data for the simulations can be found at [https://github.com/arnold-c/OutbreakDetection]().
 
 #emph[Writing - original draft:] CA
 

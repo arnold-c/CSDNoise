@@ -100,6 +100,8 @@
     }
   }
 
+
+
   // Title block
   align(center)[
     #block(text(size: 14pt, weight: "bold", title))
@@ -259,3 +261,7 @@
 
 }
 
+#let two_header_table(..args) = table(
+  ..args,
+  fill: (x, y) => { if y == 0 or y == 1 {gray}}
+)

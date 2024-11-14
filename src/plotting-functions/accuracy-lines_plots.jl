@@ -109,7 +109,7 @@ function line_plot(
             metric_gdf;
             ax_position = ax_position,
             num_metrics = num_metrics,
-            facet_title = metric_gdf[1, :ews_metric],
+            facet_title = sentencecase(replace(metric_gdf[1, :ews_metric], "_" => " ")),
             ylims = ylims,
         )
     end

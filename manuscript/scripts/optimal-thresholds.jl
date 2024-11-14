@@ -232,6 +232,7 @@ gdfs = groupby(
 
 tau_comparison_df = DataFrame(; Rank = collect(1:8))
 auc_comparison_df = DataFrame(; Rank = collect(1:8))
+auc_magnitude_comparison_df = DataFrame(; Rank = collect(1:8))
 for (noise_num, gdf) in enumerate(gdfs)
     @assert length(unique(gdf.noise_specification)) == 1
     noise_specification = gdf.noise_specification[1]
@@ -432,10 +433,11 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 auc_heatmap = tau_auc_heatmap(
                     auc_df,
-                    :auc_magnitude;
-                    colormap = :Blues,
-                    colorrange = [0, 0.5],
-                    textcolorthreshold = 0.3,
+                    :auc,
+                    :auc;
+                    colormap = :RdBu,
+                    colorrange = [0, 1.0],
+                    textcolorthreshold = (0.3, 0.7)
                 )
 
                 tau_auc_heatmap_plot_name =
@@ -458,6 +460,37 @@ for (noise_num, gdf) in enumerate(gdfs)
                         tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name
                     ),
                     auc_heatmap,
+                )
+
+                auc_magnitude_heatmap = tau_auc_heatmap(
+                    auc_df,
+                    :auc_magnitude,
+                    :auc_magnitude;
+                    colormap = :Blues,
+                    colorrange = [0, 0.5],
+                    textcolorthreshold = 0.3,
+                )
+
+                tau_auc_magnitude_heatmap_plot_name =
+                    "tau_auc-magnitude-heatmap_" *
+                    plot_noise_filename(noise_specification) *
+                    ".svg"
+
+                tau_auc_magnitude_heatmap_plotdir = projectdir(
+                    "manuscript",
+                    "manuscript_files",
+                    "plots",
+                    "tau_auc-magnitude-heatmaps",
+                    timelength_plotdir,
+                )
+
+                mkpath(tau_auc_magnitude_heatmap_plotdir)
+
+                save(
+                    joinpath(
+                        tau_auc_magnitude_heatmap_plotdir, tau_auc_magnitude_heatmap_plot_name
+                    ),
+                    auc_magnitude_heatmap,
                 )
 
                 emergent_tau_df = hcat(
@@ -509,6 +542,10 @@ for (noise_num, gdf) in enumerate(gdfs)
                             auc_comparison_df,
                             rename(perfect_test_auc, 1 => "All Noise"),
                         )
+                        auc_magnitude_comparison_df = hcat(
+                            auc_magnitude_comparison_df,
+                            rename(perfect_test_auc, 1 => "All Noise"),
+                        )
                     end
                 end
 
@@ -529,6 +566,14 @@ for (noise_num, gdf) in enumerate(gdfs)
                     rdt_auc = extract_tau_auc_metric(
                         auc_df,
                         IndividualTestSpecification(0.9, 0.9, 0),
+                        :auc,
+                        "$noise_description";
+                        rev = true,
+                    )
+
+                    rdt_auc_magnitude = extract_tau_auc_metric(
+                        auc_df,
+                        IndividualTestSpecification(0.9, 0.9, 0),
                         :auc_magnitude,
                         "$noise_description";
                         rev = true,
@@ -537,6 +582,11 @@ for (noise_num, gdf) in enumerate(gdfs)
                     auc_comparison_df = hcat(
                         auc_comparison_df,
                         rdt_auc,
+                    )
+
+                    auc_magnitude_comparison_df = hcat(
+                        auc_magnitude_comparison_df,
+                        rdt_auc_magnitude,
                     )
                 end
 
@@ -621,11 +671,18 @@ CSV.write(
     tau_comparison_df,
 )
 
+select!(auc_magnitude_comparison_df, :Rank, Cols("All Noise"), All())
+CSV.write(
+    joinpath(tables_path, "auc-magnitude-comparison.csv"),
+    auc_magnitude_comparison_df,
+)
+
 select!(auc_comparison_df, :Rank, Cols("All Noise"), All())
 CSV.write(
     joinpath(tables_path, "auc-comparison.csv"),
     auc_comparison_df,
 )
+
 
 #%%
 lineplot_df = similar(gdfs[1], 0)

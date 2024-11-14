@@ -32,7 +32,66 @@
 )
 <tbl-tau-ranking-rdt-comparison>
 
+#let auc_comparison_table = csv("./manuscript_files/tables/auc-comparison.csv")
+#figure(
+  two_header_table(
+    columns: 6,
+    table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
+    ..auc_comparison_table.flatten().slice(1)
+  ),
+  caption: [The ranking of AUC computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
+)
+<tbl-auc-ranking-rdt-comparison>
+
+
+
 = Plots
+== AUC Magnitude Heatmaps
+=== Full Length
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x]
+)
+
+
+=== After 5yr Burn in
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_poisson_1.0x.svg"),
+  caption: [Poisson noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_poisson_7.0x.svg"),
+  caption: [Poisson noise, 7x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_dynamical_0.8734.svg"),
+  caption: [Dynamical noise, 1x]
+)
+
+#figure(
+  image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_dynamical_0.102.svg"),
+  caption: [Dynamical noise, 7x]
+)
+
 == AUC Heatmaps
 === Full Length
 

@@ -182,16 +182,22 @@ Consistent with previous studies, the autocovariance, variance, mean, and index 
 )
 <tbl-tau-ranking-perfect-test>
 
-#let auc_comparison_table = csv("./manuscript_files/tables/auc-comparison.csv")
+With an imperfect diagnostic test, noise structure was more influential to correlation with emergence than the noise magnitude @tbl-auc-magnitude-ranking-rdt-comparison.
+For an RDT-equivalent test with 90% sensitivity and specificity, with a 0-day turnaround time, the correlation between all EWS metrics and emergence was relatively unaffected.
+The top four metrics with a perfect diagnostics (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
+Under low levels of Poisson noise, autocorrelation was more strongly associated with emergence when calculated on the test positive time series resulting from and RDT than from a perfect diagnostic test ($|"AUC"-0.5| = 0.17 "vs." 0.12$, respectively).
+Under high levels of Poisson noise, the association of coefficient of variation with emergence also increased ($|"AUC"-0.5| = 0.17$ for an RDT vs. 0.11 for a perfect diagnostic).
+
+#let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
 #figure(
   two_header_table(
     columns: 6,
     table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
-    ..auc_comparison_table.flatten().slice(1)
+    ..auc_magnitude_comparison_table.flatten().slice(1)
   ),
   caption: [The ranking of $|"AUC" - 0.5|$ computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
-<tbl-auc-ranking-rdt-comparison>
+<tbl-auc-magnitude-ranking-rdt-comparison>
 
 
 #figure(

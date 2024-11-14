@@ -160,7 +160,7 @@ Taking the mean of the sensitivity and specificity produces the accuracy of the 
 For each alert scenario, a grid search over the EWS hyperparameters (percentile threshold $in [0.5, 0.99]$, consecutive flags $in [2, 30]$) is performed to identify the set of EWS hyperparameters that maximizes alert accuracy for a given alert scenario.
 If multiple hyperparameter combinations produce identical alert system accuracies, the combination with the highest specificity is selected.
 After the optimal EWS hyperparameters have been selected, the accuracy of each EWS metric are compared across alert scenarios, at their respective maximal values.
-Additionally, the speed and timing of detection relative to the critical threshold is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
+Finally, the speed and timing of detection relative to the critical threshold is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
 
 = Results
 
@@ -170,37 +170,105 @@ Decreasing the length of the emergent time series used to evaluate the correlati
 
 #figure(
   table(
-    columns: 2,
-    [Tau \ (Full Time Series)],[Tau \ (After Burn-in Period)],
-    [Index of dispersion (0.26)], [Autocovariance (0.78)],
-    [Autocovariance (0.25)], [Variance (0.69)],
-    [Variance (0.25)], [Autocorrelation (0.68)],
-    [Mean (0.22)], [Index of dispersion (0.67)],
-    [Autocorrelation (0.17)], [Mean (0.47)],
-    [Coefficient of variation (-0.01)], [Kurtosis (0.40)],
-    [Kurtosis (-0.04)], [Skewness (0.20)],
-    [Skewness (-0.08)], [Coefficient of variation (-0.01)],
+    columns: 5,
+    table.cell(rowspan: 2, align: horizon, "Rank"), table.cell(colspan: 2, "Tau"), table.cell(colspan: 2, "|AUC - 0.5|"),
+    table.cell(fill: gray, "Full Time Series"),table.cell(fill:gray, "After Burn-in Period"), table.cell(fill: gray, "Full Time Series"),table.cell(fill:gray, "After Burn-in Period"),
+    [1],[Index of dispersion (0.26)], [Autocovariance (0.78)], [Mean (0.19)], [Autocovariance (0.20)],
+    [2],[Autocovariance (0.25)], [Variance (0.69)], [Autocovariance (0.17)], [Variance (0.20)],
+    [3],[Variance (0.25)], [Autocorrelation (0.68)], [Variance (0.17)], [Mean (0.18)],
+    [4],[Mean (0.22)], [Index of dispersion (0.67)], [Index of dispersion (0.14)], [Index of dispersion (0.13)],
+    [5],[Autocorrelation (0.17)], [Mean (0.47)], [Coefficient of variation (0.12)], [Autocorrelation (0.12)],
+    [6],[Coefficient of variation (-0.01)], [Kurtosis (0.40)], [Autocorrelation (0.10)], [Coefficient of variation (0.11)],
+    [7],[Kurtosis (-0.04)], [Skewness (0.20)], [Skewness (0.10)], [Skewness (0.10)],
+    [8],[Skewness (-0.08)], [Coefficient of variation (-0.01)], [Kurtosis (0.02)], [Kurtosis (0.03)],
   ),
-  caption: [The ranking and mean value of Kendall's #sym.tau computed on the full time series, and after the burn-in period, with a perfect test]
+  caption: [The ranking and mean value of Kendall's #sym.tau computed on emergent time series, and the $|"AUC" - 0.5|$ for each metric. The values are computed on the full time series, and the subset from after the completion of the burn-in period, with a perfect test]
 )
 <tbl-tau-ranking-perfect-test>
 
 #figure(
   table(
-    columns: 5,
-    [Tau \ Perfect Test], [Tau \ 90/90 - 1x Poisson],[Tau \ 90/90 - 7x Poisson], [Tau \ 90/90 - 1x Dynamical], [Tau \ 90/90 - 7x Dynamical],
-     [Autocovariance \ (0.78)], [Autocovariance \ (0.71)], [Autocovariance \ (0.70)], [Mean \ (0.86)], [Skewness \ (0.94)],
-     [Variance \ (0.69)], [Variance \ (0.64)], [Mean \ (0.66)], [Variance \ (0.71)], [Index of dispersion \ (0.87)],
-     [Autocorrelation \ (0.68)], [Autocorrelation \ (0.64)], [Autocorrelation \ (0.61)], [Autocovariance \ (0.70)], [Variance \ (0.81)],
-     [Index of dispersion \ (0.67)], [Index of dispersion \ (0.57)],[Variance \ (0.56)], [Autocorrelation \ (0.64)], [Autocovariance \ (0.81)],
-     [Mean \ (0.47)], [Coefficient of variation \ (0.54)], [Index of dispersion \ (0.54)], [Index of dispersion \ (0.46)], [Autocorrelation \ (0.55)],
-     [Kurtosis \ (0.40)], [Mean \ (0.51)], [Coefficient of variation \ (0.53)], [Skewness \ (0.36)], [Coefficient of variation \ (0.51)],
-     [Skewness \ (0.20)], [Kurtosis \ (0.45)], [Skewness \ (0.29)], [Kurtosis \ (0.30)], [Kurtosis \ (-0.14)],
-     [Coefficient of variation \ (-0.01)], [Skewness \ (0.23)], [Kurtosis \ (0.20)], [Coefficient of variation \ (-0.49)], [Mean \ (-0.31)],
+    columns: 6,
+    table.cell(rowspan: 2, align: horizon, "Rank"), [Perfect Test], table.cell(colspan: 4)[90% sensitivity, 90% specificity RDT],
+    table.cell(fill: gray)[All Noise],
+    table.cell(fill: gray)[1x Poisson],
+    table.cell(fill: gray)[7x Poisson],
+    table.cell(fill: gray)[1x Dynamical],
+    table.cell(fill: gray)[7x Dynamical],
+    [1], [Autocovariance \ (0.78)], [Autocovariance \ (0.71)], [Autocovariance \ (0.70)], [Mean \ (0.86)], [Skewness \ (0.94)],
+    [2], [Variance \ (0.69)], [Variance \ (0.64)], [Mean \ (0.66)], [Variance \ (0.71)], [Index of dispersion \ (0.87)],
+    [3], [Autocorrelation \ (0.68)], [Autocorrelation \ (0.64)], [Autocorrelation \ (0.61)], [Autocovariance \ (0.70)], [Variance \ (0.81)],
+    [4], [Index of dispersion \ (0.67)], [Index of dispersion \ (0.57)],[Variance \ (0.56)], [Autocorrelation \ (0.64)], [Autocovariance \ (0.81)],
+    [5], [Mean \ (0.47)], [Coefficient of variation \ (0.54)], [Index of dispersion \ (0.54)], [Index of dispersion \ (0.46)], [Autocorrelation \ (0.55)],
+    [6], [Kurtosis \ (0.40)], [Mean \ (0.51)], [Coefficient of variation \ (0.53)], [Skewness \ (0.36)], [Coefficient of variation \ (0.51)],
+    [7], [Skewness \ (0.20)], [Kurtosis \ (0.45)], [Skewness \ (0.29)], [Kurtosis \ (0.30)], [Kurtosis \ (-0.14)],
+    [8], [Coefficient of variation \ (-0.01)], [Skewness \ (0.23)], [Kurtosis \ (0.20)], [Coefficient of variation \ (-0.49)], [Mean \ (-0.31)],
   ),
-  caption: [The ranking and mean value of Kendall's #sym.tau computed after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
+  caption: [The ranking and mean value of Kendall's #sym.tau computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
 <tbl-tau-ranking-rdt-comparison>
+
+#figure(
+  table(
+    columns: 6,
+    table.cell(rowspan: 2, align: horizon, "Rank"), [Perfect Test], table.cell(colspan: 4)[90% sensitivity, 90% specificity RDT],
+    table.cell(fill: gray)[All Noise],
+    table.cell(fill: gray)[1x Poisson],
+    table.cell(fill: gray)[7x Poisson],
+    table.cell(fill: gray)[1x Dynamical],
+    table.cell(fill: gray)[7x Dynamical],
+    [1],
+    [Autocovariance \ (0.20)],
+    [Autocovariance \ (0.23)],
+    [Autocovariance \ (0.22)],
+    [Autocovariance \ (0.16)],
+    [Mean \ (0.05)],
+    [2],
+    [Variance \ (0.20)],
+    [Variance \ (0.21)],
+    [Mean \ (0.20)],
+    [Variance \ (0.14)],
+    [Variance \ (0.08)],
+    [3],
+    [Mean \ (0.18)],
+    [Mean \ (0.20)],
+    [Variance \ (0.18)],
+    [Mean \ (0.13)],
+    [Autocovariance \ (0.03)],
+    [4],
+    [Index of dispersion \ (0.13)],
+    [Index of dispersion \ (0.17)],
+    [Index of dispersion \ (0.18)],
+    [Index of dispersion \ (0.09)],
+    [Coefficient of variation \ (0.02)],
+    [5],
+    [Autocorrelation \ (0.12)],
+    [Autocorrelation \ (0.17)],
+    [Coefficient of variation \ (0.17)],
+    [Autocorrelation \ (0.07)],
+    [Skewness \ (0.01)],
+    [6],
+    [Coefficient of variation \ (0.11)],
+    [Coefficient of variation \ (0.10)],
+    [Autocorrelation \ (0.16)],
+    [Skewness \ (0.06)],
+    [Autocorrelation \ (0.01)],
+    [7],
+    [Skewness \ (0.10)],
+    [Skewness \ (0.08)],
+    [Skewness \ (0.10)],
+    [Coefficient of variation \ (0.05)],
+    [Kurtosis \ (0.01)],
+    [8],
+    [Kurtosis\ (0.03)],
+    [Kurtosis \ (0.05)],
+    [Kurtosis \ (0.03)],
+    [Kurtosis \ (0.01)],
+    [Index of dispersion \ (0.00)],
+  ),
+  caption: [The ranking of $|"AUC" - 0.5|$ computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
+)
+<tbl-auc-ranking-rdt-comparison>
 
 
 #figure(
@@ -250,10 +318,10 @@ Decreasing the length of the emergent time series used to evaluate the correlati
   caption: [Dynamical noise, 1x]
 )
 
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x]
-)
+// #figure(
+//   image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
+//   caption: [Dynamical noise, 7x]
+// )
 
 == Tau Heatmaps
 === Full Length

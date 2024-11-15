@@ -144,6 +144,16 @@ optimization_filepath = get_most_recent_hyperparam_filepath(
 
 previous_optimal_ews_df = load(Try.unwrap(optimization_filepath))["optimal_ews_df"]
 
+test_specification_vec = [
+    IndividualTestSpecification(0.8, 0.8, 0),
+    IndividualTestSpecification(0.9, 0.9, 0),
+    IndividualTestSpecification(0.95, 0.95, 0),
+    IndividualTestSpecification(0.97, 0.97, 0),
+    IndividualTestSpecification(0.98, 0.98, 0),
+    IndividualTestSpecification(0.99, 0.99, 0),
+    IndividualTestSpecification(1.0, 1.0, 0),
+]
+
 subset_optimal_df = subset(
     previous_optimal_ews_df,
     :ews_threshold_burnin => ByRow(==(ews_threshold_burnin)),
@@ -152,6 +162,7 @@ subset_optimal_df = subset(
     :percent_tested => ByRow(==(percent_tested)),
     :ews_metric_specification => ByRow(==(ews_metric_specification)),
     :ews_enddate_type => ByRow(==(ews_enddate_type)),
+    :test_specification => ByRow(in(test_specification_vec))
 )
 
 #%%

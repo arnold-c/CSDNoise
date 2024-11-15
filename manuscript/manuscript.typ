@@ -24,7 +24,7 @@
   author-summary: [
     200 words\
   ],
-  word-count: false,
+  word-count: true,
   line-numbers: false
 )
 
@@ -111,7 +111,7 @@ Each of the 100 emergent and 100 null time series are paired during the pre-proc
 All simulations and analysis was completed in Julia version 1.10.5 @bezansonJuliaFreshApproach2017, with all code stored at #link("https://github.com/arnold-c/CSDNoise").
 
 == Computing & Evaluating EWS
-Each set of null and emergent time series are aggregated by month and numerical estimates of the EWS metrics were then calculated on the aggregated time series, de-trended using backwards-facing moving averages with bandwidth $b = 52$ weeks (see supplement for weekly and bi-weekly aggregation results).
+Each set of null and emergent time series are aggregated by month and numerical estimates of the EWS metrics were then calculated on the aggregated time series, de-trended using backwards-facing moving averages with bandwidth $b = 52$ weeks.
 For example, the EWS metric, the mean, is given by the expectation:
 
 $$$
@@ -172,7 +172,7 @@ Finally, the speed and timing of detection relative to the critical threshold is
 == Correlation with Emergence
 
 The strength and direction of the raw correlation between EWS metrics and the approach to the critical threshold in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test).
-However, when calculating AUC to compare against the correlations observed in null simulations, this affect disappears (@tbl-tau-ranking-perfect-test).
+However, when calculating AUC to normalize the correlation in the emergent time series against the correlation observed in null simulations, this affect disappears (@tbl-tau-ranking-perfect-test).
 Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.2, 0.2, 0.18$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
 
 #let perfect_tau_auc_table = csv("./manuscript_files/tables/perfect-test_tau-auc.csv")
@@ -189,18 +189,19 @@ Consistent with previous studies, the autocovariance, variance, mean, and index 
 )
 <tbl-tau-ranking-perfect-test>
 
-With an imperfect diagnostic test, noise structure was more influential to correlation with emergence than the noise magnitude (@tbl-auc-magnitude-ranking-rdt-comparison).
+With an imperfect diagnostic test, the noise structure was more influential to correlation with emergence than the noise magnitude (@tbl-auc-magnitude-ranking-rdt-comparison).
 For an RDT-equivalent test with 90% sensitivity and specificity, with a 0-day turnaround time, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
 The top four metrics with a perfect diagnostics (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
 Under low levels of Poisson noise, autocorrelation was more strongly associated with emergence when calculated on the test positive time series resulting from and RDT than from a perfect diagnostic test ($|"AUC"-0.5| = 0.17 "vs." 0.12$, respectively).
 Under high levels of Poisson noise, the association of coefficient of variation with emergence also increased ($|"AUC"-0.5| = 0.17$ for an RDT vs. 0.11 for a perfect diagnostic).
 When simulations included rubella-like SEIR dynamical noise, the correlation of all metrics decreased (@tbl-auc-magnitude-ranking-rdt-comparison), and was exacerbated at a higher magnitude of noise.
 With low levels of dynamical noise, the autocovariance, variance, and mean maintained some correlation with emergence, albeit at a lower level than observed in Poisson noise scenarios ($|"AUC" - 0.5| = 0.16, 0.14, "and" 0.13$, respectively).
-However, when the magnitude of dynamical noise was increased, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.5$.
+However, when the magnitude of dynamical noise was increased, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
 
-Most EWS metrics were positively correlated with emergence (AUC > 0.5) for perfect diagnostic tests and an RDT with 90% sensitivity and specificity, with the exception of: the coefficient of variation, with a perfect diagnostic test, and an RDT in low and high dynamical noise ($"AUC" = 0.39, 0.45, "and" 0.48$, respectively); kurtosis with an RDT under low Poisson noise ($"AUC" = 0.45$); and autocorrelation with an RDT under high dynamical noise ($"AUC" = 0.49$) (see supplemental table 2).
+Among the EWS metrics that were correlated with emergence, most increased in value as the tipping point neared (AUC > 0.5) when computed on the test positive time series resulting from perfect diagnostic tests or an RDT with 90% sensitivity and specificity, with the exception of: the coefficient of variation, with a perfect diagnostic test, and an RDT in low and high dynamical noise ($"AUC" = 0.39, 0.45, "and" 0.48$, respectively); kurtosis with an RDT under low Poisson noise ($"AUC" = 0.45$); and autocorrelation with an RDT under high dynamical noise ($"AUC" = 0.49$) (Supplemental Table 2).
 
 #let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
+
 #figure(
   two_header_table(
     columns: 6,
@@ -213,28 +214,70 @@ Most EWS metrics were positively correlated with emergence (AUC > 0.5) for perfe
 
 == Predictive Ability
 
-Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy with a different combination of EWS hyperparameters (the percentile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (supplemental figures 25-28).
-Upon selected the optimal hyperparameters, with a perfect diagnostic test
+Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy with a different combination of EWS hyperparameters (the percentile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (Supplemental Figures 9-12).
+At their respective maximal accuracies, the relative ranking of the EWS metrics computed with a perfect diagnostic test remained consistent to the ranking based upon $|"AUC" - 0.5|$: Mean (accuracy = 0.72), variance (0.72), autocovariance (0.7), index of dispersion (0.63), autocorrelation (0.62), skewness (0.6), kurtosis (0.58), and coefficient of variation (0.5) (Supplemental Table 3).
 
+When EWS metrics were computed on time series generated from RDTs, each metric's accuracy generally remained constant, with a few notable exceptions (@fig-best-accuracy-line-plot, @fig-worse-accuracy-line-plot).
+For the 4 most correlated metrics (autocovariance, variance, mean, and index of dispersion), the accuracy observed with imperfect diagnostic tests was primarily affected by high levels of dynamical noise e.g., the maximal accuracies achieved for autocovariance with a perfect diagnostic test and an 80% sensitive and specific RDT were 0.72 and 0.52, respectively (@fig-best-accuracy-line-plot, Supplemental Figure 12).
+The primary exception to this trend is the index of dispersion, which also demonstrated higher accuracy with imperfect diagnostics under high levels of Poisson noise, increasing from 0.63 to 0.70 across the same two tests (@fig-best-accuracy-line-plot, Supplemental Figure 10).
+Among the 4 least correlated EWS metrics (autocorrelation, coefficient of variation, skewness, and kurtosis), the use of RDTs generally did not change the accuracy of the alert systems, relative to a perfect test (@fig-worse-accuracy-line-plot).
+However, the autocorrelation experienced a slight increase in accuracy with imperfect diagnostic tests and Poisson noise (0.67 for an 80% sensitive and specific RDT in 7x Poisson noise, vs. 0.62 with a perfect test) (Supplemental Figure 10), and slight decreases under dynamical noise (0.54 in 7x dynamical noise) (Supplemental Figure 12).
+More surprisingly, the accuracy drastically improved for the coefficient of variation under high levels of Poisson noise with imperfect diagnostics (accuracy of 0.7 vs 0.5, for an 80% sensitive and specific RDT and perfect test, respectively) (@fig-worse-accuracy-line-plot, Supplemental Figure 10).
 
 #figure(
   image("./manuscript_files/plots/accuracy-line-plot.svg"),
-  caption: [Accuracy line plot]
+  caption: [The change in alert accuracy for the most correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise]
 )
-<fig-accuracy-line-plot>
+<fig-best-accuracy-line-plot>
 
+#figure(
+  image("./supplemental_files/plots/accuracy-line-plot.svg"),
+  caption: [The change in alert accuracy for less correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise]
+)
+<fig-worse-accuracy-line-plot>
+
+In addition to the accuracy of the EWS-based alert system, it is important to evaluate the speed and relative false positive and negative alert rates.
+With a perfect diagnostic test, the 4 most correlated metrics exhibited steeper and more sustained declines in survival than the 4 least correlated metrics i.e., they alerted more frequently, and earlier in the time series (@fig-autocovariance-survival, Supplemental Figures 14-20).
+For the autocovariance, the use of an RDT resulted in slightly earlier and more frequent alerts under Poisson noise, but a more specific system with fewer and later alerts under dynamical noise (@fig-autocovariance-survival).
+In each of the other 3 most correlated EWS metric survival curves, the use of an RDT consistently led to more specific alert systems, regardless of noise structure or magnitude (Supplemental Figures 14-16).
+For the 4 least correlated metrics, the same pattern was generally observed, with the marked exception of the coefficient of variation, which increases in alert sensitivity and discriminatory ability for Poisson noise (Supplemental Figures 17-20).
 
 #figure(
   image("./manuscript_files/plots/survival/survival_ews-autocovariance.svg"),
-  caption: [Autocovariance survival analysis]
+  caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"effective" = 1$) under the emergent simulation, right-truncating the curves.]
 )
-
+<fig-autocovariance-survival>
 
 = Discussion
 
-For use in an early warning system, EWS metrics must provide advance warning of the approach to the tipping point $R_"effective" = 1$.
+Corroborating previous findings, we find that in perfectly observed systems with reporting uncertainty (monthly case aggregation), the autocovariance, variance, and mean are all well correlated with the emergence of outbreaks.
+As uncertainty rises, through the use of an imperfect diagnostic tests for laboratory confirmation of clinically-compatible cases, these correlations are maintained in all scenarios, except when there is a large amount of dynamical noise.
+These patterns of correlation translate to alert accuracy when incorporating a threshold-based approach, indicating the potential benefit if implemented in a real-world situation.
+For example, in Botswana, the estimated incidence rates of rubella and measles for 2023 are approximately equal, suggesting EWS calculated with imperfect diagnostic tests may provide accurate and actionable results @masreshaTrackingMeaslesRubella2024.
+But in Guinea Bissau, the estimated incidence rate for rubella was approximately 9 times that of measles, highlighting a region where any diagnostic test is unlikely to provide a meaningfully beneficial proactive alert system @masreshaTrackingMeaslesRubella2024.
 
-== Limitations and Strengths
+When evaluating the ability for the EWS metrics to accurately discriminate between emergent and null simulations, it is import to contextualize the results with the system's relative speed and specificity.
+Alert systems necessarily make compromises in their design: improvements to speed generally come at the cost of increased numbers of false alerts _*[REF]*_.
+Depending on the context, it may be desirable to place a greater weight in preference/penalty for one of these axes; in scenarios where the expected cost to launch a preliminary investigation is low relative to the unaverted DALYs resulting from incorrect inaction in an overly specific system, higher false alert rates may be acceptable.
+This analysis provides a framework to explicitly explore these trade-offs through the comparison of survival curves.
+A larger separation at the end of the time series between the emergent and null simulation lines indicates higher accuracy, as there is a greater difference in the true positive and false positive rates.
+Faster declines indicate a (relatively) more sensitive alert system with more advanced warning of emergence.
+Under the simulation constraints placed here (i.e., equal weighting to speed and specificity to the alert system's accuracy, with the results of the more specific system being presented in cases where multiple thresholds hyperparameters provide the same accuracy), generally, the use of RDTs does not increase the speed of the warning for the EWS metrics that are predictive of emergence.
+This is likely a consequence of imperfect diagnostic tests producing more false positive cases, which, without appropriate penalization, would otherwise lead to high false alert rates under the same EWS hyperparameters.
+Adjusting the relative weighting of alert sensitivity and specificity to accuracy, as well as the accuracy tiebreaker preference, would allow for an exploration of alternative scenarios.
+
+For EWS metrics to reflect the underlying dynamics of critical slowing down, careful detrending of the data is required @gamadessavreProblemDetrendingWhen2019 @dakosSlowingEarlyWarning2008 @lentonEarlyWarningClimate2012.
+Our analysis utilizes a backward-facing uniform moving average to detrend the data: this was chosen as it can easily be intuited and implemented in a surveillance system.
+However, it has previously been stated that insufficient detrending may lead spurious patterns that do not arise from a system's dynamical response @dakosSlowingEarlyWarning2008, and the association of an EWS with the approach to a tipping point may be sensitive to the bandwidth size selected, although the sensitivity to detrending varies by EWS metric @gamadessavreProblemDetrendingWhen2019 @lentonEarlyWarningClimate2012.
+While it may be preferred to detrend using the mean over multiple realizations, this is clearly not possible in a real-world situation.
+Future work could explore the effects of different detrending methods (e.g., Gaussian weighting moving average, smaller and/or larger bandwidths) on the effectiveness of EWS metrics in systems with diagnostic uncertainty.
+
+Despite being relatively well-established in areas of study such as ecology, ecosystem collapse, and climate science @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012 @dakosSlowingEarlyWarning2008 @schefferEarlywarningSignalsCritical2009 @obrienEarlyWarningSignal2021 @carpenterEarlyWarningsRegime2011 @dudneyElusiveSearchTipping2020, the exploration and development of EWS for infectious disease systems is in its relative infancy.
+Until recently, a large proportion of the prior work in the area has been to establish the existence of these metrics that theoretically could be used in such a system @drakeMonitoringPathElimination2017 @drakeStatisticsEpidemicTransitions2019 @oreganTheoryEarlyWarning2013.
+While this is a crucial first step, for use in an proactive outbreak alert system, EWS metrics must be able to provide advance warning of the approach to the tipping point $R_"effective" = 1$.
+Correlations alone are not sufficient to indicate when and what actions must be taken.
+To address this, there is a growing body of work that seeks to evaluate the use of various threshold and risk-based approaches within infectious disease systems @southallHowEarlyCan2022 @southallEarlyWarningSignals2021 @brettDetectingCriticalSlowing2020 @brettDynamicalFootprintsEnable2020.
+Our work expands upon these efforts, characterizing the limits of predictability for EWS metrics in systems with diagnostic uncertainty and background noise.
 
 #pagebreak()
 

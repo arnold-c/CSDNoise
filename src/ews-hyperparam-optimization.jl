@@ -933,13 +933,14 @@ function ews_survival_plot(
         DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
         DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
     ],
-    ews_aggregation = Dates.Day(7),
-    burnin = Dates.Year(5),
     endpoint_aggregation = Dates.Day(30),
+    linestyle_vec = [:solid, :dot],
     alpha = 1.0,
     trim_burnin = true,
     plottitle = "Survival",
     subtitle = "",
+    nbanks = length(test_specification_vec),
+    legend_rowsize = Makie.Relative(0.05),
 ) where {T1<:DataFrames.DataFrame}
     if sum(
         filter(
@@ -952,6 +953,12 @@ function ews_survival_plot(
     ) != sum(eachindex(test_specification_vec))
         error(
             "Not all test specified are present in the dataframe.\nTrying to plot survival curves for:\n$(test_specification_vec).\nFound these in the dataframe:\n$(unique(survival_df.test_specification))"
+        )
+    end
+
+    if length(test_specification_vec) > length(linestyle_vec)
+        error(
+            "There are more tests specified ($(length(test_specification_vec))) than line styles ($(length(linestyle_vec)))."
         )
     end
 
@@ -969,13 +976,16 @@ function ews_survival_plot(
         )
     end
 
+    @assert length(unique(survival_df.ews_metric_specification)) == 1
+    @assert length(unique(survival_df.ews_threshold_burnin)) == 1
+    ews_aggregation = survival_df.ews_metric_specification[1].aggregation
+    burnin = survival_df.ews_threshold_burnin[1]
+
     subset_survival_df = subset(
         survival_df,
         :test_specification => ByRow(in(test_specification_vec)),
         :noise_specification => ByRow(in(noise_specification_vec)),
     )
-
-    fig = Figure()
 
     noise_grouped_dfs = groupby(subset_survival_df, :noise_specification)
 
@@ -1000,11 +1010,15 @@ function ews_survival_plot(
             4 => (2, 2)
         end
         gl = fig[ax_position...] = GridLayout()
+        surv_ax = nothing
         for (i, test_specification) in pairs(test_specification_vec)
             @show test_specification
 
             detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
-                noise_gdf
+                subset(
+                    noise_gdf,
+                    :test_specification => ByRow(==(test_specification)),
+                ),
             )
 
             times,
@@ -1030,10 +1044,18 @@ function ews_survival_plot(
                     trim_burnin = trim_burnin,
                     burnin = burnin,
                 )
+                surv_ax = Axis(
+                    gl[1, 1];
+                    title = noise_description,
+                    xlabel = "Time (Years)",
+                    ylabel = "Survival Numbers",
+                    xticks = 1:1:10,
+                    limits = (0, maximum(times), 0, ceil(1.1 * nsims)),
+                )
             end
 
             survival_plot_lines!(
-                gl,
+                surv_ax,
                 times,
                 detection_survival_times,
                 detection_survival_vec,
@@ -1041,12 +1063,26 @@ function ews_survival_plot(
                 null_survival_vec;
                 alpha = alpha,
                 nsims = nsims,
-                facet_title = noise_description,
                 trim_burnin = trim_burnin,
                 burnin = burnin,
+                linestyle = linestyle_vec[i],
             )
         end
     end
+
+    Legend(
+        fig[0, :],
+        [
+            LineElement(; linestyle = style) for
+            style in linestyle_vec[1:length(test_specification_vec)]
+        ],
+        get_test_description.(test_specification_vec),
+        "";
+        nbanks = nbanks,
+    )
+
+    rowsize!(fig.layout, 0, legend_rowsize)
+    colsize!(fig.layout, 1, Makie.Relative(1))
 
     return fig
 end
@@ -1165,9 +1201,6 @@ function prepare_survival_facet_params(
         detection_survival_vecs
     @unpack null_survival_vec, null_indices_vec = null_survival_vecs
 
-    @show detection_survival_vec
-    @show detection_survival_vec
-
     filtered_enddate_vec = filter(isinteger, enddate_vec)
 
     times =
@@ -1235,7 +1268,7 @@ function survival_plot_histogram!(
 end
 
 function survival_plot_lines!(
-    gl,
+    gl::T1,
     times,
     detection_survival_times,
     detection_survival_vec,
@@ -1246,7 +1279,7 @@ function survival_plot_lines!(
     facet_title = "Survival",
     trim_burnin = true,
     burnin = Dates.Year(5),
-)
+) where {T1<:Makie.GridLayout}
     surv_ax = Axis(
         gl[1, 1];
         title = facet_title,
@@ -1255,12 +1288,41 @@ function survival_plot_lines!(
         xticks = 1:1:10,
         limits = (0, maximum(times), 0, ceil(1.1 * nsims)),
     )
+    survival_plot_lines!(
+        surv_ax,
+        times,
+        detection_survival_times,
+        detection_survival_vec,
+        null_survival_times,
+        null_survival_vec;
+        alpha = alpha,
+        nsims = nsims,
+        trim_burnin = trim_burnin,
+        burnin = burnin,
+    )
+    return nothing
+end
 
+function survival_plot_lines!(
+    surv_ax::T1,
+    times,
+    detection_survival_times,
+    detection_survival_vec,
+    null_survival_times,
+    null_survival_vec;
+    linestyle = :solid,
+    alpha = 1.0,
+    nsims = 100,
+    facet_title = "Survival",
+    trim_burnin = true,
+    burnin = Dates.Year(5),
+) where {T1<:Makie.Axis}
     lines!(
         surv_ax,
         detection_survival_times,
         detection_survival_vec;
         color = (:blue, alpha),
+        linestyle = linestyle,
         label = "Detection",
     )
 
@@ -1269,6 +1331,7 @@ function survival_plot_lines!(
         null_survival_times,
         null_survival_vec;
         color = (:red, alpha),
+        linestyle = linestyle,
         label = "Null",
     )
 
@@ -1372,6 +1435,8 @@ function simulate_ews_survival_data(
 
     survival_df = DataFrame(
     (
+        ews_metric_specification = EWSMetricSpecification[],
+        ews_threshold_burnin = Union{<:Dates.Day,<:Dates.Year}[],
         noise_specification = Union{
             <:PoissonNoiseSpecification,<:DynamicalNoiseSpecification
         }[],
@@ -1591,6 +1656,12 @@ function simulate_ews_survival_data(
         append!(
             survival_df,
             DataFrame(;
+                ews_metric_specification = repeat(
+                    [ews_metric_specification], length(detection_index_vec)
+                ),
+                ews_threshold_burnin = repeat(
+                    [ews_threshold_burnin], length(detection_index_vec)
+                ),
                 noise_specification = repeat(
                     [noise_specification], length(detection_index_vec)
                 ),

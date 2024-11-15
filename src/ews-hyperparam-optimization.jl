@@ -939,7 +939,7 @@ function ews_survival_plot(
     trim_burnin = true,
     plottitle = "Survival",
     subtitle = "",
-    nbanks = length(test_specification_vec),
+    nbanks = length(test_specification_vec) * length(linestyle_vec),
     legend_rowsize = Makie.Relative(0.05),
 ) where {T1<:DataFrames.DataFrame}
     if sum(
@@ -1065,6 +1065,14 @@ function ews_survival_plot(
                 burnin = burnin,
                 linestyle = linestyle_vec[i],
             )
+        end
+        if ax_position[2] != 1
+            hideydecorations!(surv_ax)
+        end
+
+        nrows = ceil(num_noise / 2)
+        if ax_position[1] != nrows && ax_position[2] + 2 <= num_noise
+            hidexdecorations!(surv_ax)
         end
     end
 

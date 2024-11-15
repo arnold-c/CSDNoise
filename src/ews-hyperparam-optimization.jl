@@ -7,6 +7,7 @@ using REPL: REPL
 using REPL.TerminalMenus: RadioMenu, request
 using Try: Try
 using Match: Match
+using Makie: Makie
 
 function ews_hyperparam_optimization(
     specification_vecs,

@@ -591,6 +591,29 @@ function get_noise_magnitude(
     return noise_specification.noise_mean_scaling
 end
 
+function noise_table_description(
+    noise_specification::T1
+) where {T1<:PoissonNoiseSpecification}
+    return "$(Int64(noise_specification.noise_mean_scaling))x Poisson Noise"
+end
+
+function noise_table_description(
+    noise_specification::T1
+) where {T1<:DynamicalNoiseSpecification}
+    avg_vaccination = round(
+        mean([
+            noise_specification.min_vaccination_coverage,
+            noise_specification.max_vaccination_coverage,
+        ]);
+        digits = 4,
+    )
+    noise_scaling = @match avg_vaccination begin
+        0.1020 => 7
+        0.8734 => 1
+    end
+    return "$(noise_scaling)x Dynamical Noise"
+end
+
 # function get_noise_magnitude(
 #     noise_specification::DynamicalNoiseSpecification
 # )

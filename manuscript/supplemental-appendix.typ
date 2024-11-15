@@ -28,7 +28,7 @@
     table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
     ..tau_comparison_table.flatten().slice(1)
   ),
-  caption: [The ranking and mean value of Kendall's #sym.tau computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
+  caption: [The ranking and mean value of Kendall's Tau computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
 <tbl-tau-ranking-rdt-comparison>
 
@@ -205,6 +205,9 @@
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
   caption: [Dynamical noise, 7x noise]
 )
+
+= Survival Analysis
+
 
 
 #set bibliography(style: "elsevier-vancouver")

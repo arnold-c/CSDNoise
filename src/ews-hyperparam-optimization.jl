@@ -1000,7 +1000,7 @@ function ews_survival_plot(
     fig = Figure()
 
     for (noise_num, noise_gdf) in enumerate(noise_grouped_dfs)
-        noise_description = get_noise_description(
+        noise_description = noise_table_description(
             noise_gdf.noise_specification[1]
         )
         ax_position = Match.@match noise_num begin
@@ -1012,8 +1012,6 @@ function ews_survival_plot(
         gl = fig[ax_position...] = GridLayout()
         surv_ax = nothing
         for (i, test_specification) in pairs(test_specification_vec)
-            @show test_specification
-
             detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
                 subset(
                     noise_gdf,
@@ -1072,17 +1070,28 @@ function ews_survival_plot(
 
     Legend(
         fig[0, :],
-        [
-            LineElement(; linestyle = style) for
-            style in linestyle_vec[1:length(test_specification_vec)]
-        ],
-        get_test_description.(test_specification_vec),
+        vcat(
+            [
+                LineElement(; linestyle = style) for
+                style in linestyle_vec[1:length(test_specification_vec)]
+            ],
+            [
+                PolyElement(; color = col) for
+                col in [:red, :blue]
+            ],
+        ),
+        vcat(
+            get_test_description.(test_specification_vec),
+            ["Null", "Emergent"],
+        ),
         "";
         nbanks = nbanks,
     )
 
     rowsize!(fig.layout, 0, legend_rowsize)
-    colsize!(fig.layout, 1, Makie.Relative(1))
+    if num_noise == 1
+        colsize!(fig.layout, 1, Makie.Relative(1))
+    end
 
     return fig
 end
@@ -1274,6 +1283,7 @@ function survival_plot_lines!(
     detection_survival_vec,
     null_survival_times,
     null_survival_vec;
+    linestyle = :solid,
     alpha = 1.0,
     nsims = 100,
     facet_title = "Survival",
@@ -1295,6 +1305,7 @@ function survival_plot_lines!(
         detection_survival_vec,
         null_survival_times,
         null_survival_vec;
+        linestyle = linestyle,
         alpha = alpha,
         nsims = nsims,
         trim_burnin = trim_burnin,

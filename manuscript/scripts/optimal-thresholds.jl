@@ -210,29 +210,6 @@ function extract_tau_auc_metric(
     )
 end
 
-function noise_table_description(
-    noise_specification::T1
-) where {T1<:PoissonNoiseSpecification}
-    return "$(Int64(noise_specification.noise_mean_scaling))x Poisson Noise"
-end
-
-function noise_table_description(
-    noise_specification::T1
-) where {T1<:DynamicalNoiseSpecification}
-    avg_vaccination = round(
-        mean([
-            noise_specification.min_vaccination_coverage,
-            noise_specification.max_vaccination_coverage,
-        ]);
-        digits = 4,
-    )
-    noise_scaling = @match avg_vaccination begin
-        0.1020 => 7
-        0.8734 => 1
-    end
-    return "$(noise_scaling)x Dynamical Noise"
-end
-
 #%%
 gdfs = groupby(
     subset_optimal_df,
@@ -244,6 +221,8 @@ gdfs = groupby(
 tau_comparison_df = DataFrame(; Rank = collect(1:8))
 auc_comparison_df = DataFrame(; Rank = collect(1:8))
 auc_magnitude_comparison_df = DataFrame(; Rank = collect(1:8))
+# alert_auc_magnitude_comparison_df = DataFrame(; Rank = collect(1:8))
+combined_survival_df = DataFrame()
 for (noise_num, gdf) in enumerate(gdfs)
     @assert length(unique(gdf.noise_specification)) == 1
     noise_specification = gdf.noise_specification[1]
@@ -272,6 +251,8 @@ for (noise_num, gdf) in enumerate(gdfs)
         textcolorthreshold = 0.68,
     )
 
+    # optimal_heatmap_df[]
+
     optimal_heatmap_plot_name =
         "optimal_heatmap_" * plot_noise_filename(noise_specification) *
         ".svg"
@@ -299,7 +280,7 @@ for (noise_num, gdf) in enumerate(gdfs)
         :percent_tested => ByRow(==(percent_tested)),
     )
 
-    for (i, survival_ews_metric) in pairs(["mean", "variance"])
+    for (i, survival_ews_metric) in pairs(ews_metrics)
         survival_df, (
         vec_of_testarr,
         vec_of_null_testarr,
@@ -320,47 +301,32 @@ for (noise_num, gdf) in enumerate(gdfs)
             ews_metric = survival_ews_metric,
         )
 
-        for test_specification in [
-            IndividualTestSpecification(1.0, 1.0, 0),
-            IndividualTestSpecification(0.90, 0.90, 0),
-        ]
-            detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
-                subset(
-                    survival_df,
-                    :test_specification => ByRow(==(test_specification)),
-                ),
-            )
+        combined_survival_df = vcat(
+            combined_survival_df,
+            survival_df;
+            cols = :union
+        )
 
-            survival_plot = ews_survival_plot(
-                detection_survival_vecs,
-                null_survival_vecs,
-                survival_df.enddate;
-                ews_aggregation = ews_metric_specification.aggregation,
-                burnin = ews_threshold_burnin,
-            )
-
-            survival_plot_name =
-                "survival_" *
-                "test-" * plot_test_filename(test_specification) *
-                "_ews-" * survival_ews_metric * "_" *
-                plot_noise_filename(noise_specification) *
-                ".svg"
-
-            survival_plotdir = projectdir(
-                "manuscript",
-                "manuscript_files",
-                "plots",
-                "survival",
-                "test-$(plot_test_filename(test_specification))",
-            )
-
-            mkpath(survival_plotdir)
-
-            save(
-                joinpath(survival_plotdir, survival_plot_name),
-                survival_plot,
-            )
-        end
+        # for test_specification in [
+        #     IndividualTestSpecification(1.0, 1.0, 0),
+        #     IndividualTestSpecification(0.90, 0.90, 0),
+        # ]
+        #     detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
+        #         subset(
+        #             survival_df,
+        #             :test_specification => ByRow(==(test_specification)),
+        #         ),
+        #     )
+        #
+        #     survival_plot = ews_survival_plot(
+        #         detection_survival_vecs,
+        #         null_survival_vecs,
+        #         survival_df.enddate;
+        #         ews_aggregation = ews_metric_specification.aggregation,
+        #         burnin = ews_threshold_burnin,
+        #     )
+        #
+        # end
 
         if i == 1
             perfect_test_df = DataFrame(; Rank = collect(1:length(ews_metrics)))
@@ -751,5 +717,39 @@ for ewsmetric in [
             individual_line_plotdir, "$(ewsmetric)_accuracy-line-plot.svg"
         ),
         individual_accuracy_line_plot,
+    )
+end
+
+#%%
+survival_plotdir = projectdir(
+    "manuscript",
+    "manuscript_files",
+    "plots",
+    "survival",
+)
+mkpath(survival_plotdir)
+
+for metric in ews_metrics
+    survival_plot = ews_survival_plot(
+        subset(combined_survival_df, :ews_metric => ByRow(==(metric)));
+        noise_specification_vec = [
+            PoissonNoiseSpecification(1.0),
+            PoissonNoiseSpecification(7.0),
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+        ],
+        test_specification_vec = [
+            IndividualTestSpecification(1.0, 1.0, 0),
+            IndividualTestSpecification(0.9, 0.9, 0),
+        ],
+        linestyle_vec = [:solid, :dot]
+    )
+
+    survival_plot_name = "survival_" *
+        "ews-" * metric * ".svg"
+
+    save(
+        joinpath(survival_plotdir, survival_plot_name),
+        survival_plot,
     )
 end

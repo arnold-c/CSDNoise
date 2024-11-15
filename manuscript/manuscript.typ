@@ -61,13 +61,19 @@ In this paper we show the conditions under which diagnostic uncertainty overwhel
 == Model Structure
 
 To evaluate the predictive ability of EWS metrics in environments with clinically-compatible background noise that could be mistaken for the target disease and tested with an imperfect diagnostic, we constructed two stochastic compartmental non-age structured Susceptible-Exposed-Infected-Recovered (SEIR) models.
-The model structure has been described in detail previously _*[REF to OD preprint]*_, but briefly, SEIR models were simulated using a Tau-leaping algorithm with a time step of 1 day, with binomial draws so that no jump resulted in negative compartment sizes @gillespieApproximateAcceleratedStochastic2001 @chatterjeeBinomialDistributionBased2005.
+SEIR models were simulated using a Tau-leaping algorithm with a time step of 1 day, with binomial draws so that no jump resulted in negative compartment sizes @gillespieApproximateAcceleratedStochastic2001 @chatterjeeBinomialDistributionBased2005.
 We assumed no seasonality in the transmission rate ($beta_t$), and set the latent and infectious periods equal to 10 days and 8 days, respectively, and an $R_0$ equal to 16, approximating measles parameters values @guerraBasicReproductionNumber2017 @gastanaduyMeasles2019.
 Demographic parameters (birth and death rates) broadly reflecting those observed in Ghana were selected to evaluate the performance of EWS metrics in a setting where high, yet sub-elimination, vaccination coverage is observed, requiring ongoing vigilance @WHOImmunizationData @masreshaTrackingMeaslesRubella2024.
 An initial population of 500,000 individuals was simulated, with commuter-style imports drawn from a Poisson distribution with mean proportional to the size of the population and $R_0$, to maintain a level of endemicity @keelingModelingInfectiousDiseases2008.
+
 We generated a time series of clinically-compatible febrile rash by summing the daily test positive results from the measles incidence time series, and a noise time series.
-The noise time series was the result of independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$, or from an SEIR time series with rubella-like parameters (@tbl-model-parameters) @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
+The noise time series was the result of: independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$; or from an SEIR time series with rubella-like parameters with additional noise drawn from a Poisson distribution with mean equal to 15% of the daily average of the rubella incidence time series, to account for non-rubella sources of clinically-compatible febrile rash e.g., parvovirus (@tbl-model-parameters) @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
 Under dynamical noise simulations, the vaccination rate at birth was selected to produce equivalent magnitudes of daily average noise incidence as observed in the Poisson-like noise simulations (10.20% and 87.34%).
+Throughout the rest of the manuscript, these will be referred to as low and high Poisson/dynamical noise scenarios, accordingly.
+Each day, all clinically-compatible febrile rash cases (that is, both the measles and noise time series) were tested using one of the following diagnostic tests, producing a time series of test positive cases.
+
+- A perfect test with 100% sensitivity and specificity, with a 0-day test result delay. This was chosen to reflect the best-case scenario that the imperfect diagnostic-based alert scenarios could be compared against.
+- An RDT equivalent, imperfect diagnostic with a 0-day test result delay and sensitivity and specificity equal to either 99%, 98%, 97%, 95%, 90%, or 80%.
 
 #let import_rate = $(1.06*μ*R_0)/(√(N))$
 
@@ -163,6 +169,7 @@ After the optimal EWS hyperparameters have been selected, the accuracy of each E
 Finally, the speed and timing of detection relative to the critical threshold is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
 
 = Results
+== Correlation with Emergence
 
 The strength and direction of the raw correlation between EWS metrics and the approach to the critical threshold in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test).
 However, when calculating AUC to compare against the correlations observed in null simulations, this affect disappears (@tbl-tau-ranking-perfect-test).
@@ -182,11 +189,16 @@ Consistent with previous studies, the autocovariance, variance, mean, and index 
 )
 <tbl-tau-ranking-perfect-test>
 
-With an imperfect diagnostic test, noise structure was more influential to correlation with emergence than the noise magnitude @tbl-auc-magnitude-ranking-rdt-comparison.
-For an RDT-equivalent test with 90% sensitivity and specificity, with a 0-day turnaround time, the correlation between all EWS metrics and emergence was relatively unaffected.
+With an imperfect diagnostic test, noise structure was more influential to correlation with emergence than the noise magnitude (@tbl-auc-magnitude-ranking-rdt-comparison).
+For an RDT-equivalent test with 90% sensitivity and specificity, with a 0-day turnaround time, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
 The top four metrics with a perfect diagnostics (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
 Under low levels of Poisson noise, autocorrelation was more strongly associated with emergence when calculated on the test positive time series resulting from and RDT than from a perfect diagnostic test ($|"AUC"-0.5| = 0.17 "vs." 0.12$, respectively).
 Under high levels of Poisson noise, the association of coefficient of variation with emergence also increased ($|"AUC"-0.5| = 0.17$ for an RDT vs. 0.11 for a perfect diagnostic).
+When simulations included rubella-like SEIR dynamical noise, the correlation of all metrics decreased (@tbl-auc-magnitude-ranking-rdt-comparison), and was exacerbated at a higher magnitude of noise.
+With low levels of dynamical noise, the autocovariance, variance, and mean maintained some correlation with emergence, albeit at a lower level than observed in Poisson noise scenarios ($|"AUC" - 0.5| = 0.16, 0.14, "and" 0.13$, respectively).
+However, when the magnitude of dynamical noise was increased, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.5$.
+
+Most EWS metrics were positively correlated with emergence (AUC > 0.5) for perfect diagnostic tests and an RDT with 90% sensitivity and specificity, with the exception of: the coefficient of variation, with a perfect diagnostic test, and an RDT in low and high dynamical noise ($"AUC" = 0.39, 0.45, "and" 0.48$, respectively); kurtosis with an RDT under low Poisson noise ($"AUC" = 0.45$); and autocorrelation with an RDT under high dynamical noise ($"AUC" = 0.49$) (see supplemental table 2).
 
 #let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
 #figure(
@@ -195,9 +207,14 @@ Under high levels of Poisson noise, the association of coefficient of variation 
     table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
     ..auc_magnitude_comparison_table.flatten().slice(1)
   ),
-  caption: [The ranking of $|"AUC" - 0.5|$ computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
+  caption: [$|"AUC" - 0.5|$ for EWS metrics, ranked in descending order of magnitude, computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
 <tbl-auc-magnitude-ranking-rdt-comparison>
+
+== Predictive Ability
+
+Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy with a different combination of EWS hyperparameters (the percentile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (supplemental figures 25-28).
+Upon selected the optimal hyperparameters, with a perfect diagnostic test
 
 
 #figure(
@@ -207,7 +224,50 @@ Under high levels of Poisson noise, the association of coefficient of variation 
 <fig-accuracy-line-plot>
 
 
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-autocovariance.svg"),
+  caption: [Autocovariance survival analysis]
+)
+
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-variance.svg"),
+  caption: [Variance survival analysis]
+)
+
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-mean.svg"),
+  caption: [Mean survival analysis]
+)
+
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-index_of_dispersion.svg"),
+  caption: [Index of dispersion survival analysis]
+)
+
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-autocorrelation.svg"),
+  caption: [Autocorrelation survival analysis]
+)
+
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-coefficient_of_variation.svg"),
+  caption: [Coefficient of variance survival analysis]
+)
+
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-skewness.svg"),
+  caption: [Skewness survival analysis]
+)
+
+#figure(
+  image("./manuscript_files/plots/survival/survival_ews-kurtosis.svg"),
+  caption: [Kurtosis survival analysis]
+)
+
 = Discussion
+
+For use in an early warning system, EWS metrics must provide advance warning of the approach to the tipping point $R_"effective" = 1$.
+
 == Limitations and Strengths
 
 #pagebreak()

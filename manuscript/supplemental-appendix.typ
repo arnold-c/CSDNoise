@@ -206,8 +206,49 @@
   caption: [Dynamical noise, 7x noise]
 )
 
+#figure(
+  image("./supplemental_files/plots/accuracy-line-plot.svg"),
+  caption: [Accuracy line plot]
+)
+
+
+
 = Survival Analysis
 
+#figure(
+  image("./supplemental_files/plots/survival/survival_ews-variance.svg"),
+  caption: [Variance survival analysis]
+)
+
+#figure(
+  image("./supplemental_files/plots/survival/survival_ews-mean.svg"),
+  caption: [Mean survival analysis]
+)
+
+#figure(
+  image("./supplemental_files/plots/survival/survival_ews-index_of_dispersion.svg"),
+  caption: [Index of dispersion survival analysis]
+)
+
+#figure(
+  image("./supplemental_files/plots/survival/survival_ews-autocorrelation.svg"),
+  caption: [Autocorrelation survival analysis]
+)
+
+#figure(
+  image("./supplemental_files/plots/survival/survival_ews-coefficient_of_variation.svg"),
+  caption: [Coefficient of variance survival analysis]
+)
+
+#figure(
+  image("./supplemental_files/plots/survival/survival_ews-skewness.svg"),
+  caption: [Skewness survival analysis]
+)
+
+#figure(
+  image("./supplemental_files/plots/survival/survival_ews-kurtosis.svg"),
+  caption: [Kurtosis survival analysis]
+)
 
 
 #set bibliography(style: "elsevier-vancouver")

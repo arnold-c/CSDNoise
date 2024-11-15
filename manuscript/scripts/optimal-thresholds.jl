@@ -307,27 +307,6 @@ for (noise_num, gdf) in enumerate(gdfs)
             cols = :union
         )
 
-        # for test_specification in [
-        #     IndividualTestSpecification(1.0, 1.0, 0),
-        #     IndividualTestSpecification(0.90, 0.90, 0),
-        # ]
-        #     detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
-        #         subset(
-        #             survival_df,
-        #             :test_specification => ByRow(==(test_specification)),
-        #         ),
-        #     )
-        #
-        #     survival_plot = ews_survival_plot(
-        #         detection_survival_vecs,
-        #         null_survival_vecs,
-        #         survival_df.enddate;
-        #         ews_aggregation = ews_metric_specification.aggregation,
-        #         burnin = ews_threshold_burnin,
-        #     )
-        #
-        # end
-
         if i == 1
             perfect_test_df = DataFrame(; Rank = collect(1:length(ews_metrics)))
             for (start_ind, timelength_plotdir, timelength_label) in zip(
@@ -691,34 +670,23 @@ save(
 )
 
 #%%
-individual_line_plotdir = joinpath(line_plotdir, "individual-line-plots")
-mkpath(individual_line_plotdir)
-
-for ewsmetric in [
-    "autocovariance",
-    "variance",
-    "index_of_dispersion",
-    "mean",
-    "kurtosis",
-    "skewness",
-    "coefficient_of_variation",
-]
-    individual_lineplot_df = similar(gdfs[1], 0)
-    for gdf in gdfs
-        prepare_line_plot_df!(individual_lineplot_df, gdf, ewsmetric)
-    end
-
-    individual_accuracy_line_plot = line_plot(
-        individual_lineplot_df;
-    )
-
-    save(
-        joinpath(
-            individual_line_plotdir, "$(ewsmetric)_accuracy-line-plot.svg"
-        ),
-        individual_accuracy_line_plot,
-    )
+supplemental_lineplot_df = similar(gdfs[1], 0)
+for gdf in gdfs,
+    ewsmetric in ["autocorrelation", "coefficient_of_variation", "skewness", "kurtosis"]
+    prepare_line_plot_df!(supplemental_lineplot_df, gdf, ewsmetric)
 end
+
+supplemental_accuracy_line_plot = line_plot(supplemental_lineplot_df)
+
+supplemental_line_plotdir = projectdir("manuscript", "supplemental_files", "plots")
+
+save(
+    joinpath(
+        supplemental_line_plotdir,
+        "accuracy-line-plot.svg",
+    ),
+    supplemental_accuracy_line_plot,
+)
 
 #%%
 survival_plotdir = projectdir(
@@ -727,7 +695,14 @@ survival_plotdir = projectdir(
     "plots",
     "survival",
 )
+supplemental_survival_plotdir = projectdir(
+    "manuscript",
+    "supplemental_files",
+    "plots",
+    "survival",
+)
 mkpath(survival_plotdir)
+mkpath(supplemental_survival_plotdir)
 
 for metric in ews_metrics
     survival_plot = ews_survival_plot(
@@ -748,8 +723,9 @@ for metric in ews_metrics
     survival_plot_name = "survival_" *
         "ews-" * metric * ".svg"
 
+    dir = metric == "autocovariance" ? survival_plotdir : supplemental_survival_plotdir
     save(
-        joinpath(survival_plotdir, survival_plot_name),
+        joinpath(dir, survival_plot_name),
         survival_plot,
     )
 end

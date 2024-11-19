@@ -1,7 +1,7 @@
-#import "template.typ": article, two_header_table
+#import "template.typ": *
 
 #show: article.with(
-  title: "Diagnostic Uncertainty Limits the Potential of Early Warning Signals for Epidemic Transitions",
+  title: "Diagnostic Uncertainty Limits the Potential of Early Warning Signals to Identify Epidemic Emergence",
   header-title: "true",
   authors: (
     "Callum R.K. Arnold": (
@@ -17,7 +17,7 @@
     "PSU-Bio": "Department of Biology, Pennsylvania State University, University Park, PA, USA 16802",
     "CIDD": "Center for Infectious Disease Dynamics, Pennsylvania State University, University Park, PA, USA 16802",
   ),
-  keywords: ("Rapid-Diagnostic Tests","ELISA","Infectious Disease Surveillance","Outbreak Detection"),
+  keywords: ("Rapid-Diagnostic Tests","Diagnostic Test Uncertainty","Infectious Disease Surveillance","Outbreak Detection", "Early Warning Signals", "Critical Slowing Down"),
   abstract: [
     300 words\
   ],
@@ -76,10 +76,11 @@ Each day, all clinically-compatible febrile rash cases (that is, both the measle
 - An RDT equivalent, imperfect diagnostic with a 0-day test result delay and sensitivity and specificity equal to either 99%, 98%, 97%, 95%, 90%, or 80%.
 
 #let import_rate = $(1.06*μ*R_0)/(√(N))$
+#let table_math(inset: 6pt, size: 14pt, content) = table.cell(inset: inset, text(size: size, content))
 
 #figure(
   table(
-    columns: 4,
+    columns: 4, align: horizon,
     [Parameters],[Measles - Emergent],[Measles - Null],[Dynamical noise],
     [R0],table.cell(colspan: 2, align: center, "16"),[5],
     [Latent period (s)],table.cell(colspan: 2, align: center, "10 days"),[7 days],
@@ -87,7 +88,7 @@ Each day, all clinically-compatible febrile rash cases (that is, both the measle
     [Vaccination rate at birth \ during burn-in period (r#sub[i])],table.cell(colspan: 2, align: center, "Unif (92.69%, 100%)"),[10.20%, 83.74%],
     [Vaccination rate at birth \ after burn-in period (r#sub[e])],[Unif (60%, 80%)],[Unif (92.69%, 100%)],[10.20%, 83.74%],
     [Birth/death rate (m)],table.cell(colspan: 3, align: center, "27 per 1000 per annum"),
-    [Importation rate], table.cell(colspan: 3, align: center, $(1.06*μ*R_0)/(√(N))$),
+    [Importation rate], table.cell(colspan: 3, align: center, table_math[$(1.06*μ*R_0)/(√(N))$]),
     [Population size (N)], table.cell(colspan: 3, align: center, "500,000"),
     [Initial proportion susceptible], table.cell(colspan: 3, align: center, "0.05"),
     [Initial proportion exposed], table.cell(colspan: 3, align: center, "0.0"),
@@ -125,7 +126,7 @@ In this paper we evaluate the performance of the following EWS metrics: the mean
 Many of the EWS metrics rely on the prior computation of others e.g., the variance requires the calculation of the detrended mean, so are computed in an iterative pattern.
 The full list of numerical formulas for each EWS metric can be found in @tbl-ews-formulas.
 
-#let table_math(content) = table.cell(text(size: 16pt, content))
+#let table_math = table_math.with(inset: 10pt)
 
 #figure(
   table(
@@ -151,7 +152,7 @@ Briefly, the calculation of the AUC compares whether the distributions of Kendal
 AUC is calculated using the rank order of the EWS metrics for both emergent and null time series using the equation @flachROCAnalysis2016
 
 $$$
-(r_"null" - n_"null" (n_"null" + 1) \/ 2) / (n_"emergent" n_"null")
+"AUC" = (r_"null" - n_"null" (n_"null" + 1) \/ 2) / (n_"emergent" n_"null")
 $$$
 
 where $r_"null"$ equals the sum of ranks for the null time series, and $n_"null"$ and $n_"emergent"$ refer to the number of null and emergent simulations, respectively.
@@ -274,7 +275,7 @@ Future work could explore the effects of different detrending methods (e.g., Gau
 
 Despite being relatively well-established in areas of study such as ecology, ecosystem collapse, and climate science @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012 @dakosSlowingEarlyWarning2008 @schefferEarlywarningSignalsCritical2009 @obrienEarlyWarningSignal2021 @carpenterEarlyWarningsRegime2011 @dudneyElusiveSearchTipping2020, the exploration and development of EWS for infectious disease systems is in its relative infancy.
 Until recently, a large proportion of the prior work in the area has been to establish the existence of these metrics that theoretically could be used in such a system @drakeMonitoringPathElimination2017 @drakeStatisticsEpidemicTransitions2019 @oreganTheoryEarlyWarning2013.
-While this is a crucial first step, for use in an proactive outbreak alert system, EWS metrics must be able to provide advance warning of the approach to the tipping point $R_"effective" = 1$.
+While this is a crucial first step, for use in a proactive outbreak alert system, EWS metrics must be able to provide advance warning of the approach to the tipping point $R_"effective" = 1$.
 Correlations alone are not sufficient to indicate when and what actions must be taken.
 To address this, there is a growing body of work that seeks to evaluate the use of various threshold and risk-based approaches within infectious disease systems @southallHowEarlyCan2022 @southallEarlyWarningSignals2021 @brettDetectingCriticalSlowing2020 @brettDynamicalFootprintsEnable2020.
 Our work expands upon these efforts, characterizing the limits of predictability for EWS metrics in systems with diagnostic uncertainty and background noise.

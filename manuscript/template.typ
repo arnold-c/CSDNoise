@@ -195,10 +195,6 @@
       #align(right)[#header-title]
     ],
   )
-  if word-count {
-    import "@preview/wordometer:0.1.4": word-count, total-words
-    show: word-count.with(exclude: (heading, table, figure.caption))
-  }
 
   // Abstract and keyword block
   if abstract != [] {

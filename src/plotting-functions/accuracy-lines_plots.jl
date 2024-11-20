@@ -13,6 +13,7 @@ function prepare_line_plot_df!(
         IndividualTestSpecification(0.8, 0.8, 0),
         IndividualTestSpecification(0.9, 0.9, 0),
         IndividualTestSpecification(0.95, 0.95, 0),
+        IndividualTestSpecification(0.96, 0.96, 0),
         IndividualTestSpecification(0.97, 0.97, 0),
         IndividualTestSpecification(0.98, 0.98, 0),
         IndividualTestSpecification(0.99, 0.99, 0),
@@ -90,7 +91,7 @@ function line_plot(
     num_metrics = length(ewsmetric_grouped_dfs)
     if num_metrics > 4
         error(
-            "Trying to plot too many metric facets $(length(ewsmetric_grouped_dfs)). Max allowed is 4",
+            "Trying to plot too many metric facets $(length(ewsmetric_grouped_dfs)). Max allowed is 4"
         )
     end
 
@@ -109,7 +110,9 @@ function line_plot(
             metric_gdf;
             ax_position = ax_position,
             num_metrics = num_metrics,
-            facet_title = sentencecase(replace(metric_gdf[1, :ews_metric], "_" => " ")),
+            facet_title = sentencecase(
+                replace(metric_gdf[1, :ews_metric], "_" => " ")
+            ),
             ylims = ylims,
         )
     end

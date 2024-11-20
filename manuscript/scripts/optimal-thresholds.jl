@@ -148,6 +148,7 @@ test_specification_vec = [
     IndividualTestSpecification(0.8, 0.8, 0),
     IndividualTestSpecification(0.9, 0.9, 0),
     IndividualTestSpecification(0.95, 0.95, 0),
+    IndividualTestSpecification(0.96, 0.96, 0),
     IndividualTestSpecification(0.97, 0.97, 0),
     IndividualTestSpecification(0.98, 0.98, 0),
     IndividualTestSpecification(0.99, 0.99, 0),
@@ -213,7 +214,6 @@ end
 #%%
 tables_path = projectdir("manuscript", "manuscript_files", "tables")
 mkpath(tables_path)
-
 
 gdfs = groupby(
     subset_optimal_df,
@@ -455,7 +455,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                 save(
                     joinpath(
                         tau_auc_magnitude_heatmap_plotdir,
-                        tau_auc_magnitude_heatmap_plot_name
+                        tau_auc_magnitude_heatmap_plot_name,
                     ),
                     auc_magnitude_heatmap,
                 )
@@ -686,7 +686,12 @@ lineplot_df = similar(gdfs[1], 0)
 for gdf in gdfs,
     ewsmetric in ["autocovariance", "variance", "mean", "index_of_dispersion"]
 
-    prepare_line_plot_df!(lineplot_df, gdf, ewsmetric)
+    prepare_line_plot_df!(
+        lineplot_df,
+        gdf,
+        ewsmetric,
+        test_specification_vec,
+    )
 end
 
 accuracy_line_plot = line_plot(lineplot_df)

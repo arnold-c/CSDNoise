@@ -174,8 +174,8 @@ Finally, the speed and timing of detection relative to the critical transition i
 = Results
 == Correlation with Emergence
 
-The strength and direction of the raw correlation between EWS metrics and the approach to the critical transition in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl_csd-tau-ranking-perfect-test).
-However, when calculating AUC to normalize the correlation in the emergent time series against the correlation observed in null simulations, this affect disappears (@tbl_csd-tau-ranking-perfect-test).
+The strength and direction of the raw correlation (Tau) between EWS metrics and the approach to the critical transition in emergent time series is strongly dependent upon the length of the time series evaluated; Tau is higher when calculated after the burn-in period for the top 5 ranked metrics (@tbl_csd-tau-ranking-perfect-test).
+Normalizing the correlation in the emergent time series against the correlation observed in null simulations yields comparable results when calculated from the full time series and only after the burn-in (@tbl_csd-tau-ranking-perfect-test).
 Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.2, 0.2, 0.18$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
 
 #let perfect_tau_auc_table = csv("./manuscript_files/tables/perfect-test_tau-auc.csv")
@@ -192,16 +192,18 @@ Consistent with previous studies, the autocovariance, variance, mean, and index 
 )
 <tbl_csd-tau-ranking-perfect-test>
 
-With an imperfect diagnostic test, the noise structure was more influential to correlation with emergence than the noise magnitude (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
-For an RDT-equivalent test with 90% sensitivity and specificity, with a 0-day turnaround time, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
-The top four metrics with a perfect diagnostics (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
-Under low levels of Poisson noise, autocorrelation was more strongly associated with emergence when calculated on the test positive time series resulting from and RDT than from a perfect diagnostic test ($|"AUC"-0.5| = 0.17 "vs." 0.12$, respectively).
-Under high levels of Poisson noise, the association of coefficient of variation with emergence also increased ($|"AUC"-0.5| = 0.17$ for an RDT vs. 0.11 for a perfect diagnostic).
-When simulations included rubella-like SEIR dynamical noise, the correlation of all metrics decreased (@tbl_csd-auc-magnitude-ranking-rdt-comparison), and was exacerbated at a higher magnitude of noise.
-With low levels of dynamical noise, the autocovariance, variance, and mean maintained some correlation with emergence, albeit at a lower level than observed in Poisson noise scenarios ($|"AUC" - 0.5| = 0.16, 0.14, "and" 0.13$, respectively).
-However, when the magnitude of dynamical noise was increased, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
+With an imperfect diagnostic test, the correlation with emergence was more influenced by the noise structure (Poisson vs. dynamical) than the noise magnitude (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
+For an RDT-equivalent test with 90% sensitivity and specificity, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
+The top four metrics with a perfect diagnostic test (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
+// Under low levels of Poisson noise, autocorrelation was more strongly associated with emergence when calculated on the test positive time series resulting from and RDT than from a perfect diagnostic test ($|"AUC"-0.5| = 0.17 "vs." 0.12$, respectively).
+// Under high levels of Poisson noise, the association of coefficient of variation with emergence also increased ($|"AUC"-0.5| = 0.17$ for an RDT vs. 0.11 for a perfect diagnostic).
+// When simulations included rubella-like SEIR dynamical noise, the correlation of all metrics decreased (@tbl_csd-auc-magnitude-ranking-rdt-comparison), and was exacerbated at a higher magnitude of noise.
 
-Among the EWS metrics that were correlated with emergence, most increased in value as the tipping point neared (AUC > 0.5) when computed on the test positive time series resulting from perfect diagnostic tests or an RDT with 90% sensitivity and specificity, with the exception of: the coefficient of variation, with a perfect diagnostic test, and an RDT in low and high dynamical noise ($"AUC" = 0.39, 0.45, "and" 0.48$, respectively); kurtosis with an RDT under low Poisson noise ($"AUC" = 0.45$); and autocorrelation with an RDT under high dynamical noise ($"AUC" = 0.49$) (Supplemental Table 2).
+For simulations with rubella-like SEIR dynamical noise, the correlation of all metrics was lower at low dynamical noise compared to low Poisson noise (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
+With low levels of dynamical noise, the autocovariance, variance, and mean remained the most correlated with emergence ($|"AUC" - 0.5| = 0.16, 0.14, "and" 0.13$, respectively).
+At high dynamical noise, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
+
+// Among the EWS metrics that were correlated with emergence, most increased in value as the tipping point neared (AUC > 0.5) when computed on the test positive time series resulting from perfect diagnostic tests or an RDT with 90% sensitivity and specificity, with the exception of: the coefficient of variation, with a perfect diagnostic test, and an RDT in low and high dynamical noise ($"AUC" = 0.39, 0.45, "and" 0.48$, respectively); kurtosis with an RDT under low Poisson noise ($"AUC" = 0.45$); and autocorrelation with an RDT under high dynamical noise ($"AUC" = 0.49$) (Supplemental Table 2).
 
 #let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
 
@@ -217,15 +219,17 @@ Among the EWS metrics that were correlated with emergence, most increased in val
 
 == Predictive Ability
 
-Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy with a different combination of EWS hyperparameters (the quantile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (Supplemental Figures 9-12).
+Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy at a different combination of EWS hyperparameters (the quantile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (Supplemental Figures 9-12).
 At their respective maximal accuracies, the relative ranking of the EWS metrics computed with a perfect diagnostic test remained consistent to the ranking based upon $|"AUC" - 0.5|$: Mean (accuracy = 0.72), variance (0.72), autocovariance (0.7), index of dispersion (0.63), autocorrelation (0.62), skewness (0.6), kurtosis (0.58), and coefficient of variation (0.5) (Supplemental Table 3).
 
-When EWS metrics were computed on time series generated from RDTs, each metric's accuracy generally remained constant, with a few notable exceptions (@fig-best-accuracy-line-plot, @fig-worse-accuracy-line-plot).
-For the 4 most correlated metrics (autocovariance, variance, mean, and index of dispersion), the accuracy observed with imperfect diagnostic tests was primarily affected by high levels of dynamical noise e.g., the maximal accuracies achieved for autocovariance with a perfect diagnostic test and an 80% sensitive and specific RDT were 0.72 and 0.52, respectively (@fig-best-accuracy-line-plot, Supplemental Figure 12).
-The primary exception to this trend is the index of dispersion, which also demonstrated higher accuracy with imperfect diagnostics under high levels of Poisson noise, increasing from 0.63 to 0.70 across the same two tests (@fig-best-accuracy-line-plot, Supplemental Figure 10).
-Among the 4 least correlated EWS metrics (autocorrelation, coefficient of variation, skewness, and kurtosis), the use of RDTs generally did not change the accuracy of the alert systems, relative to a perfect test (@fig-worse-accuracy-line-plot).
-However, the autocorrelation experienced a slight increase in accuracy with imperfect diagnostic tests and Poisson noise (0.67 for an 80% sensitive and specific RDT in 7x Poisson noise, vs. 0.62 with a perfect test) (Supplemental Figure 10), and slight decreases under dynamical noise (0.54 in 7x dynamical noise) (Supplemental Figure 12).
-More surprisingly, the accuracy drastically improved for the coefficient of variation under high levels of Poisson noise with imperfect diagnostics (accuracy of 0.7 vs 0.5, for an 80% sensitive and specific RDT and perfect test, respectively) (@fig-worse-accuracy-line-plot, Supplemental Figure 10).
+When EWS metrics were computed on time series generated from RDTs, each metric's accuracy generally remained constant, with a few notable exceptions (@fig-best-accuracy-line-plot, Supplemental Figure 13).
+
+For the 4 most correlated metrics (autocovariance, variance, mean, and index of dispersion), the accuracy achieved with imperfect diagnostic tests was comparable for low and high Poisson noise, for all diagnostic test accuracies (@fig-best-accuracy-line-plot).
+The accuracy of outbreak detection using index of dispersion increased with decreasing diagnostic test sensitivity and specificity for low and high levels of Poisson noise (@fig-best-accuracy-line-plot, Supplemental Figure 10).
+
+For low dynamical noise, accuracy increased slightly for diagnostic test sensitivity and specificity greater than 97% and then declined.
+For high dynamical noise, accuracy declined monotonically with decreasing test sensitivity and specificity (@fig-best-accuracy-line-plot, Supplemental Figure 12).
+Results for the 4 least well correlated EWS metrics are presented in the supplement (Supplemental Figure 13).
 
 #figure(
   image("./manuscript_files/plots/accuracy-line-plot.svg"),
@@ -233,17 +237,13 @@ More surprisingly, the accuracy drastically improved for the coefficient of vari
 )
 <fig-best-accuracy-line-plot>
 
-#figure(
-  image("./supplemental_files/plots/accuracy-line-plot.svg"),
-  caption: [The change in alert accuracy for less correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise]
-)
-<fig-worse-accuracy-line-plot>
-
-In addition to the accuracy of the EWS-based alert system, it is important to evaluate the speed and relative false positive and negative alert rates.
-With a perfect diagnostic test, the 4 most correlated metrics exhibited steeper and more sustained declines in survival than the 4 least correlated metrics i.e., they alerted more frequently, and earlier in the time series (@fig-autocovariance-survival, Supplemental Figures 14-20).
-For the autocovariance, the use of an RDT resulted in slightly earlier and more frequent alerts under Poisson noise, but a more specific system with fewer and later alerts under dynamical noise (@fig-autocovariance-survival).
-In each of the other 3 most correlated EWS metric survival curves, the use of an RDT consistently led to more specific alert systems, regardless of noise structure or magnitude (Supplemental Figures 14-16).
-For the 4 least correlated metrics, the same pattern was generally observed, with the marked exception of the coefficient of variation, which increases in alert sensitivity and discriminatory ability for Poisson noise (Supplemental Figures 17-20).
+Outbreak detection produced false positives under the null simulations for all EWS metrics, except for the coefficient of variation computed on time series resulting from perfect tests, which also failed to alert in emergent simulations.
+Here we illustrate the comparison of timing of alerts for the autocovariance metric for the null and emergent simulations (@fig-autocovariance-survival).
+The remaining metrics are illustrated in the supplement (Supplemental Figures 14-20).
+Outbreak detection using the autocovariance metric resulted in comparable timing of alerts for perfect and imperfect tests under low and high Poisson noise (@fig-autocovariance-survival).
+For low dynamical noise, the imperfect test resulted in a similar number of true positives under the emergent scenario, but tended to trigger those alerts later than with a perfect test.
+Notably, an imperfect test resulted in more false positives under the null scenario and tended to trigger those alerts later.
+With high dynamical noise, an imperfect test failed to produce many alerts under either the null or emergent scenarios (@fig-autocovariance-survival).
 
 #figure(
   image("./manuscript_files/plots/survival/survival_ews-autocovariance.svg"),

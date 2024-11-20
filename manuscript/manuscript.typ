@@ -62,20 +62,20 @@ In this paper we show the conditions under which diagnostic uncertainty overwhel
 = Materials & Methods
 == Model Structure
 
-To evaluate the predictive ability of EWS metrics in environments with clinically-compatible background noise that could be mistaken for the target disease and tested with an imperfect diagnostic, we constructed two stochastic compartmental non-age structured Susceptible-Exposed-Infected-Recovered (SEIR) models.
-SEIR models were simulated using a Tau-leaping algorithm with a time step of 1 day, with binomial draws so that no jump resulted in negative compartment sizes @gillespieApproximateAcceleratedStochastic2001 @chatterjeeBinomialDistributionBased2005.
+We modeled the dynamics of a target pathogen (measles), for which we want to detect outbreaks, with a stochastic compartmental non-age structured Susceptible-Exposed-Infected-Recovered (SEIR) model.
+The SEIR models was simulated using a Tau-leaping algorithm with a time step of 1 day, with binomial draws so that no jump resulted in negative compartment sizes @gillespieApproximateAcceleratedStochastic2001 @chatterjeeBinomialDistributionBased2005.
 We assumed no seasonality in the transmission rate ($beta_t$), and set the latent and infectious periods equal to 10 days and 8 days, respectively, and an $R_0$ equal to 16, approximating measles parameters values @guerraBasicReproductionNumber2017 @gastanaduyMeasles2019.
 Demographic parameters (birth and death rates) broadly reflecting those observed in Ghana were selected to evaluate the performance of EWS metrics in a setting where high, yet sub-elimination, vaccination coverage is observed, requiring ongoing vigilance @WHOImmunizationData @masreshaTrackingMeaslesRubella2024.
 An initial population of 500,000 individuals was simulated, with commuter-style imports drawn from a Poisson distribution with mean proportional to the size of the population and $R_0$, to maintain a level of endemicity @keelingModelingInfectiousDiseases2008.
 
-We generated a time series of clinically-compatible febrile rash by summing the daily test positive results from the measles incidence time series, and a noise time series.
-The noise time series was the result of: independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$; or from an SEIR time series with rubella-like parameters with additional noise drawn from a Poisson distribution with mean equal to 15% of the daily average of the rubella incidence time series, to account for non-rubella sources of clinically-compatible febrile rash e.g., parvovirus (@tbl_csd-model-parameters) @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
-Under dynamical noise simulations, the vaccination rate at birth was selected to produce equivalent magnitudes of daily average noise incidence as observed in the Poisson-like noise simulations (10.20% and 87.34%).
+To evaluate the predictive ability of EWS metrics in environments with background disease that could produce false positive test results if tested with an imperfect diagnostic, we generated a time series of "suspected measles" by summing the measles and background noise time series.
+The noise time series is modeled as either: independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$; or from an SEIR time series with rubella-like parameters with additional noise drawn from a Poisson distribution with mean equal to 15% of the daily average of the rubella incidence time series, to account for non-rubella sources of clinically-compatible febrile rash e.g., parvovirus (@tbl_csd-model-parameters) @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
+Under dynamical (SEIR-generated) noise simulations, the vaccination rate at birth was selected to produce equivalent magnitudes of daily average noise incidence as observed in the Poisson-like noise simulations (10.20% and 87.34%).
 Throughout the rest of the manuscript, these will be referred to as low and high Poisson/dynamical noise scenarios, accordingly.
 Each day, all clinically-compatible febrile rash cases (that is, both the measles and noise time series) were tested using one of the following diagnostic tests, producing a time series of test positive cases.
 
-- A perfect test with 100% sensitivity and specificity, with a 0-day test result delay. This was chosen to reflect the best-case scenario that the imperfect diagnostic-based alert scenarios could be compared against.
-- An RDT equivalent, imperfect diagnostic with a 0-day test result delay and sensitivity and specificity equal to either 99%, 98%, 97%, 95%, 90%, or 80%.
+- A perfect test with 100% sensitivity and specificity. This was chosen to reflect the best-case scenario that the imperfect diagnostic-based alert scenarios could be compared against.
+- An RDT equivalent, imperfect diagnostic with sensitivity and specificity equal to either 99%, 98%, 97%, 96%, 95%, 90%, or 80%.
 
 #let import_rate = $(1.06*μ*R_0)/(√(N))$
 #let table_math(inset: 6pt, size: 14pt, content) = table.cell(inset: inset, text(size: size, content))
@@ -101,14 +101,14 @@ Each day, all clinically-compatible febrile rash cases (that is, both the measle
 )
 <tbl_csd-model-parameters>
 
-To evaluate the performance of the EWS metrics at predicting the approach to the critical threshold ($R_"E" = 1$) from below, it is essential to simulate both emergent and null scenarios.
+To evaluate the performance of the EWS metrics at predicting the approach to the critical transition ($R_"E" = 1$) from below, we simulated "emergent" scenarios where $R_"E"$ increases until 1, and "null" scenarios where $R_"E"$ is below 1.
 For both emergent and null scenarios, we generated 100 time series.
-All measles simulation incorporated a 5 year burn-in period to produce sufficient data for calculation of the EWS metrics upon aggregation, as well as to produce greater variation in the trajectory of $R_"E"$.
+All measles simulation incorporated a 5-year burn-in period to produce sufficient data for calculation of the EWS metrics upon aggregation, as well as to produce greater variation in the trajectory of $R_"E"$.
 For each time series, the vaccination rate at birth during the burn-in period was sampled from a Uniform distribution between 92.69% and 100% coverage.
 These bounds were selected to ensure the maximum value of $R_"E"$ that could be reached within 10 years (twice the length of the burn-in period) was 0.9.
-We simulated emergent scenarios by allowing the proportion of the population that is susceptible to grow, through lowering the vaccination rate at birth after completion of the burn-in period.
-For each emergent time series, the vaccination rate at birth was independently drawn from a Uniform distribution between 60% and 80% coverage, allowing the rate of growth in $R_"E"$ to vary between emergent time series.
-For each null time series, the vaccination rate at birth was set to the coverage sampled during the burn-in period, ensuring $R_"E"$ would not cross the critical threshold within the scope of the simulation, though it may grow slowly.
+We simulated emergent scenarios by lowering the vaccination rate at birth after completion of the burn-in period, allowing the proportion of the population that is susceptible to grow.
+For each emergent time series, the vaccination rate at birth was independently drawn from a Uniform distribution between 60% and 80% coverage, allowing the rate of growth in $R_"E"$, and therefore the time of the critical transition, to vary in each emergent time series.
+For each null time series, the vaccination rate at birth was set to the coverage sampled during the burn-in period, ensuring $R_"E"$ would not cross the critical transition within the scope of the simulation, though it may grow slowly.
 Each of the 100 emergent and 100 null time series are paired during the pre-processing steps i.e., up until the completion of the burn-in period, paired emergent and null simulations share the same vaccination rate at birth, and they are both truncated to identical lengths (the time step when $R_"E" = 1$ in that pair's emergent simulation).
 
 All simulations and analysis was completed in Julia version 1.10.5 @bezansonJuliaFreshApproach2017, with all code stored at #link("https://github.com/arnold-c/CSDNoise").
@@ -124,8 +124,7 @@ $$$
 where $X_s$ represents the aggregated incidence at time point (month) $s$, and $delta = 1$ time step (in the simulation results presented, 1 month).
 At the beginning of the time series when $t < b$, $b$ is set equal to $t$.
 
-In this paper we evaluate the performance of the following EWS metrics: the mean, variance, coefficient of variation, index of dispersion, skewness, kurtosis, autocovariance, and autocorrelation at lag-1, as they have been some evidence in the literature that they are correlated or predictive of disease emergence @brettAnticipatingEpidemicTransitions2018 @drakeStatisticsEpidemicTransitions2019 @southallEarlyWarningSignals2021 @southallEarlyWarningSignals2021 @brettDetectingCriticalSlowing2020, or commonly evaluated in critical slowing down literature at large.
-Many of the EWS metrics rely on the prior computation of others e.g., the variance requires the calculation of the detrended mean, so are computed in an iterative pattern.
+In this paper we evaluate the performance of the following EWS metrics: the mean, variance, coefficient of variation, index of dispersion, skewness, kurtosis, autocovariance, and autocorrelation at lag-1, which have previously been show to be correlated or predictive of disease emergence @brettAnticipatingEpidemicTransitions2018 @drakeStatisticsEpidemicTransitions2019 @southallEarlyWarningSignals2021 @southallEarlyWarningSignals2021 @brettDetectingCriticalSlowing2020.
 The full list of numerical formulas for each EWS metric can be found in @tbl_csd-ews-formulas.
 
 #let table_math = table_math.with(inset: 10pt)
@@ -163,18 +162,19 @@ AUC values are commonly transformed as $|"AUC" - 0.5|$ to highlight the strength
 
 The primary mode of evaluation for the EWS metrics relies on computing and triggering an alert based upon a set of conditions.
 The alert scenario is defined as the combination of diagnostic test, noise structure and magnitude, and EWS metric.
-The combination of the alert scenario and EWS alert hyperparameters (the percentile threshold value of the long-running metric distribution that must be exceeded to create a flag, and the number of consecutive flags required to trigger an alert), produce distinct counts of emergent and null time series that result in an alert.
+The combination of the alert scenario and EWS alert hyperparameters (the quantile threshold value of the long-running metric distribution that must be exceeded to create a flag, and the number of consecutive flags required to trigger an alert), produce distinct counts of emergent and null time series that result in an alert.
+For example, a simulation may require that at two consecutive time points ($t_1$ and $t_2$), the corresponding values of the EWS are larger than 95% of previously observed EWS values (quantile threshold = 0.95).
 The sensitivity of the system is defined as the proportion of the emergent simulations that result in an alert, and the specificity is the proportion of the null simulations that do not result in an alert.
 Taking the mean of the sensitivity and specificity produces the accuracy of the system.
-For each alert scenario, a grid search over the EWS hyperparameters (percentile threshold $in [0.5, 0.99]$, consecutive flags $in [2, 30]$) is performed to identify the set of EWS hyperparameters that maximizes alert accuracy for a given alert scenario.
+For each alert scenario, a grid search over the EWS hyperparameters (quantile threshold $in [0.5, 0.99]$, consecutive flags $in [2, 30]$) is performed to identify the set of EWS hyperparameters that maximizes alert accuracy for a given alert scenario.
 If multiple hyperparameter combinations produce identical alert system accuracies, the combination with the highest specificity is selected.
 After the optimal EWS hyperparameters have been selected, the accuracy of each EWS metric are compared across alert scenarios, at their respective maximal values.
-Finally, the speed and timing of detection relative to the critical threshold is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
+Finally, the speed and timing of detection relative to the critical transition is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
 
 = Results
 == Correlation with Emergence
 
-The strength and direction of the raw correlation between EWS metrics and the approach to the critical threshold in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl_csd-tau-ranking-perfect-test).
+The strength and direction of the raw correlation between EWS metrics and the approach to the critical transition in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl_csd-tau-ranking-perfect-test).
 However, when calculating AUC to normalize the correlation in the emergent time series against the correlation observed in null simulations, this affect disappears (@tbl_csd-tau-ranking-perfect-test).
 Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.2, 0.2, 0.18$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
 
@@ -217,7 +217,7 @@ Among the EWS metrics that were correlated with emergence, most increased in val
 
 == Predictive Ability
 
-Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy with a different combination of EWS hyperparameters (the percentile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (Supplemental Figures 9-12).
+Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy with a different combination of EWS hyperparameters (the quantile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (Supplemental Figures 9-12).
 At their respective maximal accuracies, the relative ranking of the EWS metrics computed with a perfect diagnostic test remained consistent to the ranking based upon $|"AUC" - 0.5|$: Mean (accuracy = 0.72), variance (0.72), autocovariance (0.7), index of dispersion (0.63), autocorrelation (0.62), skewness (0.6), kurtosis (0.58), and coefficient of variation (0.5) (Supplemental Table 3).
 
 When EWS metrics were computed on time series generated from RDTs, each metric's accuracy generally remained constant, with a few notable exceptions (@fig-best-accuracy-line-plot, @fig-worse-accuracy-line-plot).
@@ -251,7 +251,13 @@ For the 4 least correlated metrics, the same pattern was generally observed, wit
 )
 <fig-autocovariance-survival>
 
+
 = Discussion
+
+#line(length: 100%)
+- Composite metrics as future direction (shown promise in some work)
+- Didn't account for reporting delay - inconsequential compared to scale of data aggregation
+#line(length: 100%)
 
 Corroborating previous findings, we find that in perfectly observed systems with reporting uncertainty (monthly case aggregation), the autocovariance, variance, and mean are all well correlated with the emergence of outbreaks.
 As uncertainty rises, through the use of an imperfect diagnostic tests for laboratory confirmation of clinically-compatible cases, these correlations are maintained in all scenarios, except when there is a large amount of dynamical noise.

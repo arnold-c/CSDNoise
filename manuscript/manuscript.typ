@@ -32,29 +32,31 @@
 
 Despite sustained advances over decades, infectious diseases still pose a substantial threat to human life, causing an estimated X number of infections, and Y deaths, per annum _*[REF]*_.
 For many diseases, effective and affordable vaccines have played a substantial role in reducing this burden, averting 154 million deaths since the introduction of the Expanded Programme on Immunization in 1974 @shattockContributionVaccinationImproved2024.
-On the path to elimination, complex non-linear dynamics may cause an increase in the variability of annual incidence, such as the so-called "canonical path" of measles @grahamMeaslesCanonicalPath2019.
-As a result, episodic outbreaks become increasingly important to the total burden of disease, and are therefore vital to detect and respond to if elimination is to be reached.
-Infectious disease surveillance systems are the mechanism for this action @murrayInfectiousDiseaseSurveillance2016 @DiseaseSurveillance.
+As burden decreases with increasing control, dynamics may shift from predictable annual incidence to increasingly variable and episodic dynamics @grahamMeaslesCanonicalPath2019.
+Many populations have achieved apparent control, suffer from large-scale resurgent outbreaks due to the build up of susceptibles in the absence of persistent transmission _*[REF]*_.
+While rapid detection and response can minimize the impact of these outbreaks _*[REF]*_, early warning systems that can trigger pre-emptive action prior to outbreaks would be the ideal.
 
-Traditional infectious disease surveillance systems are reactive in nature; suspected and laboratory confirmed cases are collated, counted, and if a pre-determined threshold is met or breached, an action is undertaken (e.g., preliminary investigation, or reactive vaccination campaign) _*[REF]*_.
-However, due to the exponential trajectory of incidence often observed in the early stages of an outbreak, the reactive nature necessarily results in excess infections that cannot be prevented _*[REF]*_.
+Infectious disease surveillance systems are crucial for detecting outbreaks @murrayInfectiousDiseaseSurveillance2016 @DiseaseSurveillance, and could be leveraged to anticipate the risk of outbreaks _*[REF]*_.
+Outbreak detection and response systems are reactive in nature; cases are collated, counted, and if a pre-determined threshold is met or breached, an action is undertaken (e.g., preliminary investigation, or reactive vaccination campaign) _*[REF]*_.
+However, due to the exponential trajectory of incidence in the early stages of an outbreak, the reactive nature necessarily results in excess infections that cannot be prevented _*[REF]*_.
 To limit the burden of disease, ideally, epidemiologists could utilize the output of a surveillance system (e.g., the trend in cases of a pathogen) to predict the risk of a future outbreak, triggering a _proactive_ action, such as a preventative vaccination campaign.
 
-There has been growing interest in this line of reasoning, with many fields trying to identify and develop early warning signals (EWS) that are predictive of a critical transition @schefferEarlywarningSignalsCritical2009 @schefferForeseeingTippingPoints2010 @dakosSlowingEarlyWarning2008 @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012.
-For infectious diseases, this critical transition occurs when the effective reproduction number crosses the bifurcation threshold $R_"effective" = 1$, observed during both elimination and emergence of disease.
+The risk of an outbreak can be quantified in terms of the effective reproduction number, $R_"E"$, defined as the expected number of secondary cases due to each infectious individual _*[REF]*_.
+$R_"E" = 1$ represents a "critical transition", below which epidemics should not spread, and above which outbreaks should propagate.
+There has been growing interest, in many fields, to identify and develop early warning signals (EWS) that are predictive of the approach to such critical transitions in dynamical systems @schefferEarlywarningSignalsCritical2009 @schefferForeseeingTippingPoints2010 @dakosSlowingEarlyWarning2008 @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012.
 The appeal of an alert system based upon EWS metrics is that they are model-free, only requiring the calculation of summary statistics of a time series.
 Prior work has demonstrated that for infectious disease systems, computing EWS metrics on the progression of population susceptibility may be most predictive @drakeStatisticsEpidemicTransitions2019, but collecting this information is often intractable, and utilizing either the incidence or prevalence data has provided similarly useful predictions @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020.
-If an EWS is predictive, critical slowing down theory suggests that the EWS values will drastically change in value as a transition is approached, such as an increase in the variance.
-This is the result of a slowed recovery from perturbations to the system @delecroixPotentialResilienceIndicators2023 @dakosSlowingEarlyWarning2008 @schefferEarlywarningSignalsCritical2009, e.g., an imported infection.
+If an EWS is predictive, critical slowing down theory suggests that the EWS values will change in value as a transition is approached, such as an increase in the variance.
 Prior work has demonstrated that EWS metrics are theoretically correlated with a critical transition for infectious disease systems, under emergent and extinction conditions @oreganTheoryEarlyWarning2013 @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEmergenceInfectious2017 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020 @drakeMonitoringPathElimination2017.
-While identifying EWS that are correlated with a transition is an important first step, there are some important limitations that arise when designing a surveillance system @dablanderOverlappingTimescalesObscure2022 @southallEarlyWarningSignals2021.
-Notably, the correlation with a transition provides no information about the expected time until that transition, which is vital for any planning and preventative actions.
-To address these shortcomings, various threshold-based and statistical learning based approaches have been developed, with a 2#sym.sigma threshold most commonly employed @southallHowEarlyCan2022 @drakeEarlyWarningSignals2010 @brettDynamicalFootprintsEnable2020 @clementsIncludingTraitbasedEarly2016 @obrienEarlyWarningSignal2021.
-This threshold could be calculated from a single metric, or a composite of multiple EWS metrics @drakeEarlyWarningSignals2010 @obrienEarlyWarningSignal2021, with prior working demonstrating that requiring multiple consecutive flags to trigger an alert improves the accuracy in a 'noisy' system by reducing the false positive rate @southallHowEarlyCan2022 @clementsBodySizeShifts2017 @clementsEarlyWarningSignals2019.
 
-Until now, the relatively nascent topic of EWS has only explored 'noise' in the observational process of an outbreak, such as under-reporting and aggregation of case data @brettAnticipatingEpidemicTransitions2018 @brettDetectingCriticalSlowing2020.
-Our goal is to characterize the performance of EWS metrics in detecting the risk of disease emergence in a system with imperfect diagnostic tests and background infections that may be misdiagnosed as the target disease and inappropriately tested.
-For diseases with non-specific symptoms, e.g., measles and rubella often co-circulate and present clinically similarly, an imperfect diagnostic test will result in false positive and negative cases.
+While identifying EWS that are correlated with a transition is an important first step, systems to preempt outbreaks also require a discrete decision threshold to trigger preventive action (e.g., vaccination) _*[REF]*_.
+To address this, various threshold-based and statistical learning based approaches have been developed @southallHowEarlyCan2022 @drakeEarlyWarningSignals2010 @brettDynamicalFootprintsEnable2020 @clementsIncludingTraitbasedEarly2016 @obrienEarlyWarningSignal2021.
+For these, a distribution of the EWS metric is quantified during a non-outbreak regime and a decision threshold is triggered when the EWS metrics at time $t$ exceeds some quantile of this distribution; often 2 times the standard deviation.
+Prior work has shown that a single exceedance is often too sensitive and requiring multiple consecutive flags to trigger an alert improves the accuracy in a 'noisy' system by reducing the false positive rate @southallHowEarlyCan2022 @clementsBodySizeShifts2017 @clementsEarlyWarningSignals2019.
+
+Until now, the relatively nascent topic of EWS for outbreak detection has only explored imperfect surveillance in the setting of under-reporting and temporal aggregation of case data @brettAnticipatingEpidemicTransitions2018 @brettDetectingCriticalSlowing2020.
+Our goal is to characterize the performance of EWS metrics for outbreak detection in a surveillance system with diagnostic uncertainty due to co-circulating pathogens and imperfect diagnostic tests, i.e., non-target disease that may be misdiagnosed as the target disease.
+For diseases with non-specific symptoms, e.g., measles and rubella that often co-circulate and have similar clinical presentation _*[REF]*_, an imperfect diagnostic test will result in false positive and negative cases.
 In this paper we show the conditions under which diagnostic uncertainty overwhelms the time series used to calculate EWS summary statistics, limiting the ability to predict epidemic transitions.
 
 = Materials & Methods
@@ -67,7 +69,7 @@ Demographic parameters (birth and death rates) broadly reflecting those observed
 An initial population of 500,000 individuals was simulated, with commuter-style imports drawn from a Poisson distribution with mean proportional to the size of the population and $R_0$, to maintain a level of endemicity @keelingModelingInfectiousDiseases2008.
 
 We generated a time series of clinically-compatible febrile rash by summing the daily test positive results from the measles incidence time series, and a noise time series.
-The noise time series was the result of: independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$; or from an SEIR time series with rubella-like parameters with additional noise drawn from a Poisson distribution with mean equal to 15% of the daily average of the rubella incidence time series, to account for non-rubella sources of clinically-compatible febrile rash e.g., parvovirus (@tbl-model-parameters) @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
+The noise time series was the result of: independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$; or from an SEIR time series with rubella-like parameters with additional noise drawn from a Poisson distribution with mean equal to 15% of the daily average of the rubella incidence time series, to account for non-rubella sources of clinically-compatible febrile rash e.g., parvovirus (@tbl_csd-model-parameters) @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
 Under dynamical noise simulations, the vaccination rate at birth was selected to produce equivalent magnitudes of daily average noise incidence as observed in the Poisson-like noise simulations (10.20% and 87.34%).
 Throughout the rest of the manuscript, these will be referred to as low and high Poisson/dynamical noise scenarios, accordingly.
 Each day, all clinically-compatible febrile rash cases (that is, both the measles and noise time series) were tested using one of the following diagnostic tests, producing a time series of test positive cases.
@@ -97,17 +99,17 @@ Each day, all clinically-compatible febrile rash cases (that is, both the measle
   ),
   caption: [Compartmental model parameters],
 )
-<tbl-model-parameters>
+<tbl_csd-model-parameters>
 
-To evaluate the performance of the EWS metrics at predicting the approach to the critical threshold ($R_"effective" = 1$) from below, it is essential to simulate both emergent and null scenarios.
+To evaluate the performance of the EWS metrics at predicting the approach to the critical threshold ($R_"E" = 1$) from below, it is essential to simulate both emergent and null scenarios.
 For both emergent and null scenarios, we generated 100 time series.
-All measles simulation incorporated a 5 year burn-in period to produce sufficient data for calculation of the EWS metrics upon aggregation, as well as to produce greater variation in the trajectory of $R_"effective"$.
+All measles simulation incorporated a 5 year burn-in period to produce sufficient data for calculation of the EWS metrics upon aggregation, as well as to produce greater variation in the trajectory of $R_"E"$.
 For each time series, the vaccination rate at birth during the burn-in period was sampled from a Uniform distribution between 92.69% and 100% coverage.
-These bounds were selected to ensure the maximum value of $R_"effective"$ that could be reached within 10 years (twice the length of the burn-in period) was 0.9.
+These bounds were selected to ensure the maximum value of $R_"E"$ that could be reached within 10 years (twice the length of the burn-in period) was 0.9.
 We simulated emergent scenarios by allowing the proportion of the population that is susceptible to grow, through lowering the vaccination rate at birth after completion of the burn-in period.
-For each emergent time series, the vaccination rate at birth was independently drawn from a Uniform distribution between 60% and 80% coverage, allowing the rate of growth in $R_"effective"$ to vary between emergent time series.
-For each null time series, the vaccination rate at birth was set to the coverage sampled during the burn-in period, ensuring $R_"effective"$ would not cross the critical threshold within the scope of the simulation, though it may grow slowly.
-Each of the 100 emergent and 100 null time series are paired during the pre-processing steps i.e., up until the completion of the burn-in period, paired emergent and null simulations share the same vaccination rate at birth, and they are both truncated to identical lengths (the time step when $R_"effective" = 1$ in that pair's emergent simulation).
+For each emergent time series, the vaccination rate at birth was independently drawn from a Uniform distribution between 60% and 80% coverage, allowing the rate of growth in $R_"E"$ to vary between emergent time series.
+For each null time series, the vaccination rate at birth was set to the coverage sampled during the burn-in period, ensuring $R_"E"$ would not cross the critical threshold within the scope of the simulation, though it may grow slowly.
+Each of the 100 emergent and 100 null time series are paired during the pre-processing steps i.e., up until the completion of the burn-in period, paired emergent and null simulations share the same vaccination rate at birth, and they are both truncated to identical lengths (the time step when $R_"E" = 1$ in that pair's emergent simulation).
 
 All simulations and analysis was completed in Julia version 1.10.5 @bezansonJuliaFreshApproach2017, with all code stored at #link("https://github.com/arnold-c/CSDNoise").
 
@@ -124,7 +126,7 @@ At the beginning of the time series when $t < b$, $b$ is set equal to $t$.
 
 In this paper we evaluate the performance of the following EWS metrics: the mean, variance, coefficient of variation, index of dispersion, skewness, kurtosis, autocovariance, and autocorrelation at lag-1, as they have been some evidence in the literature that they are correlated or predictive of disease emergence @brettAnticipatingEpidemicTransitions2018 @drakeStatisticsEpidemicTransitions2019 @southallEarlyWarningSignals2021 @southallEarlyWarningSignals2021 @brettDetectingCriticalSlowing2020, or commonly evaluated in critical slowing down literature at large.
 Many of the EWS metrics rely on the prior computation of others e.g., the variance requires the calculation of the detrended mean, so are computed in an iterative pattern.
-The full list of numerical formulas for each EWS metric can be found in @tbl-ews-formulas.
+The full list of numerical formulas for each EWS metric can be found in @tbl_csd-ews-formulas.
 
 #let table_math = table_math.with(inset: 10pt)
 
@@ -143,7 +145,7 @@ The full list of numerical formulas for each EWS metric can be found in @tbl-ews
   ),
   caption: [Numerical computations for EWS metrics, where $delta = 1$ time step, $b = 52$ weeks]
 )
-<tbl-ews-formulas>
+<tbl_csd-ews-formulas>
 
 Once the EWS metrics have been computed, the correlation within emergent time series is computed using Kendall's Tau-B, signifying if an EWS metric consistently increases (or decreases) in magnitude throughout the time series @kendallTREATMENTTIESRANKING1945 @knightComputerMethodCalculating1966.
 Kendall's Tau is computed on two lengths of time series: from the beginning of the simulation until the critical transition is met, and from the completion of the burn-in period until the critical transition.
@@ -172,8 +174,8 @@ Finally, the speed and timing of detection relative to the critical threshold is
 = Results
 == Correlation with Emergence
 
-The strength and direction of the raw correlation between EWS metrics and the approach to the critical threshold in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl-tau-ranking-perfect-test).
-However, when calculating AUC to normalize the correlation in the emergent time series against the correlation observed in null simulations, this affect disappears (@tbl-tau-ranking-perfect-test).
+The strength and direction of the raw correlation between EWS metrics and the approach to the critical threshold in emergent time series is strongly dependent upon the length of the time series evaluated than the characteristics of the diagnostic test (@tbl_csd-tau-ranking-perfect-test).
+However, when calculating AUC to normalize the correlation in the emergent time series against the correlation observed in null simulations, this affect disappears (@tbl_csd-tau-ranking-perfect-test).
 Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.2, 0.2, 0.18$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
 
 #let perfect_tau_auc_table = csv("./manuscript_files/tables/perfect-test_tau-auc.csv")
@@ -188,14 +190,14 @@ Consistent with previous studies, the autocovariance, variance, mean, and index 
   ),
   caption: [The ranking and mean value of Kendall's Tau computed on emergent time series, and the $|"AUC" - 0.5|$ for each metric. The values are computed on the full time series, and the subset from after the completion of the burn-in period, with a perfect test]
 )
-<tbl-tau-ranking-perfect-test>
+<tbl_csd-tau-ranking-perfect-test>
 
-With an imperfect diagnostic test, the noise structure was more influential to correlation with emergence than the noise magnitude (@tbl-auc-magnitude-ranking-rdt-comparison).
+With an imperfect diagnostic test, the noise structure was more influential to correlation with emergence than the noise magnitude (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
 For an RDT-equivalent test with 90% sensitivity and specificity, with a 0-day turnaround time, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
 The top four metrics with a perfect diagnostics (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
 Under low levels of Poisson noise, autocorrelation was more strongly associated with emergence when calculated on the test positive time series resulting from and RDT than from a perfect diagnostic test ($|"AUC"-0.5| = 0.17 "vs." 0.12$, respectively).
 Under high levels of Poisson noise, the association of coefficient of variation with emergence also increased ($|"AUC"-0.5| = 0.17$ for an RDT vs. 0.11 for a perfect diagnostic).
-When simulations included rubella-like SEIR dynamical noise, the correlation of all metrics decreased (@tbl-auc-magnitude-ranking-rdt-comparison), and was exacerbated at a higher magnitude of noise.
+When simulations included rubella-like SEIR dynamical noise, the correlation of all metrics decreased (@tbl_csd-auc-magnitude-ranking-rdt-comparison), and was exacerbated at a higher magnitude of noise.
 With low levels of dynamical noise, the autocovariance, variance, and mean maintained some correlation with emergence, albeit at a lower level than observed in Poisson noise scenarios ($|"AUC" - 0.5| = 0.16, 0.14, "and" 0.13$, respectively).
 However, when the magnitude of dynamical noise was increased, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
 
@@ -211,7 +213,7 @@ Among the EWS metrics that were correlated with emergence, most increased in val
   ),
   caption: [$|"AUC" - 0.5|$ for EWS metrics, ranked in descending order of magnitude, computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
-<tbl-auc-magnitude-ranking-rdt-comparison>
+<tbl_csd-auc-magnitude-ranking-rdt-comparison>
 
 == Predictive Ability
 
@@ -245,7 +247,7 @@ For the 4 least correlated metrics, the same pattern was generally observed, wit
 
 #figure(
   image("./manuscript_files/plots/survival/survival_ews-autocovariance.svg"),
-  caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"effective" = 1$) under the emergent simulation, right-truncating the curves.]
+  caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
 )
 <fig-autocovariance-survival>
 
@@ -275,7 +277,7 @@ Future work could explore the effects of different detrending methods (e.g., Gau
 
 Despite being relatively well-established in areas of study such as ecology, ecosystem collapse, and climate science @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012 @dakosSlowingEarlyWarning2008 @schefferEarlywarningSignalsCritical2009 @obrienEarlyWarningSignal2021 @carpenterEarlyWarningsRegime2011 @dudneyElusiveSearchTipping2020, the exploration and development of EWS for infectious disease systems is in its relative infancy.
 Until recently, a large proportion of the prior work in the area has been to establish the existence of these metrics that theoretically could be used in such a system @drakeMonitoringPathElimination2017 @drakeStatisticsEpidemicTransitions2019 @oreganTheoryEarlyWarning2013.
-While this is a crucial first step, for use in a proactive outbreak alert system, EWS metrics must be able to provide advance warning of the approach to the tipping point $R_"effective" = 1$.
+While this is a crucial first step, for use in a proactive outbreak alert system, EWS metrics must be able to provide advance warning of the approach to the tipping point $R_"E" = 1$.
 Correlations alone are not sufficient to indicate when and what actions must be taken.
 To address this, there is a growing body of work that seeks to evaluate the use of various threshold and risk-based approaches within infectious disease systems @southallHowEarlyCan2022 @southallEarlyWarningSignals2021 @brettDetectingCriticalSlowing2020 @brettDynamicalFootprintsEnable2020.
 Our work expands upon these efforts, characterizing the limits of predictability for EWS metrics in systems with diagnostic uncertainty and background noise.

@@ -226,7 +226,6 @@ When EWS metrics were computed on time series generated from RDTs, each metric's
 
 For the 4 most correlated metrics (autocovariance, variance, mean, and index of dispersion), the accuracy achieved with imperfect diagnostic tests was comparable for low and high Poisson noise, for all diagnostic test accuracies (@fig-best-accuracy-line-plot).
 The accuracy of outbreak detection using index of dispersion increased with decreasing diagnostic test sensitivity and specificity for low and high levels of Poisson noise (@fig-best-accuracy-line-plot, Supplemental Figure 10).
-
 For low dynamical noise, accuracy increased slightly for diagnostic test sensitivity and specificity greater than 97% and then declined.
 For high dynamical noise, accuracy declined monotonically with decreasing test sensitivity and specificity (@fig-best-accuracy-line-plot, Supplemental Figure 12).
 Results for the 4 least well correlated EWS metrics are presented in the supplement (Supplemental Figure 13).
@@ -254,16 +253,17 @@ With high dynamical noise, an imperfect test failed to produce many alerts under
 
 = Discussion
 
-#line(length: 100%)
-- Composite metrics as future direction (shown promise in some work)
-- Didn't account for reporting delay - inconsequential compared to scale of data aggregation
-#line(length: 100%)
+Outbreak detection using EWS metrics is robust to diagnostic uncertainty depending on the structure and magnitude of the noise due to non-target infections in the surveillance time series.
+Under Poisson noise, outbreak detection using a time-series of test-positive cases resulted in similar performance to a corresponding time series with a perfect diagnostic, regardless of the incidence of the non-target infections.
+However, when the background noise due to non-target infections in the time series of suspected cases is consistent with a dynamical SEIR-type process (e.g. tends to produce cycles or periods of consistent outbreaks), the accuracy of outbreak detection declines with decreasing diagnostic test sensitivity and specificity and with increasing relative incidence of the non-target infections.
+Thus, the performance of outbreak warning systems using EWS depends on both the properties of the individual diagnostics used and structure and magnitude of non-target disease incidence, which may vary with the local context.
 
-Corroborating previous findings, we find that in perfectly observed systems with reporting uncertainty (monthly case aggregation), the autocovariance, variance, and mean are all well correlated with the emergence of outbreaks.
-As uncertainty rises, through the use of an imperfect diagnostic tests for laboratory confirmation of clinically-compatible cases, these correlations are maintained in all scenarios, except when there is a large amount of dynamical noise.
-These patterns of correlation translate to alert accuracy when incorporating a threshold-based approach, indicating the potential benefit if implemented in a real-world situation.
-For example, in Botswana, the estimated incidence rates of rubella and measles for 2023 are approximately equal, suggesting EWS calculated with imperfect diagnostic tests may provide accurate and actionable results @masreshaTrackingMeaslesRubella2024.
-But in Guinea Bissau, the estimated incidence rate for rubella was approximately 9 times that of measles, highlighting a region where any diagnostic test is unlikely to provide a meaningfully beneficial proactive alert system @masreshaTrackingMeaslesRubella2024.
+This analysis was motivated by the case of anticipating the progression to $R_"E" > 1$ for measles in the context of other sources of febrile rash; e.g., rubella, parvovirus, and arboviruses such as dengue fever and chikungunya @RubellaCDCYellow @kaidaContributionParvovirusB192023 @pullDifferentialDiagnosisDengue2012 @tintoCocirculationTwoAlphaviruses2024.
+For much of the WHO's African Region, the co-circulation of measles and rubella is common, although there are stark differences in the relative proportion of incidence by country @masreshaTrackingMeaslesRubella2024.
+In Guinea Bissau, for example, the estimated incidence rates of rubella are approximately 9 time that of measles, in Botswana they are similar, and in the Democratic Republic of Congo measles incidence is estimated to be 20 times higher @masreshaTrackingMeaslesRubella2024.
+Imperfect diagnostic tests will not provide equal value to each of these locations.
+The Democratic Republic of Congo would be a good candidate for the integration of less accurate diagnostic if it allowed for improvements to other aspects of the disease surveillance system e.g., increases in the testing rates and case-finding activities due to lower financial and logistical costs @brownRapidDiagnosticTests2020.
+However, when large rubella outbreaks can produce meaningful peaks in test positive cases resulting from the use of imperfect diagnostics, such as in Guinea Bissau, the EWS metrics struggle to discriminate between emergent and periods, reducing their utility.
 
 When evaluating the ability for the EWS metrics to accurately discriminate between emergent and null simulations, it is import to contextualize the results with the system's relative speed and specificity.
 Alert systems necessarily make compromises in their design: improvements to speed generally come at the cost of increased numbers of false alerts _*[REF]*_.
@@ -276,10 +276,13 @@ This is likely a consequence of imperfect diagnostic tests producing more false 
 Adjusting the relative weighting of alert sensitivity and specificity to accuracy, as well as the accuracy tiebreaker preference, would allow for an exploration of alternative scenarios.
 
 For EWS metrics to reflect the underlying dynamics of critical slowing down, careful detrending of the data is required @gamadessavreProblemDetrendingWhen2019 @dakosSlowingEarlyWarning2008 @lentonEarlyWarningClimate2012.
-Our analysis utilizes a backward-facing uniform moving average to detrend the data: this was chosen as it can easily be intuited and implemented in a surveillance system.
+Our analysis utilizes a backward-facing uniform moving average to detrend the data: this was chosen as it can be easily intuited and implemented in a surveillance system.
 However, it has previously been stated that insufficient detrending may lead spurious patterns that do not arise from a system's dynamical response @dakosSlowingEarlyWarning2008, and the association of an EWS with the approach to a tipping point may be sensitive to the bandwidth size selected, although the sensitivity to detrending varies by EWS metric @gamadessavreProblemDetrendingWhen2019 @lentonEarlyWarningClimate2012.
 While it may be preferred to detrend using the mean over multiple realizations, this is clearly not possible in a real-world situation.
 Future work could explore the effects of different detrending methods (e.g., Gaussian weighting moving average, smaller and/or larger bandwidths) on the effectiveness of EWS metrics in systems with diagnostic uncertainty.
+Similarly, prior work has demonstrated the benefits of constructing composite metrics, for example, calculating a composite metric as the sum of the standardized differences for each of the individual metrics, before defining a quantile threshold for the distribution of the composite @drakeEarlyWarningSignals2010.
+However, there are numerous other techniques that could be applied, each requiring different decisions as to the appropriate weightings to be assigned to the underlying single metrics.
+For this reason, we only present the results from the individual metrics to illustrate the effects of diagnostic uncertainty, but future work should aim to extend the approach detailed to composite EWS metrics.
 
 Despite being relatively well-established in areas of study such as ecology, ecosystem collapse, and climate science @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012 @dakosSlowingEarlyWarning2008 @schefferEarlywarningSignalsCritical2009 @obrienEarlyWarningSignal2021 @carpenterEarlyWarningsRegime2011 @dudneyElusiveSearchTipping2020, the exploration and development of EWS for infectious disease systems is in its relative infancy.
 Until recently, a large proportion of the prior work in the area has been to establish the existence of these metrics that theoretically could be used in such a system @drakeMonitoringPathElimination2017 @drakeStatisticsEpidemicTransitions2019 @oreganTheoryEarlyWarning2013.

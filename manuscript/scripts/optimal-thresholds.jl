@@ -694,7 +694,16 @@ for gdf in gdfs,
     )
 end
 
-accuracy_line_plot = line_plot(lineplot_df)
+accuracy_line_plot = line_plot(
+    lineplot_df;
+    nbanks = 2,
+    facet_fontsize = 24,
+    legendsize = 24,
+    xlabelsize = 26,
+    ylabelsize = 26,
+    xticklabelsize = 24,
+    yticklabelsize = 24,
+)
 
 line_plotdir = projectdir("manuscript", "manuscript_files", "plots")
 

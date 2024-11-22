@@ -63,6 +63,12 @@ end
 function line_plot(
     df;
     legend_rowsize = Relative(0.05),
+    facet_fontsize = 20,
+    legendsize = 22,
+    xlabelsize = 22,
+    ylabelsize = 22,
+    xticklabelsize = 22,
+    yticklabelsize = 22,
     kwargs...,
 )
     kwargs_dict = Dict{Symbol,Any}(kwargs)
@@ -77,7 +83,7 @@ function line_plot(
     end
 
     noise_descriptions =
-        heatmap_noise_description.(unique(df.noise_specification))
+        noise_table_description.(unique(df.noise_specification))
     num_noise_descriptions = length(noise_descriptions)
 
     if !haskey(kwargs_dict, :nbanks)
@@ -114,6 +120,11 @@ function line_plot(
                 replace(metric_gdf[1, :ews_metric], "_" => " ")
             ),
             ylims = ylims,
+            facet_fontsize = facet_fontsize,
+            xlabelsize = xlabelsize,
+            ylabelsize = ylabelsize,
+            xticklabelsize = xticklabelsize,
+            yticklabelsize = yticklabelsize,
         )
     end
 
@@ -123,9 +134,11 @@ function line_plot(
             PolyElement(; color = col) for
             col in Makie.wong_colors()[1:num_noise_descriptions]
         ],
+        # repeat([""], 4),
         noise_descriptions,
         "";
         nbanks = nbanks,
+        labelsize = legendsize,
     )
 
     rowsize!(fig.layout, 0, legend_rowsize)
@@ -140,22 +153,44 @@ function line_plot_facet!(
     num_metrics = 1,
     facet_title = "",
     ylims = nothing,
+    facet_fontsize = 20,
+    legendsize = 22,
+    xlabelsize = 22,
+    ylabelsize = 22,
+    xticklabelsize = 22,
+    yticklabelsize = 22,
+    kwargs...,
 )
     grouped_dfs = groupby(df, :noise_specification)
     unique_tests = unique(df[!, :test_specification])
     test_labels = map(
         test ->
-            "[$(test.sensitivity), $(test.test_result_lag)]",
+            "$(Int64(round(test.sensitivity*100; digits = 0)))%",
         unique_tests,
     )
 
     ax = Axis(
-        gl[1, 1];
-        title = facet_title,
-        xlabel = "Test Specification ([Sensitivity/Specificity, Lag])",
-        ylabel = "EWS Accuracy",
+        gl[2, 1];
+        xlabel = "Test Sensitivity & Specificity",
+        ylabel = "Alert Accuracy",
         xticks = (collect(1:length(test_labels)), test_labels),
+        titlesize = facet_fontsize,
+        xlabelsize = xlabelsize,
+        ylabelsize = ylabelsize,
+        xticklabelsize = xticklabelsize,
+        yticklabelsize = yticklabelsize,
     )
+
+    Box(gl[1, 1]; color = :lightgray, strokevisible = false)
+    Label(
+        gl[1, 1],
+        facet_title;
+        fontsize = facet_fontsize,
+        padding = (0, 0, 0, 0),
+        valign = :bottom,
+        tellwidth = false,
+    )
+    rowsize!(gl, 2, Relative(0.9))
 
     for gdf in grouped_dfs
         lines!(
@@ -178,25 +213,4 @@ function line_plot_facet!(
         hidexdecorations!(ax)
     end
     return nothing
-end
-
-function heatmap_noise_description(
-    noise_specification::T
-) where {T<:PoissonNoiseSpecification}
-    return string(
-        "Poisson noise: ", noise_specification.noise_mean_scaling, "x Measles"
-    )
-end
-
-function heatmap_noise_description(
-    noise_specification::T
-) where {T<:DynamicalNoiseSpecification}
-    mean_vaccination_coverage = mean([
-        noise_specification.min_vaccination_coverage,
-        noise_specification.max_vaccination_coverage,
-    ])
-
-    return string(
-        "Dynamical noise: mean vaccination $(mean_vaccination_coverage)"
-    )
 end

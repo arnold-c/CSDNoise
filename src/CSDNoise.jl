@@ -160,7 +160,7 @@ include("plotting-functions/hyperparam-debugging_plots.jl")
 export hyperparam_debugging_Reff_plot
 
 include("plotting-functions/accuracy-lines_plots.jl")
-export prepare_line_plot_df!, line_plot, heatmap_noise_description
+export prepare_line_plot_df!, line_plot
 
 include("plotting-functions/auc-heatmap_plots.jl")
 export tau_auc_heatmap

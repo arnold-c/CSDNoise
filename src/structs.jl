@@ -594,7 +594,11 @@ end
 function noise_table_description(
     noise_specification::T1
 ) where {T1<:PoissonNoiseSpecification}
-    return "$(Int64(noise_specification.noise_mean_scaling))x Poisson Noise"
+    noise_scaling = @match noise_specification.noise_mean_scaling begin
+        7 => "High"
+        1 => "Low"
+    end
+    return "$(noise_scaling) Poisson Noise"
 end
 
 function noise_table_description(
@@ -608,10 +612,10 @@ function noise_table_description(
         digits = 4,
     )
     noise_scaling = @match avg_vaccination begin
-        0.1020 => 7
-        0.8734 => 1
+        0.1020 => "High"
+        0.8734 => "Low"
     end
-    return "$(noise_scaling)x Dynamical Noise"
+    return "$(noise_scaling) Dynamical Noise"
 end
 
 # function get_noise_magnitude(

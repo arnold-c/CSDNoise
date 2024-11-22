@@ -35,18 +35,18 @@
 
 = Introduction
 
-Despite sustained advances over decades, infectious diseases still pose a substantial threat to human life, causing an estimated X number of infections, and Y deaths, per annum _*[REF]*_.
+Despite sustained advances over decades, infectious diseases still pose a substantial threat to human life, causing an estimated 33.8 B infections, and 57.0 M deaths, per annum in 2019 (rising to an estimated 67.9 M deaths in 2021, as a result of the COVID-19 pandemic) @GBDResults.
 For many diseases, effective and affordable vaccines have played a substantial role in reducing this burden, averting 154 million deaths since the introduction of the Expanded Programme on Immunization in 1974 @shattockContributionVaccinationImproved2024.
 As burden decreases with increasing control, dynamics may shift from predictable annual incidence to increasingly variable and episodic dynamics @grahamMeaslesCanonicalPath2019.
-Many populations have achieved apparent control, suffer from large-scale resurgent outbreaks due to the build up of susceptibles in the absence of persistent transmission _*[REF]*_.
-While rapid detection and response can minimize the impact of these outbreaks _*[REF]*_, early warning systems that can trigger pre-emptive action prior to outbreaks would be the ideal.
+Many populations that have achieved apparent control, suffer from large-scale resurgent outbreaks due to the build up of susceptibles in the absence of persistent transmission @parumsReviewResurgenceMeasles2024 @masreshaProgressMeaslesElimination2023 @minettiLessonsChallengesMeasles2013.
+While rapid detection and response has the potential to minimize the impact of these outbreaks @graisTimeEssenceExploring2008 @ferrariTimeStillEssence2014 @azmanUrbanCholeraTransmission2012 @dergiadesEffectivenessGovernmentPolicies2022, early warning systems that can trigger pre-emptive action prior to outbreaks would be the ideal.
 
-Infectious disease surveillance systems are crucial for detecting outbreaks @murrayInfectiousDiseaseSurveillance2016 @DiseaseSurveillance, and could be leveraged to anticipate the risk of outbreaks _*[REF]*_.
-Outbreak detection and response systems are reactive in nature; cases are collated, counted, and if a pre-determined threshold is met or breached, an action is undertaken (e.g., preliminary investigation, or reactive vaccination campaign) _*[REF]*_.
-However, due to the exponential trajectory of incidence in the early stages of an outbreak, the reactive nature necessarily results in excess infections that cannot be prevented _*[REF]*_.
+Infectious disease surveillance systems are crucial for detecting outbreaks @murrayInfectiousDiseaseSurveillance2016 @DiseaseSurveillance, and could be leveraged to anticipate the risk of outbreaks @brettAnticipatingEpidemicTransitions2018 @brettAnticipatingEmergenceInfectious2017 @drakeStatisticsEpidemicTransitions2019.
+Outbreak detection and response systems are reactive in nature; cases are collated, counted, and if a pre-determined threshold is met or breached, an action is undertaken (e.g., preliminary investigation, or reactive vaccination campaign) @worldhealthorganizationOperationalThresholds2014 @worldhealthorganizationMeaslesOutbreakGuide2022.
+However, due to the exponential trajectory of incidence in the early stages of an outbreak, the reactive nature necessarily results in excess infections that cannot be prevented @graisTimeEssenceExploring2008 @ferrariTimeStillEssence2014 @azmanUrbanCholeraTransmission2012.
 To limit the burden of disease, ideally, epidemiologists could utilize the output of a surveillance system (e.g., the trend in cases of a pathogen) to predict the risk of a future outbreak, triggering a _proactive_ action, such as a preventative vaccination campaign.
 
-The risk of an outbreak can be quantified in terms of the effective reproduction number, $R_"E"$, defined as the expected number of secondary cases due to each infectious individual _*[REF]*_.
+The risk of an outbreak can be quantified in terms of the effective reproduction number, $R_"E"$, defined as the expected number of secondary cases due to each infectious individual @vynnyckyIntroductionInfectiousDisease2010a.
 $R_"E" = 1$ represents a "critical transition", below which epidemics should not spread, and above which outbreaks should propagate.
 There has been growing interest, in many fields, to identify and develop early warning signals (EWS) that are predictive of the approach to such critical transitions in dynamical systems @schefferEarlywarningSignalsCritical2009 @schefferForeseeingTippingPoints2010 @dakosSlowingEarlyWarning2008 @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012.
 The appeal of an alert system based upon EWS metrics is that they are model-free, only requiring the calculation of summary statistics of a time series.
@@ -54,14 +54,14 @@ Prior work has demonstrated that for infectious disease systems, computing EWS m
 If an EWS is predictive, critical slowing down theory suggests that the EWS values will change in value as a transition is approached, such as an increase in the variance.
 Prior work has demonstrated that EWS metrics are theoretically correlated with a critical transition for infectious disease systems, under emergent and extinction conditions @oreganTheoryEarlyWarning2013 @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEmergenceInfectious2017 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020 @drakeMonitoringPathElimination2017.
 
-While identifying EWS that are correlated with a transition is an important first step, systems to preempt outbreaks also require a discrete decision threshold to trigger preventive action (e.g., vaccination) _*[REF]*_.
+While identifying EWS that are correlated with a transition is an important first step, systems to preempt outbreaks also require a discrete decision threshold to trigger preventive action (e.g., vaccination) @southallEarlyWarningSignals2021 @dablanderOverlappingTimescalesObscure2022.
 To address this, various threshold-based and statistical learning based approaches have been developed @southallHowEarlyCan2022 @drakeEarlyWarningSignals2010 @brettDynamicalFootprintsEnable2020 @clementsIncludingTraitbasedEarly2016 @obrienEarlyWarningSignal2021.
 For these, a distribution of the EWS metric is quantified during a non-outbreak regime and a decision threshold is triggered when the EWS metrics at time $t$ exceeds some quantile of this distribution; often 2 times the standard deviation.
 Prior work has shown that a single exceedance is often too sensitive and requiring multiple consecutive flags to trigger an alert improves the accuracy in a 'noisy' system by reducing the false positive rate @southallHowEarlyCan2022 @clementsBodySizeShifts2017 @clementsEarlyWarningSignals2019.
 
 Until now, the relatively nascent topic of EWS for outbreak detection has only explored imperfect surveillance in the setting of under-reporting and temporal aggregation of case data @brettAnticipatingEpidemicTransitions2018 @brettDetectingCriticalSlowing2020.
 Our goal is to characterize the performance of EWS metrics for outbreak detection in a surveillance system with diagnostic uncertainty due to co-circulating pathogens and imperfect diagnostic tests, i.e., non-target disease that may be misdiagnosed as the target disease.
-For diseases with non-specific symptoms, e.g., measles and rubella that often co-circulate and have similar clinical presentation _*[REF]*_, an imperfect diagnostic test will result in false positive and negative cases.
+For diseases with non-specific symptoms, e.g., measles and rubella that often co-circulate and have similar clinical presentation @masreshaTrackingMeaslesRubella2024 @worldhealthorganizationMeaslesOutbreakGuide2022, an imperfect diagnostic test will result in false positive and negative cases.
 In this paper we show the conditions under which diagnostic uncertainty overwhelms the time series used to calculate EWS summary statistics, limiting the ability to predict epidemic transitions.
 
 = Materials & Methods
@@ -80,7 +80,7 @@ Throughout the rest of the manuscript, these will be referred to as low and high
 Each day, all clinically-compatible febrile rash cases (that is, both the measles and noise time series) were tested using one of the following diagnostic tests, producing a time series of test positive cases.
 
 - A perfect test with 100% sensitivity and specificity. This was chosen to reflect the best-case scenario that the imperfect diagnostic-based alert scenarios could be compared against.
-- An RDT equivalent, imperfect diagnostic with sensitivity and specificity equal to either 99%, 98%, 97%, 96%, 95%, 90%, or 80%.
+- An imperfect diagnostic with sensitivity and specificity equal to either 99%, 98%, 97%, 96%, 95%, 90%, or 80%.
 
 #let import_rate = $(1.06*μ*R_0)/(√(N))$
 #let table_math(inset: 6pt, size: 14pt, content) = table.cell(inset: inset, text(size: size, content))
@@ -200,25 +200,20 @@ Consistent with previous studies, the autocovariance, variance, mean, and index 
 With an imperfect diagnostic test, the correlation with emergence was more influenced by the noise structure (Poisson vs. dynamical) than the noise magnitude (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
 For an RDT-equivalent test with 90% sensitivity and specificity, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
 The top four metrics with a perfect diagnostic test (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
-// Under low levels of Poisson noise, autocorrelation was more strongly associated with emergence when calculated on the test positive time series resulting from and RDT than from a perfect diagnostic test ($|"AUC"-0.5| = 0.17 "vs." 0.12$, respectively).
-// Under high levels of Poisson noise, the association of coefficient of variation with emergence also increased ($|"AUC"-0.5| = 0.17$ for an RDT vs. 0.11 for a perfect diagnostic).
-// When simulations included rubella-like SEIR dynamical noise, the correlation of all metrics decreased (@tbl_csd-auc-magnitude-ranking-rdt-comparison), and was exacerbated at a higher magnitude of noise.
 
 For simulations with rubella-like SEIR dynamical noise, the correlation of all metrics was lower at low dynamical noise compared to low Poisson noise (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
 With low levels of dynamical noise, the autocovariance, variance, and mean remained the most correlated with emergence ($|"AUC" - 0.5| = 0.16, 0.14, "and" 0.13$, respectively).
 At high dynamical noise, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
-
-// Among the EWS metrics that were correlated with emergence, most increased in value as the tipping point neared (AUC > 0.5) when computed on the test positive time series resulting from perfect diagnostic tests or an RDT with 90% sensitivity and specificity, with the exception of: the coefficient of variation, with a perfect diagnostic test, and an RDT in low and high dynamical noise ($"AUC" = 0.39, 0.45, "and" 0.48$, respectively); kurtosis with an RDT under low Poisson noise ($"AUC" = 0.45$); and autocorrelation with an RDT under high dynamical noise ($"AUC" = 0.49$) (Supplemental Table 2).
 
 #let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
 
 #figure(
   two_header_table(
     columns: 6,
-    table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
+    table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & Specific Imperfect Test],
     ..auc_magnitude_comparison_table.flatten().slice(1)
   ),
-  caption: [$|"AUC" - 0.5|$ for EWS metrics, ranked in descending order of magnitude, computed on the subset of the emergent time series after the burn-in period, for a perfect test and an RDT with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
+  caption: [$|"AUC" - 0.5|$ for EWS metrics, ranked in descending order of magnitude, computed on the subset of the emergent time series after the burn-in period, for a perfect test and an imperfect diagnostic test with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )
 <tbl_csd-auc-magnitude-ranking-rdt-comparison>
 
@@ -271,20 +266,23 @@ The Democratic Republic of Congo would be a good candidate for the integration o
 However, when large rubella outbreaks can produce meaningful peaks in test positive cases resulting from the use of imperfect diagnostics, such as in Guinea Bissau, the EWS metrics struggle to discriminate between emergent and periods, reducing their utility.
 
 When evaluating the ability for the EWS metrics to accurately discriminate between emergent and null simulations, it is import to contextualize the results with the system's relative speed and specificity.
-Alert systems necessarily make compromises in their design: improvements to speed generally come at the cost of increased numbers of false alerts _*[REF]*_.
+Alert systems necessarily make compromises in their design: improvements to speed generally come at the cost of increased numbers of false alerts @lewisTimelyDetectionMeningococcal2001 @zalwangoEvaluationMalariaOutbreak2024.
 Depending on the context, it may be desirable to place a greater weight in preference/penalty for one of these axes; in scenarios where the expected cost to launch a preliminary investigation is low relative to the unaverted DALYs resulting from incorrect inaction in an overly specific system, higher false alert rates may be acceptable.
 This analysis provides a framework to explicitly explore these trade-offs through the comparison of survival curves.
 A larger separation at the end of the time series between the emergent and null simulation lines indicates higher accuracy, as there is a greater difference in the true positive and false positive rates.
 Faster declines indicate a (relatively) more sensitive alert system with more advanced warning of emergence.
 Under the simulation constraints placed here (i.e., equal weighting to speed and specificity to the alert system's accuracy, with the results of the more specific system being presented in cases where multiple thresholds hyperparameters provide the same accuracy), generally, the use of RDTs does not increase the speed of the warning for the EWS metrics that are predictive of emergence.
 This is likely a consequence of imperfect diagnostic tests producing more false positive cases, which, without appropriate penalization, would otherwise lead to high false alert rates under the same EWS hyperparameters.
-Adjusting the relative weighting of alert sensitivity and specificity to accuracy, as well as the accuracy tiebreaker preference, would allow for an exploration of alternative scenarios.
+Adjusting the relative weighting of alert sensitivity and specificity used to compute the alert accuracy would allow for an exploration of alternative scenarios.
+Additionally, multiple hyperparameter combinations can produce identical alert accuracy i.e., some combinations will favor the speed of alert at the expensive of its specificity, and _vice versa_.
+In situations where identical accuracies are achieved, we present the results associated with the most specific alert system i.e., reduce the number of false positive alerts.
+An equivalent set of analyses could be computed to favor the hyperparameter combinations that produced the fastest and most frequent alerts.
 
 For EWS metrics to reflect the underlying dynamics of critical slowing down, careful detrending of the data is required @gamadessavreProblemDetrendingWhen2019 @dakosSlowingEarlyWarning2008 @lentonEarlyWarningClimate2012.
 Our analysis utilizes a backward-facing uniform moving average to detrend the data: this was chosen as it can be easily intuited and implemented in a surveillance system.
 However, it has previously been stated that insufficient detrending may lead spurious patterns that do not arise from a system's dynamical response @dakosSlowingEarlyWarning2008, and the association of an EWS with the approach to a tipping point may be sensitive to the bandwidth size selected, although the sensitivity to detrending varies by EWS metric @gamadessavreProblemDetrendingWhen2019 @lentonEarlyWarningClimate2012.
 While it may be preferred to detrend using the mean over multiple realizations, this is clearly not possible in a real-world situation.
-Future work could explore the effects of different detrending methods (e.g., Gaussian weighting moving average, smaller and/or larger bandwidths) on the effectiveness of EWS metrics in systems with diagnostic uncertainty.
+Future work could explore the effects of different detrending methods (e.g., Gaussian weighting moving average, smaller and/or larger bandwidths) on the effectiveness of EWS metrics in systems with diagnostic uncertainty @gamadessavreProblemDetrendingWhen2019.
 Similarly, prior work has demonstrated the benefits of constructing composite metrics, for example, calculating a composite metric as the sum of the standardized differences for each of the individual metrics, before defining a quantile threshold for the distribution of the composite @drakeEarlyWarningSignals2010.
 However, there are numerous other techniques that could be applied, each requiring different decisions as to the appropriate weightings to be assigned to the underlying single metrics.
 For this reason, we only present the results from the individual metrics to illustrate the effects of diagnostic uncertainty, but future work should aim to extend the approach detailed to composite EWS metrics.
@@ -304,7 +302,10 @@ Our work expands upon these efforts, characterizing the limits of predictability
 
 #[
 = Funding
-- #emph[What to put here?]
+
+This work was supported by the Bill & Melinda Gates Foundation through grant No. INV-016091_2020.
+This project was also supported by the National Science Foundation, by grant: NSF-NIH-NIFA Ecology and Evolution of Infectious Disease award DEB 1911962.
+The funding sources had no role in the collection, analysis, interpretation, or writing of the work.
 
 
 = Acknowledgements

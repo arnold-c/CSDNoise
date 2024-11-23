@@ -77,9 +77,10 @@ export ews_hyperparam_optimization,
     load_most_recent_hyperparam_file,
     get_most_recent_hyperparam_filepath,
     optimal_ews_heatmap_df,
-    optimal_ews_heatmap_plot,
-    simulate_and_plot_ews_survival,
-    ews_survival_plot,
+    optimal_ews_heatmap_plot
+
+include("ews-survival.jl")
+export simulate_and_plot_ews_survival,
     simulate_ews_survival_data,
     create_ews_survival_data
 
@@ -164,6 +165,9 @@ export prepare_line_plot_df!, line_plot
 
 include("plotting-functions/auc-heatmap_plots.jl")
 export tau_auc_heatmap
+
+include("plotting-functions/survival_plots.jl")
+export ews_survival_plot
 
 @static if false
     include("../scripts/ensemble-sim.jl")

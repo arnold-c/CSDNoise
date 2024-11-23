@@ -20,7 +20,11 @@ function ews_survival_plot(
     plottitle = "Survival",
     subtitle = "",
     nbanks = length(test_specification_vec) * length(linestyle_vec) + 1,
+    xlabel = "Time After Burn-In (Years)",
+    ylabel = "Survival Numbers",
     legend_rowsize = Makie.Relative(0.05),
+    xlabel_rowsize = Makie.Relative(0.03),
+    ylabel_rowsize = Makie.Relative(0.02),
     facet_fontsize = 20,
     legendsize = 22,
     xlabelsize = 22,
@@ -133,11 +137,7 @@ function ews_survival_plot(
                 )
                 surv_ax = Axis(
                     gl[2, 1];
-                    xlabel = "Time After Burn-In (Years)",
-                    ylabel = "Survival Numbers",
                     xticks = (1:1:10, string.(collect(-4:1:5))),
-                    xlabelsize = xlabelsize,
-                    ylabelsize = ylabelsize,
                     xticklabelsize = xticklabelsize,
                     yticklabelsize = yticklabelsize,
                     limits = (0, maximum(times), 0, ceil(1.1 * nsims)),
@@ -205,6 +205,24 @@ function ews_survival_plot(
     if num_noise == 1
         colsize!(fig.layout, 1, Makie.Relative(1))
     end
+
+    Label(
+        fig[:, 0],
+        ylabel;
+        fontsize = ylabelsize,
+        font = :bold,
+        rotation = pi / 2,
+    )
+    colsize!(fig.layout, 0, ylabel_rowsize)
+
+    xlabel_position = num_noise > 2 ? 3 : 2
+    Label(
+        fig[xlabel_position, :],
+        xlabel;
+        fontsize = xlabelsize,
+        font = :bold,
+    )
+    rowsize!(fig.layout, xlabel_position, xlabel_rowsize)
 
     return fig
 end

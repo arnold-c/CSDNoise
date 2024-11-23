@@ -779,8 +779,8 @@ for metric in ews_metrics
         linestyle_vec = [:solid, :dot],
         facet_fontsize = 24,
         legendsize = 24,
-        xlabelsize = 26,
-        ylabelsize = 26,
+        xlabelsize = 28,
+        ylabelsize = 28,
         xticklabelsize = 24,
         yticklabelsize = 24,
     )

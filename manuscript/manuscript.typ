@@ -246,7 +246,7 @@ With high dynamical noise, an imperfect test failed to produce many alerts under
 
 #figure(
   image("./manuscript_files/plots/survival/survival_ews-autocovariance.svg"),
-  caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
+  caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test, and an imperfect test that is 90% sensitive and specific. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves. The trajectory of the solid lines are identical in each facet, as the perfect test is unaffected by noise cases. The histogram is identical between facets as it represents the timing of the tipping points, and all testing scenarios use the same underling measles simulations that terminate at the tipping point]
 )
 <fig-autocovariance-survival>
 

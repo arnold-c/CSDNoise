@@ -226,6 +226,7 @@ tau_comparison_df = DataFrame(; Rank = collect(1:8))
 auc_comparison_df = DataFrame(; Rank = collect(1:8))
 auc_magnitude_comparison_df = DataFrame(; Rank = collect(1:8))
 alert_auc_magnitude_comparison_df = DataFrame(; Rank = collect(1:8))
+accuracy_comparison_df = DataFrame(; Rank = collect(1:8))
 combined_survival_df = DataFrame()
 for (noise_num, gdf) in enumerate(gdfs)
     @assert length(unique(gdf.noise_specification)) == 1
@@ -586,6 +587,11 @@ for (noise_num, gdf) in enumerate(gdfs)
                             ),
                             perfect_test_accuracy,
                         )
+
+                        global accuracy_comparison_df = hcat(
+                            accuracy_comparison_df,
+                            perfect_test_accuracy,
+                        )
                     end
                 end
 
@@ -654,6 +660,11 @@ for (noise_num, gdf) in enumerate(gdfs)
         alert_auc_magnitude_comparison_df,
         rdt_accuracy,
     )
+
+    global accuracy_comparison_df = hcat(
+        accuracy_comparison_df,
+        rdt_accuracy,
+    )
 end
 
 #%%
@@ -679,6 +690,12 @@ select!(alert_auc_magnitude_comparison_df, :Rank, Cols(r"All Noise"), All())
 CSV.write(
     joinpath(tables_path, "alert-accuracy-auc-comparison.csv"),
     alert_auc_magnitude_comparison_df,
+)
+
+select!(accuracy_comparison_df, :Rank, Cols(r"All Noise"), All())
+CSV.write(
+    joinpath(tables_path, "accuracy-comparison.csv"),
+    accuracy_comparison_df,
 )
 
 #%%

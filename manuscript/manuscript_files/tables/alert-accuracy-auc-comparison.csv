@@ -1,4 +1,4 @@
-Rank,All Noise - |AUC-0.5|,All Noise - Accuracy,1x Poisson Noise,7x Poisson Noise,1x Dynamical Noise,7x Dynamical Noise
+Rank,All Noise - |AUC-0.5|,All Noise - Accuracy,Low Poisson Noise,High Poisson Noise,Low Dynamical Noise,High Dynamical Noise
 1,Autocovariance (0.2),Mean (0.72),Mean (0.73),Variance (0.73),Variance (0.68),Mean (0.6)
 2,Variance (0.2),Variance (0.72),Variance (0.7),Coefficient of variation (0.72),Mean (0.66),Skewness (0.57)
 3,Mean (0.18),Autocovariance (0.7),Autocovariance (0.7),Mean (0.72),Autocovariance (0.65),Kurtosis (0.55)

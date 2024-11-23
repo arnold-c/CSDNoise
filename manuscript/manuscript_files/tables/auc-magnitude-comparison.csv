@@ -1,4 +1,4 @@
-Rank,All Noise,1x Poisson Noise,7x Poisson Noise,1x Dynamical Noise,7x Dynamical Noise
+Rank,All Noise,Low Poisson Noise,High Poisson Noise,Low Dynamical Noise,High Dynamical Noise
 1,Autocovariance (0.2),Autocovariance (0.23),Autocovariance (0.22),Autocovariance (0.16),Mean (0.05)
 2,Variance (0.2),Variance (0.21),Mean (0.2),Variance (0.14),Variance (0.04)
 3,Mean (0.18),Mean (0.2),Variance (0.18),Mean (0.13),Autocovariance (0.03)

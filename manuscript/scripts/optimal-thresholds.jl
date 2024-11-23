@@ -724,7 +724,16 @@ for gdf in gdfs,
     prepare_line_plot_df!(supplemental_lineplot_df, gdf, ewsmetric)
 end
 
-supplemental_accuracy_line_plot = line_plot(supplemental_lineplot_df)
+supplemental_accuracy_line_plot = line_plot(
+    supplemental_lineplot_df;
+    nbanks = 2,
+    facet_fontsize = 24,
+    legendsize = 24,
+    xlabelsize = 26,
+    ylabelsize = 26,
+    xticklabelsize = 24,
+    yticklabelsize = 24,
+)
 
 supplemental_line_plotdir = projectdir(
     "manuscript", "supplemental_files", "plots"

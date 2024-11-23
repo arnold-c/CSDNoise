@@ -134,7 +134,6 @@ function line_plot(
             PolyElement(; color = col) for
             col in Makie.wong_colors()[1:num_noise_descriptions]
         ],
-        # repeat([""], 4),
         noise_descriptions,
         "";
         nbanks = nbanks,

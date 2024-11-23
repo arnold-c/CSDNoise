@@ -222,7 +222,7 @@
 
 #figure(
   image("./supplemental_files/plots/accuracy-line-plot.svg"),
-  caption: [The change in alert accuracy for less correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise]
+  caption: [The change in alert accuracy for the least correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The tests sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 = Survival Analysis

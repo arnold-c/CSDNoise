@@ -32,3 +32,5 @@ xlabelsize = 28
 ylabelsize = 28
 xticklabelsize = 24
 yticklabelsize = 24
+legendticklabelsize = 22
+legendwidth = 20

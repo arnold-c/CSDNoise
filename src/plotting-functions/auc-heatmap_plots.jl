@@ -1,4 +1,5 @@
 using Match: @match
+using Printf: @sprintf
 function tau_auc_heatmap(
     df,
     textoutcome = :auc_magnitude,
@@ -7,7 +8,6 @@ function tau_auc_heatmap(
     plottitle = "Kendall's Tau $(replace(titlecase(replace(string(textoutcome), "_" => " ")), "Auc" => "AUC")) Heatmap",
     xlabel = "Test Sensitivity & Specificity",
     ylabel = "EWS Metric",
-    digits = 3,
     fontsize = 22,
     legendsize = 22,
     xlabelsize = 22,
@@ -47,12 +47,9 @@ function tau_auc_heatmap(
         df -> sort(df, order(2; rev = false))
 
     default_test_metric_order = text_ordered_df.ews_metric
-    default_test_metric_order_labels =
-        replace.(titlecase.(replace.(
-                default_test_metric_order,
-                "_" => " ",
-            )), "Of" => "of")
-
+    default_test_metric_order_labels = clean_ews_metric_names(
+        default_test_metric_order
+    )
     textmat = Matrix(text_ordered_df[:, 2:end])'
 
     if textoutcome == coloroutcome
@@ -77,17 +74,14 @@ function tau_auc_heatmap(
         colorrange[2] = ceil(maximum(colormat); digits = 1)
     end
 
-    function test_axis_label(test)
-        val = Int64(round(test.sensitivity * 100; digits = 0))
-        return "$val%"
-    end
-
     fig = Figure()
     ax = Axis(
         fig[1, 1];
         title = plottitle,
         xlabel = xlabel,
         ylabel = ylabel,
+        xlabelsize = xlabelsize,
+        ylabelsize = ylabelsize,
         xticks = (1:length(unique_tests), test_axis_label.(unique_tests)),
         yticks = (
             1:length(default_test_metric_order_labels),
@@ -122,7 +116,7 @@ function tau_auc_heatmap(
         end
         text!(
             ax,
-            "$(round(textmat[i,j], digits = digits))";
+            @sprintf("%.3f", textmat[i, j]);
             position = (i, j),
             color = textcolor,
             align = (:center, :center),
@@ -150,4 +144,16 @@ function tau_auc_heatmap(
         ticklabelsize = legendticklabelsize,
     )
     return fig
+end
+
+function clean_ews_metric_names(metric_vector)
+    return replace.(titlecase.(replace.(
+            metric_vector,
+            "_" => " ",
+        )), "Of" => "of")
+end
+
+function test_axis_label(test)
+    val = Int64(round(test.sensitivity * 100; digits = 0))
+    return "$val%"
 end

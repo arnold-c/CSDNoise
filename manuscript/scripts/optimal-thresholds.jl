@@ -10,8 +10,7 @@ using StatsBase: StatsBase
 using CSV: CSV
 using Match: @match
 
-include(srcdir("cairomakie-plotting-setup.jl"))
-CairoMakie.activate!(; type = "svg")
+include(projectdir("manuscript", "scripts", "plotting-setup.jl"))
 
 #%%
 ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
@@ -250,10 +249,21 @@ for (noise_num, gdf) in enumerate(gdfs)
 
     optimal_heatmap_plot = optimal_ews_heatmap_plot(
         optimal_heatmap_df;
-        subtitle = noise_description,
+        plottitle = "",
+        subtitle = "",
+        ylabel = "",
         colormap = :Blues,
         colorrange = (0.5, 0.8),
         textcolorthreshold = 0.68,
+        accuracy_fontsize = 20,
+        rest_fontsize = 16,
+        legendsize = legendsize,
+        xlabelsize = xlabelsize,
+        ylabelsize = ylabelsize,
+        xticklabelsize = xticklabelsize,
+        yticklabelsize = yticklabelsize,
+        legendticklabelsize = legendticklabelsize,
+        legendwidth = legendwidth,
     )
 
     optimal_heatmap_plot_name =
@@ -269,7 +279,6 @@ for (noise_num, gdf) in enumerate(gdfs)
     save(
         joinpath(heatmap_plotdir, optimal_heatmap_plot_name),
         optimal_heatmap_plot;
-        size = (1700, 1000),
     )
 
     test_df = subset(
@@ -402,9 +411,19 @@ for (noise_num, gdf) in enumerate(gdfs)
                     auc_df,
                     :auc,
                     :auc;
+                    plottitle = "",
+                    ylabel = "",
                     colormap = :RdBu,
                     colorrange = [0, 1.0],
                     textcolorthreshold = (0.3, 0.7),
+                    fontsize = 22,
+                    legendsize = legendsize,
+                    xlabelsize = xlabelsize,
+                    ylabelsize = ylabelsize,
+                    xticklabelsize = xticklabelsize,
+                    yticklabelsize = yticklabelsize,
+                    legendticklabelsize = legendticklabelsize,
+                    legendwidth = legendwidth,
                 )
 
                 tau_auc_heatmap_plot_name =
@@ -433,9 +452,19 @@ for (noise_num, gdf) in enumerate(gdfs)
                     auc_df,
                     :auc_magnitude,
                     :auc_magnitude;
+                    plottitle = "",
+                    ylabel = "",
                     colormap = :Blues,
                     colorrange = [0, 0.5],
                     textcolorthreshold = 0.3,
+                    fontsize = 22,
+                    legendsize = legendsize,
+                    xlabelsize = xlabelsize,
+                    ylabelsize = ylabelsize,
+                    xticklabelsize = xticklabelsize,
+                    yticklabelsize = yticklabelsize,
+                    legendticklabelsize = legendticklabelsize,
+                    legendwidth = legendwidth,
                 )
 
                 tau_auc_magnitude_heatmap_plot_name =

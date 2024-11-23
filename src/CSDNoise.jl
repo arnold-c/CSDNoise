@@ -164,7 +164,7 @@ include("plotting-functions/accuracy-lines_plots.jl")
 export prepare_line_plot_df!, line_plot
 
 include("plotting-functions/auc-heatmap_plots.jl")
-export tau_auc_heatmap
+export tau_auc_heatmap, clean_ews_metric_names, test_axis_label
 
 include("plotting-functions/survival_plots.jl")
 export ews_survival_plot

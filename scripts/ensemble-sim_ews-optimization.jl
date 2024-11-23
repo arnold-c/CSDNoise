@@ -523,3 +523,19 @@ if debug_Reff_plots
         baseline_test = test_specification,
     )
 end
+
+#%%
+tau_auc_heatmap(
+    auc_df,
+    :auc,
+    :auc;
+    baseline_test = test_specification,
+    plottitle = "",
+    ylabel = "",
+    legendwidth = 20,
+    xticklabelsize = 22,
+    legendticklabelsize = 22,
+    legendsize = 22,
+    fontsize = 22,
+    digits = 3,
+)

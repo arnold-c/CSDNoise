@@ -5,9 +5,11 @@ using ProgressMeter
 using UnPack: @unpack
 using REPL: REPL
 using REPL.TerminalMenus: RadioMenu, request
+using Base: rest
 using Try: Try
 using Match: Match
 using Makie: Makie
+using Printf: @sprintf
 
 function ews_hyperparam_optimization(
     specification_vecs,
@@ -676,6 +678,18 @@ function optimal_ews_heatmap_plot(
     colormap = :RdBu,
     colorrange = [0.2, 0.8],
     textcolorthreshold = (0.4, 0.68),
+    xlabel = "Test Sensitivity & Specificity",
+    ylabel = "EWS Metric",
+    colorlabel = "Accuracy",
+    accuracy_fontsize = 12,
+    rest_fontsize = 12,
+    legendsize = 22,
+    xlabelsize = 22,
+    ylabelsize = 22,
+    xticklabelsize = 22,
+    yticklabelsize = 22,
+    legendticklabelsize = 22,
+    legendwidth = 20,
     kwargs...,
 )
     kwargs_dict = Dict{Symbol,Any}(kwargs)
@@ -719,6 +733,9 @@ function optimal_ews_heatmap_plot(
         df,
         outcome,
     )
+    default_test_metric_order_labels = clean_ews_metric_names(
+        default_test_metric_order
+    )
 
     if minimum(mat) < colorrange[1]
         colorrange[1] = floor(minimum(mat); digits = 1)
@@ -745,21 +762,22 @@ function optimal_ews_heatmap_plot(
         default_test_metric_order,
     )
 
-    function test_axis_label(test)
-        return "($(test.sensitivity), $(test.specificity), $(test.test_result_lag))"
-    end
-
     fig = Figure()
     ax = Axis(
         fig[1, 1];
         title = plottitle,
         subtitle = subtitle,
-        xlabel = "Test Specification (Sensitivity, Specificity, Lag)",
-        ylabel = "EWS Metric",
+        xlabel = xlabel,
+        ylabel = ylabel,
+        xlabelsize = xlabelsize,
+        ylabelsize = ylabelsize,
         xticks = (1:length(unique_tests), test_axis_label.(unique_tests)),
         yticks = (
-            1:length(default_test_metric_order), default_test_metric_order
+            1:length(default_test_metric_order),
+            default_test_metric_order_labels,
         ),
+        xticklabelsize = xticklabelsize,
+        yticklabelsize = yticklabelsize,
     )
 
     hmap = heatmap!(
@@ -785,16 +803,30 @@ function optimal_ews_heatmap_plot(
                 "variable `textcolorthreshold` should be length 1 or 2. Instead received length $(length(textcolorthreshold))"
             )
         end
-        acc = round(mat[i, j]; digits = 2)
-        perc = round(threshold_percentile_matrix[i, j]; digits = 2)
+        acc = @sprintf("%.2f", mat[i, j])
+        perc = @sprintf("%.2f", threshold_percentile_matrix[i, j])
+        spec = @sprintf("%.2f", specificity_df[i, j])
         consec = consecutive_thresholds_df[i, j]
-        spec = round(specificity_df[i, j]; digits = 2)
+        label = rich("accuracy")
+        acc_label = "Acc: $(acc)\n"
+        acc_label_length = length(acc_label)
+        rest_label = "Q: $(perc) C: $(consec)\nS: $(spec)"
+        rest_label_length = length(rest_label)
+        label = acc_label * rest_label
         text!(
             ax,
-            "Accuracy: $(acc)\nP: $(perc) C: $(consec) S: $(spec)";
+            label;
             position = (i, j),
             color = textcolor,
             align = (:center, :center),
+            fontsize = [
+                fill(accuracy_fontsize, acc_label_length);
+                fill(rest_fontsize, rest_label_length)
+            ],
+            font = [
+                fill("TeX Gyre Heros Makie Bold", acc_label_length);
+                fill("TeX Gyre Heros Makie", rest_label_length)
+            ],
         )
     end
 
@@ -804,7 +836,14 @@ function optimal_ews_heatmap_plot(
         (0, length(default_test_metric_order) + 1),
     )
     #
-    Colorbar(fig[1, 2], hmap; label = outcome_str, width = 15, ticksize = 15)
+    Colorbar(
+        fig[1, 2],
+        hmap;
+        label = colorlabel,
+        width = legendwidth,
+        labelsize = legendsize,
+        ticklabelsize = legendticklabelsize,
+    )
     return fig
 end
 

@@ -225,48 +225,6 @@
   caption: [The change in alert accuracy for the least correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The tests sensitivity equals the test specificity for all diagnostic tests.]
 )
 
-= Survival Analysis
-
-// #figure(
-//   image("./manuscript_files/plots/survival/survival_ews-autocovariance.svg"),
-//   caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-// )
-
-#figure(
-  image("./supplemental_files/plots/survival/survival_ews-variance.svg"),
-  caption: [Survival curves for the variance EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-)
-
-#figure(
-  image("./supplemental_files/plots/survival/survival_ews-mean.svg"),
-  caption: [Survival curves for the mean EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-)
-
-#figure(
-  image("./supplemental_files/plots/survival/survival_ews-index_of_dispersion.svg"),
-  caption: [Survival curves for the index of dispersion EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-)
-
-#figure(
-  image("./supplemental_files/plots/survival/survival_ews-autocorrelation.svg"),
-  caption: [Survival curves for the autocorrelation EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-)
-
-#figure(
-  image("./supplemental_files/plots/survival/survival_ews-coefficient_of_variation.svg"),
-  caption: [Survival curves for the coefficient of variation EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-)
-
-#figure(
-  image("./supplemental_files/plots/survival/survival_ews-skewness.svg"),
-  caption: [Survival curves for the skewness EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-)
-
-#figure(
-  image("./supplemental_files/plots/survival/survival_ews-kurtosis.svg"),
-  caption: [Survival curves for the kurtosis EWS metric computed on emergent and null simulations, with a perfect test and an RDT equivalent with 90% sensitivity and specificity. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves.]
-)
-
 #set bibliography(style: "elsevier-vancouver")
 
 #bibliography("CSD.bib")

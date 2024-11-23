@@ -31,7 +31,7 @@
   three_header_table(
     columns: 6,
     align: horizon,
-    table.cell(rowspan: 3, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
+    table.cell(rowspan: 3, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & Specific Imperfect Test],
     table.cell(rowspan: 2)[All Noise], table.cell(colspan: 2)[Poisson Noise], table.cell(colspan:2)[Dynamical Noise],
     ..tau_comparison_vals
   ),
@@ -46,7 +46,7 @@
   three_header_table(
     columns: 6,
     align: horizon,
-    table.cell(rowspan: 3, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & 90% Specific RDT],
+    table.cell(rowspan: 3, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & Specific Imperfect Test],
     table.cell(rowspan: 2)[All Noise], table.cell(colspan: 2)[Poisson Noise], table.cell(colspan:2)[Dynamical Noise],
     ..accuracy_comparison_vals
   ),

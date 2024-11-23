@@ -5,6 +5,17 @@ function tau_auc_heatmap(
     coloroutcome = :auc_magnitude;
     baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
     plottitle = "Kendall's Tau $(replace(titlecase(replace(string(textoutcome), "_" => " ")), "Auc" => "AUC")) Heatmap",
+    xlabel = "Test Sensitivity & Specificity",
+    ylabel = "EWS Metric",
+    digits = 3,
+    fontsize = 22,
+    legendsize = 22,
+    xlabelsize = 22,
+    ylabelsize = 22,
+    xticklabelsize = 22,
+    yticklabelsize = 22,
+    legendticklabelsize = 22,
+    legendwidth = 20,
     colormap = :RdBu,
     colorrange = [0.2, 0.8],
     textcolorthreshold = (0.4, 0.68),
@@ -36,6 +47,11 @@ function tau_auc_heatmap(
         df -> sort(df, order(2; rev = false))
 
     default_test_metric_order = text_ordered_df.ews_metric
+    default_test_metric_order_labels =
+        replace.(titlecase.(replace.(
+                default_test_metric_order,
+                "_" => " ",
+            )), "Of" => "of")
 
     textmat = Matrix(text_ordered_df[:, 2:end])'
 
@@ -62,19 +78,23 @@ function tau_auc_heatmap(
     end
 
     function test_axis_label(test)
-        return "($(test.sensitivity), $(test.specificity), $(test.test_result_lag))"
+        val = Int64(round(test.sensitivity * 100; digits = 0))
+        return "$val%"
     end
 
     fig = Figure()
     ax = Axis(
         fig[1, 1];
         title = plottitle,
-        xlabel = "Test Specification (Sensitivity, Specificity, Lag)",
-        ylabel = "EWS Metric",
+        xlabel = xlabel,
+        ylabel = ylabel,
         xticks = (1:length(unique_tests), test_axis_label.(unique_tests)),
         yticks = (
-            1:length(default_test_metric_order), default_test_metric_order
+            1:length(default_test_metric_order_labels),
+            default_test_metric_order_labels,
         ),
+        xticklabelsize = xticklabelsize,
+        yticklabelsize = yticklabelsize,
     )
 
     hmap = heatmap!(
@@ -102,10 +122,11 @@ function tau_auc_heatmap(
         end
         text!(
             ax,
-            "$(round(textmat[i,j], digits = 5))";
+            "$(round(textmat[i,j], digits = digits))";
             position = (i, j),
             color = textcolor,
             align = (:center, :center),
+            fontsize = fontsize,
         )
     end
 
@@ -120,6 +141,13 @@ function tau_auc_heatmap(
         :auc_magnitude => "|AUC - 0.5|"
     end
 
-    Colorbar(fig[1, 2], hmap; label = colorlabel, width = 15, ticksize = 15)
+    Colorbar(
+        fig[1, 2],
+        hmap;
+        label = colorlabel,
+        width = legendwidth,
+        labelsize = legendsize,
+        ticklabelsize = legendticklabelsize,
+    )
     return fig
 end

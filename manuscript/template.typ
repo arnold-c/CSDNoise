@@ -270,7 +270,7 @@
 
 #let rename_noise_extract_vals(content, sliceval: 2) = {
   content.flatten()
-  .map(it => it.replace(regex("1x.*"), "Low"))
-  .map(it => it.replace(regex("7x.*"), "High"))
+  .map(it => it.replace(regex("(\w+)\s\w+\sNoise"), it => it.captures.at(0)))
   .slice(sliceval)
 }
+

@@ -697,12 +697,12 @@ end
 accuracy_line_plot = line_plot(
     lineplot_df;
     nbanks = 2,
-    facet_fontsize = 24,
-    legendsize = 24,
-    xlabelsize = 26,
-    ylabelsize = 26,
-    xticklabelsize = 24,
-    yticklabelsize = 24,
+    facet_fontsize = facet_fontsize,
+    legendsize = legendsize,
+    xlabelsize = xlabelsize,
+    ylabelsize = ylabelsize,
+    xticklabelsize = xticklabelsize,
+    yticklabelsize = yticklabelsize,
 )
 
 line_plotdir = projectdir("manuscript", "manuscript_files", "plots")
@@ -727,12 +727,12 @@ end
 supplemental_accuracy_line_plot = line_plot(
     supplemental_lineplot_df;
     nbanks = 2,
-    facet_fontsize = 24,
-    legendsize = 24,
-    xlabelsize = 26,
-    ylabelsize = 26,
-    xticklabelsize = 24,
-    yticklabelsize = 24,
+    facet_fontsize = facet_fontsize,
+    legendsize = legendsize,
+    xlabelsize = xlabelsize,
+    ylabelsize = ylabelsize,
+    xticklabelsize = xticklabelsize,
+    yticklabelsize = yticklabelsize,
 )
 
 supplemental_line_plotdir = projectdir(
@@ -777,12 +777,12 @@ for metric in ews_metrics
             IndividualTestSpecification(0.9, 0.9, 0),
         ],
         linestyle_vec = [:solid, :dot],
-        facet_fontsize = 24,
-        legendsize = 24,
-        xlabelsize = 28,
-        ylabelsize = 28,
-        xticklabelsize = 24,
-        yticklabelsize = 24,
+        facet_fontsize = facet_fontsize,
+        legendsize = legendsize,
+        xlabelsize = xlabelsize,
+        ylabelsize = ylabelsize,
+        xticklabelsize = xticklabelsize,
+        yticklabelsize = yticklabelsize,
     )
 
     survival_plot_name = "survival_" *

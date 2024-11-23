@@ -25,3 +25,10 @@ set_theme!(
 
 update_theme!(; size = (1300, 800))
 CairoMakie.activate!(; type = "svg", px_per_unit = 1.0)
+
+facet_fontsize = 24
+legendsize = 24
+xlabelsize = 28
+ylabelsize = 28
+xticklabelsize = 24
+yticklabelsize = 24

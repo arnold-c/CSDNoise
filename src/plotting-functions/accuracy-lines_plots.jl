@@ -62,13 +62,17 @@ end
 
 function line_plot(
     df;
-    legend_rowsize = Relative(0.05),
+    xlabel = "Test Sensitivity & Specificity",
+    ylabel = "Alert Accuracy",
     facet_fontsize = 20,
     legendsize = 22,
     xlabelsize = 22,
     ylabelsize = 22,
     xticklabelsize = 22,
     yticklabelsize = 22,
+    legend_rowsize = Relative(0.05),
+    xlabel_rowsize = Makie.Relative(0.03),
+    ylabel_rowsize = Makie.Relative(0.02),
     kwargs...,
 )
     kwargs_dict = Dict{Symbol,Any}(kwargs)
@@ -121,8 +125,6 @@ function line_plot(
             ),
             ylims = ylims,
             facet_fontsize = facet_fontsize,
-            xlabelsize = xlabelsize,
-            ylabelsize = ylabelsize,
             xticklabelsize = xticklabelsize,
             yticklabelsize = yticklabelsize,
         )
@@ -142,6 +144,24 @@ function line_plot(
 
     rowsize!(fig.layout, 0, legend_rowsize)
 
+    Label(
+        fig[:, 0],
+        ylabel;
+        fontsize = ylabelsize,
+        font = :bold,
+        rotation = pi / 2,
+    )
+    colsize!(fig.layout, 0, ylabel_rowsize)
+
+    xlabel_position = num_metrics > 2 ? 3 : 2
+    Label(
+        fig[xlabel_position, :],
+        xlabel;
+        fontsize = xlabelsize,
+        font = :bold,
+    )
+    rowsize!(fig.layout, xlabel_position, xlabel_rowsize)
+
     return fig
 end
 
@@ -154,6 +174,8 @@ function line_plot_facet!(
     ylims = nothing,
     facet_fontsize = 20,
     legendsize = 22,
+    xlabel = "",
+    ylabel = "",
     xlabelsize = 22,
     ylabelsize = 22,
     xticklabelsize = 22,
@@ -170,8 +192,8 @@ function line_plot_facet!(
 
     ax = Axis(
         gl[2, 1];
-        xlabel = "Test Sensitivity & Specificity",
-        ylabel = "Alert Accuracy",
+        xlabel = xlabel,
+        ylabel = ylabel,
         xticks = (collect(1:length(test_labels)), test_labels),
         titlesize = facet_fontsize,
         xlabelsize = xlabelsize,

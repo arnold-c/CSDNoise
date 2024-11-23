@@ -268,3 +268,9 @@
   fill: (x, y) => { if y == 0 or y == 1 or y == 2 {gray}}
 )
 
+#let rename_noise_extract_vals(content, sliceval: 2) = {
+  content.flatten()
+  .map(it => it.replace(regex("1x.*"), "Low"))
+  .map(it => it.replace(regex("7x.*"), "High"))
+  .slice(sliceval)
+}

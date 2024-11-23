@@ -206,12 +206,7 @@ With low levels of dynamical noise, the autocovariance, variance, and mean remai
 At high dynamical noise, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
 
 #let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
-#let auc_magnitude_comparison_vals = { auc_magnitude_comparison_table
-  .flatten()
-  .map(it => it.replace(regex("1x.*"), "Low"))
-  .map(it => it.replace(regex("7x.*"), "High"))
-  .slice(2)
-}
+#let auc_magnitude_comparison_vals = rename_noise_extract_vals(auc_magnitude_comparison_table)
 
 #figure(
   three_header_table(

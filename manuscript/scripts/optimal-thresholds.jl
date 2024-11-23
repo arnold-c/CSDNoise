@@ -777,6 +777,12 @@ for metric in ews_metrics
             IndividualTestSpecification(0.9, 0.9, 0),
         ],
         linestyle_vec = [:solid, :dot],
+        facet_fontsize = 24,
+        legendsize = 24,
+        xlabelsize = 26,
+        ylabelsize = 26,
+        xticklabelsize = 24,
+        yticklabelsize = 24,
     )
 
     survival_plot_name = "survival_" *

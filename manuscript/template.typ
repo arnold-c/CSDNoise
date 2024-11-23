@@ -86,7 +86,8 @@
     #numbering(it.note.numbering, ..counter(footnote).at(it.note.location())) #it.note.body
   ]
 
-  show figure.caption: emph
+  // show figure.caption: emph
+  show figure.where(kind: table): set figure.caption(position: top)
   set table(
     fill: (x, y) => {
       if y == 0 {gray}

@@ -19,6 +19,9 @@
 	),
 )
 
+#show figure.where(kind: table): set figure(supplement: [Supplemental Table])
+#show figure.where(kind: image): set figure(supplement: [Supplemental Figure])
+
 = Tables
 
 #let tau_comparison_table = csv("./manuscript_files/tables/tau-comparison.csv")
@@ -58,33 +61,12 @@
 <tbl-alert-accuracy-auc-rdt>
 
 
-
 = Plots
-== AUC Magnitude Heatmaps
-// === Full Length
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_poisson_1.0x.svg"),
-//   caption: [Poisson noise, 1x]
-// )
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_poisson_7.0x.svg"),
-//   caption: [Poisson noise, 7x]
-// )
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_dynamical_0.8734.svg"),
-//   caption: [Dynamical noise, 1x]
-// )
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/full-length/tau_auc-magnitude-heatmap_dynamical_0.102.svg"),
-//   caption: [Dynamical noise, 7x]
-// )
-//
 
-=== After 5yr Burn in
+#figure(
+  image("./supplemental_files/plots/accuracy-line-plot.svg"),
+  caption: [The change in alert accuracy for the least correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The tests sensitivity equals the test specificity for all diagnostic tests.]
+)
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_poisson_1.0x.svg"),
@@ -106,98 +88,6 @@
   caption: [Dynamical noise, 7x]
 )
 
-== AUC Heatmaps
-// === Full Length
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_1.0x.svg"),
-//   caption: [Poisson noise, 1x]
-// )
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_poisson_7.0x.svg"),
-//   caption: [Poisson noise, 7x]
-// )
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.8734.svg"),
-//   caption: [Dynamical noise, 1x]
-// )
-//
-// #figure(
-//   image("./manuscript_files/plots/tau_auc-heatmaps/full-length/tau_auc-heatmap_dynamical_0.102.svg"),
-//   caption: [Dynamical noise, 7x]
-// )
-//
-
-=== After 5yr Burn in
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x]
-)
-
-#figure(
-  image("./manuscript_files/plots/tau_auc-heatmaps/after-burnin/tau_auc-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x]
-)
-
-// == Tau Heatmaps
-// === Full Length
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_1.0x.svg"),
-//   caption: [Poisson noise, 1x noise]
-// )
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_poisson_7.0x.svg"),
-//   caption: [Poisson noise, 7x noise]
-// )
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.8734.svg"),
-//   caption: [Dynamical noise, 1x noise]
-// )
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/full-length/emergent-tau-heatmap_dynamical_0.102.svg"),
-//   caption: [Dynamical noise, 7x noise]
-// )
-//
-// === After 5yr Burn in
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_1.0x.svg"),
-//   caption: [Poisson noise, 1x noise]
-// )
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_poisson_7.0x.svg"),
-//   caption: [Poisson noise, 7x noise]
-// )
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.8734.svg"),
-//   caption: [Dynamical noise, 1x noise]
-// )
-//
-// #figure(
-//   image("manuscript_files/plots/tau_heatmaps/emergent/after-burnin/emergent-tau-heatmap_dynamical_0.102.svg"),
-//   caption: [Dynamical noise, 7x noise]
-// )
-//
-//
 == Optimal Threshold Accuracies
 
 #figure(
@@ -220,10 +110,6 @@
   caption: [The maximal alert accuracy under 7x Dynamical noise. P) refers to the long-running percentile threshold to return a flag, and C) the number of consecutive flags to trigger and alert, that in combination produce the maximal accuracy. S) refers to the specificity of the alert system]
 )
 
-#figure(
-  image("./supplemental_files/plots/accuracy-line-plot.svg"),
-  caption: [The change in alert accuracy for the least correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The tests sensitivity equals the test specificity for all diagnostic tests.]
-)
 
 #set bibliography(style: "elsevier-vancouver")
 

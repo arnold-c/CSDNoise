@@ -262,3 +262,9 @@
   ..args,
   fill: (x, y) => { if y == 0 or y == 1 {gray}}
 )
+
+#let three_header_table(..args) = table(
+  ..args,
+  fill: (x, y) => { if y == 0 or y == 1 or y == 2 {gray}}
+)
+

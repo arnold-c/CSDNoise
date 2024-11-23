@@ -206,12 +206,20 @@ With low levels of dynamical noise, the autocovariance, variance, and mean remai
 At high dynamical noise, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
 
 #let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
+#let auc_magnitude_comparison_vals = { auc_magnitude_comparison_table
+  .flatten()
+  .map(it => it.replace(regex("1x.*"), "Low"))
+  .map(it => it.replace(regex("7x.*"), "High"))
+  .slice(2)
+}
 
 #figure(
-  two_header_table(
+  three_header_table(
     columns: 6,
-    table.cell(rowspan: 2, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & Specific Imperfect Test],
-    ..auc_magnitude_comparison_table.flatten().slice(1)
+    align: horizon,
+    table.cell(rowspan: 3, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & Specific Imperfect Test],
+    table.cell(rowspan: 2)[All Noise], table.cell(colspan: 2)[Poisson Noise], table.cell(colspan:2)[Dynamical Noise],
+    ..auc_magnitude_comparison_vals
   ),
   caption: [$|"AUC" - 0.5|$ for EWS metrics, ranked in descending order of magnitude, computed on the subset of the emergent time series after the burn-in period, for a perfect test and an imperfect diagnostic test with 90% sensitivity and 90% specificity, under high and low Poisson and dynamical noise systems]
 )

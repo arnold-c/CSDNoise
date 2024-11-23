@@ -52,7 +52,7 @@
   ),
   caption: [The ranking and alert accuracy of the EWS-based alert system computed on the subset of the emergent time series after the burn-in period, for a perfect test and an imperfect test with sensitivity and specificity equal to 90%, under high and low Poisson and dynamical noise systems]
 )
-<tbl-tau-ranking-rdt-comparison>
+<tbl-accuracy-ranking-rdt-comparison>
 
 = Plots
 
@@ -102,8 +102,3 @@
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
   caption: [The maximal alert accuracy under 7x Dynamical noise. P) refers to the long-running percentile threshold to return a flag, and C) the number of consecutive flags to trigger and alert, that in combination produce the maximal accuracy. S) refers to the specificity of the alert system]
 )
-
-
-#set bibliography(style: "elsevier-vancouver")
-
-#bibliography("CSD.bib")

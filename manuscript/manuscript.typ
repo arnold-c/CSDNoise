@@ -198,7 +198,7 @@ Consistent with previous studies, the autocovariance, variance, mean, and index 
 <tbl_csd-tau-ranking-perfect-test>
 
 With an imperfect diagnostic test, the correlation with emergence was more influenced by the noise structure (Poisson vs. dynamical) than the noise magnitude (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
-For an RDT-equivalent test with 90% sensitivity and specificity, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
+For an imperfect test with 90% sensitivity and specificity, the correlation between all EWS metrics and emergence was relatively unaffected by the magnitude of Poisson noise.
 The top four metrics with a perfect diagnostic test (autocovariance, variance, mean, and index of dispersion) maintained their positions as the most strongly correlated metrics.
 
 For simulations with rubella-like SEIR dynamical noise, the correlation of all metrics was lower at low dynamical noise compared to low Poisson noise (@tbl_csd-auc-magnitude-ranking-rdt-comparison).
@@ -227,8 +227,7 @@ A full characterization of the strength of association between each metric and e
 Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy at a different combination of EWS hyperparameters (the quantile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (Supplemental Figures 6-9).
 At their respective maximal accuracies, the relative ranking of the EWS metrics computed with a perfect diagnostic test remained consistent to the ranking based upon $|"AUC" - 0.5|$: Mean (accuracy = 0.72), variance (0.72), autocovariance (0.7), index of dispersion (0.63), autocorrelation (0.62), skewness (0.6), kurtosis (0.58), and coefficient of variation (0.5) (Supplemental Table 2).
 
-When EWS metrics were computed on time series generated from RDTs, each metric's accuracy generally remained constant, with a few notable exceptions (@fig-best-accuracy-line-plot, Supplemental Figure 1).
-
+When EWS metrics were computed on time series generated from imperfect diagnostic tests, each metric's accuracy generally remained constant, with a few notable exceptions (@fig-best-accuracy-line-plot, Supplemental Figure 1).
 For the 4 most correlated metrics (autocovariance, variance, mean, and index of dispersion), the accuracy achieved with imperfect diagnostic tests was comparable for low and high Poisson noise, for all diagnostic test accuracies (@fig-best-accuracy-line-plot).
 The accuracy of outbreak detection using index of dispersion increased with decreasing diagnostic test sensitivity and specificity for low and high levels of Poisson noise (@fig-best-accuracy-line-plot, Supplemental Figure 6 & 7).
 For low dynamical noise, accuracy increased slightly for diagnostic test sensitivity and specificity greater than 97% and then declined (@fig-best-accuracy-line-plot).
@@ -275,7 +274,7 @@ Depending on the context, it may be desirable to place a greater weight in prefe
 This analysis provides a framework to explicitly explore these trade-offs through the comparison of survival curves.
 A larger separation at the end of the time series between the emergent and null simulation lines indicates higher accuracy, as there is a greater difference in the true positive and false positive rates.
 Faster declines indicate a (relatively) more sensitive alert system with more advanced warning of emergence.
-Under the simulation constraints placed here (i.e., equal weighting to speed and specificity to the alert system's accuracy, with the results of the more specific system being presented in cases where multiple thresholds hyperparameters provide the same accuracy), generally, the use of RDTs does not increase the speed of the warning for the EWS metrics that are predictive of emergence.
+Under the simulation constraints placed here (i.e., equal weighting to speed and specificity to the alert system's accuracy, with the results of the more specific system being presented in cases where multiple thresholds hyperparameters provide the same accuracy), generally, the use of imperfect diagnostic tests does not increase the speed of the warning for the EWS metrics that are predictive of emergence.
 This is likely a consequence of imperfect diagnostic tests producing more false positive cases, which, without appropriate penalization, would otherwise lead to high false alert rates under the same EWS hyperparameters.
 Adjusting the relative weighting of alert sensitivity and specificity used to compute the alert accuracy would allow for an exploration of alternative scenarios.
 Additionally, multiple hyperparameter combinations can produce identical alert accuracy i.e., some combinations will favor the speed of alert at the expensive of its specificity, and _vice versa_.

@@ -9,6 +9,7 @@ using StructArrays
 using StatsBase: StatsBase
 using CSV: CSV
 using Match: @match
+using Printf: @sprintf
 
 include(projectdir("manuscript", "scripts", "plotting-setup.jl"))
 
@@ -205,7 +206,7 @@ function extract_tau_auc_metric(
             ByRow(
                 (x, y) ->
                     sentencecase(replace(x, "_" => " ")) *
-                    " ($(round(y; digits = 2)))",
+                    " (" * @sprintf("%.2f", y) * ")",
             ) => header_label,
     )
 end

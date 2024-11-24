@@ -54,7 +54,7 @@
 )
 <tbl-accuracy-ranking-rdt-comparison>
 
-= Plots
+= Figures
 
 #figure(
   image("./supplemental_files/plots/accuracy-line-plot.svg"),

@@ -175,6 +175,7 @@ For each alert scenario, a grid search over the EWS hyperparameters (quantile th
 If multiple hyperparameter combinations produce identical alert system accuracies, the combination with the highest specificity is selected.
 After the optimal EWS hyperparameters have been selected, the accuracy of each EWS metric are compared across alert scenarios, at their respective maximal values.
 Finally, the speed and timing of detection relative to the critical transition is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
+Alert accuracy was only evaluated on EWS calculated after the completion of the burn-in period.
 
 = Results
 == Correlation with Emergence

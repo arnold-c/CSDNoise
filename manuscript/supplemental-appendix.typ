@@ -63,22 +63,22 @@
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_poisson_1.0x.svg"),
-  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at low levels of Poisson noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at low levels of Poisson noise, for diagnostic tests of varying accuracy, and was computed after the completion of the burn-in period. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_poisson_7.0x.svg"),
-  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at high levels of Poisson noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at high levels of Poisson noise, for diagnostic tests of varying accuracy, and was computed after the completion of the burn-in period. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_dynamical_0.8734.svg"),
-  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at low levels of dynamical noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at low levels of dynamical noise, for diagnostic tests of varying accuracy, and was computed after the completion of the burn-in period. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_dynamical_0.102.svg"),
-  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at high levels of dynamical noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at high levels of dynamical noise, for diagnostic tests of varying accuracy, and was computed after the completion of the burn-in period. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 == Optimal Threshold Accuracies

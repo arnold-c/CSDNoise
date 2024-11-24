@@ -182,7 +182,7 @@ Alert accuracy was only evaluated on EWS calculated after the completion of the 
 
 The strength and direction of the raw correlation (Tau) between EWS metrics and the approach to the critical transition in emergent time series is strongly dependent upon the length of the time series evaluated; Tau is higher when calculated after the burn-in period for the top 5 ranked metrics (@tbl_csd-tau-ranking-perfect-test).
 Normalizing the correlation in the emergent time series against the correlation observed in null simulations yields comparable results when calculated from the full time series and only after the burn-in (@tbl_csd-tau-ranking-perfect-test).
-Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.2, 0.2, 0.18$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
+Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.20, 0.20, 0.18, 0.13$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
 
 #let perfect_tau_auc_table = csv("./manuscript_files/tables/perfect-test_tau-auc.csv")
 
@@ -206,7 +206,7 @@ For simulations with rubella-like SEIR dynamical noise, the correlation of all m
 With low levels of dynamical noise, the autocovariance, variance, and mean remained the most correlated with emergence ($|"AUC" - 0.5| = 0.16, 0.14, "and" 0.13$, respectively).
 At high dynamical noise, these correlations disappeared, with all EWS metrics exhibiting $|"AUC"-0.5| lt.eq 0.05$.
 
-A full characterization of the strength of association between each metric and emergence, across all diagnostic tests and noise structures can be seen in Supplemental Figures 2-5.
+A full characterization of the strength of association between each metric and emergence, across all diagnostic tests and noise structures, can be seen in Supplemental Figures 2-5.
 
 #let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
 #let auc_magnitude_comparison_vals = rename_noise_extract_vals(auc_magnitude_comparison_table)
@@ -226,7 +226,7 @@ A full characterization of the strength of association between each metric and e
 == Predictive Ability
 
 Each alert scenario (the combination of diagnostic test, noise structure and magnitude, and EWS metric) produced its optimal accuracy at a different combination of EWS hyperparameters (the quantile threshold of the long-running metric distribution to be exceeded to return a flag, and the number of consecutive flags required to trigger an alert) (Supplemental Figures 6-9).
-At their respective maximal accuracies, the relative ranking of the EWS metrics computed with a perfect diagnostic test remained consistent to the ranking based upon $|"AUC" - 0.5|$: Mean (accuracy = 0.72), variance (0.72), autocovariance (0.7), index of dispersion (0.63), autocorrelation (0.62), skewness (0.6), kurtosis (0.58), and coefficient of variation (0.5) (Supplemental Table 2).
+At their respective maximal accuracies, the relative ranking of the EWS metrics computed with a perfect diagnostic test remained consistent to the ranking based upon $|"AUC" - 0.5|$: Mean (accuracy = 0.72), variance (0.72), autocovariance (0.70), index of dispersion (0.63), autocorrelation (0.62), skewness (0.60), kurtosis (0.58), and coefficient of variation (0.50) (Supplemental Table 2).
 
 When EWS metrics were computed on time series generated from imperfect diagnostic tests, each metric's accuracy generally remained constant, with a few notable exceptions (@fig-best-accuracy-line-plot, Supplemental Figure 1).
 For the 4 most correlated metrics (autocovariance, variance, mean, and index of dispersion), the accuracy achieved with imperfect diagnostic tests was comparable for low and high Poisson noise, for all diagnostic test accuracies (@fig-best-accuracy-line-plot).

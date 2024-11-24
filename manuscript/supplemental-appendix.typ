@@ -58,47 +58,47 @@
 
 #figure(
   image("./supplemental_files/plots/accuracy-line-plot.svg"),
-  caption: [The change in alert accuracy for the least correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The tests sensitivity equals the test specificity for all diagnostic tests.]
+  caption: [The change in alert accuracy for the least correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of Poisson or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_poisson_1.0x.svg"),
-  caption: [Poisson noise, 1x]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at low levels of Poisson noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_poisson_7.0x.svg"),
-  caption: [Poisson noise, 7x]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at high levels of Poisson noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_dynamical_0.8734.svg"),
-  caption: [Dynamical noise, 1x]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at low levels of dynamical noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("./manuscript_files/plots/tau_auc-magnitude-heatmaps/after-burnin/tau_auc-magnitude-heatmap_dynamical_0.102.svg"),
-  caption: [Dynamical noise, 7x]
+  caption: [The strength of the correlation ($|"AUC" - 0.5|$) for each EWS metric with emergence, at high levels of dynamical noise, for diagnostic tests of varying accuracy. The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 == Optimal Threshold Accuracies
 
 #figure(
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_1.0x.svg"),
-  caption: [The maximal alert accuracy under 1x Poisson noise. P) refers to the long-running percentile threshold to return a flag, and C) the number of consecutive flags to trigger and alert, that in combination produce the maximal accuracy. S) refers to the specificity of the alert system]
+  caption: [The maximal alert accuracy achieved by each EWS metric under low levels of Poisson noise. Q) refers to the long-running quantile threshold to return a flag, and C) the number of consecutive flags to trigger an alert, that in combination produce the maximal accuracy. S) refers to the resulting specificity of the alert system.  The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_poisson_7.0x.svg"),
-  caption: [The maximal alert accuracy under 7x Poisson noise. P) refers to the long-running percentile threshold to return a flag, and C) the number of consecutive flags to trigger and alert, that in combination produce the maximal accuracy. S) refers to the specificity of the alert system]
+  caption: [The maximal alert accuracy achieved by each EWS metric under high levels of Poisson noise. Q) refers to the long-running quantile threshold to return a flag, and C) the number of consecutive flags to trigger an alert, that in combination produce the maximal accuracy. S) refers to the resulting specificity of the alert system.  The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.8734.svg"),
-  caption: [The maximal alert accuracy under 1x Dynamical noise. P) refers to the long-running percentile threshold to return a flag, and C) the number of consecutive flags to trigger and alert, that in combination produce the maximal accuracy. S) refers to the specificity of the alert system]
+  caption: [The maximal alert accuracy achieved by each EWS metric under low levels of dynamical noise. Q) refers to the long-running quantile threshold to return a flag, and C) the number of consecutive flags to trigger an alert, that in combination produce the maximal accuracy. S) refers to the resulting specificity of the alert system.  The test sensitivity equals the test specificity for all diagnostic tests.]
 )
 
 #figure(
   image("manuscript_files/plots/optimal-threshold-heatmaps/optimal_heatmap_dynamical_0.102.svg"),
-  caption: [The maximal alert accuracy under 7x Dynamical noise. P) refers to the long-running percentile threshold to return a flag, and C) the number of consecutive flags to trigger and alert, that in combination produce the maximal accuracy. S) refers to the specificity of the alert system]
+  caption: [The maximal alert accuracy achieved by each EWS metric under high levels of dynamical noise. Q) refers to the long-running quantile threshold to return a flag, and C) the number of consecutive flags to trigger an alert, that in combination produce the maximal accuracy. S) refers to the resulting specificity of the alert system.  The test sensitivity equals the test specificity for all diagnostic tests.]
 )

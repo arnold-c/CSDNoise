@@ -5,8 +5,8 @@ They are just listed here for convenience of sourcing one file.
 module CSDNoise
 
 # using Reexport
-include("DrWatson-helpers.jl")
-export outdir
+include("helpers.jl")
+export outdir, sentencecase
 
 include("transmission-functions.jl")
 export calculate_beta, calculate_beta_amp,
@@ -28,7 +28,9 @@ export SimTimeParameters, EnsembleSpecification,
     StateParameters, OutbreakDetectionSpecification,
     OutbreakSpecification, IndividualTestSpecification, get_test_description,
     PoissonNoiseSpecification, DynamicalNoiseSpecification, NoiseSpecification,
+    calculate_min_max_vaccination_range,
     get_noise_description, get_noise_magnitude, get_noise_magnitude_description,
+    noise_table_description,
     getdirpath,
     EWSMethod, Backward, Centered, method_string,
     EWSMetricSpecification,
@@ -64,7 +66,8 @@ export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
     simulation_tau_heatmap_df!,
     tycho_tau_heatmap_df,
     calculate_ews_lead_time, calculate_ews_trigger_index,
-    ews_lead_time_df!
+    ews_lead_time_df!,
+    calculate_auc
 
 include("ews-hyperparam-optimization.jl")
 export ews_hyperparam_optimization,
@@ -74,9 +77,10 @@ export ews_hyperparam_optimization,
     load_most_recent_hyperparam_file,
     get_most_recent_hyperparam_filepath,
     optimal_ews_heatmap_df,
-    optimal_ews_heatmap_plot,
-    simulate_and_plot_ews_survival,
-    ews_survival_plot,
+    optimal_ews_heatmap_plot
+
+include("ews-survival.jl")
+export simulate_and_plot_ews_survival,
     simulate_ews_survival_data,
     create_ews_survival_data
 
@@ -156,11 +160,21 @@ export create_optimal_ews_plots
 include("plotting-functions/hyperparam-debugging_plots.jl")
 export hyperparam_debugging_Reff_plot
 
+include("plotting-functions/accuracy-lines_plots.jl")
+export prepare_line_plot_df!, line_plot
+
+include("plotting-functions/auc-heatmap_plots.jl")
+export tau_auc_heatmap, clean_ews_metric_names, test_axis_label
+
+include("plotting-functions/survival_plots.jl")
+export ews_survival_plot
+
 @static if false
     include("../scripts/ensemble-sim.jl")
     include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")
     include("../scripts/tycho-visualization.jl")
     include("../scripts/ensemble-sim_ews-optimization.jl")
+    include("../manuscript/scripts/optimal-thresholds.jl")
 end
 
 end

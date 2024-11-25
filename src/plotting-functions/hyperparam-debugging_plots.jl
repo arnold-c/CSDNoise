@@ -12,6 +12,7 @@ function hyperparam_debugging_Reff_plot(
     ewsmetric,
     test_positive_vec,
     null_test_positive_vec,
+    noise_vec,
     ews_vals_vec,
     null_ews_vals_vec,
     exceed_thresholds_vec,
@@ -51,33 +52,38 @@ function hyperparam_debugging_Reff_plot(
 
     aggregated_test_vec = aggregate_timeseries(test_positive_vec, aggregation)
 
-    aggregated_test_movingavg_vec = zeros(
-        Int64, size(aggregated_test_vec)
-    )
-
-    calculate_movingavg!(
-        aggregated_test_movingavg_vec,
-        aggregated_test_vec,
-        7,
-    )
+    # aggregated_test_movingavg_vec = zeros(
+    #     Int64, size(aggregated_test_vec)
+    # )
+    #
+    # calculate_movingavg!(
+    #     aggregated_test_movingavg_vec,
+    #     aggregated_test_vec,
+    #     7,
+    # )
 
     aggregated_null_test_vec = aggregate_timeseries(
         null_test_positive_vec, aggregation
     )
 
-    aggregated_null_test_movingavg_vec = zeros(
-        Int64, size(aggregated_null_test_vec)
-    )
+    # aggregated_null_test_movingavg_vec = zeros(
+    #     Int64, size(aggregated_null_test_vec)
+    # )
+    #
+    # calculate_movingavg!(
+    #     aggregated_null_test_movingavg_vec,
+    #     aggregated_null_test_vec,
+    #     7,
+    # )
 
-    calculate_movingavg!(
-        aggregated_null_test_movingavg_vec,
-        aggregated_null_test_vec,
-        7,
-    )
+    aggregated_noise_vec = aggregate_timeseries(noise_vec, aggregation)
 
     return Reff_ews_plot(
         aggregated_inc_vec,
         aggregated_null_inc_vec,
+        aggregated_test_vec,
+        aggregated_null_test_vec,
+        aggregated_noise_vec,
         aggregated_Reff_vec,
         aggregated_null_Reff_vec,
         aggregated_Reff_thresholds,

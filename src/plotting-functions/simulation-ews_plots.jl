@@ -7,6 +7,9 @@ using DataFrames
 function Reff_ews_plot(
     incvec,
     null_incvec,
+    testvec,
+    null_testvec,
+    noisevec,
     Reffvec,
     null_Reffvec,
     Reff_thresholds,
@@ -53,7 +56,10 @@ function Reff_ews_plot(
         end
         if !haskey(kwargs_dict, ylims)
             min_metric, max_metric = extrema(
-                vcat(detection_vec, null_detection_vec)
+                vcat(
+                    filter(!isnan, detection_vec),
+                    filter(!isnan, null_detection_vec),
+                ),
             )
             return (min_metric - 0.1, max_metric + 0.1)
         end
@@ -89,6 +95,8 @@ function Reff_ews_plot(
     Reff_ews_plot_facet!(
         gl_detection,
         incvec,
+        testvec,
+        noisevec,
         Reffvec,
         Reff_thresholds,
         ewsmetrics,
@@ -113,6 +121,8 @@ function Reff_ews_plot(
     Reff_ews_plot_facet!(
         gl_null,
         null_incvec,
+        null_testvec,
+        noisevec,
         null_Reffvec,
         null_Reff_thresholds,
         null_ewsmetrics,
@@ -445,6 +455,8 @@ end
 function Reff_ews_plot_facet!(
     gl,
     incvec,
+    testvec,
+    noisevec,
     Reffvec,
     Reff_thresholds,
     ewsmetrics,
@@ -549,6 +561,22 @@ function Reff_ews_plot_facet!(
         colormap = Reff_colormap,
     )
 
+    lines!(
+        incax,
+        times,
+        noisevec;
+        linewidth = 2,
+    )
+
+    band!(
+        incax,
+        times,
+        repeat([0], length(times)),
+        testvec;
+        color = (:navy, 0.4),
+        # linewidth = 5,
+    )
+
     outbreak_threshold_hline = aggregation_int == 1 ? threshold : NaN
     line_and_hline!(
         incax,
@@ -557,6 +585,7 @@ function Reff_ews_plot_facet!(
         outbreak_threshold_hline;
         color = outbreak_status_vec,
         colormap = outbreak_colormap,
+        linewidth = 2,
     )
 
     add_ews_lines!(

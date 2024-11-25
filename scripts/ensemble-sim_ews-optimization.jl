@@ -17,8 +17,6 @@ using Dates
 
 using ProgressMeter
 
-include(srcdir("makie-plotting-setup.jl"))
-
 #%%
 ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
 
@@ -162,12 +160,20 @@ logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
 noise_specification_vec = [
     PoissonNoiseSpecification(1.0),
-    PoissonNoiseSpecification(8.0),
+    PoissonNoiseSpecification(7.0),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
 ]
 
 test_specification_vec = [
     IndividualTestSpecification(0.5, 0.5, 0),
     IndividualTestSpecification(0.8, 0.8, 0),
+    IndividualTestSpecification(0.9, 0.9, 0),
+    IndividualTestSpecification(0.95, 0.95, 0),
+    IndividualTestSpecification(0.96, 0.96, 0),
+    IndividualTestSpecification(0.97, 0.97, 0),
+    IndividualTestSpecification(0.98, 0.98, 0),
+    IndividualTestSpecification(0.99, 0.99, 0),
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
 
@@ -213,9 +219,12 @@ ews_enddate_type_vec = [
     # Reff_end
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
-ews_threshold_percentile_vec = [collect(0.9:0.02:0.98)..., 0.99]
+ews_threshold_percentile_vec = collect(0.5:0.01:0.99)
 ews_consecutive_thresholds_vec = [collect(2:1:30)...]
-ews_threshold_burnin_vec = [Day(50), Year(5)]
+ews_threshold_burnin_vec = [
+    # Day(50),
+    Year(5)
+]
 
 #%%
 specification_vecs = (;
@@ -292,18 +301,31 @@ create_optimal_ews_plots(
         :ews_enddate_type,
         :ews_metric,
     ],
+    output_format = "png",
+    force_heatmap = true,
+    force_survival = false,
 )
 
 #%%
-debug_Reff_plots = false
+debug_Reff_plots = true
 
 if debug_Reff_plots
-    selected_sim = 8
-    test_noise_specification = PoissonNoiseSpecification(1.0)
-    test_specification = IndividualTestSpecification(1.0, 1.0, 0)
+    test_noise_specification = DynamicalNoiseSpecification(
+        5.0,
+        7,
+        14,
+        "in-phase",
+        0.15,
+        0.8734,
+        # 0.102,
+    )
+    # test_noise_specification = PoissonNoiseSpecification(1.0)
+    # test_ews_metric = "mean"
     test_ews_metric = "variance"
+    # test_ews_metric = "skewness"
     test_ews_metric_specification = EWSMetricSpecification(
-        Backward, Day(7), Week(52), 1
+        # Backward, Day(7), Week(52), 1
+        Backward, Day(28), Week(52), 1
     )
     test_ews_enddate_type = Reff_start
     test_ews_threshold_burnin = Dates.Year(5)
@@ -324,7 +346,7 @@ if debug_Reff_plots
         :ews_threshold_burnin => ByRow(==(test_ews_threshold_burnin)),
         :ews_threshold_window => ByRow(==(test_ews_threshold_window)),
         :noise_specification => ByRow(==(test_noise_specification)),
-        :test_specification => ByRow(==(test_specification)),
+        # :test_specification => ByRow(==(test_specification)),
         :percent_tested => ByRow(==(percent_tested)),
     )
 
@@ -339,7 +361,7 @@ if debug_Reff_plots
     vec_of_null_threshold_percentiles,
     vec_of_detection_index_vec,
     vec_of_null_detection_index_vec
-) = simulate_ews_survival_data(
+), noisearr = simulate_ews_survival_data(
         test_df,
         ensemble_specification,
         ensemble_single_incarr,
@@ -347,6 +369,26 @@ if debug_Reff_plots
         ensemble_single_Reff_thresholds_vec;
         ews_metric = test_ews_metric,
     )
+end;
+
+#%%
+if debug_Reff_plots
+    # include(srcdir("makie-plotting-setup.jl"))
+    include(srcdir("cairomakie-plotting-setup.jl"))
+
+    # test_specification = IndividualTestSpecification(0.8, 0.8, 0)
+    # test_specification = IndividualTestSpecification(0.9, 0.9, 0)
+    # test_specification = IndividualTestSpecification(0.95, 0.95, 0)
+    # test_specification = IndividualTestSpecification(0.97, 0.97, 0)
+    test_specification = IndividualTestSpecification(0.98, 0.98, 0)
+    # test_specification = IndividualTestSpecification(0.99, 0.99, 0)
+    # test_specification = IndividualTestSpecification(1.0, 1.0, 0)
+
+    test_ind = findfirst(
+        t -> t == test_specification, unique(survival_df.test_specification)
+    )
+
+    selected_sim = 90
 
     plottitle =
         "Noise: $(get_noise_magnitude_description(test_noise_specification)), Percent Tested: $(percent_tested), $(split(string(test_ews_enddate_type), "::")[1])" *
@@ -363,19 +405,137 @@ if debug_Reff_plots
         ensemble_single_periodsum_vecs[selected_sim],
         null_single_periodsum_vecs[selected_sim],
         Symbol(test_ews_metric),
-        vec_of_testarr[1][:, 5, selected_sim],
-        vec_of_null_testarr[1][:, 5, selected_sim],
-        vec_of_ews_vals_vec[1][selected_sim],
-        vec_of_null_ews_vals_vec[1][selected_sim],
-        vec(vec_of_exceed_thresholds[1][selected_sim, 1]),
-        vec(vec_of_null_exceed_thresholds[1][selected_sim, 1]),
-        vec(vec_of_threshold_percentiles[1][selected_sim, 1]),
-        vec(vec_of_null_threshold_percentiles[1][selected_sim, 1]),
-        vec_of_detection_index_vec[1][selected_sim],
-        vec_of_null_detection_index_vec[1][selected_sim],
+        vec_of_testarr[test_ind][:, 5, selected_sim],
+        vec_of_null_testarr[test_ind][:, 5, selected_sim],
+        noisearr[:, selected_sim],
+        vec_of_ews_vals_vec[test_ind][selected_sim],
+        vec_of_null_ews_vals_vec[test_ind][selected_sim],
+        vec(vec_of_exceed_thresholds[test_ind][selected_sim, 1]),
+        vec(vec_of_null_exceed_thresholds[test_ind][selected_sim, 1]),
+        vec(vec_of_threshold_percentiles[test_ind][selected_sim, 1]),
+        vec(vec_of_null_threshold_percentiles[test_ind][selected_sim, 1]),
+        vec_of_detection_index_vec[test_ind][selected_sim],
+        vec_of_null_detection_index_vec[test_ind][selected_sim],
         ensemble_time_specification;
         xlims = (0, 12),
         burnin_vline = test_ews_threshold_burnin,
         plottitle = plottitle,
     )
 end
+
+#%%
+if debug_Reff_plots
+    ews_survival_plot(
+        survival_df;
+        noise_specification_vec = [
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734)
+        ],
+        test_specification_vec = [
+            IndividualTestSpecification(1.0, 1.0, 0),
+            IndividualTestSpecification(0.9, 0.9, 0),
+        ],
+    )
+end
+
+#%%
+if debug_Reff_plots
+    auc_df = DataFrame(
+        "ews_metric" => String[],
+        "test_specification" => IndividualTestSpecification[],
+        # "ews_metric_specification" => EWSMetricSpecification[],
+        # "ews_enddate_type" => EWSEndDateType[],
+        "auc" => Float64[],
+        "auc_magnitude" => Float64[],
+        "emergent_tau" => Vector{Float64}[],
+        "null_tau" => Vector{Float64}[],
+    )
+
+    unique_tests = unique(survival_df.test_specification)
+    subset_start_ind = Int64(round(Dates.days(Year(5))))
+
+    for test_ind in eachindex(vec_of_ews_vals_vec)
+        test_specification = unique_tests[test_ind]
+        subset_testarr = vec_of_testarr[test_ind][
+            :, 5, :,
+        ]
+        subset_null_testarr = vec_of_null_testarr[test_ind][
+            :, 5, :,
+        ]
+
+        enddate_vec = map(axes(subset_testarr, 2)) do sim
+            Try.unwrap(
+                calculate_ews_enddate(
+                    ensemble_single_Reff_thresholds_vec[sim],
+                    ews_enddate_type,
+                ),
+            )
+        end
+
+        emergent_sv =
+            map(axes(subset_testarr, 2)) do sim
+                enddate = enddate_vec[sim]
+                EWSMetrics(
+                    ews_metric_specification,
+                    subset_testarr[subset_start_ind:enddate, sim],
+                )
+            end |>
+            v -> StructVector(v)
+
+        null_sv =
+            map(axes(subset_null_testarr, 2)) do sim
+                enddate = enddate_vec[sim]
+                EWSMetrics(
+                    ews_metric_specification,
+                    subset_null_testarr[subset_start_ind:enddate, sim],
+                )
+            end |>
+            v -> StructVector(v)
+
+        for metric in ews_metrics
+            metric_tau = Symbol(metric * "_tau")
+            emergent_tau = getproperty(emergent_sv, metric_tau)
+            null_tau = getproperty(null_sv, metric_tau)
+            auc = calculate_auc(
+                emergent_tau,
+                null_tau,
+            )
+            auc_magnitude = abs(auc - 0.5)
+            push!(
+                auc_df,
+                (
+                    ews_metric = metric,
+                    test_specification = test_specification,
+                    # ews_metric_specification = ews_metric_specification,
+                    # ews_enddate_type = ews_enddate_type,
+                    auc = auc,
+                    auc_magnitude,
+                    emergent_tau = emergent_tau,
+                    null_tau = null_tau,
+                ),
+            )
+        end
+    end
+
+    tau_auc_heatmap(
+        auc_df,
+        :auc,
+        :auc;
+        baseline_test = test_specification,
+    )
+end
+
+#%%
+tau_auc_heatmap(
+    auc_df,
+    :auc,
+    :auc;
+    baseline_test = test_specification,
+    plottitle = "",
+    ylabel = "",
+    legendwidth = 20,
+    xticklabelsize = 22,
+    legendticklabelsize = 22,
+    legendsize = 22,
+    fontsize = 22,
+    digits = 3,
+)

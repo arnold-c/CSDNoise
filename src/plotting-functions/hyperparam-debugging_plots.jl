@@ -52,29 +52,9 @@ function hyperparam_debugging_Reff_plot(
 
     aggregated_test_vec = aggregate_timeseries(test_positive_vec, aggregation)
 
-    # aggregated_test_movingavg_vec = zeros(
-    #     Int64, size(aggregated_test_vec)
-    # )
-    #
-    # calculate_movingavg!(
-    #     aggregated_test_movingavg_vec,
-    #     aggregated_test_vec,
-    #     7,
-    # )
-
     aggregated_null_test_vec = aggregate_timeseries(
         null_test_positive_vec, aggregation
     )
-
-    # aggregated_null_test_movingavg_vec = zeros(
-    #     Int64, size(aggregated_null_test_vec)
-    # )
-    #
-    # calculate_movingavg!(
-    #     aggregated_null_test_movingavg_vec,
-    #     aggregated_null_test_vec,
-    #     7,
-    # )
 
     aggregated_noise_vec = aggregate_timeseries(noise_vec, aggregation)
 
@@ -102,6 +82,60 @@ function hyperparam_debugging_Reff_plot(
         ensemble_time_specification;
         plottitle = plottitle,
         xlims = xlims,
+        kwargs...,
+    )
+end
+
+function hyperparam_debugging_Reff_plot(
+    inc_vec,
+    Reff_vec,
+    Reff_thresholds,
+    outbreak_bounds,
+    ewsmetric,
+    test_positive_vec,
+    noise_vec,
+    ews_vals_vec,
+    exceed_thresholds_vec,
+    threshold_percentiles_vec,
+    detection_index_vec,
+    ensemble_time_specification;
+    xlims = (0, 12),
+    rowsize = Makie.Relative(0.03),
+    legends = true,
+    kwargs...,
+)
+    ews_specification = ews_vals_vec.ews_specification
+    @unpack aggregation = ews_specification
+    aggregation_int = Dates.days(aggregation)
+
+    aggregated_inc_vec = aggregate_timeseries(inc_vec, aggregation)
+
+    aggregated_Reff_vec = aggregate_Reff_vec(Reff_vec, aggregation)
+    aggregated_Reff_thresholds = Reff_thresholds .÷ aggregation_int
+
+    aggregated_outbreak_bounds =
+        outbreak_bounds[(outbreak_bounds[:, 4] .== 1), [1, 2]] .÷
+        aggregation_int
+
+    aggregated_test_vec = aggregate_timeseries(test_positive_vec, aggregation)
+
+    aggregated_noise_vec = aggregate_timeseries(noise_vec, aggregation)
+
+    return Reff_ews_plot(
+        aggregated_inc_vec,
+        aggregated_test_vec,
+        aggregated_noise_vec,
+        aggregated_Reff_vec,
+        aggregated_Reff_thresholds,
+        ews_vals_vec,
+        ewsmetric,
+        aggregated_outbreak_bounds,
+        exceed_thresholds_vec,
+        detection_index_vec,
+        ensemble_time_specification;
+        xlims = xlims,
+        legends = legends,
+        plot_tau = false,
         kwargs...,
     )
 end

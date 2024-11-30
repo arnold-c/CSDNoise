@@ -149,7 +149,12 @@ export tycho_epicurve, tycho_noise_components_epicurve,
 include(
     "plotting-functions/simulation-ews_plots.jl"
 )
-export Reff_ews_plot, simulation_tau_distribution
+export Reff_ews_plot,
+    simulation_tau_distribution,
+    Reff_plot,
+    Reff_noise_plot,
+    Reff_noise_inc_plot,
+    Reff_noise_inc_test_plot
 
 include("ensemble-sim_single-scenario_plots.jl")
 export plot_all_single_scenarios

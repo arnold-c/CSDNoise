@@ -310,18 +310,18 @@ create_optimal_ews_plots(
 debug_Reff_plots = true
 
 if debug_Reff_plots
-    test_noise_specification = DynamicalNoiseSpecification(
-        5.0,
-        7,
-        14,
-        "in-phase",
-        0.15,
-        0.8734,
-        # 0.102,
-    )
-    # test_noise_specification = PoissonNoiseSpecification(1.0)
+    # test_noise_specification = DynamicalNoiseSpecification(
+    #     5.0,
+    #     7,
+    #     14,
+    #     "in-phase",
+    #     0.15,
+    #     0.8734,
+    #     # 0.102,
+    # )
+    test_noise_specification = PoissonNoiseSpecification(1.0)
     # test_ews_metric = "mean"
-    test_ews_metric = "variance"
+    test_ews_metric = "autocovariance"
     # test_ews_metric = "skewness"
     test_ews_metric_specification = EWSMetricSpecification(
         # Backward, Day(7), Week(52), 1
@@ -377,10 +377,10 @@ if debug_Reff_plots
     include(srcdir("cairomakie-plotting-setup.jl"))
 
     # test_specification = IndividualTestSpecification(0.8, 0.8, 0)
-    # test_specification = IndividualTestSpecification(0.9, 0.9, 0)
+    test_specification = IndividualTestSpecification(0.9, 0.9, 0)
     # test_specification = IndividualTestSpecification(0.95, 0.95, 0)
     # test_specification = IndividualTestSpecification(0.97, 0.97, 0)
-    test_specification = IndividualTestSpecification(0.98, 0.98, 0)
+    # test_specification = IndividualTestSpecification(0.98, 0.98, 0)
     # test_specification = IndividualTestSpecification(0.99, 0.99, 0)
     # test_specification = IndividualTestSpecification(1.0, 1.0, 0)
 
@@ -422,6 +422,171 @@ if debug_Reff_plots
         plottitle = plottitle,
     )
 end
+
+#%%
+selected_sim = 20
+
+ews_specification =
+    vec_of_ews_vals_vec[test_ind][selected_sim].ews_specification
+@unpack aggregation = ews_specification
+aggregation_int = Dates.days(aggregation)
+
+aggregated_inc_vec = aggregate_timeseries(
+    ensemble_single_incarr[:, 1, selected_sim],
+    aggregation,
+)
+
+aggregated_Reff_vec = aggregate_Reff_vec(
+    ensemble_single_Reff_arr[:, selected_sim],
+    aggregation,
+)
+
+aggregated_Reff_thresholds =
+    ensemble_single_Reff_thresholds_vec[selected_sim] .÷ aggregation_int
+
+aggregated_null_Reff_vec = aggregate_Reff_vec(
+    null_single_Reff_arr[:, selected_sim],
+    aggregation,
+)
+
+aggregated_null_Reff_thresholds =
+    null_single_Reff_thresholds_vec[selected_sim] .÷ aggregation_int
+
+aggregated_outbreak_bounds =
+    ensemble_single_periodsum_vecs[selected_sim][
+        (
+        ensemble_single_periodsum_vecs[selected_sim][:, 4] .== 1), [1, 2]] .÷
+    aggregation_int
+
+aggregated_test_vec = aggregate_timeseries(
+    vec_of_testarr[test_ind][:, 5, selected_sim],
+    aggregation,
+)
+
+aggregated_noise_vec = aggregate_timeseries(
+    noisearr[:, selected_sim],
+    aggregation,
+)
+
+#%%
+null_reff_schematic = Reff_plot(
+    aggregated_null_Reff_vec,
+    aggregated_null_Reff_thresholds,
+    ensemble_time_specification,
+    vec_of_ews_vals_vec[test_ind][selected_sim];
+    xlims = (0, 12),
+    ylims_Reff = (0.6, 1.2),
+    legends = false,
+    Reff_colormap = [BASE_COLOR],
+)
+
+save(
+    plotsdir("null-reff-schematic.png"),
+    null_reff_schematic;
+    size = (600, 800 / 3),
+)
+
+#%%
+reff_schematic = Reff_plot(
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
+    ensemble_time_specification,
+    vec_of_ews_vals_vec[test_ind][selected_sim];
+    xlims = (0, 12),
+    ylims_Reff = (0.6, 1.2),
+    legends = false,
+)
+
+save(
+    plotsdir("autocovariance-reff-schematic.png"),
+    reff_schematic;
+    size = (600, 800 / 3),
+)
+
+#%%
+reff_noise_schematic = Reff_noise_plot(
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
+    aggregated_noise_vec,
+    ensemble_time_specification,
+    vec_of_ews_vals_vec[test_ind][selected_sim];
+    xlims = (0, 12),
+    ylims_inc = (0, 950),
+    legends = false,
+)
+
+save(
+    plotsdir("autocovariance-reff-noise-schematic.png"),
+    reff_noise_schematic;
+    size = (1300, (2 * 800 / 3) * 1.038),
+)
+
+#%%
+reff_noise_inc_schematic = Reff_noise_inc_plot(
+    aggregated_inc_vec,
+    aggregated_outbreak_bounds,
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
+    aggregated_noise_vec,
+    ensemble_time_specification,
+    vec_of_ews_vals_vec[test_ind][selected_sim];
+    xlims = (0, 12),
+    legends = false,
+    ylims_inc = (0, 950),
+)
+
+save(
+    plotsdir("autocovariance-reff-noise-inc-schematic.png"),
+    reff_noise_inc_schematic;
+    size = (1300, (2 * 800 / 3) * 1.038),
+)
+
+#%%
+reff_noise_inc_test_schematic = Reff_noise_inc_test_plot(
+    aggregated_test_vec,
+    aggregated_inc_vec,
+    aggregated_outbreak_bounds,
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
+    aggregated_noise_vec,
+    ensemble_time_specification,
+    vec_of_ews_vals_vec[test_ind][selected_sim];
+    xlims = (0, 12),
+    legends = false,
+    ylims_inc = (0, 950),
+)
+
+save(
+    plotsdir("autocovariance-reff-noise-inc-test-schematic.png"),
+    reff_noise_inc_test_schematic;
+    size = (1300, (2 * 800 / 3) * 1.038),
+)
+
+#%%
+ews_schematic = Reff_ews_plot(
+    aggregated_inc_vec,
+    aggregated_test_vec,
+    aggregated_noise_vec,
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
+    vec_of_ews_vals_vec[test_ind][selected_sim],
+    Symbol(test_ews_metric),
+    aggregated_outbreak_bounds,
+    vec(vec_of_exceed_thresholds[test_ind][selected_sim, 1]),
+    vec_of_detection_index_vec[test_ind][selected_sim],
+    ensemble_time_specification;
+    xlims = (0, 12),
+    ylims_inc = (0, 950),
+    legends = false,
+    plot_tau = false,
+    plot_detection_index = false,
+)
+
+save(
+    plotsdir("autocovariance-schematic.png"),
+    ews_schematic;
+    size = (1300, 800),
+)
 
 #%%
 if debug_Reff_plots

@@ -474,7 +474,7 @@ null_reff_schematic = Reff_plot(
     aggregated_null_Reff_thresholds,
     ensemble_time_specification,
     vec_of_ews_vals_vec[test_ind][selected_sim];
-    xlims = (0, 12),
+    xlims = (0, 8),
     ylims_Reff = (0.6, 1.2),
     legends = false,
     Reff_colormap = [BASE_COLOR],
@@ -492,7 +492,7 @@ reff_schematic = Reff_plot(
     aggregated_Reff_thresholds,
     ensemble_time_specification,
     vec_of_ews_vals_vec[test_ind][selected_sim];
-    xlims = (0, 12),
+    xlims = (0, 8),
     ylims_Reff = (0.6, 1.2),
     legends = false,
 )
@@ -501,6 +501,25 @@ save(
     plotsdir("autocovariance-reff-schematic.png"),
     reff_schematic;
     size = (600, 800 / 3),
+)
+
+#%%
+reff_inc_schematic = Reff_inc_plot(
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
+    aggregated_inc_vec,
+    aggregated_outbreak_bounds,
+    ensemble_time_specification,
+    vec_of_ews_vals_vec[test_ind][selected_sim];
+    xlims = (0, 12),
+    ylims_inc = (0, 950),
+    legends = false,
+)
+
+save(
+    plotsdir("autocovariance-reff-inc-schematic.png"),
+    reff_inc_schematic;
+    size = (1300, (2 * 800 / 3) * 1.038),
 )
 
 #%%
@@ -523,10 +542,10 @@ save(
 
 #%%
 reff_noise_inc_schematic = Reff_noise_inc_plot(
-    aggregated_inc_vec,
-    aggregated_outbreak_bounds,
     aggregated_Reff_vec,
     aggregated_Reff_thresholds,
+    aggregated_inc_vec,
+    aggregated_outbreak_bounds,
     aggregated_noise_vec,
     ensemble_time_specification,
     vec_of_ews_vals_vec[test_ind][selected_sim];
@@ -543,17 +562,18 @@ save(
 
 #%%
 reff_noise_inc_test_schematic = Reff_noise_inc_test_plot(
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
     aggregated_test_vec,
     aggregated_inc_vec,
     aggregated_outbreak_bounds,
-    aggregated_Reff_vec,
-    aggregated_Reff_thresholds,
     aggregated_noise_vec,
     ensemble_time_specification,
     vec_of_ews_vals_vec[test_ind][selected_sim];
     xlims = (0, 12),
     legends = false,
     ylims_inc = (0, 950),
+    test_positive_color = "#4B2EDF",
 )
 
 save(
@@ -563,12 +583,71 @@ save(
 )
 
 #%%
-ews_schematic = Reff_ews_plot(
+test_enddate = Try.unwrap(
+    calculate_ews_enddate(
+        ensemble_single_Reff_thresholds_vec[selected_sim],
+        test_ews_enddate_type,
+    ),
+)
+
+inc_ews = EWSMetrics(
+    test_ews_metric_specification,
+    @view(ensemble_single_incarr[1:test_enddate, 1, selected_sim])
+)
+
+inc_ews_no_exceedance_schematic = Reff_ews_plot(
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
+    aggregated_inc_vec,
+    inc_ews,
+    Symbol(test_ews_metric),
+    aggregated_outbreak_bounds,
+    ensemble_time_specification;
+    xlims = (0, 12),
+    ylims_inc = (0, 950),
+    legends = false,
+    plot_tau = false,
+    plot_detection_index = false,
+)
+
+save(
+    plotsdir("inc-autocovariance-schematic_no-exceedance.png"),
+    inc_ews_no_exceedance_schematic;
+    size = (1300, 800),
+)
+
+#%%
+ews_no_exceedance_schematic = Reff_ews_plot(
+    aggregated_Reff_vec,
+    aggregated_Reff_thresholds,
     aggregated_inc_vec,
     aggregated_test_vec,
     aggregated_noise_vec,
+    vec_of_ews_vals_vec[test_ind][selected_sim],
+    Symbol(test_ews_metric),
+    aggregated_outbreak_bounds,
+    ensemble_time_specification;
+    xlims = (0, 12),
+    ylims_inc = (0, 950),
+    legends = false,
+    plot_tau = false,
+    plot_detection_index = false,
+    test_positive_color = "#4B2EDF",
+)
+
+save(
+    plotsdir("autocovariance-schematic_no-exceedance.png"),
+    ews_no_exceedance_schematic;
+    size = (1300, 800),
+)
+
+#%%
+ews_schematic = Reff_ews_plot(
     aggregated_Reff_vec,
     aggregated_Reff_thresholds,
+    aggregated_inc_vec,
+    aggregated_test_vec,
+    aggregated_noise_vec,
     vec_of_ews_vals_vec[test_ind][selected_sim],
     Symbol(test_ews_metric),
     aggregated_outbreak_bounds,
@@ -580,6 +659,7 @@ ews_schematic = Reff_ews_plot(
     legends = false,
     plot_tau = false,
     plot_detection_index = false,
+    test_positive_color = "#4B2EDF",
 )
 
 save(

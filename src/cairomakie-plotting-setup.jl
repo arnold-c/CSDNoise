@@ -23,4 +23,8 @@ set_theme!(
 )
 
 update_theme!(; size = (1300, 800))
-CairoMakie.activate!(; type = "svg", pt_per_unit = 0.75)
+CairoMakie.activate!(
+    ; type = "svg",
+    pt_per_unit = 0.75,
+    px_per_unit = 2,
+)

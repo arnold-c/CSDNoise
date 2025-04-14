@@ -24,7 +24,7 @@ set_theme!(
 )
 
 update_theme!(; size = (1300, 800))
-CairoMakie.activate!(; type = "svg", px_per_unit = 1.0)
+CairoMakie.activate!(; type = "svg", pt_per_unit = 1.5)
 
 facet_fontsize = 24
 legendsize = 24

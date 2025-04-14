@@ -59,15 +59,15 @@ function hyperparam_debugging_Reff_plot(
     aggregated_noise_vec = aggregate_timeseries(noise_vec, aggregation)
 
     return Reff_ews_plot(
+        aggregated_Reff_vec,
+        aggregated_null_Reff_vec,
+        aggregated_Reff_thresholds,
+        aggregated_null_Reff_thresholds,
         aggregated_inc_vec,
         aggregated_null_inc_vec,
         aggregated_test_vec,
         aggregated_null_test_vec,
         aggregated_noise_vec,
-        aggregated_Reff_vec,
-        aggregated_null_Reff_vec,
-        aggregated_Reff_thresholds,
-        aggregated_null_Reff_thresholds,
         ews_vals_vec,
         null_ews_vals_vec,
         ewsmetric,
@@ -122,11 +122,11 @@ function hyperparam_debugging_Reff_plot(
     aggregated_noise_vec = aggregate_timeseries(noise_vec, aggregation)
 
     return Reff_ews_plot(
+        aggregated_Reff_vec,
+        aggregated_Reff_thresholds,
         aggregated_inc_vec,
         aggregated_test_vec,
         aggregated_noise_vec,
-        aggregated_Reff_vec,
-        aggregated_Reff_thresholds,
         ews_vals_vec,
         ewsmetric,
         aggregated_outbreak_bounds,

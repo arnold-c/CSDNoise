@@ -1,4 +1,4 @@
-Rank,All Noise,Low Poisson Noise,High Poisson Noise,Low Dynamical Noise,High Dynamical Noise
+Rank,All Noise,Low Static Noise,High Static Noise,Low Dynamical Noise,High Dynamical Noise
 1,Variance (0.62),Variance (0.61),Variance (0.60),Variance (0.66),Index of dispersion (0.47)
 2,Index of dispersion (0.58),Index of dispersion (0.59),Index of dispersion (0.60),Autocovariance (0.63),Autocorrelation (0.45)
 3,Autocovariance (0.58),Autocovariance (0.55),Coefficient of variation (0.59),Index of dispersion (0.57),Coefficient of variation (0.45)

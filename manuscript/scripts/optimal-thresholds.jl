@@ -845,3 +845,122 @@ for metric in ews_metrics
         survival_plot,
     )
 end
+
+#%%
+poisson_reff_only_survival_plot = ews_reff_histogram_plot(
+    subset(
+        combined_survival_df,
+        :ews_metric => ByRow(==("autocovariance")),
+    );
+    noise_specification_vec = [
+        PoissonNoiseSpecification(1.0),
+        PoissonNoiseSpecification(7.0),
+    ],
+    linestyle_vec = [:solid, :dot],
+    ylabel = "Number of Simulations",
+    facet_fontsize = facet_fontsize,
+    legendsize = legendsize,
+    xlabelsize = xlabelsize,
+    ylabelsize = ylabelsize,
+    xticklabelsize = xticklabelsize,
+    yticklabelsize = yticklabelsize,
+)
+
+save(
+    plotsdir(
+        "survival_poisson_reff-only.svg"
+    ),
+    poisson_reff_only_survival_plot,
+)
+
+#%%
+poisson_autocov_perfect_test_survival_plot = ews_survival_plot(
+    subset(
+        combined_survival_df,
+        :ews_metric => ByRow(==("autocovariance")),
+    );
+    noise_specification_vec = [
+        PoissonNoiseSpecification(1.0),
+        PoissonNoiseSpecification(7.0),
+    ],
+    test_specification_vec = [
+        IndividualTestSpecification(1.0, 1.0, 0)
+    ],
+    linestyle_vec = [:solid, :dot],
+    ylabel = "Percentage Without Alert",
+    facet_fontsize = facet_fontsize,
+    legendsize = legendsize,
+    xlabelsize = xlabelsize,
+    ylabelsize = ylabelsize,
+    xticklabelsize = xticklabelsize,
+    yticklabelsize = yticklabelsize,
+)
+
+save(
+    plotsdir(
+        "survival_poisson_autocov_perfect-test.svg"
+    ),
+    poisson_autocov_perfect_test_survival_plot,
+)
+
+#%%
+poisson_autocov_survival_plot = ews_survival_plot(
+    subset(
+        combined_survival_df,
+        :ews_metric => ByRow(==("autocovariance")),
+    );
+    noise_specification_vec = [
+        PoissonNoiseSpecification(1.0),
+        PoissonNoiseSpecification(7.0),
+    ],
+    test_specification_vec = [
+        IndividualTestSpecification(1.0, 1.0, 0),
+        IndividualTestSpecification(0.9, 0.9, 0),
+    ],
+    linestyle_vec = [:solid, :dot],
+    ylabel = "Percentage Without Alert",
+    facet_fontsize = facet_fontsize,
+    legendsize = legendsize,
+    xlabelsize = xlabelsize,
+    ylabelsize = ylabelsize,
+    xticklabelsize = xticklabelsize,
+    yticklabelsize = yticklabelsize,
+)
+
+save(
+    plotsdir(
+        "survival_poisson_autocov.svg"
+    ),
+    poisson_autocov_survival_plot,
+)
+
+#%%
+dynamical_autocov_survival_plot = ews_survival_plot(
+    subset(
+        combined_survival_df,
+        :ews_metric => ByRow(==("autocovariance")),
+    );
+    noise_specification_vec = [
+        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+    ],
+    test_specification_vec = [
+        IndividualTestSpecification(1.0, 1.0, 0),
+        IndividualTestSpecification(0.9, 0.9, 0),
+    ],
+    linestyle_vec = [:solid, :dot],
+    ylabel = "Percentage Without Alert",
+    facet_fontsize = facet_fontsize,
+    legendsize = legendsize,
+    xlabelsize = xlabelsize,
+    ylabelsize = ylabelsize,
+    xticklabelsize = xticklabelsize,
+    yticklabelsize = yticklabelsize,
+)
+
+save(
+    plotsdir(
+        "survival_dynamical_autocov.svg"
+    ),
+    dynamical_autocov_survival_plot,
+)

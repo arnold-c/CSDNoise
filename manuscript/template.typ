@@ -101,6 +101,8 @@
     }
   }
 
+  set math.equation(numbering: "1")
+
 
 
   // Title block
@@ -133,7 +135,7 @@
         let au_inst_id = au_meta.affiliation
         let au_inst_primary = ""
         // Test whether the author belongs to multiple affiliations
-        if type(au_inst_id) == "array" {
+        if type(au_inst_id) == array {
           // If the author belongs to multiple affiliations,
           // record the first affiliation as the primary affiliation,
           au_inst_primary = affiliations.at(au_inst_id.first())
@@ -141,7 +143,7 @@
           let au_inst_index = au_inst_id.map(id => inst_keys.position(key => key == id) + 1)
           // Output affiliation
           super([#(au_inst_index.map(id => [#id]).join([,]))])
-        } else if (type(au_inst_id) == "string") {
+        } else if (type(au_inst_id) == string) {
           // If the author belongs to only one affiliation,
           // set this as the primary affiliation
           au_inst_primary = affiliations.at(au_inst_id)

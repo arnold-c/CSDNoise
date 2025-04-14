@@ -598,7 +598,7 @@ function noise_table_description(
         7 => "High"
         1 => "Low"
     end
-    return "$(noise_scaling) Poisson Noise"
+    return "$(noise_scaling) Static Noise"
 end
 
 function noise_table_description(

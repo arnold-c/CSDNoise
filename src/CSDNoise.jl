@@ -152,6 +152,7 @@ include(
 export Reff_ews_plot,
     simulation_tau_distribution,
     Reff_plot,
+    Reff_inc_plot,
     Reff_noise_plot,
     Reff_noise_inc_plot,
     Reff_noise_inc_test_plot
@@ -172,7 +173,7 @@ include("plotting-functions/auc-heatmap_plots.jl")
 export tau_auc_heatmap, clean_ews_metric_names, test_axis_label
 
 include("plotting-functions/survival_plots.jl")
-export ews_survival_plot
+export ews_survival_plot, ews_reff_histogram_plot
 
 @static if false
     include("../scripts/ensemble-sim.jl")

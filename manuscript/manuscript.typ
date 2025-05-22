@@ -152,7 +152,7 @@ For each emergent time series, the post burn-in vaccination rate at birth was in
 For each null time series, the post burn-in vaccination rate at birth was set to the coverage sampled during the burn-in period, ensuring $R_"E"$ would not cross the critical transition within the scope of the simulation, though it may grow slowly.
 Each of the 100 emergent and 100 null time series are paired during the pre-processing steps i.e., up until the completion of the burn-in period, paired emergent and null simulations share the same vaccination rate at birth, and they are both truncated to identical lengths (the time step when $R_"E" = 1$ in that pair's emergent simulation).
 
-All simulations and analysis was completed in Julia version 1.10.5 @bezansonJuliaFreshApproach2017, with all code stored at #link("https://github.com/arnold-c/CSDNoise").
+All simulations and analysis was completed in Julia version 1.11.5 @bezansonJuliaFreshApproach2017, with all code stored at #link("https://github.com/arnold-c/CSDNoise").
 
 === Computing & Evaluating EWS
 Each set of null and emergent time series are aggregated by month and numerical estimates of the EWS metrics were then calculated on the aggregated time series, detrended using backwards-facing moving averages with bandwidth $b = 52$ weeks.

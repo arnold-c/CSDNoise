@@ -74,6 +74,14 @@ just manuscript
 ├── plots
 ├── Project.toml
 ├── README.md
+├── scripts
+│   ├── calculate-dynamical-noise-vaccintion-rates.jl
+│   ├── ensemble-sim_ews-optimization.jl
+│   ├── ensemble-sim_ews-optimization.log.txt
+│   ├── ensemble-sim_ews-visualization.jl
+│   ├── ensemble-sim_ews-visualization.log.txt
+│   ├── ensemble-sim_inferred-scenario-visualizations.jl
+│   └── ensemble-sim.jl
 ├── src
 │   ├── ARCHIVE
 │   ├── cairomakie-plotting-setup.jl
@@ -105,11 +113,14 @@ just manuscript
 25 directories, 86 files
 ```
 
-- `plots` contains all output plots
-- `scripts` contains the Julia scripts used to examine single and ensemble simulations, using plotting and other functions defined in `src/*.jl` files
+- `out/ensemble`
+    - `ews-hyperparam-optimization` contains the `*.jld2` files that save the results of the optimizations.
+    - `seasonal-infectivity-import` contains the `*.jld2` files that save the results of the SEIR simulations.
+- `plots` contains all output plots from temporary scripts.
+- `scripts` contains the Julia scripts used to examine single and ensemble simulations, using plotting and other functions defined in `src/*.jl` files.
 - `src` contains all Julia source files and functions used in the analysis pipeline and exploration scripts. These files are separated by purpose.
-- `manuscript/` contains all files relevant to the manuscript
+- `manuscript` contains all files relevant to the manuscript.
     - `combined-manuscript.typ` is an outer file that includes both the `manuscript.typ` and `supplemental-appendix.typ` files for cross-referencing.
-    - `scripts/optimal-thresholds.jl` contains all function calls to generate the underlying simulation results and figures and tables for the manuscript
-- `test` contains all test scripts
-- `workflows` contains the CI workflow using GitHub Actions. Currently it only contains a file that can run tests on push to the `main` branch, but it is not active
+    - `scripts/optimal-thresholds.jl` contains all function calls to generate the underlying simulation results and figures and tables for the manuscript.
+- `test` contains all test scripts.
+- `workflows` contains the CI workflow using GitHub Actions. Currently it only contains a file that can run tests on push to the `main` branch, but it is not active.

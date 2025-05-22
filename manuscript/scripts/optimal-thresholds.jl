@@ -270,8 +270,7 @@ for (noise_num, gdf) in enumerate(gdfs)
     )
 
     optimal_heatmap_plot_name =
-        "optimal_heatmap_" * plot_noise_filename(noise_specification) *
-        ".svg"
+        "optimal_heatmap_" * plot_noise_filename(noise_specification)
 
     heatmap_plotdir = projectdir(
         "manuscript", "manuscript_files", "plots", "optimal-threshold-heatmaps"
@@ -279,10 +278,12 @@ for (noise_num, gdf) in enumerate(gdfs)
 
     mkpath(heatmap_plotdir)
 
-    save(
-        joinpath(heatmap_plotdir, optimal_heatmap_plot_name),
-        optimal_heatmap_plot
-    )
+    for ext in [".svg", ".png"]
+        save(
+            joinpath(heatmap_plotdir, optimal_heatmap_plot_name * ext),
+            optimal_heatmap_plot
+        )
+    end
 
     test_df = subset(
         optimal_heatmap_df,
@@ -431,8 +432,7 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 tau_auc_heatmap_plot_name =
                     "tau_auc-heatmap_" *
-                    plot_noise_filename(noise_specification) *
-                    ".svg"
+                    plot_noise_filename(noise_specification)
 
                 tau_auc_heatmap_plotdir = projectdir(
                     "manuscript",
@@ -444,12 +444,15 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 mkpath(tau_auc_heatmap_plotdir)
 
-                save(
-                    joinpath(
-                        tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name
-                    ),
-                    auc_heatmap,
-                )
+                for ext in [".svg", ".png"]
+                    save(
+                        joinpath(
+                            tau_auc_heatmap_plotdir, tau_auc_heatmap_plot_name * ext
+                        ),
+                        auc_heatmap,
+                    )
+                end
+
 
                 auc_magnitude_heatmap = tau_auc_heatmap(
                     auc_df,
@@ -472,8 +475,7 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 tau_auc_magnitude_heatmap_plot_name =
                     "tau_auc-magnitude-heatmap_" *
-                    plot_noise_filename(noise_specification) *
-                    ".svg"
+                    plot_noise_filename(noise_specification)
 
                 tau_auc_magnitude_heatmap_plotdir = projectdir(
                     "manuscript",
@@ -485,13 +487,15 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 mkpath(tau_auc_magnitude_heatmap_plotdir)
 
-                save(
-                    joinpath(
-                        tau_auc_magnitude_heatmap_plotdir,
-                        tau_auc_magnitude_heatmap_plot_name,
-                    ),
-                    auc_magnitude_heatmap,
-                )
+                for ext in [".svg", ".png"]
+                    save(
+                        joinpath(
+                            tau_auc_magnitude_heatmap_plotdir,
+                            tau_auc_magnitude_heatmap_plot_name * ext,
+                        ),
+                        auc_magnitude_heatmap,
+                    )
+                end
 
                 emergent_tau_df = hcat(
                     select(auc_df, Cols(1:2)),
@@ -516,8 +520,7 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 emergent_tau_heatmap_plot_name =
                     "emergent-tau-heatmap_" *
-                    plot_noise_filename(noise_specification) *
-                    ".svg"
+                    plot_noise_filename(noise_specification)
 
                 emergent_tau_heatmap_plotdir = projectdir(
                     "manuscript",
@@ -530,13 +533,15 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 mkpath(emergent_tau_heatmap_plotdir)
 
-                save(
-                    joinpath(
-                        emergent_tau_heatmap_plotdir,
-                        emergent_tau_heatmap_plot_name,
-                    ),
-                    emergent_tau_heatmap,
-                )
+                for ext in [".svg", ".png"]
+                    save(
+                        joinpath(
+                            emergent_tau_heatmap_plotdir,
+                            emergent_tau_heatmap_plot_name * ext,
+                        ),
+                        emergent_tau_heatmap,
+                    )
+                end
 
                 null_tau_heatmap = tycho_tau_heatmap_plot(
                     null_tau_df
@@ -544,8 +549,7 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 null_tau_heatmap_plot_name =
                     "null-tau-heatmap_" *
-                    plot_noise_filename(noise_specification) *
-                    ".svg"
+                    plot_noise_filename(noise_specification)
 
                 null_tau_heatmap_plotdir = projectdir(
                     "manuscript",
@@ -558,12 +562,14 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                 mkpath(null_tau_heatmap_plotdir)
 
-                save(
-                    joinpath(
-                        null_tau_heatmap_plotdir, null_tau_heatmap_plot_name
-                    ),
-                    null_tau_heatmap,
-                )
+                for ext in [".svg", ".png"]
+                    save(
+                        joinpath(
+                            null_tau_heatmap_plotdir, null_tau_heatmap_plot_name * ext
+                        ),
+                        null_tau_heatmap,
+                    )
+                end
 
                 if noise_num == 1
                     perfect_test_tau = extract_tau_auc_metric(
@@ -756,13 +762,15 @@ accuracy_line_plot = line_plot(
 
 line_plotdir = projectdir("manuscript", "manuscript_files", "plots")
 
-save(
-    joinpath(
-        line_plotdir,
-        "accuracy-line-plot.svg",
-    ),
-    accuracy_line_plot,
-)
+for ext in [".svg", ".png"]
+    save(
+        joinpath(
+            line_plotdir,
+            "accuracy-line-plot" * ext,
+        ),
+        accuracy_line_plot,
+    )
+end
 
 #%%
 supplemental_lineplot_df = similar(gdfs[1], 0)
@@ -788,13 +796,15 @@ supplemental_line_plotdir = projectdir(
     "manuscript", "supplemental_files", "plots"
 )
 
-save(
-    joinpath(
-        supplemental_line_plotdir,
-        "accuracy-line-plot.svg",
-    ),
-    supplemental_accuracy_line_plot,
-)
+for ext in [".svg", ".png"]
+    save(
+        joinpath(
+            supplemental_line_plotdir,
+            "accuracy-line-plot" * ext,
+        ),
+        supplemental_accuracy_line_plot,
+    )
+end
 
 #%%
 survival_plotdir = projectdir(
@@ -835,17 +845,19 @@ for metric in ews_metrics
     )
 
     survival_plot_name = "survival_" *
-        "ews-" * metric * ".svg"
+        "ews-" * metric
 
     dir = if metric == "autocovariance"
         survival_plotdir
     else
         supplemental_survival_plotdir
     end
-    save(
-        joinpath(dir, survival_plot_name),
-        survival_plot,
-    )
+    for ext in [".svg", ".png"]
+        save(
+            joinpath(dir, survival_plot_name * ext),
+            survival_plot,
+        )
+    end
 end
 
 #%%
@@ -868,12 +880,14 @@ poisson_reff_only_survival_plot = ews_reff_histogram_plot(
     yticklabelsize = yticklabelsize,
 )
 
-save(
-    plotsdir(
-        "survival_poisson_reff-only.svg"
-    ),
-    poisson_reff_only_survival_plot,
-)
+for ext in [".svg", ".png"]
+    save(
+        plotsdir(
+            "survival_poisson_reff-only" * ext
+        ),
+        poisson_reff_only_survival_plot,
+    )
+end
 
 #%%
 poisson_autocov_perfect_test_survival_plot = ews_survival_plot(
@@ -898,12 +912,14 @@ poisson_autocov_perfect_test_survival_plot = ews_survival_plot(
     yticklabelsize = yticklabelsize,
 )
 
-save(
-    plotsdir(
-        "survival_poisson_autocov_perfect-test.svg"
-    ),
-    poisson_autocov_perfect_test_survival_plot,
-)
+for ext in [".svg", ".png"]
+    save(
+        plotsdir(
+            "survival_poisson_autocov_perfect-test" * ext
+        ),
+        poisson_autocov_perfect_test_survival_plot,
+    )
+end
 
 #%%
 poisson_autocov_survival_plot = ews_survival_plot(
@@ -929,12 +945,14 @@ poisson_autocov_survival_plot = ews_survival_plot(
     yticklabelsize = yticklabelsize,
 )
 
-save(
-    plotsdir(
-        "survival_poisson_autocov.svg"
-    ),
-    poisson_autocov_survival_plot,
-)
+for ext in [".svg", ".png"]
+    save(
+        plotsdir(
+            "survival_poisson_autocov" * ext
+        ),
+        poisson_autocov_survival_plot,
+    )
+end
 
 #%%
 dynamical_autocov_survival_plot = ews_survival_plot(
@@ -960,9 +978,11 @@ dynamical_autocov_survival_plot = ews_survival_plot(
     yticklabelsize = yticklabelsize,
 )
 
-save(
-    plotsdir(
-        "survival_dynamical_autocov.svg"
-    ),
-    dynamical_autocov_survival_plot,
-)
+for ext in [".svg", ".png"]
+    save(
+        plotsdir(
+            "survival_dynamical_autocov" * ext
+        ),
+        dynamical_autocov_survival_plot,
+    )
+end

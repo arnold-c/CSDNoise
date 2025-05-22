@@ -112,8 +112,8 @@ Each day, all clinically-compatible febrile rash cases (that is, both the measle
       colspan: 2,
       align: center,
       "Unif (92.69%, 100%)",
-    ), [10.20%, 83.74%],
-    [Vaccination rate at birth after burn-in period (r#sub[e])], [Unif (60%, 80%)], [Unif (92.69%, 100%)], [10.20%, 83.74%],
+    ), [{10.20%, 83.74%}],
+    [Vaccination rate at birth after burn-in period (r#sub[e])], [Unif (60%, 80%)], [Unif (92.69%, 100%)], [{10.20%, 83.74%}],
     [Birth/death rate (m)], table.cell(
       colspan: 3,
       align: center,

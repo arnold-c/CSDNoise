@@ -71,8 +71,8 @@ null_dynamics_specification = DynamicsParameterSpecification(
         pn -> getproperty(ensemble_dynamics_specification, pn),
         filter(
             name ->
-                name != :min_vaccination_coverage &&
-                    name != :max_vaccination_coverage,
+            name != :min_vaccination_coverage &&
+                name != :max_vaccination_coverage,
             propertynames(ensemble_dynamics_specification),
         ),
     )...,
@@ -168,18 +168,20 @@ subset_optimal_df = subset(
 
 #%%
 function plot_noise_filename(
-    noise_specification::T
-) where {T<:PoissonNoiseSpecification}
+        noise_specification::T
+    ) where {T <: PoissonNoiseSpecification}
     return "poisson_$(noise_specification.noise_mean_scaling)x"
 end
 
 function plot_noise_filename(
-    noise_specification::T
-) where {T<:DynamicalNoiseSpecification}
-    mean_vaccination_coverage = mean([
-        noise_specification.min_vaccination_coverage,
-        noise_specification.max_vaccination_coverage,
-    ])
+        noise_specification::T
+    ) where {T <: DynamicalNoiseSpecification}
+    mean_vaccination_coverage = StatsBase.mean(
+        [
+            noise_specification.min_vaccination_coverage,
+            noise_specification.max_vaccination_coverage,
+        ]
+    )
     return "dynamical_$(mean_vaccination_coverage)"
 end
 
@@ -188,12 +190,12 @@ function plot_test_filename(test_specification)
 end
 
 function extract_tau_auc_metric(
-    df,
-    test_specification,
-    tau_auc_metric,
-    header_label;
-    rev = true,
-)
+        df,
+        test_specification,
+        tau_auc_metric,
+        header_label;
+        rev = true,
+    )
     return combine(
         sort(
             subset(
@@ -204,10 +206,10 @@ function extract_tau_auc_metric(
         ),
         [:ews_metric, tau_auc_metric] =>
             ByRow(
-                (x, y) ->
-                    sentencecase(replace(x, "_" => " ")) *
-                    " (" * @sprintf("%.2f", y) * ")",
-            ) => header_label,
+            (x, y) ->
+            sentencecase(replace(x, "_" => " ")) *
+                " (" * @sprintf("%.2f", y) * ")",
+        ) => header_label,
     )
 end
 
@@ -218,7 +220,7 @@ mkpath(tables_path)
 gdfs = groupby(
     subset_optimal_df,
     [
-        :noise_specification
+        :noise_specification,
     ],
 )
 
@@ -279,7 +281,7 @@ for (noise_num, gdf) in enumerate(gdfs)
 
     save(
         joinpath(heatmap_plotdir, optimal_heatmap_plot_name),
-        optimal_heatmap_plot;
+        optimal_heatmap_plot
     )
 
     test_df = subset(
@@ -295,17 +297,17 @@ for (noise_num, gdf) in enumerate(gdfs)
 
     for (i, survival_ews_metric) in pairs(ews_metrics)
         survival_df, (
-        vec_of_testarr,
-        vec_of_null_testarr,
-        vec_of_ews_vals_vec,
-        vec_of_null_ews_vals_vec,
-        vec_of_exceed_thresholds,
-        vec_of_null_exceed_thresholds,
-        vec_of_threshold_percentiles,
-        vec_of_null_threshold_percentiles,
-        vec_of_detection_index_vec,
-        vec_of_null_detection_index_vec
-), noisearr = simulate_ews_survival_data(
+                vec_of_testarr,
+                vec_of_null_testarr,
+                vec_of_ews_vals_vec,
+                vec_of_null_ews_vals_vec,
+                vec_of_exceed_thresholds,
+                vec_of_null_exceed_thresholds,
+                vec_of_threshold_percentiles,
+                vec_of_null_threshold_percentiles,
+                vec_of_detection_index_vec,
+                vec_of_null_detection_index_vec,
+            ), noisearr = simulate_ews_survival_data(
             test_df,
             ensemble_specification,
             ensemble_single_incarr,
@@ -331,10 +333,10 @@ for (noise_num, gdf) in enumerate(gdfs)
             )
 
             for (start_ind, timelength_plotdir, timelength_label) in zip(
-                [1, Int64(round(Dates.days(Year(5))))],
-                ["full-length", "after-burnin"],
-                ["Full Time Series", "After Burn-in Period"],
-            )
+                    [1, Int64(round(Dates.days(Year(5))))],
+                    ["full-length", "after-burnin"],
+                    ["Full Time Series", "After Burn-in Period"],
+                )
                 auc_df = DataFrame(
                     "ews_metric" => String[],
                     "test_specification" => IndividualTestSpecification[],
@@ -367,22 +369,22 @@ for (noise_num, gdf) in enumerate(gdfs)
 
                     emergent_sv =
                         map(axes(subset_testarr, 2)) do sim
-                            enddate = enddate_vec[sim]
-                            EWSMetrics(
-                                ews_metric_specification,
-                                subset_testarr[start_ind:enddate, sim],
-                            )
-                        end |>
+                        enddate = enddate_vec[sim]
+                        EWSMetrics(
+                            ews_metric_specification,
+                            subset_testarr[start_ind:enddate, sim],
+                        )
+                    end |>
                         v -> StructVector(v)
 
                     null_sv =
                         map(axes(subset_null_testarr, 2)) do sim
-                            enddate = enddate_vec[sim]
-                            EWSMetrics(
-                                ews_metric_specification,
-                                subset_null_testarr[start_ind:enddate, sim],
-                            )
-                        end |>
+                        enddate = enddate_vec[sim]
+                        EWSMetrics(
+                            ews_metric_specification,
+                            subset_null_testarr[start_ind:enddate, sim],
+                        )
+                    end |>
                         v -> StructVector(v)
 
                     for metric in ews_metrics
@@ -496,7 +498,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                     combine(
                         auc_df,
                         :emergent_tau =>
-                            ByRow(x -> mean(x)) => :ews_metric_value,
+                            ByRow(x -> StatsBase.mean(x)) => :ews_metric_value,
                     ),
                 )
 
@@ -504,7 +506,7 @@ for (noise_num, gdf) in enumerate(gdfs)
                     select(auc_df, Cols(1:2)),
                     combine(
                         auc_df,
-                        :null_tau => ByRow(x -> mean(x)) => :ews_metric_value,
+                        :null_tau => ByRow(x -> StatsBase.mean(x)) => :ews_metric_value,
                     ),
                 )
 
@@ -731,7 +733,7 @@ CSV.write(
 #%%
 lineplot_df = similar(gdfs[1], 0)
 for gdf in gdfs,
-    ewsmetric in ["autocovariance", "variance", "mean", "index_of_dispersion"]
+        ewsmetric in ["autocovariance", "variance", "mean", "index_of_dispersion"]
 
     prepare_line_plot_df!(
         lineplot_df,
@@ -765,8 +767,8 @@ save(
 #%%
 supplemental_lineplot_df = similar(gdfs[1], 0)
 for gdf in gdfs,
-    ewsmetric in
-    ["autocorrelation", "coefficient_of_variation", "skewness", "kurtosis"]
+        ewsmetric in
+        ["autocorrelation", "coefficient_of_variation", "skewness", "kurtosis"]
 
     prepare_line_plot_df!(supplemental_lineplot_df, gdf, ewsmetric)
 end
@@ -833,7 +835,7 @@ for metric in ews_metrics
     )
 
     survival_plot_name = "survival_" *
-                         "ews-" * metric * ".svg"
+        "ews-" * metric * ".svg"
 
     dir = if metric == "autocovariance"
         survival_plotdir
@@ -884,7 +886,7 @@ poisson_autocov_perfect_test_survival_plot = ews_survival_plot(
         PoissonNoiseSpecification(7.0),
     ],
     test_specification_vec = [
-        IndividualTestSpecification(1.0, 1.0, 0)
+        IndividualTestSpecification(1.0, 1.0, 0),
     ],
     linestyle_vec = [:solid, :dot],
     ylabel = "Percentage Without Alert",

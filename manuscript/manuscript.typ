@@ -17,7 +17,13 @@
     "PSU-Bio": "Department of Biology, Pennsylvania State University, University Park, PA, USA 16802",
     "CIDD": "Center for Infectious Disease Dynamics, Pennsylvania State University, University Park, PA, USA 16802",
   ),
-  keywords: ("Diagnostic Test Uncertainty","Infectious Disease Surveillance","Outbreak Detection", "Early Warning Signals", "Critical Slowing Down"),
+  keywords: (
+    "Diagnostic Test Uncertainty",
+    "Infectious Disease Surveillance",
+    "Outbreak Detection",
+    "Early Warning Signals",
+    "Critical Slowing Down",
+  ),
   abstract: [
     Methods to detect the emergence of infectious diseases, and approach to the "critical transition" $R_"E" = 1$, have to potential to avert substantial disease burden by facilitating preemptive actions like vaccination campaigns.
     Early warning signals (EWS), summary statistics of infection case time series, show promise in providing such advanced warnings.
@@ -29,7 +35,7 @@
     In these situations, diagnostic test accuracy should not be a precursor to the implementation of an EWS metric-based alert system.
   ],
   word-count: false,
-  line-numbers: true
+  line-numbers: false,
 )
 
 = Background
@@ -38,28 +44,30 @@ Despite sustained advances over decades, infectious diseases still pose a substa
 For many diseases, effective and affordable vaccines have played a substantial role in reducing this burden, averting 154 million deaths since the introduction of the Expanded Programme on Immunization in 1974 @shattockContributionVaccinationImproved2024.
 As burden decreases with increasing control, dynamics may shift from predictable annual incidence to increasingly variable and episodic dynamics @grahamMeaslesCanonicalPath2019.
 Many populations that have achieved apparent control suffer from large-scale resurgent outbreaks due to the build up of susceptibles in the absence of persistent transmission @parumsReviewResurgenceMeasles2024 @masreshaProgressMeaslesElimination2023 @minettiLessonsChallengesMeasles2013.
-While rapid detection and response has the potential to minimize the impact of these outbreaks @graisTimeEssenceExploring2008 @ferrariTimeStillEssence2014 @azmanUrbanCholeraTransmission2012 @dergiadesEffectivenessGovernmentPolicies2022, early warning systems that can trigger preemptive action prior to outbreaks would have a greater potential for effectiveness.
+While rapid detection and response has the potential to minimize the impact of these outbreaks @graisTimeEssenceExploring2008 @ferrariTimeStillEssence2014 @azmanUrbanCholeraTransmission2012 @dergiadesEffectivenessGovernmentPolicies2022, early warning systems that can trigger preemptive action prior to outbreaks would necessarily avert more cases.
 
 Infectious disease surveillance systems are crucial for detecting outbreaks @murrayInfectiousDiseaseSurveillance2016 @DiseaseSurveillance, and could be leveraged to anticipate the risk of outbreaks @brettAnticipatingEpidemicTransitions2018 @brettAnticipatingEmergenceInfectious2017 @drakeStatisticsEpidemicTransitions2019.
 Outbreak detection and response systems are reactive in nature; cases are collated, counted, and if a pre-determined threshold is met or breached, an action is undertaken (e.g., preliminary investigation, or reactive vaccination campaign) @worldhealthorganizationOperationalThresholds2014 @worldhealthorganizationMeaslesOutbreakGuide2022.
-However, due to the exponential trajectory of incidence in the early stages of an outbreak, the reactive nature necessarily results in excess infections that cannot be prevented @graisTimeEssenceExploring2008 @ferrariTimeStillEssence2014 @azmanUrbanCholeraTransmission2012.
-To limit the burden of disease, ideally, epidemiologists could utilize the output of a surveillance system (e.g., the trend in cases of a pathogen) to predict the risk of a future outbreak, triggering a _proactive_ action, such as a preventative vaccination campaign.
+However, due to the exponential trajectory of incidence in the early stages of an outbreak, the reactive nature necessarily results in excess infections between detection and action that cannot be prevented @graisTimeEssenceExploring2008 @ferrariTimeStillEssence2014 @azmanUrbanCholeraTransmission2012.
+Early warning systems that can trigger preemptive action based on empirical patterns in surveillance data could avert these excess cases; though preemptive systems run the risk of over-sensitivity triggering expensive prevention efforts with small realized gains.
 
 The risk of an outbreak can be quantified in terms of the effective reproduction number, $R_"E"$, defined as the expected number of secondary cases due to each infectious individual @vynnyckyIntroductionInfectiousDisease2010a.
-$R_"E" = 1$ represents a "critical transition", below which epidemics should not spread, and above which outbreaks should propagate.
+$R_"E" = 1$ represents a "critical transition" (or "tipping point"), below which epidemics should not spread, and above which outbreaks should propagate.
 There has been growing interest, in many fields, to identify and develop early warning signals (EWS) that are predictive of the approach to such critical transitions in dynamical systems @schefferEarlywarningSignalsCritical2009 @schefferForeseeingTippingPoints2010 @dakosSlowingEarlyWarning2008 @drakeEarlyWarningSignals2010 @boettigerQuantifyingLimitsDetection2012.
 The appeal of an alert system based upon EWS metrics is that they are model-free, only requiring the calculation of summary statistics of a time series.
-Prior work has demonstrated that for infectious disease systems, computing EWS metrics on the progression of population susceptibility may be most predictive @drakeStatisticsEpidemicTransitions2019, but collecting this information is often intractable, and utilizing either the incidence or prevalence data has provided similarly useful predictions @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020.
-If an EWS is predictive, critical slowing down theory suggests that the EWS values will change as a transition is approached, such as an increase in the variance.
+Prior work has demonstrated that for infectious disease systems, computing EWS metrics on the size (or proportion) of the susceptible population may be most predictive @drakeStatisticsEpidemicTransitions2019, but collecting this information is often intractable.
+EWS metrics based on incidence or prevalence data, which are more commonly available in surveillance systems, can be predictive of critical transitions @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020.
+If an EWS is predictive, critical slowing down theory suggests that the EWS values will change as a transition is approached.
 Prior work has demonstrated that EWS metrics are theoretically correlated with a critical transition for infectious disease systems, under emergent and extinction conditions @oreganTheoryEarlyWarning2013 @drakeStatisticsEpidemicTransitions2019 @brettAnticipatingEmergenceInfectious2017 @brettAnticipatingEpidemicTransitions2018 @southallProspectsDetectingEarly2020 @drakeMonitoringPathElimination2017.
 
 While identifying EWS that are correlated with a transition is an important first step, systems to preempt outbreaks also require a discrete decision threshold to trigger preventive action (e.g., vaccination) @southallEarlyWarningSignals2021 @dablanderOverlappingTimescalesObscure2022.
+This discrete decision must balance consequences of being overly sensitive i.e., the cost of over-reaction in the absence of a transition, against those relating to being overly specific, i.e., under- or late reactions in the presence of a transition.
 To address this, various threshold-based and statistical learning based approaches have been developed @southallHowEarlyCan2022 @drakeEarlyWarningSignals2010 @brettDynamicalFootprintsEnable2020 @clementsIncludingTraitbasedEarly2016 @obrienEarlyWarningSignal2021.
 For these, a distribution of the EWS metric is quantified during a non-outbreak regime and a decision threshold is triggered when the EWS metrics at time $t$ exceeds some quantile or derived statistic of this distribution; often the mean plus 2 times the standard deviation.
 Prior work has shown that a single exceedance is often too sensitive and requiring multiple consecutive flags to trigger an alert improves the accuracy in a 'noisy' system by reducing the false positive rate @southallHowEarlyCan2022 @clementsBodySizeShifts2017 @clementsEarlyWarningSignals2019.
 
 Until now, the relatively nascent topic of EWS for outbreak detection has only explored imperfect surveillance in the setting of under-reporting and temporal aggregation of case data @brettAnticipatingEpidemicTransitions2018 @brettDetectingCriticalSlowing2020.
-Our goal is to characterize the performance of EWS metrics for outbreak detection in a surveillance system with diagnostic uncertainty due to co-circulating pathogens and imperfect diagnostic tests, i.e., non-target disease that may be misdiagnosed as the target disease.
+In this paper we characterize the performance of EWS metrics for outbreak detection in a surveillance system with diagnostic uncertainty due to co-circulating pathogens and imperfect diagnostic tests, i.e., non-target disease that may be misdiagnosed as the target disease.
 For diseases with non-specific symptoms, e.g., measles and rubella that often co-circulate and have similar clinical presentation @masreshaTrackingMeaslesRubella2024 @worldhealthorganizationMeaslesOutbreakGuide2022, an imperfect diagnostic test will result in false positive and negative cases.
 In this paper we show the conditions under which diagnostic uncertainty overwhelms the time series used to calculate EWS summary statistics, limiting the ability to predict epidemic transitions.
 
@@ -72,47 +80,78 @@ We assumed no seasonality in the transmission rate ($beta_t$), and set the laten
 Demographic parameters (birth and death rates) broadly reflecting those observed in Ghana were selected to evaluate the performance of EWS metrics in a setting where high, yet sub-elimination, vaccination coverage is observed, requiring ongoing vigilance @WHOImmunizationData @masreshaTrackingMeaslesRubella2024.
 An initial population of 500,000 individuals was simulated, with commuter-style imports drawn from a Poisson distribution with mean proportional to the size of the population and $R_0$, to maintain a level of endemicity @keelingModelingInfectiousDiseases2008.
 
-To evaluate the predictive ability of EWS metrics in environments with background disease that could produce false positive test results if tested with an imperfect diagnostic, we generated a time series of "suspected measles" by summing the measles and background noise time series.
-The noise time series is modeled as either: independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$; or from an SEIR time series with rubella-like parameters with additional noise drawn from a Poisson distribution with mean equal to 15% of the daily average of the rubella incidence time series, to account for non-rubella sources of clinically-compatible febrile rash e.g., parvovirus (@tbl_csd-model-parameters) @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
-Under dynamical (SEIR-generated) noise simulations, the vaccination rate at birth was selected to produce equivalent magnitudes of daily average noise incidence as observed in the static noise simulations that were drawn from Poisson distributions (10.20% and 87.34%).
-Throughout the rest of the manuscript, these will be referred to as low and high dynamical/static noise scenarios, accordingly.
+To evaluate the predictive ability of EWS metrics in environments with background disease that could produce false positive results if tested with an imperfect diagnostic, we generated a time series of "suspected measles" by summing the measles and a background noise time series.
+The noise time series is modeled as either static or dynamical, as follows: static noise was modeled as independent draws of a Poisson distribution, with mean equal to a multiple (c) of the daily average measles incidence, where $c in {1, 7}$; dynamical noise was modeled as a SEIR time series with rubella-like parameters (@tbl_csd-model-parameters) with additional noise drawn from a Poisson distribution with mean equal to 15% of the daily average of the rubella incidence time series, to account for non-rubella sources of clinically-compatible febrile rash e.g., parvovirus @papadopoulosEstimatesBasicReproduction2022 @RubellaCDCYellow.
+Under dynamical noise simulations, the vaccination rate at birth was selected to produce equivalent magnitudes of daily average noise incidence as observed in the static noise simulations that were drawn from Poisson distributions (10.20% and 87.34%).
+Throughout the rest of the manuscript, these will be referred to as low and high static/dynamical noise scenarios, accordingly.
 Each day, all clinically-compatible febrile rash cases (that is, both the measles and noise time series) were tested using one of the following diagnostic tests, producing a time series of test positive cases.
 
 - A perfect test with 100% sensitivity and specificity. This was chosen to reflect the best-case scenario that the imperfect diagnostic-based alert scenarios could be compared against.
 - An imperfect diagnostic with sensitivity and specificity equal to either 99%, 98%, 97%, 96%, 95%, 90%, or 80%.
 
 #let import_rate = $(1.06*μ*R_0)/(√(N))$
-#let table_math(inset: 6pt, size: 14pt, content) = table.cell(inset: inset, text(size: size, content))
+#let table_math(inset: 6pt, size: 14pt, content) = table.cell(
+  inset: inset,
+  text(size: size, content),
+)
 
 #figure(
   table(
     columns: 4, align: horizon,
-    [Parameters],[Measles - Emergent],[Measles - Null],[Dynamical noise],
-    [R0],table.cell(colspan: 2, align: center, "16"),[5],
-    [Latent period (s)],table.cell(colspan: 2, align: center, "10 days"),[7 days],
-    [Infectious period (g)],table.cell(colspan: 2, align: center, "8 days"),[14 days],
-    [Vaccination rate at birth during burn-in period (r#sub[i])],table.cell(colspan: 2, align: center, "Unif (92.69%, 100%)"),[10.20%, 83.74%],
-    [Vaccination rate at birth after burn-in period (r#sub[e])],[Unif (60%, 80%)],[Unif (92.69%, 100%)],[10.20%, 83.74%],
-    [Birth/death rate (m)],table.cell(colspan: 3, align: center, "27 per 1000 per annum"),
-    [Importation rate], table.cell(colspan: 3, align: center, table_math[$(1.06*μ*R_0)/(√(N))$]),
+    [Parameters], [Measles - Emergent], [Measles - Null], [Dynamical noise],
+    [R0], table.cell(colspan: 2, align: center, "16"), [5],
+    [Latent period (s)], table.cell(
+      colspan: 2,
+      align: center,
+      "10 days",
+    ), [7 days],
+    [Infectious period (g)], table.cell(
+      colspan: 2,
+      align: center,
+      "8 days",
+    ), [14 days],
+    [Vaccination rate at birth during burn-in period (r#sub[i])], table.cell(
+      colspan: 2,
+      align: center,
+      "Unif (92.69%, 100%)",
+    ), [10.20%, 83.74%],
+    [Vaccination rate at birth after burn-in period (r#sub[e])], [Unif (60%, 80%)], [Unif (92.69%, 100%)], [10.20%, 83.74%],
+    [Birth/death rate (m)], table.cell(
+      colspan: 3,
+      align: center,
+      "27 per 1000 per annum",
+    ),
+    [Importation rate], table.cell(
+      colspan: 3,
+      align: center,
+      table_math[$(1.06*μ*R_0)/(√(N))$],
+    ),
     [Population size (N)], table.cell(colspan: 3, align: center, "500,000"),
-    [Initial proportion susceptible], table.cell(colspan: 3, align: center, "0.05"),
+    [Initial proportion susceptible], table.cell(
+      colspan: 3,
+      align: center,
+      "0.05",
+    ),
     [Initial proportion exposed], table.cell(colspan: 3, align: center, "0.0"),
     [Initial proportion infected], table.cell(colspan: 3, align: center, "0.0"),
-    [Initial proportion recovered], table.cell(colspan: 3, align: center, "0.95"),
+    [Initial proportion recovered], table.cell(
+      colspan: 3,
+      align: center,
+      "0.95",
+    ),
   ),
   caption: [Compartmental model parameters],
 )
 <tbl_csd-model-parameters>
 
-To evaluate the performance of the EWS metrics at predicting the approach to the critical transition ($R_"E" = 1$) from below, we simulated "emergent" scenarios where $R_"E"$ increases until 1, and "null" scenarios where $R_"E"$ is below 1.
+To evaluate the performance of the EWS metrics at predicting the approach to the critical transition ($R_"E" = 1$) from below, we simulated "emergent" scenarios where $R_"E"$ increases until 1, and "null" scenarios where $R_"E"$ remains below 1.
 For both emergent and null scenarios, we generated 100 time series.
-All measles simulation incorporated a 5-year burn-in period to produce sufficient data for calculation of the EWS metrics upon aggregation, as well as to produce greater variation in the trajectory of $R_"E"$.
+All measles simulations incorporated a 5-year burn-in period to produce sufficient data for calculation of the EWS metrics upon aggregation, as well as to produce greater variation in the trajectory of $R_"E"$.
 For each time series, the vaccination rate at birth during the burn-in period was sampled from a Uniform distribution between 92.69% and 100% coverage.
 These bounds were selected to ensure the maximum value of $R_"E"$ that could be reached within 10 years (twice the length of the burn-in period) was 0.9.
 We simulated emergent scenarios by lowering the vaccination rate at birth after completion of the burn-in period, allowing the proportion of the population that is susceptible to grow.
-For each emergent time series, the vaccination rate at birth was independently drawn from a Uniform distribution between 60% and 80% coverage, allowing the rate of growth in $R_"E"$, and therefore the time of the critical transition, to vary in each emergent time series.
-For each null time series, the vaccination rate at birth was set to the coverage sampled during the burn-in period, ensuring $R_"E"$ would not cross the critical transition within the scope of the simulation, though it may grow slowly.
+For each emergent time series, the post burn-in vaccination rate at birth was independently drawn from a Uniform distribution between 60% and 80% coverage, allowing the rate of growth in $R_"E"$, and therefore the time of the critical transition, to vary in each emergent time series.
+For each null time series, the post burn-in vaccination rate at birth was set to the coverage sampled during the burn-in period, ensuring $R_"E"$ would not cross the critical transition within the scope of the simulation, though it may grow slowly.
 Each of the 100 emergent and 100 null time series are paired during the pre-processing steps i.e., up until the completion of the burn-in period, paired emergent and null simulations share the same vaccination rate at birth, and they are both truncated to identical lengths (the time step when $R_"E" = 1$ in that pair's emergent simulation).
 
 All simulations and analysis was completed in Julia version 1.10.5 @bezansonJuliaFreshApproach2017, with all code stored at #link("https://github.com/arnold-c/CSDNoise").
@@ -123,7 +162,7 @@ For example, the EWS metric, the mean, is given by the expectation in @eq_ews-mu
 At the beginning of the time series when $t < b$, $b$ is set equal to $t$.
 
 $$$
-hat(mu)_t &= sum_(s = t-b delta)^(s = t) X_s / b
+  hat(mu)_t & = sum_(s = t-b delta)^(s = t) X_s / b
 $$$
 <eq_ews-mu-computation>
 
@@ -134,18 +173,33 @@ The full list of numerical formulas for each EWS metric can be found in @tbl_csd
 
 #figure(
   table(
-    columns: 2, align: center, inset: 10pt,
-    [EWS Metric],[Formula],
-    [Mean ($hat(mu)_t$)],table_math[$sum_(s = t-b delta)^(s = t) X_s / b$],
-    [Variance ($hat(sigma)^2_t$)], table_math[$sum_(s = t-b delta)^(s=t) (X_s - hat(mu)_s)^2 / b$],
-    [Coefficient of Variation ($hat("CV")_t$) ], table_math[$hat(sigma)_t / hat(mu)_t$],
-    [Index of Dispersion ($hat("IoD")_t$) ], table_math[$hat(sigma)^2_t / hat(mu)_t$],
-    [Skewness ($hat("Skew")_t$)], table_math[$1/(hat(sigma)^3_t) sum_(s = t-b delta)^(s = t) (X_s - hat(mu)_s)^3 / b$],
-    [Kurtosis ($hat("Kurt")_t$)], table_math[$1/(hat(sigma)^4_t) sum_(s = t-b delta)^(s = t) (X_s - hat(mu)_s)^4 / b$],
-    [Autocovariance ($hat("ACov")_t$)], table_math[$sum_(s = t-b delta)^(s=t) ((X_s - hat(mu)_s)(X_(s-delta) - hat(mu)_(s-delta))) / b$],
-    [Autocorrelation lag-1 ($hat("AC-1")_t$)], table_math[$hat("ACov")_t / (hat(sigma)_t hat(sigma)_(t-delta)) $],
+    columns: 2,
+    align: center,
+    inset: 10pt,
+    [EWS Metric], [Formula],
+    [Mean ($hat(mu)_t$)], table_math[$sum_(s = t-b delta)^(s = t) X_s / b$],
+    [Variance ($hat(sigma)^2_t$)],
+    table_math[$sum_(s = t-b delta)^(s=t) (X_s - hat(mu)_s)^2 / b$],
+
+    [Coefficient of Variation ($hat("CV")_t$) ],
+    table_math[$hat(sigma)_t / hat(mu)_t$],
+
+    [Index of Dispersion ($hat("IoD")_t$) ],
+    table_math[$hat(sigma)^2_t / hat(mu)_t$],
+
+    [Skewness ($hat("Skew")_t$)],
+    table_math[$1/(hat(sigma)^3_t) sum_(s = t-b delta)^(s = t) (X_s - hat(mu)_s)^3 / b$],
+
+    [Kurtosis ($hat("Kurt")_t$)],
+    table_math[$1/(hat(sigma)^4_t) sum_(s = t-b delta)^(s = t) (X_s - hat(mu)_s)^4 / b$],
+
+    [Autocovariance ($hat("ACov")_t$)],
+    table_math[$sum_(s = t-b delta)^(s=t) ((X_s - hat(mu)_s)(X_(s-delta) - hat(mu)_(s-delta))) / b$],
+
+    [Autocorrelation lag-1 ($hat("AC-1")_t$)],
+    table_math[$hat("ACov")_t / (hat(sigma)_t hat(sigma)_(t-delta))$],
   ),
-  caption: [Numerical computations for EWS metrics, where $delta = 1$ time step, $b = 52$ weeks]
+  caption: [Numerical computations for EWS metrics, where $delta = 1$ time step, $b = 52$ weeks],
 )
 <tbl_csd-ews-formulas>
 
@@ -158,7 +212,7 @@ An AUC of 0.5 indicates the EWS is similarly correlated with both emergent and n
 AUC values are transformed as $|"AUC" - 0.5|$ to highlight the strength of the correlation with emergence, with values close to 0 exhibiting poor performance, and a value of 0.5 indicating perfect correlation @brettAnticipatingEpidemicTransitions2018.
 
 $$$
-"AUC" = (r_"null" - n_"null" (n_"null" + 1) \/ 2) / (n_"emergent" n_"null")
+  "AUC" = (r_"null" - n_"null" (n_"null" + 1) \/ 2) / (n_"emergent" n_"null")
 $$$
 <eq-auc-calculation>
 
@@ -170,28 +224,34 @@ The sensitivity of the system is defined as the proportion of the emergent simul
 Taking the mean of the sensitivity and specificity produces the accuracy of the system.
 For each alert scenario, a grid search over the EWS hyperparameters (Q $in [0.5, 0.99]$, C $in [2, 30]$) is performed to identify the set of EWS hyperparameters that maximizes alert accuracy for a given alert scenario.
 If multiple hyperparameter combinations produce identical alert system accuracies, the combination with the highest alert specificity is selected.
-After the optimal EWS hyperparameters have been selected, the accuracy of each EWS metric are compared across alert scenarios, at their respective maximal values.
+After the optimal EWS hyperparameters have been selected, the accuracy of each EWS metric is compared across alert scenarios, at their respective maximal values.
 Finally, the speed and timing of detection relative to the critical transition is evaluated using Kaplan-Meier survival estimates @clarkSurvivalAnalysisPart2003.
 Alert accuracy was only evaluated on EWS calculated after the completion of the burn-in period.
 
 = Results
 == Correlation with Emergence
 
-The strength and direction of the raw correlation (Tau) between EWS metrics and the approach to the critical transition in emergent time series is strongly dependent upon the length of the time series evaluated; Tau is higher when calculated after the burn-in period for the top 5 ranked metrics (@tbl_csd-tau-ranking-perfect-test).
+The strength and direction of the raw correlation (Tau) between EWS metrics and the approach to the critical transition in emergent time series is strongly dependent upon the length of the time series evaluated; Tau is higher when calculated after the burn-in period for the top 5 ranked metrics (@tbl_csd-tau-ranking-perfect-test illustrates the correlations observed for a perfect test).
 Normalizing the correlation in the emergent time series against the correlation observed in null simulations yields comparable results when calculated from the full time series and only after the burn-in (@tbl_csd-tau-ranking-perfect-test).
 Consistent with previous studies, the autocovariance, variance, mean, and index of dispersion show the strongest correlations with emergence ($|"AUC"-0.5| = 0.20, 0.20, 0.18, 0.13$, evaluated after the burn-in period, respectively) @brettDetectingCriticalSlowing2020 @brettAnticipatingEpidemicTransitions2018.
 
-#let perfect_tau_auc_table = csv("./manuscript_files/tables/perfect-test_tau-auc.csv")
+#let perfect_tau_auc_table = csv(
+  "./manuscript_files/tables/perfect-test_tau-auc.csv",
+)
 
 #figure(
-    two_header_table(
+  two_header_table(
     columns: 5,
-    table.cell(rowspan: 2, align: horizon)[Rank], table.cell(colspan: 2)[Tau], table.cell(colspan: 2)[|AUC - 0.5|],
-    [Full Time Series], [After Burn-In Period],
-    [Full Time Series], [After Burn-In Period],
-    ..perfect_tau_auc_table.slice(1).flatten()
+    table.cell(rowspan: 2, align: horizon)[Rank],
+    table.cell(colspan: 2)[Tau],
+    table.cell(colspan: 2)[|AUC - 0.5|],
+    [Full Time Series],
+    [After Burn-In Period],
+    [Full Time Series],
+    [After Burn-In Period],
+    ..perfect_tau_auc_table.slice(1).flatten(),
   ),
-  caption: [The ranking and mean value of Kendall's Tau computed on emergent time series, and the $|"AUC" - 0.5|$ for each metric. The values are computed on the full time series, and the subset from after the completion of the burn-in period, with a perfect test]
+  caption: [The ranking and mean value of Kendall's Tau computed on emergent time series, and the $|"AUC" - 0.5|$ for each metric. The values are computed on the full time series, and the subset from after the completion of the burn-in period, with a perfect test],
 )
 <tbl_csd-tau-ranking-perfect-test>
 
@@ -205,18 +265,26 @@ At high dynamical noise, these correlations disappeared, with all EWS metrics ex
 
 A full characterization of the strength of association between each metric and emergence, across all diagnostic tests and noise structures, can be seen in supplement (@fig_csd-auc-mag-heatmap-poisson-1x, @fig_csd-auc-mag-heatmap-poisson-7x, @fig_csd-auc-mag-heatmap-dynamical-1x, @fig_csd-auc-mag-heatmap-dynamical-7x).
 
-#let auc_magnitude_comparison_table = csv("./manuscript_files/tables/auc-magnitude-comparison.csv")
-#let auc_magnitude_comparison_vals = rename_noise_extract_vals(auc_magnitude_comparison_table)
+#let auc_magnitude_comparison_table = csv(
+  "./manuscript_files/tables/auc-magnitude-comparison.csv",
+)
+#let auc_magnitude_comparison_vals = rename_noise_extract_vals(
+  auc_magnitude_comparison_table,
+)
 
 #figure(
   three_header_table(
     columns: 6,
     align: horizon,
-    table.cell(rowspan: 3, align: horizon)[Rank], [Perfect Test], table.cell(colspan: 4)[90% Sensitive & Specific Imperfect Test],
-    table.cell(rowspan: 2)[All Noise], table.cell(colspan: 2)[Poisson Noise], table.cell(colspan:2)[Dynamical Noise],
-    ..auc_magnitude_comparison_vals
+    table.cell(rowspan: 3, align: horizon)[Rank],
+    [Perfect Test],
+    table.cell(colspan: 4)[90% Sensitive & Specific Imperfect Test],
+    table.cell(rowspan: 2)[All Noise],
+    table.cell(colspan: 2)[Poisson Noise],
+    table.cell(colspan: 2)[Dynamical Noise],
+    ..auc_magnitude_comparison_vals,
   ),
-  caption: [$|"AUC" - 0.5|$ for EWS metrics, ranked in descending order of magnitude, computed on the subset of the emergent time series after the burn-in period, for a perfect test and an imperfect diagnostic test with 90% sensitivity and 90% specificity, under high and low static and dynamical noise systems]
+  caption: [$|"AUC" - 0.5|$ for EWS metrics, ranked in descending order of magnitude, computed on the subset of the emergent time series after the burn-in period, for a perfect test and an imperfect diagnostic test with 90% sensitivity and 90% specificity, under high and low static and dynamical noise systems],
 )
 <tbl_csd-auc-magnitude-ranking-rdt-comparison>
 
@@ -234,7 +302,7 @@ Results for the 4 least well correlated EWS metrics are presented in the supplem
 
 #figure(
   image("./manuscript_files/plots/accuracy-line-plot.svg"),
-  caption: [The change in alert accuracy for the most correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of static or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The tests sensitivity equals the test specificity for all diagnostic tests.]
+  caption: [The change in alert accuracy for the most correlated EWS metrics under increasing diagnostic uncertainty, and low and high levels of static or dynamical noise. Low noise refers to simulations where the average incidence of noise is equal to the average incidence of measles. High noise refers to simulations where the average incidence of noise is equal to 7 times the average incidence of measles. The tests sensitivity equals the test specificity for all diagnostic tests.],
 )
 <fig-best-accuracy-line-plot>
 
@@ -247,7 +315,7 @@ With high dynamical noise, an imperfect test failed to produce many alerts under
 
 #figure(
   image("./manuscript_files/plots/survival/survival_ews-autocovariance.svg"),
-  caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test, and an imperfect test that is 90% sensitive and specific. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves. The trajectory of the solid lines are identical in each facet, as the perfect test is unaffected by noise cases. The histogram is identical between facets as it represents the timing of the tipping points, and all testing scenarios use the same underling measles simulations that terminate at the tipping point]
+  caption: [Survival curves for the autocovariance EWS metric computed on emergent and null simulations, with a perfect test, and an imperfect test that is 90% sensitive and specific. The histogram depicts the times when the tipping point is reached ($R_"E" = 1$) under the emergent simulation, right-truncating the curves. The trajectory of the solid lines are identical in each facet, as the perfect test is unaffected by noise cases. The histogram is identical between facets as it represents the timing of the tipping points, and all testing scenarios use the same underling measles simulations that terminate at the tipping point],
 )
 <fig-autocovariance-survival>
 
@@ -268,7 +336,7 @@ However, when large rubella outbreaks can produce meaningful peaks in test posit
 
 When evaluating the ability for the EWS metrics to accurately discriminate between emergent and null simulations, it is import to contextualize the results with the system's relative speed and specificity.
 Alert systems necessarily make compromises in their design: improvements to speed generally come at the cost of increased numbers of false alerts @lewisTimelyDetectionMeningococcal2001 @zalwangoEvaluationMalariaOutbreak2024.
-Depending on the context, it may be desirable to place a greater weight in preference/penalty for one of these axes; in scenarios where the expected cost to launch a preliminary investigation is low relative to the unaverted DALYs resulting from incorrect inaction in an overly specific system, higher false alert rates may be acceptable.
+Depending on the context, it may be desirable to place a greater weight in preference/penalty for one of these axes; in scenarios where the expected cost to launch a preliminary investigation is low relative to the unaverted disability-adjusted life-years (DALYs) resulting from incorrect inaction in an overly specific system, higher false alert rates may be acceptable.
 This analysis provides a framework to explicitly explore these trade-offs, including through the comparison of survival curves.
 A larger separation at the end of the time series between the emergent and null simulation lines indicates higher alert accuracy, as there is a greater difference in the true positive and false positive rates.
 Faster and more sustained declines indicate a (relatively) more sensitive alert system with more advanced warning of emergence.
@@ -299,44 +367,44 @@ Our work expands upon these efforts, characterizing the limits of predictability
 #pagebreak()
 
 #[
-= Funding
+  = Funding
 
-This work was supported by the Bill & Melinda Gates Foundation through grant No. INV-016091_2020.
-This project was also supported by the National Science Foundation, by grant: NSF-NIH-NIFA Ecology and Evolution of Infectious Disease award DEB 1911962.
-The funding sources had no role in the collection, analysis, interpretation, or writing of the work.
+  This work was supported by the Bill & Melinda Gates Foundation through grant No. INV-016091_2020.
+  This project was also supported by the National Science Foundation, by grant: NSF-NIH-NIFA Ecology and Evolution of Infectious Disease award DEB 1911962.
+  The funding sources had no role in the collection, analysis, interpretation, or writing of the work.
 
 
-= Acknowledgements
-== Author Contributions
-#emph[Conceptualization:] CA, MJF
+  = Acknowledgements
+  == Author Contributions
+  #emph[Conceptualization:] CA, MJF
 
-#emph[Data curation:] CA, MJF
+  #emph[Data curation:] CA, MJF
 
-#emph[Formal analysis:] CA
+  #emph[Formal analysis:] CA
 
-#emph[Funding acquisition:] MJF
+  #emph[Funding acquisition:] MJF
 
-#emph[Investigation:] CA
+  #emph[Investigation:] CA
 
-#emph[Methodology:] CA, MJF
+  #emph[Methodology:] CA, MJF
 
-#emph[Writing - original draft:] CA
+  #emph[Writing - original draft:] CA
 
-#emph[Writing - review and editing:] all authors.
+  #emph[Writing - review and editing:] all authors.
 
-== Conflicts of Interest and Financial Disclosures
-The authors declare no conflicts of interest.
+  == Conflicts of Interest and Financial Disclosures
+  The authors declare no conflicts of interest.
 
-== Data Access, Responsibility, and Analysis
-Callum Arnold and Dr. Matthew J. Ferrari had full access to all the data in the study and take responsibility for the integrity of the data and the accuracy of the data analysis.
-Callum Arnold (Department of Biology, Pennsylvania State University) conducted the data analysis.
+  == Data Access, Responsibility, and Analysis
+  Callum Arnold and Dr. Matthew J. Ferrari had full access to all the data in the study and take responsibility for the integrity of the data and the accuracy of the data analysis.
+  Callum Arnold (Department of Biology, Pennsylvania State University) conducted the data analysis.
 
-== Data Availability
-All code and data for the simulations can be found at #link("https://github.com/arnold-c/CSDNoise")
+  == Data Availability
+  All code and data for the simulations can be found at #link("https://github.com/arnold-c/CSDNoise")
 
-#pagebreak()
+  #pagebreak()
 
-#set bibliography(style: "elsevier-vancouver")
+  #set bibliography(style: "elsevier-vancouver")
 
-#bibliography("CSD.bib")
+  #bibliography("CSD.bib")
 ]<additional-info>

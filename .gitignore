@@ -441,3 +441,4 @@ scripts/debugging.jl
 /renv/settings.json
 /renv
 /Session.vim
+*.docx

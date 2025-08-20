@@ -1,19 +1,19 @@
 function simulate_and_plot_ews_survival(
-    optimal_heatmap_df,
-    ews_metric_specification,
-    ews_enddate_type,
-    ews_threshold_burnin,
-    ews_threshold_window,
-    noise_specification,
-    ensemble_specification,
-    individual_test_specification,
-    ensemble_single_incarr,
-    null_single_incarr,
-    ensemble_single_Reff_thresholds_vec;
-    ews_metric = "mean",
-    plottitle = "Survival",
-    subtitle = "",
-)
+        optimal_heatmap_df,
+        ews_metric_specification,
+        ews_enddate_type,
+        ews_threshold_burnin,
+        ews_threshold_window,
+        noise_specification,
+        ensemble_specification,
+        individual_test_specification,
+        ensemble_single_incarr,
+        null_single_incarr,
+        ensemble_single_Reff_thresholds_vec;
+        ews_metric = "mean",
+        plottitle = "Survival",
+        subtitle = "",
+    )
     subset_df = subset(
         optimal_heatmap_df,
         :ews_metric_specification => ByRow(==(ews_metric_specification)),
@@ -39,18 +39,18 @@ function simulate_and_plot_ews_survival(
 end
 
 function simulate_and_plot_ews_survival(
-    subset_df,
-    ews_metric_specification,
-    ews_threshold_burnin,
-    ensemble_specification,
-    individual_test_specification,
-    ensemble_single_incarr,
-    null_single_incarr,
-    ensemble_single_Reff_thresholds_vec;
-    ews_metric = "mean",
-    plottitle = "Survival",
-    subtitle = "",
-)
+        subset_df,
+        ews_metric_specification,
+        ews_threshold_burnin,
+        ensemble_specification,
+        individual_test_specification,
+        ensemble_single_incarr,
+        null_single_incarr,
+        ensemble_single_Reff_thresholds_vec;
+        ews_metric = "mean",
+        plottitle = "Survival",
+        subtitle = "",
+    )
     test_subset_df = subset(
         subset_df,
         :test_specification => ByRow(==(individual_test_specification)),
@@ -83,8 +83,8 @@ function simulate_and_plot_ews_survival(
 end
 
 function create_ews_survival_data(
-    ews_optimal_simulation_df
-)
+        ews_optimal_simulation_df
+    )
     nsims = nrow(ews_optimal_simulation_df)
     unique_detection_indices = sort(
         filter(
@@ -120,10 +120,10 @@ function create_ews_survival_data(
 end
 
 function calculate_detection_indices_and_survival(
-    detection_vec,
-    detection_indices,
-    nsims,
-)
+        detection_vec,
+        detection_indices,
+        nsims,
+    )
     if isempty(detection_indices)
         @assert nsims ==
             sum(detection_vec .== nothing)
@@ -140,7 +140,7 @@ function calculate_detection_indices_and_survival(
 
         @assert nsims ==
             sum(detection_indices_counts) +
-                sum(detection_vec .== nothing)
+            sum(detection_vec .== nothing)
 
         survival_vec = nsims .- cumsum(detection_indices_counts)
 
@@ -159,30 +159,34 @@ function calculate_detection_indices_and_survival(
 end
 
 function simulate_ews_survival_data(
-    optimal_ews_df,
-    ensemble_specification,
-    ensemble_single_incarr,
-    null_single_incarr,
-    thresholds;
-    ews_metric = "mean",
-    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-)
+        optimal_ews_df,
+        ensemble_specification,
+        ensemble_single_incarr,
+        null_single_incarr,
+        thresholds;
+        ews_metric = "mean",
+        logfilename = "ensemble-sim_ews-optimization.log.txt",
+        logfiledir = scriptsdir()
+    )
+    !isdir(logfiledir) && mkpath(logfiledir)
+
+    logfilepath = joinpath(logfiledir, logfilename)
     logfile = open(logfilepath, "a")
 
     survival_df = DataFrame(
-    (
-        ews_metric_specification = EWSMetricSpecification[],
-        ews_threshold_burnin = Union{<:Dates.Day,<:Dates.Year}[],
-        noise_specification = Union{
-            <:PoissonNoiseSpecification,<:DynamicalNoiseSpecification
-        }[],
-        test_specification = IndividualTestSpecification[],
-        ews_metric = String[],
-        enddate = Vector{Union{Int64,Try.Err}}(),
-        detection_index = Vector{Union{Nothing,Int64}}(),
-        null_detection_index = Vector{Union{Nothing,Int64}}(),
+        (
+            ews_metric_specification = EWSMetricSpecification[],
+            ews_threshold_burnin = Union{<:Dates.Day, <:Dates.Year}[],
+            noise_specification = Union{
+                <:PoissonNoiseSpecification, <:DynamicalNoiseSpecification,
+            }[],
+            test_specification = IndividualTestSpecification[],
+            ews_metric = String[],
+            enddate = Vector{Union{Int64, Try.Err}}(),
+            detection_index = Vector{Union{Nothing, Int64}}(),
+            null_detection_index = Vector{Union{Nothing, Int64}}(),
+        )
     )
-)
 
     subset_optimal_ews_df = subset(
         optimal_ews_df,
@@ -190,21 +194,21 @@ function simulate_ews_survival_data(
     )
 
     for n in [
-        :noise_specification,
-        :percent_tested,
-        :ews_metric_specification,
-        :ews_enddate_type,
-        :ews_threshold_window,
-        :ews_threshold_burnin,
-        :ews_metric,
-    ]
+            :noise_specification,
+            :percent_tested,
+            :ews_metric_specification,
+            :ews_enddate_type,
+            :ews_threshold_window,
+            :ews_threshold_burnin,
+            :ews_metric,
+        ]
         @assert length(unique(subset_optimal_ews_df[:, n])) == 1
     end
 
     noise_specification = subset_optimal_ews_df[1, :noise_specification]
     percent_tested = subset_optimal_ews_df[1, :percent_tested]
     ews_metric_specification = subset_optimal_ews_df[
-        1, :ews_metric_specification
+        1, :ews_metric_specification,
     ]
     ews_enddate_type = subset_optimal_ews_df[1, :ews_enddate_type]
     ews_threshold_window = subset_optimal_ews_df[1, :ews_threshold_window]
@@ -219,7 +223,7 @@ function simulate_ews_survival_data(
         seed = 1234,
     )[1]
 
-    enddate_vec = Vector{Union{Try.Ok,Try.Err}}(
+    enddate_vec = Vector{Union{Try.Ok, Try.Err}}(
         undef, size(ensemble_single_incarr, 3)
     )
 
@@ -231,16 +235,16 @@ function simulate_ews_survival_data(
     end
     failed_sims = sum(Try.iserr.(enddate_vec))
 
-    vec_of_testarr = Vector{Array{Float64,3}}(
+    vec_of_testarr = Vector{Array{Float64, 3}}(
         undef, nrow(subset_optimal_ews_df)
     )
-    vec_of_null_testarr = Vector{Array{Float64,3}}(
+    vec_of_null_testarr = Vector{Array{Float64, 3}}(
         undef, nrow(subset_optimal_ews_df)
     )
-    vec_of_ews_vals_vec = Vector{Vector{Union{Missing,EWSMetrics}}}(
+    vec_of_ews_vals_vec = Vector{Vector{Union{Missing, EWSMetrics}}}(
         undef, nrow(subset_optimal_ews_df)
     )
-    vec_of_null_ews_vals_vec = Vector{Vector{Union{Missing,EWSMetrics}}}(
+    vec_of_null_ews_vals_vec = Vector{Vector{Union{Missing, EWSMetrics}}}(
         undef, nrow(subset_optimal_ews_df)
     )
     vec_of_exceed_thresholds = Vector{Vector{Matrix{Bool}}}(
@@ -255,10 +259,10 @@ function simulate_ews_survival_data(
     vec_of_null_threshold_percentiles = Vector{Vector{Matrix{Float64}}}(
         undef, nrow(subset_optimal_ews_df)
     )
-    vec_of_detection_index_vec = Vector{Vector{Union{Nothing,Int64}}}(
+    vec_of_detection_index_vec = Vector{Vector{Union{Nothing, Int64}}}(
         undef, nrow(subset_optimal_ews_df)
     )
-    vec_of_null_detection_index_vec = Vector{Vector{Union{Nothing,Int64}}}(
+    vec_of_null_detection_index_vec = Vector{Vector{Union{Nothing, Int64}}}(
         undef, nrow(subset_optimal_ews_df)
     )
 
@@ -284,10 +288,10 @@ function simulate_ews_survival_data(
         )
         vec_of_null_testarr[i] = null_testarr
 
-        ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+        ews_vals_vec = Vector{Union{Missing, EWSMetrics}}(
             undef, size(testarr, 3)
         )
-        null_ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+        null_ews_vals_vec = Vector{Union{Missing, EWSMetrics}}(
             undef, size(testarr, 3)
         )
         fill!(ews_vals_vec, missing)
@@ -306,10 +310,10 @@ function simulate_ews_survival_data(
             undef, size(testarr, 3)
         )
 
-        detection_index_vec = Vector{Union{Nothing,Int64}}(
+        detection_index_vec = Vector{Union{Nothing, Int64}}(
             undef, size(testarr, 3)
         )
-        null_detection_index_vec = Vector{Union{Nothing,Int64}}(
+        null_detection_index_vec = Vector{Union{Nothing, Int64}}(
             undef, size(testarr, 3)
         )
         fill!(detection_index_vec, nothing)
@@ -414,17 +418,17 @@ function simulate_ews_survival_data(
     end
 
     return survival_df,
-    (
-        vec_of_testarr,
-        vec_of_null_testarr,
-        vec_of_ews_vals_vec,
-        vec_of_null_ews_vals_vec,
-        vec_of_exceed_thresholds,
-        vec_of_null_exceed_thresholds,
-        vec_of_threshold_percentiles,
-        vec_of_null_threshold_percentiles,
-        vec_of_detection_index_vec,
-        vec_of_null_detection_index_vec,
-    ),
-    noisearr
+        (
+            vec_of_testarr,
+            vec_of_null_testarr,
+            vec_of_ews_vals_vec,
+            vec_of_null_ews_vals_vec,
+            vec_of_exceed_thresholds,
+            vec_of_null_exceed_thresholds,
+            vec_of_threshold_percentiles,
+            vec_of_null_threshold_percentiles,
+            vec_of_detection_index_vec,
+            vec_of_null_detection_index_vec,
+        ),
+        noisearr
 end

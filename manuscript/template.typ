@@ -2,7 +2,6 @@
   // Article's Title
   title: "Article Title",
   header-title: none,
-
   // A dictionary of authors.
   // Dictionary keys are authors' names.
   // Dictionary values are meta data of every author, including
@@ -21,7 +20,6 @@
   //   )
   // )
   authors: (),
-
   // A dictionary of affiliation.
   // Dictionary keys are affiliations' labels.
   // These labels show be constent with those used in authors' meta data.
@@ -32,32 +30,24 @@
   //   "affil-1": "Institution Name, University Name, Road, Post Code, Country"
   // )
   affiliations: (),
-
   // The paper's abstract.
   abstract: [],
-
-  // The paper's abstract.
+  // The paper's author summary.
   author-summary: [],
-
   // The paper's keywords.
   keywords: (),
-
   // The path to a bibliography file if you want to cite some external
   // works.
   // bib: none,
   // bib-title: "References",
-
   // Word count
   word-count: false,
-
   // Line numbers
   line-numbers: false,
-
   font: "Libertinus Serif",
   font-size: 11pt,
-
   // Paper's content
-  body
+  body,
 ) = {
   set document(title: title, author: authors.keys())
   set page(numbering: "1", number-align: center)
@@ -88,11 +78,9 @@
 
   // show figure.caption: emph
   show figure.where(kind: table): set figure.caption(position: top)
-  set table(
-    fill: (x, y) => {
-      if y == 0 {gray}
-    }
-  )
+  set table(fill: (x, y) => {
+    if y == 0 { gray }
+  })
   show table.cell: it => {
     if it.y == 0 {
       strong(it)
@@ -102,7 +90,6 @@
   }
 
   set math.equation(numbering: "1")
-
 
 
   // Title block
@@ -128,7 +115,9 @@
           text([, ])
         }
         // Write author's name
-        let au_name = if au_meta.keys().contains("name") {au_meta.name} else {au}
+        let au_name = if au_meta.keys().contains("name") { au_meta.name } else {
+          au
+        }
         text([#au_name])
 
         // Get labels of author's affiliation
@@ -140,10 +129,12 @@
           // record the first affiliation as the primary affiliation,
           au_inst_primary = affiliations.at(au_inst_id.first())
           // and convert each affiliation's label to index
-          let au_inst_index = au_inst_id.map(id => inst_keys.position(key => key == id) + 1)
+          let au_inst_index = au_inst_id.map(id => (
+            inst_keys.position(key => key == id) + 1
+          ))
           // Output affiliation
           super([#(au_inst_index.map(id => [#id]).join([,]))])
-        } else if (type(au_inst_id) == string) {
+        } else if (type(au_inst_id) == str) {
           // If the author belongs to only one affiliation,
           // set this as the primary affiliation
           au_inst_primary = affiliations.at(au_inst_id)
@@ -154,21 +145,36 @@
         }
 
         // Corresponding author
-        if au_meta.keys().contains("corresponding") and (au_meta.corresponding == "true" or au_meta.corresponding == true) {
+        if (
+          au_meta.keys().contains("corresponding")
+            and (
+              au_meta.corresponding == "true" or au_meta.corresponding == true
+            )
+        ) {
           [#super[,]#footnote(numbering: "*")[
-            Corresponding author. #au_name. Address:
-            #if not au_meta.keys().contains("address") or au_meta.address == "" {
-              [#au_inst_primary.]
-            }
-            #if au_meta.keys().contains("email") {
-              [Email: #link("mailto:" + au_meta.email.replace("\\", "")).]
-            }
-          ]]
+              Corresponding author. #au_name. Address:
+              #if (
+                not au_meta.keys().contains("address") or au_meta.address == ""
+              ) {
+                [#au_inst_primary.]
+              }
+              #if au_meta.keys().contains("email") {
+                [Email: #link("mailto:" + au_meta.email.replace("\\", "")).]
+              }
+            ]]
         }
 
-        if au_meta.keys().contains("equal-contributor") and (au_meta.equal-contributor == "true" or au_meta.equal-contributor == true){
+        if (
+          au_meta.keys().contains("equal-contributor")
+            and (
+              au_meta.equal-contributor == "true"
+                or au_meta.equal-contributor == true
+            )
+        ) {
           if ai == 0 {
-            [#super[,]#footnote(numbering: "*")[Equal contributors.]<ec_footnote>]
+            [#super[,]#footnote(
+                numbering: "*",
+              )[Equal contributors.]<ec_footnote>]
           } else {
             [#super[,]#footnote(numbering: "*", <ec_footnote>)]
           }
@@ -180,24 +186,22 @@
 
     // Affiliation block
     #align(left)[#block([
-      #set par(leading: 0.4em)
-      #for (ik, key) in inst_keys.enumerate() {
-        text(size: 0.8em, [#super([#(ik+1)]) #(affiliations.at(key))])
-        linebreak()
-      }
-    ])]
+        #set par(leading: 0.4em)
+        #for (ik, key) in inst_keys.enumerate() {
+          text(size: 0.8em, [#super([#(ik + 1)]) #(affiliations.at(key))])
+          linebreak()
+        }
+      ])]
   ]
 
   if header-title == "true" {
     header-title = title
   }
 
-  set page(
-    header: [
-      #set text(8pt)
-      #align(right)[#header-title]
-    ],
-  )
+  set page(header: [
+    #set text(8pt)
+    #align(right)[#header-title]
+  ])
 
   // Abstract and keyword block
   if abstract != [] {
@@ -205,7 +209,11 @@
 
     block([
       #if word-count {
-        import "@preview/wordometer:0.1.4": word-count, word-count-of, total-words
+        import "@preview/wordometer:0.1.4": (
+          total-words,
+          word-count,
+          word-count-of,
+        )
         text(weight: "bold", [Word count: ])
         text([#word-count-of(exclude: (heading))[#abstract].words])
       }
@@ -226,7 +234,11 @@
   if author-summary != [] {
     block([
       #if word-count {
-        import "@preview/wordometer:0.1.4": word-count, word-count-of, total-words
+        import "@preview/wordometer:0.1.4": (
+          total-words,
+          word-count,
+          word-count-of,
+        )
         text(weight: "bold", [Word count: ])
         text([#word-count-of(exclude: (heading))[#author-summary].words])
       }
@@ -243,36 +255,39 @@
 
 
   if word-count {
-      import "@preview/wordometer:0.1.4": word-count, word-count-of, total-words
-      text(weight: "bold", [Word count: ])
-      text([#word-count-of(exclude: (heading, table, figure.caption, <additional-info>))[#body].words])
+    import "@preview/wordometer:0.1.4": total-words, word-count, word-count-of
+    text(weight: "bold", [Word count: ])
+    text([#word-count-of(exclude: (
+        heading,
+        table,
+        figure.caption,
+        <additional-info>,
+      ))[#body].words])
   }
 
   if line-numbers {
     set par.line(numbering: "1")
-    show figure: set par.line(
-      numbering: none
-    )
+    show figure: set par.line(numbering: none)
     body
   } else {
     body
   }
-
 }
 
 #let two_header_table(..args) = table(
   ..args,
-  fill: (x, y) => { if y == 0 or y == 1 {gray}}
+  fill: (x, y) => { if y == 0 or y == 1 { gray } }
 )
 
 #let three_header_table(..args) = table(
   ..args,
-  fill: (x, y) => { if y == 0 or y == 1 or y == 2 {gray}}
+  fill: (x, y) => { if y == 0 or y == 1 or y == 2 { gray } }
 )
 
 #let rename_noise_extract_vals(content, sliceval: 2) = {
-  content.flatten()
-  .map(it => it.replace(regex("(\w+)\s\w+\sNoise"), it => it.captures.at(0)))
-  .slice(sliceval)
+  content
+    .flatten()
+    .map(it => it.replace(regex("(\w+)\s\w+\sNoise"), it => it.captures.at(0)))
+    .slice(sliceval)
 }
 

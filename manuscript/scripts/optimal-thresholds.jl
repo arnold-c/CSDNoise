@@ -315,6 +315,7 @@ for (noise_num, gdf) in enumerate(gdfs)
             null_single_incarr,
             ensemble_single_Reff_thresholds_vec;
             ews_metric = survival_ews_metric,
+            logfiledir = projectdir("manuscript", "manuscript_files")
         )
 
         global combined_survival_df = vcat(
@@ -795,6 +796,7 @@ supplemental_accuracy_line_plot = line_plot(
 supplemental_line_plotdir = projectdir(
     "manuscript", "supplemental_files", "plots"
 )
+mkpath(supplemental_line_plotdir)
 
 for ext in [".svg", ".png"]
     save(

@@ -5,8 +5,8 @@ export calculate_sensitivity, calculate_specificity, calculate_accuracy
 
 Calculate the balanced accuracy from sensitivity and specificity values.
 
-Balanced accuracy is the arithmetic mean of sensitivity (true positive rate) and 
-specificity (true negative rate), providing a single metric that accounts for 
+Balanced accuracy is the arithmetic mean of sensitivity (true positive rate) and
+specificity (true negative rate), providing a single metric that accounts for
 performance on both positive and negative cases.
 
 # Arguments
@@ -28,11 +28,11 @@ end
 """
     calculate_sensitivity(true_positives, ensemble_nsims)
 
-Calculate the sensitivity (true positive rate) from the number of true positives 
+Calculate the sensitivity (true positive rate) from the number of true positives
 and total number of simulations.
 
-Sensitivity measures the proportion of actual positive cases that are correctly 
-identified as positive. In the context of early warning systems, this represents 
+Sensitivity measures the proportion of actual positive cases that are correctly
+identified as positive. In the context of early warning systems, this represents
 the fraction of simulations where a critical transition was correctly detected.
 
 # Arguments
@@ -55,12 +55,12 @@ end
 """
     calculate_specificity(true_negatives, ensemble_nsims)
 
-Calculate the specificity (true negative rate) from the number of true negatives 
+Calculate the specificity (true negative rate) from the number of true negatives
 and total number of simulations.
 
-Specificity measures the proportion of actual negative cases that are correctly 
-identified as negative. In the context of early warning systems, this represents 
-the fraction of simulations where no critical transition occurred and no false 
+Specificity measures the proportion of actual negative cases that are correctly
+identified as negative. In the context of early warning systems, this represents
+the fraction of simulations where no critical transition occurred and no false
 alarm was raised.
 
 # Arguments

@@ -222,6 +222,10 @@ ews_enddate_type_vec = [
     # Reff_end
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
+ews_threshold_burnin_vec = [
+    # Day(50),
+    Year(5),
+]
 
 #%%
 # Multistart optimization configuration
@@ -230,7 +234,6 @@ multistart_config = (
     # Parameter bounds (will be optimized continuously)
     percentile_bounds = (0.5, 0.99),           # Threshold percentile range
     consecutive_bounds = (1.0, 30.0),          # Consecutive thresholds range
-    burnin_bounds = (50.0, 365.0 * 5),        # Burnin period in days (50 days to 5 years)
 
     # Optimization settings
     n_sobol_points = 100,                      # Number of Sobol sequence starting points
@@ -239,7 +242,7 @@ multistart_config = (
     xtol_rel = 1.0e-3,                           # Relative tolerance for parameters
     xtol_abs = 1.0e-3,                           # Absolute tolerance for parameters
     ftol_rel = 1.0e-4,                           # Relative tolerance for function values
-    executor = FLoops.SequentialEx(),                        # Enable parallel optimization
+    executor = FLoops.SequentialEx(),          # Executor for parallel processing
 )
 
 #%%
@@ -250,6 +253,7 @@ specification_vecs = (;
     ews_metric_specification_vec,
     ews_enddate_type_vec,
     ews_threshold_window_vec,
+    ews_threshold_burnin_vec,
     ews_metric_vec,
 )
 
@@ -261,7 +265,7 @@ println(styled"  Max evaluations per local opt: {yellow:$(multistart_config.maxe
 println(styled"  Parameter bounds:")
 println(styled"    Percentile: {cyan:$(multistart_config.percentile_bounds)}")
 println(styled"    Consecutive: {cyan:$(multistart_config.consecutive_bounds)}")
-println(styled"    Burnin (days): {cyan:$(multistart_config.burnin_bounds)}")
+println(styled"  Burnin (fixed): {cyan:$(ews_threshold_burnin_vec)}")
 println(styled"  Executor: {magenta:$(multistart_config.executor)}")
 
 #%%
@@ -290,10 +294,9 @@ optimal_ews_df = ews_multistart_optimization(
     # Parameter bounds
     percentile_bounds = multistart_config.percentile_bounds,
     consecutive_bounds = multistart_config.consecutive_bounds,
-    burnin_bounds = multistart_config.burnin_bounds,
 
     # Control options
-    force = false,
+    force = true,
     return_df = true,
     save_results = true,
     verbose = true,
@@ -305,17 +308,13 @@ println(styled"Total scenarios optimized: {yellow:$(nrow(optimal_ews_df))}")
 println(styled"Best overall accuracy: {blue:$(round(maximum(optimal_ews_df.accuracy), digits=4))}")
 println(styled"Mean accuracy: {cyan:$(round(mean(optimal_ews_df.accuracy), digits=4))}")
 
-# Show convergence statistics
-converged_count = count(s -> s == "NLOPT_SUCCESS" || s == "NLOPT_XTOL_REACHED" || s == "NLOPT_FTOL_REACHED", optimal_ews_df.convergence_status)
-println(styled"Converged optimizations: {green:$converged_count}/$(nrow(optimal_ews_df)) ($(round(100*converged_count/nrow(optimal_ews_df), digits=1))%)")
-
 # Show parameter distribution summary
 println(styled"\n{green:Optimal Parameter Distributions}")
 println(styled"Percentile - Min: {cyan:$(round(minimum(optimal_ews_df.ews_threshold_percentile), digits=3))}, Max: {cyan:$(round(maximum(optimal_ews_df.ews_threshold_percentile), digits=3))}, Mean: {cyan:$(round(mean(optimal_ews_df.ews_threshold_percentile), digits=3))}")
 println(styled"Consecutive - Min: {cyan:$(minimum(optimal_ews_df.ews_consecutive_thresholds))}, Max: {cyan:$(maximum(optimal_ews_df.ews_consecutive_thresholds))}, Mean: {cyan:$(round(mean(optimal_ews_df.ews_consecutive_thresholds), digits=1))}")
 
 burnin_days = Dates.days.(optimal_ews_df.ews_threshold_burnin)
-println(styled"Burnin (days) - Min: {cyan:$(minimum(burnin_days))}, Max: {cyan:$(maximum(burnin_days))}, Mean: {cyan:$(round(mean(burnin_days), digits=0))}")
+println(styled"Burnin (fixed) - Values: {cyan:$(unique(burnin_days))} days")
 
 #%%
 # Filter optimal results using the same logic as grid search
@@ -398,66 +397,63 @@ create_optimal_ews_plots(
 #     println(styled"{yellow:Could not load grid search results: $e}")
 # end
 #
-# #%%
-# # Analysis of optimization efficiency
-# println(styled"\n{green:Optimization Efficiency Analysis}")
-#
-# total_evaluations = sum(optimal_ews_df.n_evaluations)
-# mean_evaluations = mean(optimal_ews_df.n_evaluations)
-# scenarios_count = nrow(optimal_ews_df)
-#
-# println(styled"Total function evaluations: {yellow:$total_evaluations}")
-# println(styled"Mean evaluations per scenario: {cyan:$(round(mean_evaluations, digits=1))}")
-# println(styled"Scenarios optimized: {blue:$scenarios_count}")
-#
-# # Estimate equivalent grid search size
-# # Grid search would need: n_percentiles × n_consecutive × n_burnin evaluations per scenario
-# # With the original bounds: (0.5:0.01:0.99) × (2:1:30) × [Day(50), Year(5)] = 50 × 29 × 2 = 2900 per scenario
-# equivalent_grid_evaluations = scenarios_count * 2900  # Conservative estimate
-# efficiency_gain = equivalent_grid_evaluations / total_evaluations
-#
-# println(styled"\n{green:Efficiency Comparison}")
-# println(styled"Equivalent grid search evaluations: {red:$equivalent_grid_evaluations}")
-# println(styled"Multistart evaluations: {green:$total_evaluations}")
-# println(styled"Efficiency gain: {blue:$(round(efficiency_gain, digits=1))x fewer evaluations}")
-#
-# #%%
-# debug_multistart_plots = true
-#
-# if debug_multistart_plots
-#     # Select best performing configuration for detailed analysis
-#     best_idx = argmax(optimal_ews_df.accuracy)
-#     best_config = optimal_ews_df[best_idx, :]
-#
-#     println(styled"\n{green:Best Configuration Analysis}")
-#     println(styled"Best accuracy: {blue:$(round(best_config.accuracy, digits=4))}")
-#     println(styled"Noise: {cyan:$(get_noise_description(best_config.noise_specification))}")
-#     println(styled"Test: {yellow:$(get_test_description(best_config.test_specification))}")
-#     println(styled"EWS metric: {magenta:$(best_config.ews_metric)}")
-#     println(styled"Optimal parameters:")
-#     println(styled"  Percentile: {cyan:$(round(best_config.ews_threshold_percentile, digits=3))}")
-#     println(styled"  Consecutive: {cyan:$(best_config.ews_consecutive_thresholds)}")
-#     println(styled"  Burnin: {cyan:$(best_config.ews_threshold_burnin)}")
-#     println(styled"  Evaluations: {yellow:$(best_config.n_evaluations)}")
-#     println(styled"  Convergence: {green:$(best_config.convergence_status)}")
-#
-#     # Parameter distribution analysis
-#     println(styled"\n{green:Parameter Distribution Analysis}")
-#
-#     # Group by noise type and show parameter preferences
-#     for noise_spec in unique(optimal_ews_df.noise_specification)
-#         subset = filter(r -> r.noise_specification == noise_spec, optimal_ews_df)
-#
-#         println(styled"\n$(get_noise_description(noise_spec)):")
-#         println(styled"  Mean percentile: {cyan:$(round(mean(subset.ews_threshold_percentile), digits=3))}")
-#         println(styled"  Mean consecutive: {cyan:$(round(mean(subset.ews_consecutive_thresholds), digits=1))}")
-#         println(styled"  Mean burnin (days): {cyan:$(round(mean(Dates.days.(subset.ews_threshold_burnin)), digits=0))}")
-#         println(styled"  Best accuracy: {blue:$(round(maximum(subset.accuracy), digits=4))}")
-#     end
-# end
+#%%
+# Analysis of optimization efficiency
+println(styled"\n{green:Optimization Efficiency Analysis}")
+
+scenarios_count = nrow(optimal_ews_df)
+n_sobol_per_scenario = multistart_config.n_sobol_points
+total_multistart_evaluations = scenarios_count * n_sobol_per_scenario
+
+println(styled"Scenarios optimized: {blue:$scenarios_count}")
+println(styled"Sobol points per scenario: {cyan:$n_sobol_per_scenario}")
+println(styled"Total multistart evaluations: {yellow:$total_multistart_evaluations}")
+
+# Estimate equivalent grid search size
+# Grid search would need: n_percentiles × n_consecutive evaluations per scenario
+# With the original bounds: (0.5:0.01:0.99) × (2:1:30) = 50 × 29 = 1450 per scenario
+equivalent_grid_evaluations = scenarios_count * 1450  # Conservative estimate
+efficiency_gain = equivalent_grid_evaluations / total_multistart_evaluations
+
+println(styled"\n{green:Efficiency Comparison}")
+println(styled"Equivalent grid search evaluations: {red:$equivalent_grid_evaluations}")
+println(styled"Multistart evaluations: {green:$total_multistart_evaluations}")
+println(styled"Efficiency gain: {blue:$(round(efficiency_gain, digits=1))x fewer evaluations}")
+
+#%%
+debug_multistart_plots = true
+
+if debug_multistart_plots
+    # Select best performing configuration for detailed analysis
+    best_idx = argmax(optimal_ews_df.accuracy)
+    best_config = optimal_ews_df[best_idx, :]
+
+    println(styled"\n{green:Best Configuration Analysis}")
+    println(styled"Best accuracy: {blue:$(round(best_config.accuracy, digits=4))}")
+    println(styled"Noise: {cyan:$(get_noise_description(best_config.noise_specification))}")
+    println(styled"Test: {yellow:$(get_test_description(best_config.test_specification))}")
+    println(styled"EWS metric: {magenta:$(best_config.ews_metric)}")
+    println(styled"Optimal parameters:")
+    println(styled"  Percentile: {cyan:$(round(best_config.ews_threshold_percentile, digits=3))}")
+    println(styled"  Consecutive: {cyan:$(best_config.ews_consecutive_thresholds)}")
+    println(styled"  Burnin (fixed): {cyan:$(best_config.ews_threshold_burnin)}")
+
+    # Parameter distribution analysis
+    println(styled"\n{green:Parameter Distribution Analysis}")
+
+    # Group by noise type and show parameter preferences
+    for noise_spec in unique(optimal_ews_df.noise_specification)
+        subset = filter(r -> r.noise_specification == noise_spec, optimal_ews_df)
+
+        println(styled"\n$(get_noise_description(noise_spec)):")
+        println(styled"  Mean percentile: {cyan:$(round(mean(subset.ews_threshold_percentile), digits=3))}")
+        println(styled"  Mean consecutive: {cyan:$(round(mean(subset.ews_consecutive_thresholds), digits=1))}")
+        println(styled"  Burnin (fixed): {cyan:$(unique(subset.ews_threshold_burnin))}")
+        println(styled"  Best accuracy: {blue:$(round(maximum(subset.accuracy), digits=4))}")
+    end
+end
 #
 # #%%
 # println(styled"\n{green:✅ Multistart EWS Hyperparameter Optimization Complete!}")
 # println(styled"Results saved to: {cyan:$(outdir("ensemble", "ews-multistart-optimization"))}")
 # println(styled"Plots saved to: {cyan:$(plotsdir())}")
-

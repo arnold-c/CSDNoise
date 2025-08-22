@@ -11,6 +11,23 @@ using DrWatson: @tagsave
 using JLD2
 
 """
+    OptimizationTracker
+
+Mutable struct to track the best solution and its metrics during optimization.
+"""
+mutable struct OptimizationTracker
+    best_loss::Float64
+    best_accuracy::Float64
+    best_sensitivity::Float64
+    best_specificity::Float64
+    best_params::Vector{Float64}
+
+    function OptimizationTracker()
+        return new(Inf, 0.0, 0.0, 0.0, Float64[])
+    end
+end
+
+"""
     ews_multistart_optimization(specification_vecs, data_arrs; kwargs...)
 
 Optimize EWS hyperparameters using multistart optimization with Sobol sequences.
@@ -32,7 +49,6 @@ Alternative to grid search that scales better with parameter dimensionality.
 - `executor`: Executor for loops (default: `FLoops.SequentialEx()`)
 - `percentile_bounds`: Bounds for threshold percentile (default: (0.5, 0.99))
 - `consecutive_bounds`: Bounds for consecutive thresholds (default: (1.0, 10.0))
-- `burnin_bounds`: Bounds for burnin days (default: (7.0, 365.0))
 - `force`: Force recomputation even if results exist (default: false)
 - `return_df`: Return DataFrame of results (default: true)
 - `save_results`: Save results to file (default: true)
@@ -62,7 +78,6 @@ function ews_multistart_optimization(
         # Parameter bounds
         percentile_bounds = (0.5, 0.99),
         consecutive_bounds = (1.0, 10.0),
-        burnin_bounds = (7.0, 365.0),
         # Control options
         force = false,
         return_df = true,
@@ -100,10 +115,10 @@ function ews_multistart_optimization(
     # Setup progress tracking
     prog = Progress(n_scenarios; desc = "Optimizing scenarios: ")
 
-    # Define parameter bounds
+    # Define parameter bounds (only percentile and consecutive thresholds)
     bounds = (
-        lowers = [percentile_bounds[1], consecutive_bounds[1], burnin_bounds[1]],
-        uppers = [percentile_bounds[2], consecutive_bounds[2], burnin_bounds[2]],
+        lowers = [percentile_bounds[1], consecutive_bounds[1]],
+        uppers = [percentile_bounds[2], consecutive_bounds[2]],
     )
 
     # Optimization configuration
@@ -158,11 +173,15 @@ function optimize_single_scenario(
 
     simulated_data = simulate_timeseries_arrs(scenario, data_arrs)
 
-    # Create objective function closure
-    objective = params -> ews_objective_function(
+    # Create tracker instance for this scenario
+    tracker = OptimizationTracker()
+
+    # Create objective function closure that updates tracker
+    objective = params -> ews_objective_function_with_tracking(
         params,
         scenario,
-        simulated_data
+        simulated_data,
+        tracker
     )
 
     # Setup multistart problem
@@ -191,33 +210,35 @@ function optimize_single_scenario(
         problem
     )
 
-    # Extract and map optimal parameters
-    optimal_params = map_continuous_to_ews_parameters(result.location)
+    # Extract optimal parameters from tracker (which has the best metrics)
+    optimal_params = map_continuous_to_ews_parameters(tracker.best_params)
 
     return (
         optimal_threshold_percentile = optimal_params.threshold_percentile,
         optimal_consecutive_thresholds = optimal_params.consecutive_thresholds,
-        optimal_threshold_burnin = optimal_params.threshold_burnin,
-        accuracy = 1.0 - result.value,
+        accuracy = tracker.best_accuracy,
+        sensitivity = tracker.best_sensitivity,
+        specificity = tracker.best_specificity,
         # n_evaluations = result.n_calls,
         # convergence_status = string(result.ret_code),
     )
 end
 
 """
-    ews_objective_function(params_vec, scenario, data_arrs)
+    ews_objective_function_with_tracking(params_vec, scenario, data_arrs, tracker)
 
-Objective function for EWS parameter optimization.
-Returns 1 - accuracy for minimization.
+Objective function for EWS parameter optimization that tracks the best solution.
+Returns 1 - accuracy for minimization and updates tracker with best metrics.
 """
-function ews_objective_function(
+function ews_objective_function_with_tracking(
         params_vec::Vector{Float64},
         scenario::NamedTuple,
         data_arrs::NamedTuple,
+        tracker::OptimizationTracker
     )
     @unpack ews_metric_specification,
         ews_enddate_type,
-        ews_threshold_window, ews_metric = scenario
+        ews_threshold_window, ews_threshold_burnin, ews_metric = scenario
 
     @unpack ensemble_single_incarr,
         testarr,
@@ -255,7 +276,7 @@ function ews_objective_function(
                 Symbol(ews_metric),
                 ews_threshold_window;
                 percentiles = ews_params.threshold_percentile,
-                burn_in = ews_params.threshold_burnin,
+                burn_in = ews_threshold_burnin,
             )[2]
 
             detection_index = calculate_ews_trigger_index(
@@ -268,7 +289,7 @@ function ews_objective_function(
                 Symbol(ews_metric),
                 ews_threshold_window;
                 percentiles = ews_params.threshold_percentile,
-                burn_in = ews_params.threshold_burnin,
+                burn_in = ews_threshold_burnin,
             )[2]
 
             null_detection_index = calculate_ews_trigger_index(
@@ -286,12 +307,22 @@ function ews_objective_function(
         end
     end
 
-    # Calculate accuracy
-    sensitivity = true_positives / ensemble_nsims
-    specificity = true_negatives / ensemble_nsims
-    accuracy = (sensitivity + specificity) / 2
+    # Calculate metrics
+    sensitivity = calculate_sensitivity(true_positives, ensemble_nsims)
+    specificity = calculate_specificity(true_negatives, ensemble_nsims)
+    accuracy = calculate_accuracy(sensitivity, specificity)
+    loss = 1.0 - accuracy
 
-    return 1.0 - accuracy  # Return loss for minimization
+    # Update tracker if this is the best solution so far
+    if loss < tracker.best_loss
+        tracker.best_loss = loss
+        tracker.best_accuracy = accuracy
+        tracker.best_sensitivity = sensitivity
+        tracker.best_specificity = specificity
+        tracker.best_params = copy(params_vec)
+    end
+
+    return loss  # Return scalar loss for optimizer
 end
 
 function simulate_timeseries_arrs(
@@ -341,12 +372,12 @@ end
     map_continuous_to_ews_parameters(params_vec)
 
 Map continuous optimization parameters to discrete EWS parameters.
+Note: burnin is now passed as part of the scenario, not optimized.
 """
 function map_continuous_to_ews_parameters(params_vec::Vector{Float64})
     return (
         threshold_percentile = params_vec[1],  # Already in correct range
         consecutive_thresholds = round(Int, params_vec[2]),
-        threshold_burnin = Day(round(Int, params_vec[3])),
     )
 end
 
@@ -359,7 +390,7 @@ function create_optimization_scenarios(specification_vecs)
     @unpack noise_specification_vec, test_specification_vec,
         percent_tested_vec, ews_metric_specification_vec,
         ews_enddate_type_vec, ews_threshold_window_vec,
-        ews_metric_vec = specification_vecs
+        ews_threshold_burnin_vec, ews_metric_vec = specification_vecs
 
     scenarios = []
 
@@ -369,18 +400,21 @@ function create_optimization_scenarios(specification_vecs)
                 for ews_metric_spec in ews_metric_specification_vec
                     for ews_enddate_type in ews_enddate_type_vec
                         for ews_window in ews_threshold_window_vec
-                            for ews_metric in ews_metric_vec
-                                push!(
-                                    scenarios, (
-                                        noise_specification = noise_spec,
-                                        test_specification = test_spec,
-                                        percent_tested = percent_tested,
-                                        ews_metric_specification = ews_metric_spec,
-                                        ews_enddate_type = ews_enddate_type,
-                                        ews_threshold_window = ews_window,
-                                        ews_metric = ews_metric,
+                            for ews_burnin in ews_threshold_burnin_vec
+                                for ews_metric in ews_metric_vec
+                                    push!(
+                                        scenarios, (
+                                            noise_specification = noise_spec,
+                                            test_specification = test_spec,
+                                            percent_tested = percent_tested,
+                                            ews_metric_specification = ews_metric_spec,
+                                            ews_enddate_type = ews_enddate_type,
+                                            ews_threshold_window = ews_window,
+                                            ews_threshold_burnin = ews_burnin,
+                                            ews_metric = ews_metric,
+                                        )
                                     )
-                                )
+                                end
                             end
                         end
                     end
@@ -409,10 +443,10 @@ function create_results_dataframe(results::Vector, scenarios::Vector)
         ews_metric = [s.ews_metric for s in scenarios],
         ews_threshold_percentile = [r.optimal_threshold_percentile for r in results],
         ews_consecutive_thresholds = [r.optimal_consecutive_thresholds for r in results],
-        ews_threshold_burnin = [r.optimal_threshold_burnin for r in results],
+        ews_threshold_burnin = [s.ews_threshold_burnin for s in scenarios],
         accuracy = [r.accuracy for r in results],
-        sensitivity = fill(NaN, length(scenarios)),  # Will be calculated if needed
-        specificity = fill(NaN, length(scenarios)),  # Will be calculated if needed
+        sensitivity = [r.sensitivity for r in results],
+        specificity = [r.specificity for r in results],
         # n_evaluations = [r.n_evaluations for r in results],
         # convergence_status = [r.convergence_status for r in results],
     )
@@ -478,4 +512,3 @@ function filter_optimal_multistart_results(
     end |>
         x -> vcat(x...; cols = :union)
 end
-

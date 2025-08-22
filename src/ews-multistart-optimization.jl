@@ -28,6 +28,19 @@ mutable struct OptimizationTracker
 end
 
 """
+    CachedSimulationData
+
+Pre-computed simulation data that can be reused across parameter evaluations.
+This avoids expensive recomputation of noise arrays and test arrays.
+"""
+struct CachedSimulationData
+    ensemble_single_incarr::Array{Int64,3}
+    testarr::Array{Int64,3}
+    null_testarr::Array{Int64,3}
+    thresholds::Vector
+end
+
+"""
     ews_multistart_optimization(specification_vecs, data_arrs; kwargs...)
 
 Optimize EWS hyperparameters using multistart optimization with Sobol sequences.
@@ -107,6 +120,7 @@ function ews_multistart_optimization(
         println(styled"{green:Starting Multistart Optimization}")
         println(styled"Scenarios to optimize: {yellow:$n_scenarios}")
         println(styled"Sobol points per scenario: {blue:$n_sobol_points}")
+        println(styled"Pre-computing simulation data for caching...")
     end
 
     # Initialize results storage
@@ -171,7 +185,8 @@ function optimize_single_scenario(
     )
     @unpack ews_metric = scenario
 
-    simulated_data = simulate_timeseries_arrs(scenario, data_arrs)
+    # Pre-compute expensive simulation data once per scenario
+    cached_data = create_cached_simulation_data(scenario, data_arrs)
 
     # Create tracker instance for this scenario
     tracker = OptimizationTracker()
@@ -180,7 +195,7 @@ function optimize_single_scenario(
     objective = params -> ews_objective_function_with_tracking(
         params,
         scenario,
-        simulated_data,
+        cached_data,
         tracker
     )
 
@@ -225,15 +240,16 @@ function optimize_single_scenario(
 end
 
 """
-    ews_objective_function_with_tracking(params_vec, scenario, data_arrs, tracker)
+    ews_objective_function_with_tracking(params_vec, scenario, cached_data, tracker)
 
 Objective function for EWS parameter optimization that tracks the best solution.
 Returns 1 - accuracy for minimization and updates tracker with best metrics.
+Uses pre-computed cached simulation data for efficiency.
 """
 function ews_objective_function_with_tracking(
         params_vec::Vector{Float64},
         scenario::NamedTuple,
-        data_arrs::NamedTuple,
+        cached_data::CachedSimulationData,
         tracker::OptimizationTracker
     )
     @unpack ews_metric_specification,
@@ -243,7 +259,7 @@ function ews_objective_function_with_tracking(
     @unpack ensemble_single_incarr,
         testarr,
         null_testarr,
-        thresholds = data_arrs
+        thresholds = cached_data
 
     # Map continuous parameters to EWS parameters
     ews_params = map_continuous_to_ews_parameters(params_vec)
@@ -325,7 +341,13 @@ function ews_objective_function_with_tracking(
     return loss  # Return scalar loss for optimizer
 end
 
-function simulate_timeseries_arrs(
+"""
+    create_cached_simulation_data(scenario, data_arrs)
+
+Pre-compute expensive simulation data once per scenario to avoid repeated computation
+during parameter optimization. This includes noise arrays and test arrays.
+"""
+function create_cached_simulation_data(
         scenario::NamedTuple,
         data_arrs::NamedTuple
     )
@@ -336,7 +358,7 @@ function simulate_timeseries_arrs(
         ensemble_specification, ensemble_single_Reff_thresholds_vec,
         ensemble_single_periodsum_vecs = data_arrs
 
-    # Create noise array
+    # Create noise array once per scenario (expensive operation)
     noisearr = create_noise_arr(
         noise_specification,
         ensemble_single_incarr;
@@ -344,7 +366,7 @@ function simulate_timeseries_arrs(
         seed = 1234,
     )[1]
 
-    # Create test arrays
+    # Create test arrays once per scenario (expensive operation)
     testarr = create_testing_arrs(
         ensemble_single_incarr,
         noisearr,
@@ -365,7 +387,12 @@ function simulate_timeseries_arrs(
         [Outbreak_start, Outbreak_end, Outbreak_middle] => ensemble_single_periodsum_vecs
     end
 
-    return (; ensemble_single_incarr, testarr, null_testarr, thresholds)
+    return CachedSimulationData(
+        ensemble_single_incarr,
+        testarr,
+        null_testarr,
+        thresholds
+    )
 end
 
 """

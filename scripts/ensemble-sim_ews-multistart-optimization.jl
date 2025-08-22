@@ -163,16 +163,16 @@ logfilepath = scriptsdir("ensemble-sim_ews-multistart-optimization.log.txt")
 
 noise_specification_vec = [
     PoissonNoiseSpecification(1.0),
-    # PoissonNoiseSpecification(7.0),
-    # DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
-    # DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+    PoissonNoiseSpecification(7.0),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
 ]
 
 test_specification_vec = [
-    # IndividualTestSpecification(0.5, 0.5, 0),
-    # IndividualTestSpecification(0.8, 0.8, 0),
-    # IndividualTestSpecification(0.9, 0.9, 0),
-    # IndividualTestSpecification(0.95, 0.95, 0),
+    IndividualTestSpecification(0.5, 0.5, 0),
+    IndividualTestSpecification(0.8, 0.8, 0),
+    IndividualTestSpecification(0.9, 0.9, 0),
+    IndividualTestSpecification(0.95, 0.95, 0),
     # IndividualTestSpecification(0.96, 0.96, 0),
     # IndividualTestSpecification(0.97, 0.97, 0),
     # IndividualTestSpecification(0.98, 0.98, 0),
@@ -242,7 +242,8 @@ multistart_config = (
     xtol_rel = 1.0e-3,                           # Relative tolerance for parameters
     xtol_abs = 1.0e-3,                           # Absolute tolerance for parameters
     ftol_rel = 1.0e-4,                           # Relative tolerance for function values
-    executor = FLoops.SequentialEx(),          # Executor for parallel processing
+    # executor = FLoops.SequentialEx(),          # Executor for parallel processing
+    executor = FLoops.ThreadedEx(),          # Executor for parallel processing
 )
 
 #%%

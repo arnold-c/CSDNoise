@@ -79,6 +79,14 @@ export ews_hyperparam_optimization,
     optimal_ews_heatmap_df,
     optimal_ews_heatmap_plot
 
+include("ews-multistart-optimization.jl")
+export ews_multistart_optimization,
+    optimize_single_scenario,
+    ews_objective_function,
+    map_continuous_to_ews_parameters,
+    create_optimization_scenarios,
+    filter_optimal_multistart_results
+
 include("ews-survival.jl")
 export simulate_and_plot_ews_survival,
     simulate_ews_survival_data,

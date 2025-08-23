@@ -75,8 +75,8 @@ null_dynamics_specification = DynamicsParameterSpecification(
         pn -> getproperty(ensemble_dynamics_specification, pn),
         filter(
             name ->
-                name != :min_vaccination_coverage &&
-                    name != :max_vaccination_coverage,
+            name != :min_vaccination_coverage &&
+                name != :max_vaccination_coverage,
             propertynames(ensemble_dynamics_specification),
         ),
     )...,
@@ -182,7 +182,7 @@ percent_tested_vec = [1.0]
 #%%
 ews_method_vec = [
     # Centered,
-    Backward
+    Backward,
 ]
 ews_aggregation_vec = [
     Day(7),
@@ -215,7 +215,7 @@ ews_metric_vec = [
 
 #%%
 ews_enddate_type_vec = [
-    Reff_start
+    Reff_start,
     # Reff_end
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
@@ -223,7 +223,7 @@ ews_threshold_percentile_vec = collect(0.5:0.01:0.99)
 ews_consecutive_thresholds_vec = [collect(2:1:30)...]
 ews_threshold_burnin_vec = [
     # Day(50),
-    Year(5)
+    Year(5),
 ]
 
 #%%
@@ -247,9 +247,9 @@ specification_vec_tuples = (
     ews_metric_specification = EWSMetricSpecification[],
     ews_enddate_type = EWSEndDateType[],
     ews_threshold_window = Union{
-        Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
+        Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
     }[],
-    ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
+    ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
     ews_threshold_percentile = Float64[],
     ews_consecutive_thresholds = Int[],
     ews_metric = String[],
@@ -351,17 +351,17 @@ if debug_Reff_plots
     )
 
     survival_df, (
-    vec_of_testarr,
-    vec_of_null_testarr,
-    vec_of_ews_vals_vec,
-    vec_of_null_ews_vals_vec,
-    vec_of_exceed_thresholds,
-    vec_of_null_exceed_thresholds,
-    vec_of_threshold_percentiles,
-    vec_of_null_threshold_percentiles,
-    vec_of_detection_index_vec,
-    vec_of_null_detection_index_vec
-), noisearr = simulate_ews_survival_data(
+            vec_of_testarr,
+            vec_of_null_testarr,
+            vec_of_ews_vals_vec,
+            vec_of_null_ews_vals_vec,
+            vec_of_exceed_thresholds,
+            vec_of_null_exceed_thresholds,
+            vec_of_threshold_percentiles,
+            vec_of_null_threshold_percentiles,
+            vec_of_detection_index_vec,
+            vec_of_null_detection_index_vec,
+        ), noisearr = simulate_ews_survival_data(
         test_df,
         ensemble_specification,
         ensemble_single_incarr,
@@ -454,8 +454,10 @@ aggregated_null_Reff_thresholds =
 
 aggregated_outbreak_bounds =
     ensemble_single_periodsum_vecs[selected_sim][
-        (
-        ensemble_single_periodsum_vecs[selected_sim][:, 4] .== 1), [1, 2]] .÷
+    (
+        ensemble_single_periodsum_vecs[selected_sim][:, 4] .== 1
+    ), [1, 2],
+] .÷
     aggregation_int
 
 aggregated_test_vec = aggregate_timeseries(
@@ -673,7 +675,7 @@ if debug_Reff_plots
     ews_survival_plot(
         survival_df;
         noise_specification_vec = [
-            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734)
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
         ],
         test_specification_vec = [
             IndividualTestSpecification(1.0, 1.0, 0),
@@ -718,22 +720,22 @@ if debug_Reff_plots
 
         emergent_sv =
             map(axes(subset_testarr, 2)) do sim
-                enddate = enddate_vec[sim]
-                EWSMetrics(
-                    ews_metric_specification,
-                    subset_testarr[subset_start_ind:enddate, sim],
-                )
-            end |>
+            enddate = enddate_vec[sim]
+            EWSMetrics(
+                ews_metric_specification,
+                subset_testarr[subset_start_ind:enddate, sim],
+            )
+        end |>
             v -> StructVector(v)
 
         null_sv =
             map(axes(subset_null_testarr, 2)) do sim
-                enddate = enddate_vec[sim]
-                EWSMetrics(
-                    ews_metric_specification,
-                    subset_null_testarr[subset_start_ind:enddate, sim],
-                )
-            end |>
+            enddate = enddate_vec[sim]
+            EWSMetrics(
+                ews_metric_specification,
+                subset_null_testarr[subset_start_ind:enddate, sim],
+            )
+        end |>
             v -> StructVector(v)
 
         for metric in ews_metrics

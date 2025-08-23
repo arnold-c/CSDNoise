@@ -173,10 +173,10 @@ test_specification_vec = [
     IndividualTestSpecification(0.8, 0.8, 0),
     IndividualTestSpecification(0.9, 0.9, 0),
     IndividualTestSpecification(0.95, 0.95, 0),
-    # IndividualTestSpecification(0.96, 0.96, 0),
-    # IndividualTestSpecification(0.97, 0.97, 0),
-    # IndividualTestSpecification(0.98, 0.98, 0),
-    # IndividualTestSpecification(0.99, 0.99, 0),
+    IndividualTestSpecification(0.96, 0.96, 0),
+    IndividualTestSpecification(0.97, 0.97, 0),
+    IndividualTestSpecification(0.98, 0.98, 0),
+    IndividualTestSpecification(0.99, 0.99, 0),
     IndividualTestSpecification(1.0, 1.0, 0),
 ]
 
@@ -297,7 +297,7 @@ optimal_ews_df = ews_multistart_optimization(
     consecutive_bounds = multistart_config.consecutive_bounds,
 
     # Control options
-    force = true,
+    force = false,
     return_df = true,
     save_results = true,
     verbose = true,

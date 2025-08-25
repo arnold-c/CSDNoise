@@ -179,6 +179,7 @@ function ews_multistart_optimization(
         batch_size = batch_size,
         executor = executor,
         save_every_n = save_every_n,
+        save_results = save_results,
         checkpoint_dir = checkpoint_dir,
         verbose = verbose
     )
@@ -648,7 +649,7 @@ This function follows a fork-join pattern with clear phase separation:
 
 2. **Serial Phase**: Between batches, all I/O and state management happens single-threaded:
    - DataFrame creation and merging
-   - Progress updates  
+   - Progress updates
    - Checkpoint saving
    - Result accumulation
 
@@ -666,6 +667,7 @@ function optimize_scenarios_in_batches(
         batch_size::Int = 10,
         executor = FLoops.SequentialEx(),
         save_every_n::Int = 10,
+        save_results = true,
         checkpoint_dir::String = "",
         verbose::Bool = true
     )
@@ -690,7 +692,9 @@ function optimize_scenarios_in_batches(
     all_results = DataFrame[]
 
     # Setup progress tracking
-    prog = Progress(n_missing; desc = "Optimizing scenarios: ", showspeed = true)
+    if verbose
+        prog = Progress(n_missing; desc = "Optimizing scenarios: ", showspeed = true)
+    end
 
     # Process scenarios in batches
     scenario_batches = collect(Iterators.partition(1:n_missing, batch_size))
@@ -731,10 +735,10 @@ function optimize_scenarios_in_batches(
         push!(all_results, batch_df)
 
         # Update progress (single-threaded)
-        update!(prog, sum(length.(scenario_batches[1:batch_idx])))
+        verbose && update!(prog, sum(length.(scenario_batches[1:batch_idx])))
 
         # Save checkpoint periodically (single-threaded I/O)
-        if batch_idx % save_every_n == 0 && !isempty(checkpoint_dir)
+        if batch_idx % save_every_n == 0 && !isempty(checkpoint_dir) && save_results
             combined_df = vcat(all_results...; cols = :union)
             save_checkpoint_atomic(combined_df, checkpoint_dir, batch_idx)
         end
@@ -1182,37 +1186,4 @@ function create_empty_results_dataframe()
         sensitivity = Float64[],
         specificity = Float64[]
     )
-end
-
-"""
-    filter_optimal_multistart_results(multistart_df; kwargs...)
-
-Filter multistart optimization results to find optimal parameters.
-Similar to filter_optimal_ews_hyperparam_gridsearch but for multistart results.
-"""
-function filter_optimal_multistart_results(
-        multistart_df;
-        subset_optimal_parameters = [],
-        optimal_grouping_parameters = [
-            :noise_specification,
-            :test_specification,
-            :percent_tested,
-            :ews_metric_specification,
-            :ews_enddate_type,
-            :ews_metric,
-            :ews_threshold_window,
-        ],
-    )
-    return map(
-        collect(
-            groupby(
-                subset(multistart_df, subset_optimal_parameters),
-                optimal_grouping_parameters,
-            ),
-        ),
-    ) do df
-        max_accuracy = maximum(df[!, :accuracy])
-        return subset(df, :accuracy => ByRow(==(max_accuracy)))
-    end |>
-        x -> vcat(x...; cols = :union)
 end

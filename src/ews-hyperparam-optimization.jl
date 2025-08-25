@@ -52,11 +52,12 @@ function ews_hyperparam_optimization(
             :ews_metric,
             :ews_threshold_window,
             :ews_threshold_burnin,
-        ],
-        disable_time_check = false,
-        time_per_run_s = 0.08,
-        verbose = true,
-    )
+    ],
+    disable_time_check = false,
+    time_per_run_s = 0.08,
+    verbose = true,
+    save_results = true,
+)
     if !isdir(filedir)
         mkpath(filedir)
     end
@@ -74,6 +75,7 @@ function ews_hyperparam_optimization(
         time_per_run_s = time_per_run_s,
         return_df = true,
         verbose = verbose,
+        save_results = save_results,
     )
 
     load_filepath = get_most_recent_hyperparam_filepath(
@@ -95,11 +97,13 @@ function ews_hyperparam_optimization(
         end
     end
 
-    @tagsave(
-        optimization_output_filepath,
-        Dict("optimal_ews_df" => optimal_ews_df)
-    )
-    @info "🟢 Saved optimal ews_df to $(optimization_output_filepath) 🟢"
+    if save_results
+        @tagsave(
+            optimization_output_filepath,
+            Dict("optimal_ews_df" => optimal_ews_df)
+        )
+        @info "🟢 Saved optimal ews_df to $(optimization_output_filepath) 🟢"
+    end
 
     if return_df
         return optimal_ews_df
@@ -163,9 +167,10 @@ function ews_hyperparam_gridsearch(
         ),
         disable_time_check = false,
         time_per_run_s = 0.08,
-        return_df = true,
-        verbose = true,
-    )
+    return_df = true,
+    verbose = true,
+    save_results = true,
+)
     load_filepath = get_most_recent_hyperparam_filepath(
         filename_base,
         filedir,
@@ -218,7 +223,9 @@ function ews_hyperparam_gridsearch(
 
     @info "🟢 ews_hyperparam_optimization.jl completed $(missing_runs) missing simulations in $(time_taken_message) ($(round(time_per_run_s; digits = 4)) seconds per run). 🟢"
 
-    @tagsave(output_filepath, Dict("ews_df" => ews_df))
+    if save_results
+        @tagsave(output_filepath, Dict("ews_df" => ews_df))
+    end
 
     if return_df
         return ews_df

@@ -88,7 +88,6 @@ export ews_multistart_optimization,
     map_continuous_to_ews_parameters,
     create_optimization_scenarios,
     create_cached_simulation_data,
-    filter_optimal_multistart_results,
     CachedSimulationData,
     OptimizationTracker
 

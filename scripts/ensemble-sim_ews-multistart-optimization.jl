@@ -297,7 +297,7 @@ optimal_ews_df = ews_multistart_optimization(
     consecutive_bounds = multistart_config.consecutive_bounds,
 
     # Control options
-    force = false,
+    force = true,
     return_df = true,
     save_results = true,
     verbose = true,
@@ -316,24 +316,6 @@ println(styled"Consecutive - Min: {cyan:$(minimum(optimal_ews_df.ews_consecutive
 
 burnin_days = Dates.days.(optimal_ews_df.ews_threshold_burnin)
 println(styled"Burnin (fixed) - Values: {cyan:$(unique(burnin_days))} days")
-
-#%%
-# Filter optimal results using the same logic as grid search
-optimal_multistart_results = filter_optimal_multistart_results(
-    optimal_ews_df;
-    optimal_grouping_parameters = [
-        :noise_specification,
-        :test_specification,
-        :percent_tested,
-        :ews_metric_specification,
-        :ews_enddate_type,
-        :ews_metric,
-        :ews_threshold_window,
-    ],
-)
-
-println(styled"\n{green:Filtered Optimal Results}")
-println(styled"Unique optimal configurations: {yellow:$(nrow(optimal_multistart_results))}")
 
 #%%
 create_optimal_ews_plots(

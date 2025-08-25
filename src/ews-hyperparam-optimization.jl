@@ -12,50 +12,51 @@ using Makie: Makie
 using Printf: @sprintf
 
 function ews_hyperparam_optimization(
-    specification_vecs,
-    data_arrs;
-    filedir = outdir("ensemble", "ews-hyperparam-optimization"),
-    gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
-    gridsearch_output_filepath = joinpath(
-        filedir,
-        string(Dates.now()) * "_" * gridsearch_filename_base,
-    ),
-    optimization_filename_base = "ews-hyperparam-optimization.jld2",
-    optimization_output_filepath = joinpath(
-        filedir,
-        string(Dates.now()) * "_" * optimization_filename_base,
-    ),
-    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-    force = false,
-    return_df = true,
-    specification_vec_tuples = (
-        noise_specification = NoiseSpecification[],
-        test_specification = IndividualTestSpecification[],
-        percent_tested = Float64[],
-        ews_metric_specification = EWSMetricSpecification[],
-        ews_enddate_type = EWSEndDateType[],
-        ews_threshold_window = Union{
-            Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
-        }[],
-        ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
-        ews_threshold_percentile = Float64[],
-        ews_consecutive_thresholds = Int[],
-        ews_metric = String[],
-    ),
-    subset_optimal_parameters = [],
-    optimal_grouping_parameters = [
-        :noise_specification,
-        :test_specification,
-        :percent_tested,
-        :ews_metric_specification,
-        :ews_enddate_type,
-        :ews_metric,
-        :ews_threshold_window,
-        :ews_threshold_burnin,
-    ],
-    disable_time_check = false,
-    time_per_run_s = 0.08,
-)
+        specification_vecs,
+        data_arrs;
+        filedir = outdir("ensemble", "ews-hyperparam-optimization"),
+        gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
+        gridsearch_output_filepath = joinpath(
+            filedir,
+            string(Dates.now()) * "_" * gridsearch_filename_base,
+        ),
+        optimization_filename_base = "ews-hyperparam-optimization.jld2",
+        optimization_output_filepath = joinpath(
+            filedir,
+            string(Dates.now()) * "_" * optimization_filename_base,
+        ),
+        logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
+        force = false,
+        return_df = true,
+        specification_vec_tuples = (
+            noise_specification = NoiseSpecification[],
+            test_specification = IndividualTestSpecification[],
+            percent_tested = Float64[],
+            ews_metric_specification = EWSMetricSpecification[],
+            ews_enddate_type = EWSEndDateType[],
+            ews_threshold_window = Union{
+                Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
+            }[],
+            ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
+            ews_threshold_percentile = Float64[],
+            ews_consecutive_thresholds = Int[],
+            ews_metric = String[],
+        ),
+        subset_optimal_parameters = [],
+        optimal_grouping_parameters = [
+            :noise_specification,
+            :test_specification,
+            :percent_tested,
+            :ews_metric_specification,
+            :ews_enddate_type,
+            :ews_metric,
+            :ews_threshold_window,
+            :ews_threshold_burnin,
+        ],
+        disable_time_check = false,
+        time_per_run_s = 0.08,
+        verbose = true,
+    )
     if !isdir(filedir)
         mkpath(filedir)
     end
@@ -72,6 +73,7 @@ function ews_hyperparam_optimization(
         disable_time_check = disable_time_check,
         time_per_run_s = time_per_run_s,
         return_df = true,
+        verbose = verbose,
     )
 
     load_filepath = get_most_recent_hyperparam_filepath(
@@ -107,19 +109,19 @@ function ews_hyperparam_optimization(
 end
 
 function filter_optimal_ews_hyperparam_gridsearch(
-    ews_df;
-    subset_optimal_parameters = [],
-    optimal_grouping_parameters = [
-        :noise_specification,
-        :test_specification,
-        :percent_tested,
-        :ews_metric_specification,
-        :ews_enddate_type,
-        :ews_metric,
-        :ews_threshold_window,
-        :ews_threshold_burnin,
-    ],
-)
+        ews_df;
+        subset_optimal_parameters = [],
+        optimal_grouping_parameters = [
+            :noise_specification,
+            :test_specification,
+            :percent_tested,
+            :ews_metric_specification,
+            :ews_enddate_type,
+            :ews_metric,
+            :ews_threshold_window,
+            :ews_threshold_burnin,
+        ],
+    )
     return map(
         collect(
             groupby(
@@ -131,38 +133,39 @@ function filter_optimal_ews_hyperparam_gridsearch(
         max_accuracy = maximum(df[!, :accuracy])
         return subset(df, :accuracy => ByRow(==(max_accuracy)))
     end |>
-           x -> vcat(x...; cols = :union)
+        x -> vcat(x...; cols = :union)
 end
 
 function ews_hyperparam_gridsearch(
-    specification_vecs,
-    data_arrs;
-    filedir = outdir("ensemble", "ews-hyperparam-optimization"),
-    filename_base = "ews-hyperparam-gridsearch.jld2",
-    output_filepath = joinpath(
-        filedir,
-        string(Dates.now()) * "_" * filename_base,
-    ),
-    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-    force = false,
-    specification_vec_tuples = (
-        noise_specification = NoiseSpecification[],
-        test_specification = IndividualTestSpecification[],
-        percent_tested = Float64[],
-        ews_metric_specification = EWSMetricSpecification[],
-        ews_enddate_type = EWSEndDateType[],
-        ews_threshold_window = Union{
-            Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
-        }[],
-        ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
-        ews_threshold_percentile = Float64[],
-        ews_consecutive_thresholds = Int[],
-        ews_metric = String[],
-    ),
-    disable_time_check = false,
-    time_per_run_s = 0.08,
-    return_df = true,
-)
+        specification_vecs,
+        data_arrs;
+        filedir = outdir("ensemble", "ews-hyperparam-optimization"),
+        filename_base = "ews-hyperparam-gridsearch.jld2",
+        output_filepath = joinpath(
+            filedir,
+            string(Dates.now()) * "_" * filename_base,
+        ),
+        logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
+        force = false,
+        specification_vec_tuples = (
+            noise_specification = NoiseSpecification[],
+            test_specification = IndividualTestSpecification[],
+            percent_tested = Float64[],
+            ews_metric_specification = EWSMetricSpecification[],
+            ews_enddate_type = EWSEndDateType[],
+            ews_threshold_window = Union{
+                Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
+            }[],
+            ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
+            ews_threshold_percentile = Float64[],
+            ews_consecutive_thresholds = Int[],
+            ews_metric = String[],
+        ),
+        disable_time_check = false,
+        time_per_run_s = 0.08,
+        return_df = true,
+        verbose = true,
+    )
     load_filepath = get_most_recent_hyperparam_filepath(
         filename_base,
         filedir,
@@ -172,15 +175,15 @@ function ews_hyperparam_gridsearch(
         ews_df = load(Try.unwrap(load_filepath))["ews_df"]
     else
         ews_df = DataFrame(
-        (
-            specification_vec_tuples...,
-            true_positives = Int64[],
-            true_negatives = Int64[],
-            accuracy = Float64[],
-            sensitivity = Float64[],
-            specificity = Float64[],
+            (
+                specification_vec_tuples...,
+                true_positives = Int64[],
+                true_negatives = Int64[],
+                accuracy = Float64[],
+                sensitivity = Float64[],
+                specificity = Float64[],
+            )
         )
-)
     end
 
     val = ews_hyperparam_gridsearch!(
@@ -191,6 +194,7 @@ function ews_hyperparam_gridsearch(
         specification_vec_tuples = specification_vec_tuples,
         disable_time_check = disable_time_check,
         time_per_run_s = time_per_run_s,
+        verbose = verbose,
     )
 
     if Try.iserr(val)
@@ -224,9 +228,9 @@ function ews_hyperparam_gridsearch(
 end
 
 function load_most_recent_hyperparam_file(
-    filename_base,
-    filedir,
-)
+        filename_base,
+        filedir,
+    )
     filepath = get_most_recent_hyperparam_filepath(
         filename_base,
         filedir,
@@ -240,9 +244,9 @@ function load_most_recent_hyperparam_file(
 end
 
 function get_most_recent_hyperparam_filepath(
-    filename_base,
-    filedir,
-)
+        filename_base,
+        filedir,
+    )
     @assert isdir(filedir)
     optimization_files = readdir(filedir)
 
@@ -261,7 +265,7 @@ function get_most_recent_hyperparam_filepath(
         return Try.Err("No optimization files found.")
     end
 
-    filtered_optimization_datetimes = Vector{Union{Try.Ok,Try.Err}}(
+    filtered_optimization_datetimes = Vector{Union{Try.Ok, Try.Err}}(
         undef, length(filtered_optimization_files)
     )
 
@@ -300,36 +304,37 @@ function get_most_recent_hyperparam_filepath(
     most_recent_filepath = joinpath(
         filedir,
         string(most_recent_optimization_datetime) *
-        "_$(filename_base)",
+            "_$(filename_base)",
     )
     return Try.Ok(most_recent_filepath)
 end
 
 function ews_hyperparam_gridsearch!(
-    ews_df,
-    specification_vecs,
-    data_arrs;
-    logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
-    specification_vec_tuples = (
-        noise_specification = NoiseSpecification[],
-        test_specification = IndividualTestSpecification[],
-        percent_tested = Float64[],
-        ews_metric_specification = EWSMetricSpecification[],
-        ews_enddate_type = EWSEndDateType[],
-        ews_threshold_window = Union{
-            Type{ExpandingThresholdWindow},Type{RollingThresholdWindow}
-        }[],
-        ews_threshold_burnin = Union{Dates.Day,Dates.Year}[],
-        ews_threshold_percentile = Float64[],
-        ews_consecutive_thresholds = Int[],
-        ews_metric = String[],
-    ),
-    disable_time_check = false,
-    time_per_run_s = 0.08,
-)
+        ews_df,
+        specification_vecs,
+        data_arrs;
+        logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
+        specification_vec_tuples = (
+            noise_specification = NoiseSpecification[],
+            test_specification = IndividualTestSpecification[],
+            percent_tested = Float64[],
+            ews_metric_specification = EWSMetricSpecification[],
+            ews_enddate_type = EWSEndDateType[],
+            ews_threshold_window = Union{
+                Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
+            }[],
+            ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
+            ews_threshold_percentile = Float64[],
+            ews_consecutive_thresholds = Int[],
+            ews_metric = String[],
+        ),
+        disable_time_check = false,
+        time_per_run_s = 0.08,
+        verbose = true,
+    )
     specification_vec_names = [
         Symbol(match(r"(.*)(_vec)$", string(pn)).captures[1]) for
-        pn in propertynames(specification_vecs)
+            pn in propertynames(specification_vecs)
     ]
 
     @assert specification_vec_names ==
@@ -353,22 +358,22 @@ function ews_hyperparam_gridsearch!(
         (propertynames(specification_vecs)..., :runs)
 
     @unpack missing_noise_specification_vec,
-    missing_test_specification_vec,
-    missing_percent_tested_vec,
-    missing_ews_metric_specification_vec,
-    missing_ews_enddate_type_vec,
-    missing_ews_threshold_window_vec,
-    missing_ews_threshold_burnin_vec,
-    missing_ews_threshold_percentile_vec,
-    missing_ews_consecutive_thresholds_vec,
-    missing_ews_metric_vec,
-    missing_runs = Try.unwrap(missing_specification_vecs)
+        missing_test_specification_vec,
+        missing_percent_tested_vec,
+        missing_ews_metric_specification_vec,
+        missing_ews_enddate_type_vec,
+        missing_ews_threshold_window_vec,
+        missing_ews_threshold_burnin_vec,
+        missing_ews_threshold_percentile_vec,
+        missing_ews_consecutive_thresholds_vec,
+        missing_ews_metric_vec,
+        missing_runs = Try.unwrap(missing_specification_vecs)
 
     @unpack ensemble_specification,
-    ensemble_single_incarr,
-    null_single_incarr,
-    ensemble_single_Reff_thresholds_vec,
-    ensemble_single_periodsum_vecs =
+        ensemble_single_incarr,
+        null_single_incarr,
+        ensemble_single_Reff_thresholds_vec,
+        ensemble_single_periodsum_vecs =
         data_arrs
 
     ensemble_nsims = size(ensemble_single_incarr, 3)
@@ -377,12 +382,14 @@ function ews_hyperparam_gridsearch!(
 
     start_time = time()
     for noise_specification in missing_noise_specification_vec
-        println(
-            styled"{green:\n=================================================================}"
-        )
-        println(
-            styled"Noise type: {green,inverse: $(getdirpath(noise_specification))}"
-        )
+        if verbose
+            println(
+                styled"{green:\n=================================================================}"
+            )
+            println(
+                styled"Noise type: {green,inverse: $(getdirpath(noise_specification))}"
+            )
+        end
 
         noisearr = create_noise_arr(
             noise_specification,
@@ -393,11 +400,13 @@ function ews_hyperparam_gridsearch!(
 
         for (test_specification, percent_tested) in
             Iterators.product(
-            missing_test_specification_vec, missing_percent_tested_vec
-        )
-            println(
-                styled"\t\t\t\t-> Test specification: {blue: $(get_test_description(test_specification))}, Percent tested: {red,inverse: $(percent_tested)}"
+                missing_test_specification_vec, missing_percent_tested_vec
             )
+            if verbose
+                println(
+                    styled"\t\t\t\t-> Test specification: {blue: $(get_test_description(test_specification))}, Percent tested: {red,inverse: $(percent_tested)}"
+                )
+            end
 
             testarr = create_testing_arrs(
                 ensemble_single_incarr,
@@ -414,25 +423,27 @@ function ews_hyperparam_gridsearch!(
             )
 
             for (
-                ews_metric_specification,
-                ews_enddate_type,
-                ews_threshold_window,
-                ews_threshold_burnin,
-                ews_threshold_percentile,
-                ews_consecutive_thresholds,
-            ) in
+                    ews_metric_specification,
+                    ews_enddate_type,
+                    ews_threshold_window,
+                    ews_threshold_burnin,
+                    ews_threshold_percentile,
+                    ews_consecutive_thresholds,
+                ) in
                 Iterators.product(
-                missing_ews_metric_specification_vec,
-                missing_ews_enddate_type_vec,
-                missing_ews_threshold_window_vec,
-                missing_ews_threshold_burnin_vec,
-                missing_ews_threshold_percentile_vec,
-                missing_ews_consecutive_thresholds_vec,
-            )
-                ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
-                println(
-                    styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS window: $(ews_threshold_window), EWS burn-in: {yellow: $(ews_threshold_burnin)}, EWS percentile: {magenta,inverse: $(ews_threshold_percentile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
+                    missing_ews_metric_specification_vec,
+                    missing_ews_enddate_type_vec,
+                    missing_ews_threshold_window_vec,
+                    missing_ews_threshold_burnin_vec,
+                    missing_ews_threshold_percentile_vec,
+                    missing_ews_consecutive_thresholds_vec,
                 )
+                ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
+                if verbose
+                    println(
+                        styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS window: $(ews_threshold_window), EWS burn-in: {yellow: $(ews_threshold_burnin)}, EWS percentile: {magenta,inverse: $(ews_threshold_percentile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
+                    )
+                end
 
                 thresholds = SumTypes.@cases ews_enddate_type begin
                     [Reff_start, Reff_end] =>
@@ -443,25 +454,25 @@ function ews_hyperparam_gridsearch!(
 
                 enddate_vec = zeros(Int64, size(testarr, 3))
                 failed_sims = zeros(Int64, size(testarr, 3))
-                ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+                ews_vals_vec = Vector{Union{Missing, EWSMetrics}}(
                     undef, size(testarr, 3)
                 )
-                null_ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+                null_ews_vals_vec = Vector{Union{Missing, EWSMetrics}}(
                     undef, size(testarr, 3)
                 )
                 fill!(ews_vals_vec, missing)
                 fill!(null_ews_vals_vec, missing)
 
-                exceeds_threshold_arr = Array{Matrix{Bool},2}(
+                exceeds_threshold_arr = Array{Matrix{Bool}, 2}(
                     undef, size(testarr, 3), length(missing_ews_metric_vec)
                 )
-                null_exceeds_threshold_arr = Array{Matrix{Bool},2}(
+                null_exceeds_threshold_arr = Array{Matrix{Bool}, 2}(
                     undef, size(testarr, 3), length(missing_ews_metric_vec)
                 )
-                detection_index_arr = Array{Union{Nothing,Int64},2}(
+                detection_index_arr = Array{Union{Nothing, Int64}, 2}(
                     undef, size(testarr, 3), length(missing_ews_metric_vec)
                 )
-                null_detection_index_arr = Array{Union{Nothing,Int64},2}(
+                null_detection_index_arr = Array{Union{Nothing, Int64}, 2}(
                     undef, size(testarr, 3), length(missing_ews_metric_vec)
                 )
                 fill!(detection_index_arr, nothing)
@@ -565,23 +576,23 @@ function ews_hyperparam_gridsearch!(
 end
 
 function check_missing_ews_hyperparameter_simulations(
-    ews_df,
-    specification_vecs;
-    specification_vec_names = (
-        :noise_specification,
-        :test_specification,
-        :percent_tested,
-        :ews_metric_specification,
-        :ews_enddate_type,
-        :ews_threshold_window,
-        :ews_threshold_burnin,
-        :ews_threshold_percentile,
-        :ews_consecutive_thresholds,
-        :ews_metric,
-    ),
-    disable_time_check = false,
-    time_per_run_s = 0.08,
-)
+        ews_df,
+        specification_vecs;
+        specification_vec_names = (
+            :noise_specification,
+            :test_specification,
+            :percent_tested,
+            :ews_metric_specification,
+            :ews_enddate_type,
+            :ews_threshold_window,
+            :ews_threshold_burnin,
+            :ews_threshold_percentile,
+            :ews_consecutive_thresholds,
+            :ews_metric,
+        ),
+        disable_time_check = false,
+        time_per_run_s = 0.08,
+    )
     run_params_df = DataFrame(Iterators.product(specification_vecs...))
     rename!(run_params_df, specification_vec_names)
 
@@ -637,19 +648,19 @@ function create_missing_run_params_nt(missing_run_params_df)
 end
 
 function optimal_ews_heatmap_df(
-    optimal_ews_df;
-    tiebreaker_preference = "speed",
-    optimal_grouping_parameters = [
-        :noise_specification,
-        :test_specification,
-        :percent_tested,
-        :ews_metric_specification,
-        :ews_enddate_type,
-        :ews_threshold_window,
-        :ews_threshold_burnin,
-        :ews_metric,
-    ],
-)
+        optimal_ews_df;
+        tiebreaker_preference = "speed",
+        optimal_grouping_parameters = [
+            :noise_specification,
+            :test_specification,
+            :percent_tested,
+            :ews_metric_specification,
+            :ews_enddate_type,
+            :ews_threshold_window,
+            :ews_threshold_burnin,
+            :ews_metric,
+        ],
+    )
     tiebreaker_args = Match.@match tiebreaker_preference begin
         "speed" => (:ews_consecutive_thresholds, false)
         "specificity" => (:specificity, true)
@@ -668,31 +679,31 @@ function optimal_ews_heatmap_df(
     ) do df
         sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[1, :]
     end |>
-           x -> vcat(DataFrame.(x)...; cols = :union)
+        x -> vcat(DataFrame.(x)...; cols = :union)
 end
 
 function optimal_ews_heatmap_plot(
-    df;
-    outcome = :accuracy,
-    baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
-    colormap = :RdBu,
-    colorrange = [0.2, 0.8],
-    textcolorthreshold = (0.4, 0.68),
-    xlabel = "Test Sensitivity & Specificity",
-    ylabel = "EWS Metric",
-    colorlabel = "Accuracy",
-    accuracy_fontsize = 12,
-    rest_fontsize = 12,
-    legendsize = 22,
-    xlabelsize = 22,
-    ylabelsize = 22,
-    xticklabelsize = 22,
-    yticklabelsize = 22,
-    legendticklabelsize = 22,
-    legendwidth = 20,
-    kwargs...,
-)
-    kwargs_dict = Dict{Symbol,Any}(kwargs)
+        df;
+        outcome = :accuracy,
+        baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
+        colormap = :RdBu,
+        colorrange = [0.2, 0.8],
+        textcolorthreshold = (0.4, 0.68),
+        xlabel = "Test Sensitivity & Specificity",
+        ylabel = "EWS Metric",
+        colorlabel = "Accuracy",
+        accuracy_fontsize = 12,
+        rest_fontsize = 12,
+        legendsize = 22,
+        xlabelsize = 22,
+        ylabelsize = 22,
+        xticklabelsize = 22,
+        yticklabelsize = 22,
+        legendticklabelsize = 22,
+        legendwidth = 20,
+        kwargs...,
+    )
+    kwargs_dict = Dict{Symbol, Any}(kwargs)
 
     outcome_str = titlecase(string(outcome))
 
@@ -793,11 +804,11 @@ function optimal_ews_heatmap_plot(
             textcolor = val <= textcolorthreshold ? :black : :white
         elseif length(textcolorthreshold) == 2
             textcolor =
-                if val >= textcolorthreshold[1] && val <= textcolorthreshold[2]
-                    :black
-                else
-                    :white
-                end
+            if val >= textcolorthreshold[1] && val <= textcolorthreshold[2]
+                :black
+            else
+                :white
+            end
         else
             error(
                 "variable `textcolorthreshold` should be length 1 or 2. Instead received length $(length(textcolorthreshold))"
@@ -848,28 +859,28 @@ function optimal_ews_heatmap_plot(
 end
 
 function create_ews_heatmap_matrix(
-    df, outcome::Symbol, ews_metric_order
-)
+        df, outcome::Symbol, ews_metric_order
+    )
     ordered_df =
         unstack(
-            select(df, [:ews_metric, :test_specification, outcome]),
-            :test_specification,
-            outcome,
-        ) |>
+        select(df, [:ews_metric, :test_specification, outcome]),
+        :test_specification,
+        outcome,
+    ) |>
         df -> df[indexin(ews_metric_order, df.ews_metric), :]
 
     return Matrix(ordered_df[:, 2:end])'
 end
 
 function create_ews_heatmap_matrix(
-    df, outcome::Symbol
-)
+        df, outcome::Symbol
+    )
     ordered_df =
         unstack(
-            select(df, [:ews_metric, :test_specification, outcome]),
-            :test_specification,
-            outcome,
-        ) |>
+        select(df, [:ews_metric, :test_specification, outcome]),
+        :test_specification,
+        outcome,
+    ) |>
         df -> sort(df, order(2; rev = false))
 
     default_test_metric_order = ordered_df.ews_metric

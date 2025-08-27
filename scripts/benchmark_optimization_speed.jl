@@ -1,8 +1,8 @@
 #!/usr/bin/env julia
 
 """
-Simple benchmark script to compare grid search vs multistart optimization speed
-on the same parameter spaces using the realistic ensemble setup.
+Enhanced benchmark script to compare grid search vs multistart optimization
+with comprehensive accuracy verification across all scenarios.
 
 Usage:
     julia benchmark_optimization_speed.jl
@@ -26,9 +26,11 @@ using StatsBase: StatsBase
 using Distributions: Distributions
 using ProgressMeter
 using FLoops
+using Statistics
+using CSV
 
 function main()
-    println(styled"{bold blue:Optimization Speed Benchmark}")
+    println(styled"{bold blue:Optimization Speed & Accuracy Benchmark}")
     println("="^60)
 
     # Set random seed for reproducibility
@@ -68,8 +70,6 @@ function main()
     )
 
     max_burnin_vaccination_coverage = 1.0
-    min_vaccination_coverage = 0.0
-    max_vaccination_coverage = 0.8
 
     ensemble_dynamics_specification = DynamicsParameterSpecification(
         beta_mean,
@@ -266,7 +266,8 @@ function main()
         (n_sobol = 20, name = "Fast"),
         (n_sobol = 50, name = "Balanced"),
         (n_sobol = 100, name = "Thorough"),
-        (n_sobol = 250, name = "Extremely Thorough"),
+        (n_sobol = 150, name = "Very Thorough"),
+        # (n_sobol = 250, name = "Extremely Thorough"),
     ]
 
     println(styled"\n{bold green:MULTISTART OPTIMIZATION BENCHMARK}")
@@ -317,7 +318,7 @@ function main()
     )
 
     println(styled"Reference scenario:")
-    println(styled"  Noise: {cyan:$(get_noise_description(reference_scenario.noise_specification))}")
+    println(styled"  Noise: {cyan:$(get_noise_magnitude_description(reference_scenario.noise_specification))}")
     println(styled"  Test spec: {cyan:$(get_test_description(reference_scenario.test_specification))}")
     println(styled"  EWS metric: {cyan:$(reference_scenario.ews_metric)}")
     println()
@@ -384,8 +385,6 @@ function main()
         best_idx = argmax(ms_scenario_results.accuracy)
         best_row = ms_scenario_results[best_idx, :]
 
-        color = acc_diff >= 0 ? "green" : "red"
-
         println(styled"\nMultistart ($name - $n_sobol Sobol points, reference scenario):")
         println(styled"  Time: {yellow:$(round(ms_time, digits=2))}s")
         println(styled"  Speedup: {green:$(speedup)}x")
@@ -401,7 +400,265 @@ function main()
         println(styled"    Specificity: {green:$(round(best_row.specificity, digits=4))}")
     end
 
-    return grid_results, multistart_results
+    # NEW: Comprehensive accuracy comparison across all scenarios
+    println(styled"\n{bold blue:COMPREHENSIVE ACCURACY VERIFICATION}")
+    println("="^60)
+
+    # Perform detailed comparison
+    comparison_results = compare_all_scenarios(
+        grid_results,
+        multistart_results,
+        specification_vecs
+    )
+
+    # Display summary statistics
+    display_accuracy_comparison_summary(comparison_results)
+
+    # Generate detailed report
+    generate_accuracy_verification_report(
+        comparison_results,
+        grid_time,
+        multistart_results
+    )
+
+    return grid_results, multistart_results, comparison_results
+end
+
+"""
+Compare accuracy values between grid search and multistart optimization
+for all scenarios.
+"""
+function compare_all_scenarios(grid_results, multistart_results, specification_vecs)
+    # Define scenario columns (non-optimized parameters)
+    scenario_cols = [
+        :noise_specification,
+        :test_specification,
+        :percent_tested,
+        :ews_metric,
+        :ews_metric_specification,
+        :ews_enddate_type,
+        :ews_threshold_window,
+        :ews_threshold_burnin,
+    ]
+
+    # Group grid results by scenario
+    grid_grouped = groupby(grid_results, scenario_cols)
+
+    comparison_data = []
+
+    for grid_scenario in grid_grouped
+        # Get best grid accuracy for this scenario
+        best_grid_idx = argmax(grid_scenario.accuracy)
+        best_grid_row = grid_scenario[best_grid_idx, :]
+        best_grid_acc = best_grid_row.accuracy
+
+        # Extract scenario identifier
+        scenario_id = NamedTuple(
+            col => best_grid_row[col] for col in scenario_cols
+        )
+
+        # Compare with each multistart configuration
+        for (n_sobol, ms_data) in multistart_results
+            ms_results = ms_data.res
+
+            # Find matching scenario in multistart results
+            ms_scenario = filter(
+                row -> all(
+                    row[col] == scenario_id[col] for col in scenario_cols
+                ), ms_results
+            )
+
+            if nrow(ms_scenario) > 0
+                best_ms_idx = argmax(ms_scenario.accuracy)
+                best_ms_row = ms_scenario[best_ms_idx, :]
+                best_ms_acc = best_ms_row.accuracy
+
+                # Calculate difference
+                acc_diff = best_ms_acc - best_grid_acc
+                relative_diff = abs(acc_diff) / best_grid_acc * 100
+
+                push!(
+                    comparison_data, (
+                        scenario_id = scenario_id,
+                        grid_accuracy = best_grid_acc,
+                        grid_percentile = best_grid_row.ews_threshold_percentile,
+                        grid_consecutive = best_grid_row.ews_consecutive_thresholds,
+                        grid_sensitivity = best_grid_row.sensitivity,
+                        grid_specificity = best_grid_row.specificity,
+                        ms_accuracy = best_ms_acc,
+                        ms_percentile = best_ms_row.ews_threshold_percentile,
+                        ms_consecutive = best_ms_row.ews_consecutive_thresholds,
+                        ms_sensitivity = best_ms_row.sensitivity,
+                        ms_specificity = best_ms_row.specificity,
+                        n_sobol = n_sobol,
+                        accuracy_diff = acc_diff,
+                        relative_diff_pct = relative_diff,
+                        matches = isapprox(best_grid_acc, best_ms_acc; atol = 1.0e-4),
+                    )
+                )
+            end
+        end
+    end
+
+    return DataFrame(comparison_data)
+end
+
+"""
+Display summary statistics of accuracy comparison.
+"""
+function display_accuracy_comparison_summary(comparison_df)
+    println(styled"\n{bold:Accuracy Comparison Summary}")
+    println("-"^40)
+
+    # Group by n_sobol configuration
+    for n_sobol in sort(unique(comparison_df.n_sobol))
+        config_df = filter(row -> row.n_sobol == n_sobol, comparison_df)
+
+        n_scenarios = nrow(config_df)
+        n_matching = sum(config_df.matches)
+        match_rate = n_matching / n_scenarios * 100
+
+        mean_diff = mean(config_df.accuracy_diff)
+        std_diff = std(config_df.accuracy_diff)
+        max_diff = maximum(abs.(config_df.accuracy_diff))
+        mean_rel_diff = mean(config_df.relative_diff_pct)
+
+        println(styled"\n{cyan:$n_sobol Sobol points}:")
+        println(styled"  Scenarios compared: {yellow:$n_scenarios}")
+        println(styled"  Matching accuracy (±1e-4): {green:$n_matching} ({green:$(round(match_rate, digits=1))%})")
+        println(styled"  Mean accuracy difference: {yellow:$(round(mean_diff, digits=5))}")
+        println(styled"  Std accuracy difference: {yellow:$(round(std_diff, digits=5))}")
+        println(styled"  Max absolute difference: {yellow:$(round(max_diff, digits=5))}")
+        println(styled"  Mean relative difference: {yellow:$(round(mean_rel_diff, digits=2))%}")
+
+        # Identify scenarios with largest discrepancies
+        if max_diff > 1.0e-3
+            worst_scenarios = sort(config_df, :accuracy_diff)[1:min(3, nrow(config_df)), :]
+            println(styled"  {red:Scenarios with largest negative differences}:")
+            for row in eachrow(worst_scenarios)
+                metric = row.scenario_id.ews_metric
+                noise = get_noise_magnitude_description(row.scenario_id.noise_specification)
+                diff = round(row.accuracy_diff, digits = 4)
+                println(styled"    - $metric, $noise: {red:$diff}")
+            end
+        end
+
+        # Show scenarios where multistart performs better
+        better_scenarios = filter(row -> row.accuracy_diff > 1.0e-4, config_df)
+        if nrow(better_scenarios) > 0
+            println(styled"  {green:Scenarios where multistart performs better}: {green:$(nrow(better_scenarios))}")
+        end
+    end
+    return
+end
+
+"""
+Generate detailed accuracy verification report.
+"""
+function generate_accuracy_verification_report(
+        comparison_df,
+        grid_time,
+        multistart_results
+    )
+    println(styled"\n{bold blue:DETAILED VERIFICATION REPORT}")
+    println("="^60)
+
+    # Performance summary
+    println(styled"\n{bold:Performance Summary}")
+    println(styled"Grid search time: {yellow:$(round(grid_time, digits=2))}s")
+
+    for (n_sobol, ms_data) in sort(collect(multistart_results))
+        ms_time = ms_data.time
+        speedup = round(grid_time / ms_time, digits = 1)
+        println(styled"Multistart ($n_sobol points): {yellow:$(round(ms_time, digits=2))}s (speedup: {green:$(speedup)x})")
+    end
+
+    # Accuracy verification by metric
+    println(styled"\n{bold:Accuracy Verification by EWS Metric}")
+    metrics = unique([row.scenario_id.ews_metric for row in eachrow(comparison_df)])
+
+    for metric in metrics
+        metric_df = filter(row -> row.scenario_id.ews_metric == metric, comparison_df)
+
+        println(styled"\n{cyan:$metric}:")
+        for n_sobol in sort(unique(metric_df.n_sobol))
+            sobol_df = filter(row -> row.n_sobol == n_sobol, metric_df)
+            n_match = sum(sobol_df.matches)
+            n_total = nrow(sobol_df)
+            match_pct = round(n_match / n_total * 100, digits = 1)
+
+            println(styled"  $n_sobol Sobol points: {yellow:$n_match/$n_total matching ($match_pct%)}")
+        end
+    end
+
+    # Parameter convergence analysis
+    println(styled"\n{bold:Parameter Convergence Analysis}")
+
+    for n_sobol in sort(unique(comparison_df.n_sobol))
+        config_df = filter(row -> row.n_sobol == n_sobol, comparison_df)
+
+        # Calculate parameter differences
+        percentile_diffs = abs.(config_df.grid_percentile .- config_df.ms_percentile)
+        consecutive_diffs = abs.(config_df.grid_consecutive .- config_df.ms_consecutive)
+
+        mean_perc_diff = mean(percentile_diffs)
+        mean_cons_diff = mean(consecutive_diffs)
+
+        println(styled"\n{cyan:$n_sobol Sobol points}:")
+        println(styled"  Mean percentile difference: {yellow:$(round(mean_perc_diff, digits=4))}")
+        println(styled"  Mean consecutive threshold difference: {yellow:$(round(mean_cons_diff, digits=2))}")
+    end
+
+    # Save detailed comparison to CSV for further analysis
+    output_dir = outdir("benchmark")
+    if !isdir(output_dir)
+        mkpath(output_dir)
+    end
+
+    output_file = joinpath(
+        output_dir,
+        "accuracy_verification_$(Dates.format(Dates.now(), "yyyy-mm-dd_HH-MM-SS")).csv"
+    )
+
+    # Flatten scenario_id for CSV export using NamedTuples
+    export_data = map(eachrow(comparison_df)) do row
+        # Extract scenario fields
+        scenario_fields = Dict{Symbol, Any}()
+        for (key, value) in pairs(row.scenario_id)
+            if key == :noise_specification
+                scenario_fields[:noise_description] = get_noise_magnitude_description(value)
+            elseif key == :test_specification
+                scenario_fields[:test_description] = get_test_description(value)
+            else
+                scenario_fields[key] = string(value)
+            end
+        end
+
+        # Combine with metrics
+        return merge(
+            NamedTuple(scenario_fields),
+            (
+                grid_accuracy = row.grid_accuracy,
+                grid_percentile = row.grid_percentile,
+                grid_consecutive = row.grid_consecutive,
+                grid_sensitivity = row.grid_sensitivity,
+                grid_specificity = row.grid_specificity,
+                ms_accuracy = row.ms_accuracy,
+                ms_percentile = row.ms_percentile,
+                ms_consecutive = row.ms_consecutive,
+                ms_sensitivity = row.ms_sensitivity,
+                ms_specificity = row.ms_specificity,
+                n_sobol = row.n_sobol,
+                accuracy_diff = row.accuracy_diff,
+                relative_diff_pct = row.relative_diff_pct,
+                matches = row.matches,
+            )
+        )
+    end
+
+    export_df = DataFrame(export_data)
+    CSV.write(output_file, export_df)
+    return println(styled"\n{green:Detailed comparison saved to: $output_file}")
 end
 
 function calculate_scenarios(spec_vecs)

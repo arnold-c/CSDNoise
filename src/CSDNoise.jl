@@ -192,6 +192,8 @@ export ews_survival_plot, ews_reff_histogram_plot
     include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")
     include("../scripts/tycho-visualization.jl")
     include("../scripts/ensemble-sim_ews-optimization.jl")
+    include("../scripts/ensemble-sim_ews-multistart-optimization.jl")
+    include("../scripts/benchmark_optimization_speed.jl")
     include("../manuscript/scripts/optimal-thresholds.jl")
 end
 

@@ -270,7 +270,7 @@ println(styled"  Burnin (fixed): {cyan:$(ews_threshold_burnin_vec)}")
 println(styled"  Executor: {magenta:$(multistart_config.executor)}")
 
 #%%
-optimal_ews_df = ews_multistart_optimization(
+multistart_optimal_ews_df = ews_multistart_optimization(
     specification_vecs,
     (;
         ensemble_specification,

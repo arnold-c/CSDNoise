@@ -187,6 +187,8 @@ export tau_auc_heatmap, clean_ews_metric_names, test_axis_label
 include("plotting-functions/survival_plots.jl")
 export ews_survival_plot, ews_reff_histogram_plot
 
+include("benchmark-functions.jl")
+
 @static if false
     include("../scripts/ensemble-sim.jl")
     include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")

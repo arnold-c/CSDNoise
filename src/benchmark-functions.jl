@@ -523,11 +523,17 @@ end
 Save benchmark comparison results to CSV file. Generalized version that can handle
 different types of benchmark comparisons.
 """
-function save_benchmark_comparison_results(results_dict, filename_prefix; output_dir = outdir("benchmark"))
+function save_benchmark_comparison_results(results_dict, filename_prefix; output_dir = outdir("benchmark"), full_filename = "")
     mkpath(output_dir)
 
-    timestamp = Dates.format(Dates.now(), "yyyy-mm-dd_HH-MM-SS")
-    filename = "$(filename_prefix)_$(timestamp).csv"
+    if isempty(full_filename)
+        # Use default timestamped naming
+        timestamp = Dates.format(Dates.now(), "yyyy-mm-dd_HH-MM-SS")
+        filename = "$(filename_prefix)_$(timestamp).csv"
+    else
+        # Use provided full filename
+        filename = "$(full_filename).csv"
+    end
 
     # Create summary DataFrame from results dictionary
     summary_data = []

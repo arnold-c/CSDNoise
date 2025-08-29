@@ -189,6 +189,8 @@ export ews_survival_plot, ews_reff_histogram_plot
 
 include("benchmark-functions.jl")
 
+include("logging-utilities.jl")
+
 @static if false
     include("../scripts/ensemble-sim.jl")
     include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")

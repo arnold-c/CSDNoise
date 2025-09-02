@@ -434,7 +434,6 @@ end
     map_continuous_to_ews_parameters(params_vec)
 
 Map continuous optimization parameters to discrete EWS parameters.
-Note: burnin is now passed as part of the scenario, not optimized.
 """
 function map_continuous_to_ews_parameters(params_vec::Vector{Float64})
     return (
@@ -444,63 +443,34 @@ function map_continuous_to_ews_parameters(params_vec::Vector{Float64})
 end
 
 """
-    create_optimization_scenarios(specification_vecs)
-
-Create all scenario combinations for optimization.
-"""
-function create_optimization_scenarios(specification_vecs)
-    @unpack noise_specification_vec, test_specification_vec,
-        percent_tested_vec, ews_metric_specification_vec,
-        ews_enddate_type_vec, ews_threshold_window_vec,
-        ews_threshold_burnin_vec, ews_metric_vec = specification_vecs
-
-    scenarios = []
-
-    for noise_spec in noise_specification_vec
-        for test_spec in test_specification_vec
-            for percent_tested in percent_tested_vec
-                for ews_metric_spec in ews_metric_specification_vec
-                    for ews_enddate_type in ews_enddate_type_vec
-                        for ews_window in ews_threshold_window_vec
-                            for ews_burnin in ews_threshold_burnin_vec
-                                for ews_metric in ews_metric_vec
-                                    push!(
-                                        scenarios, (
-                                            noise_specification = noise_spec,
-                                            test_specification = test_spec,
-                                            percent_tested = percent_tested,
-                                            ews_metric_specification = ews_metric_spec,
-                                            ews_enddate_type = ews_enddate_type,
-                                            ews_threshold_window = ews_window,
-                                            ews_threshold_burnin = ews_burnin,
-                                            ews_metric = ews_metric,
-                                        )
-                                    )
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return scenarios
-end
-
-"""
     create_scenarios_dataframe(specification_vecs)
 
 Create a DataFrame containing all scenario combinations for optimization.
 This replaces the nested loop approach with a DataFrame-based approach for better caching.
 """
 function create_scenarios_dataframe(specification_vecs)
+    scenarios = create_optimization_scenarios(specification_vecs)
+
+    # Convert to DataFrame
+    return DataFrame(scenarios)
+end
+
+"""
+    create_optimization_scenarios(specification_vecs)
+
+Create all scenario combinations for optimization.
+Validates specification vectors before creating combinations.
+"""
+function create_optimization_scenarios(specification_vecs)
+    # Validate specification vectors before processing
+    _validate_specification_vectors(specification_vecs)
+
     @unpack noise_specification_vec, test_specification_vec,
         percent_tested_vec, ews_metric_specification_vec,
         ews_enddate_type_vec, ews_threshold_window_vec,
         ews_threshold_burnin_vec, ews_metric_vec = specification_vecs
 
-    # Create all combinations using Iterators.product
+    # Use Iterators.product instead of nested loops
     combinations = Iterators.product(
         noise_specification_vec,
         test_specification_vec,
@@ -512,15 +482,129 @@ function create_scenarios_dataframe(specification_vecs)
         ews_metric_vec
     )
 
-    # Convert to DataFrame
-    scenarios_df = DataFrame(
-        combinations,
-        [:noise_specification, :test_specification, :percent_tested, :ews_metric_specification, :ews_enddate_type, :ews_threshold_window, :ews_threshold_burnin, :ews_metric]
+    # Map each combination to a NamedTuple
+    scenarios = mapreduce(vcat, combinations; init = NamedTuple[]) do (
+                noise_spec, test_spec, percent_tested,
+                ews_metric_spec, ews_enddate_type,
+                ews_window, ews_burnin, ews_metric,
+            )
+        (;
+            noise_specification = noise_spec,
+            test_specification = test_spec,
+            percent_tested = percent_tested,
+            ews_metric_specification = ews_metric_spec,
+            ews_enddate_type = ews_enddate_type,
+            ews_threshold_window = ews_window,
+            ews_threshold_burnin = ews_burnin,
+            ews_metric = ews_metric,
+        )
+    end
+
+    return scenarios
+end
+
+"""
+    validate_specification_vectors(specification_vecs)
+
+Validate that specification vectors contain valid values and types.
+Throws ArgumentError for invalid specifications and warns for empty vectors.
+"""
+function _validate_specification_vectors(specification_vecs)
+    # Define required fields
+    required_fields = Set(
+        [
+            :noise_specification_vec,
+            :test_specification_vec,
+            :percent_tested_vec,
+            :ews_metric_specification_vec,
+            :ews_enddate_type_vec,
+            :ews_threshold_window_vec,
+            :ews_threshold_burnin_vec,
+            :ews_metric_vec,
+        ]
     )
 
+    # Get provided fields
+    provided_fields = Set(keys(specification_vecs))
 
-    return scenarios_df
+    # Check for missing required fields
+    missing_fields = setdiff(required_fields, provided_fields)
+    if !isempty(missing_fields)
+        throw(ArgumentError("Missing required fields: $(join(sort(collect(missing_fields)), ", "))"))
+    end
+
+    # Check for extra fields
+    extra_fields = setdiff(provided_fields, required_fields)
+    if !isempty(extra_fields)
+        throw(ArgumentError("Unexpected extra fields provided: $(join(sort(collect(extra_fields)), ", ")). Only these fields are allowed: $(join(sort(collect(required_fields)), ", "))"))
+    end
+
+    @unpack noise_specification_vec, test_specification_vec,
+        percent_tested_vec, ews_metric_specification_vec,
+        ews_enddate_type_vec, ews_threshold_window_vec,
+        ews_threshold_burnin_vec, ews_metric_vec = specification_vecs
+
+    # Validate noise specifications
+    if !all(spec -> spec isa NoiseSpecification, noise_specification_vec)
+        throw(ArgumentError("All noise specifications must be of type NoiseSpecification"))
+    end
+
+    # Validate test specifications
+    if !all(spec -> spec isa IndividualTestSpecification, test_specification_vec)
+        throw(ArgumentError("All test specifications must be of type IndividualTestSpecification"))
+    end
+
+    # Validate percent tested values
+    if !all(p -> 0.0 <= p <= 1.0, percent_tested_vec)
+        throw(ArgumentError("All percent_tested values must be between 0.0 and 1.0"))
+    end
+
+    # Validate EWS metric specifications
+    if !all(spec -> spec isa EWSMetricSpecification, ews_metric_specification_vec)
+        throw(ArgumentError("All EWS metric specifications must be of type EWSMetricSpecification"))
+    end
+
+    # Validate EWS end date types
+    if !all(enddate -> enddate isa EWSEndDateType, ews_enddate_type_vec)
+        throw(ArgumentError("All EWS end date types must be of type EWSEndDateType"))
+    end
+
+    # Validate threshold window types
+    valid_window_types = [ExpandingThresholdWindow, RollingThresholdWindow]
+    if !all(window -> window in valid_window_types, ews_threshold_window_vec)
+        throw(ArgumentError("All threshold windows must be either ExpandingThresholdWindow or RollingThresholdWindow"))
+    end
+
+    # Validate burnin periods
+    if !all(burnin -> burnin isa Union{Dates.Day, Dates.Year}, ews_threshold_burnin_vec)
+        throw(ArgumentError("All burnin periods must be of type Day or Year"))
+    end
+
+    # Validate EWS metric names
+    valid_metrics = [
+        "autocorrelation", "autocovariance", "coefficient_of_variation",
+        "index_of_dispersion", "kurtosis", "mean", "skewness", "variance",
+    ]
+    if !all(metric -> metric in valid_metrics, ews_metric_vec)
+        invalid_metrics = setdiff(ews_metric_vec, valid_metrics)
+        throw(ArgumentError("Invalid EWS metrics: $(invalid_metrics). Valid metrics are: $(valid_metrics)"))
+    end
+
+    # Check for empty vectors (warn but don't error)
+    empty_fields = String[]
+    for field in required_fields
+        if isempty(getfield(specification_vecs, field))
+            push!(empty_fields, string(field))
+        end
+    end
+
+    if !isempty(empty_fields)
+        @warn "Empty specification vectors detected: $(join(empty_fields, ", ")). This will result in zero scenarios."
+    end
+
+    return nothing
 end
+
 
 """
     find_missing_scenarios(all_scenarios_df, completed_results_df)

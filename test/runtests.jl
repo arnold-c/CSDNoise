@@ -15,4 +15,5 @@ using JET
     end
     include("ews-functions.jl")
     include("ews-metrics.jl")
+    include("ews-multistart-optimization.jl")
 end

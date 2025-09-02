@@ -1,5 +1,6 @@
 name = "CSDNoise"
 authors = ["Callum Arnold"]
+uuid = "8cb15dc8-b3ab-4164-9f0c-296b8d5139d2"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"

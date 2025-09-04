@@ -38,7 +38,7 @@ struct CachedSimulationData
     ensemble_single_incarr::Array{Int64, 3}
     testarr::Array{Int64, 3}
     null_testarr::Array{Int64, 3}
-    thresholds::Vector
+    thresholds::Vector{Matrix{Int64}}
 end
 
 """
@@ -227,12 +227,14 @@ function optimize_single_scenario(
     tracker = OptimizationTracker()
 
     # Create objective function closure that updates tracker
-    objective = params -> ews_objective_function_with_tracking(
-        params,
-        scenario,
-        cached_data,
-        tracker
-    )
+    objective = let params = params
+        ews_objective_function_with_tracking(
+            params,
+            scenario,
+            cached_data,
+            tracker
+        )
+    end
 
     # Setup multistart problem
     problem = MultistartOptimization.MinimizationProblem(
@@ -305,7 +307,7 @@ function ews_objective_function_with_tracking(
     true_negatives = 0
 
     for sim in 1:ensemble_nsims
-        enddate = calculate_ews_enddate(thresholds[sim], ews_enddate_type)
+        enddate::Union{Try.Err{String}, Try.Ok{Int64}} = calculate_ews_enddate(thresholds[sim], ews_enddate_type)
 
         if Try.isok(enddate)
             enddate_val = Try.unwrap(enddate)
@@ -417,7 +419,7 @@ function create_cached_simulation_data(
     )
 
     # Select appropriate thresholds
-    thresholds = SumTypes.@cases ews_enddate_type begin
+    thresholds::Vector{Matrix{Int64}} = SumTypes.@cases ews_enddate_type begin
         [Reff_start, Reff_end] => ensemble_single_Reff_thresholds_vec
         [Outbreak_start, Outbreak_end, Outbreak_middle] => ensemble_single_periodsum_vecs
     end

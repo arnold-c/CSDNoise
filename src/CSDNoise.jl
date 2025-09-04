@@ -39,6 +39,7 @@ export SimTimeParameters, EnsembleSpecification,
     ExpandingThresholdWindow,
     RollingThresholdWindow,
     ScenarioSpecification,
+    OptimizationScenario,
     EWSMetrics
 # @reexport using .ODStructs
 

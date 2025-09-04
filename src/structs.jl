@@ -18,11 +18,11 @@ using Dates: Dates
 # using .TransmissionFunctions
 
 struct SimTimeParameters{
-    T1<:AbstractFloat,
-    T2<:StepRangeLen,
-    T3<:Tuple{T1,T1},
-    T4<:Int,
-}
+        T1 <: AbstractFloat,
+        T2 <: StepRangeLen,
+        T3 <: Tuple{T1, T1},
+        T4 <: Int,
+    }
     burnin::T1
     tmin::T1
     tmax::T1
@@ -33,8 +33,8 @@ struct SimTimeParameters{
 end
 
 function SimTimeParameters(;
-    burnin = 0.0, tmin = 0.0, tmax = 365.0 * 100.0, tstep = 1.0
-)
+        burnin = 0.0, tmin = 0.0, tmax = 365.0 * 100.0, tstep = 1.0
+    )
     @assert burnin <= tmax
     return SimTimeParameters(
         burnin, tmin, tmax, tstep, tmin:tstep:tmax, (tmin, tmax),
@@ -43,8 +43,8 @@ function SimTimeParameters(;
 end
 
 struct DynamicsParameterSpecification{
-    T1<:AbstractFloat,T2<:Union{<:Integer,T1},T3<:Function
-}
+        T1 <: AbstractFloat, T2 <: Union{<:Integer, T1}, T3 <: Function,
+    }
     beta_mean::T1
     beta_force::T1
     seasonality::T3
@@ -61,18 +61,18 @@ struct DynamicsParameterSpecification{
 end
 
 function DynamicsParameterSpecification(
-    beta_mean,
-    beta_force,
-    seasonality,
-    sigma,
-    gamma,
-    mu,
-    annual_births_per_k,
-    epsilon,
-    R_0,
-    burnin_vaccination_params::Tuple{<:Nothing,<:AbstractFloat},
-    vaccination_params::Tuple{<:AbstractFloat,<:AbstractFloat},
-)
+        beta_mean,
+        beta_force,
+        seasonality,
+        sigma,
+        gamma,
+        mu,
+        annual_births_per_k,
+        epsilon,
+        R_0,
+        burnin_vaccination_params::Tuple{<:Nothing, <:AbstractFloat},
+        vaccination_params::Tuple{<:AbstractFloat, <:AbstractFloat},
+    )
     return DynamicsParameterSpecification(
         beta_mean,
         beta_force,
@@ -90,7 +90,7 @@ function DynamicsParameterSpecification(
     )
 end
 
-function calculate_min_burnin_vaccination_coverage(R_0; adjustment = 0.00)
+function calculate_min_burnin_vaccination_coverage(R_0; adjustment = 0.0)
     return min(calculate_min_burnin_vaccination_coverage(R_0) + adjustment, 1.0)
 end
 
@@ -99,23 +99,23 @@ function calculate_herd_immunity_threshold(R_0)
 end
 
 function DynamicsParameterSpecification(
-    beta_mean,
-    beta_force,
-    seasonality,
-    sigma,
-    gamma,
-    mu,
-    annual_births_per_k,
-    epsilon,
-    R_0,
-    burnin_vaccination_params::Tuple{
-        <:Nothing,<:AbstractFloat,<:AbstractFloat,<:Integer
-    },
-    vaccination_params::Union{
-        Tuple{<:AbstractFloat,<:AbstractFloat},Tuple{<:Nothing,<:Nothing}
-    },
-    initial_states,
-)
+        beta_mean,
+        beta_force,
+        seasonality,
+        sigma,
+        gamma,
+        mu,
+        annual_births_per_k,
+        epsilon,
+        R_0,
+        burnin_vaccination_params::Tuple{
+            <:Nothing, <:AbstractFloat, <:AbstractFloat, <:Integer,
+        },
+        vaccination_params::Union{
+            Tuple{<:AbstractFloat, <:AbstractFloat}, Tuple{<:Nothing, <:Nothing},
+        },
+        initial_states,
+    )
     return DynamicsParameterSpecification(
         beta_mean,
         beta_force,
@@ -141,20 +141,20 @@ function DynamicsParameterSpecification(
 end
 
 function DynamicsParameterSpecification(
-    beta_mean,
-    beta_force,
-    seasonality,
-    sigma,
-    gamma,
-    mu,
-    annual_births_per_k,
-    epsilon,
-    R_0,
-    min_burnin_vaccination_coverage,
-    max_burnin_vaccination_coverage,
-    min_vaccination_coverage::T1,
-    max_vaccination_coverage::T1,
-) where {T1<:Nothing}
+        beta_mean,
+        beta_force,
+        seasonality,
+        sigma,
+        gamma,
+        mu,
+        annual_births_per_k,
+        epsilon,
+        R_0,
+        min_burnin_vaccination_coverage,
+        max_burnin_vaccination_coverage,
+        min_vaccination_coverage::T1,
+        max_vaccination_coverage::T1,
+    ) where {T1 <: Nothing}
     return DynamicsParameterSpecification(
         beta_mean,
         beta_force,
@@ -183,8 +183,8 @@ Assuming that in the burnin period the rate of infections is negligible, the tim
 dS/dt = μ(N - Nρ - S)
 """
 function calculate_vaccination_rate_to_achieve_Reff(
-    target_Reff, target_years, initial_states, R_0, mu
-)
+        target_Reff, target_years, initial_states, R_0, mu
+    )
     @unpack S, N = initial_states
 
     return calculate_vaccination_rate_to_achieve_Reff(
@@ -193,8 +193,8 @@ function calculate_vaccination_rate_to_achieve_Reff(
 end
 
 function calculate_vaccination_rate_to_achieve_Reff(
-    target_Reff, target_years, S, N, R_0, mu
-)
+        target_Reff, target_years, S, N, R_0, mu
+    )
     @assert target_Reff > 0
     @assert target_Reff < 1.2
 
@@ -204,17 +204,17 @@ function calculate_vaccination_rate_to_achieve_Reff(
 
     if vaccination_coverage > 1 || vaccination_coverage < 0
         return error(
-            "Target Reff cannot be reached in the burn-in period. Initial Reff = $(R_0 * S/N). Try a longer burn-in period or a smaller target Reff."
+            "Target Reff cannot be reached in the burn-in period. Initial Reff = $(R_0 * S / N). Try a longer burn-in period or a smaller target Reff."
         )
     end
     return round(vaccination_coverage; digits = 4)
 end
 
 struct DynamicsParameters{
-    T1<:AbstractFloat,
-    T2<:Real,
-    T3<:Function,
-}
+        T1 <: AbstractFloat,
+        T2 <: Real,
+        T3 <: Function,
+    }
     beta_mean::T1
     beta_force::T1
     seasonality::T3
@@ -233,44 +233,46 @@ struct DynamicsParameters{
 end
 
 function DynamicsParameters(
-    dynamic_parameter_specification::T1; seed = 1234
-) where {T1<:DynamicsParameterSpecification}
+        dynamic_parameter_specification::T1; seed = 1234
+    ) where {T1 <: DynamicsParameterSpecification}
     Random.seed!(seed)
 
     burnin_vaccination_coverage =
-        if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
+    if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
             dynamic_parameter_specification.max_burnin_vaccination_coverage
-            dynamic_parameter_specification.min_burnin_vaccination_coverage
-        else
-            round(
-                rand(
-                    Distributions.Uniform(
-                        dynamic_parameter_specification.min_burnin_vaccination_coverage,
-                        dynamic_parameter_specification.max_burnin_vaccination_coverage,
-                    ),
-                ); digits = 4)
-        end
+        dynamic_parameter_specification.min_burnin_vaccination_coverage
+    else
+        round(
+            rand(
+                Distributions.Uniform(
+                    dynamic_parameter_specification.min_burnin_vaccination_coverage,
+                    dynamic_parameter_specification.max_burnin_vaccination_coverage,
+                ),
+            ); digits = 4
+        )
+    end
 
     vaccination_coverage =
-        if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
-           dynamic_parameter_specification.min_vaccination_coverage &&
+    if dynamic_parameter_specification.min_burnin_vaccination_coverage ==
+            dynamic_parameter_specification.min_vaccination_coverage &&
             dynamic_parameter_specification.max_burnin_vaccination_coverage ==
-           dynamic_parameter_specification.max_vaccination_coverage
-            burnin_vaccination_coverage
-        else
-            round(
-                rand(
-                    Distributions.Uniform(
-                        dynamic_parameter_specification.min_vaccination_coverage,
-                        dynamic_parameter_specification.max_vaccination_coverage,
-                    ),
-                ); digits = 4)
-        end
+            dynamic_parameter_specification.max_vaccination_coverage
+        burnin_vaccination_coverage
+    else
+        round(
+            rand(
+                Distributions.Uniform(
+                    dynamic_parameter_specification.min_vaccination_coverage,
+                    dynamic_parameter_specification.max_vaccination_coverage,
+                ),
+            ); digits = 4
+        )
+    end
 
     return DynamicsParameters(
         [
             getfield(dynamic_parameter_specification, f) for
-            f in fieldnames(DynamicsParameterSpecification)
+                f in fieldnames(DynamicsParameterSpecification)
         ]
         ...,
         burnin_vaccination_coverage,
@@ -278,7 +280,7 @@ function DynamicsParameters(
     )
 end
 
-struct StateParameters{T1<:SLArray,T2<:SLArray}
+struct StateParameters{T1 <: SLArray, T2 <: SLArray}
     init_states::T1
     init_state_props::T2
 end
@@ -293,8 +295,8 @@ function StateParameters(N::Int64, init_state_props::Dict)
 end
 
 function StateParameters(;
-    N = 500_00, s_prop = 0.1, e_prop = 0.01, i_prop = 0.01
-)
+        N = 500_00, s_prop = 0.1, e_prop = 0.01, i_prop = 0.01
+    )
     r_prop = 1 - (s_prop + e_prop + i_prop)
 
     states = SLVector(;
@@ -317,13 +319,13 @@ function StateParameters(;
 end
 
 struct EnsembleSpecification{
-    T1<:Tuple,
-    T2<:StateParameters,
-    T3<:DynamicsParameterSpecification,
-    T4<:SimTimeParameters,
-    T5<:Integer,
-    T6<:AbstractString,
-}
+        T1 <: Tuple,
+        T2 <: StateParameters,
+        T3 <: DynamicsParameterSpecification,
+        T4 <: SimTimeParameters,
+        T5 <: Integer,
+        T6 <: AbstractString,
+    }
     modeltypes::T1
     state_parameters::T2
     dynamics_parameter_specification::T3
@@ -333,12 +335,12 @@ struct EnsembleSpecification{
 end
 
 function EnsembleSpecification(
-    modeltypes::Tuple,
-    state_parameters::StateParameters,
-    dynamics_parameter_specification::DynamicsParameterSpecification,
-    time_parameters::SimTimeParameters,
-    nsims::Int64,
-)
+        modeltypes::Tuple,
+        state_parameters::StateParameters,
+        dynamics_parameter_specification::DynamicsParameterSpecification,
+        time_parameters::SimTimeParameters,
+        nsims::Int64,
+    )
     dirpath = outdir(
         "ensemble",
         modeltypes...,
@@ -369,7 +371,7 @@ function EnsembleSpecification(
     )
 end
 
-struct OutbreakSpecification{T1<:Integer,T2<:AbstractString}
+struct OutbreakSpecification{T1 <: Integer, T2 <: AbstractString}
     outbreak_threshold::T1
     minimum_outbreak_duration::T1
     minimum_outbreak_size::T1
@@ -377,8 +379,8 @@ struct OutbreakSpecification{T1<:Integer,T2<:AbstractString}
 end
 
 function OutbreakSpecification(
-    outbreak_threshold, minimum_outbreak_duration, minimum_outbreak_size
-)
+        outbreak_threshold, minimum_outbreak_duration, minimum_outbreak_size
+    )
     dirpath = joinpath(
         "min_outbreak_dur_$(minimum_outbreak_duration)",
         "min_outbreak_size_$(minimum_outbreak_size)",
@@ -393,9 +395,9 @@ function OutbreakSpecification(
     )
 end
 
-struct AlertMethod{T1<:AbstractString}
+struct AlertMethod{T1 <: AbstractString}
     method_name::T1
-    function AlertMethod(method_name::T1) where {T1<:AbstractString}
+    function AlertMethod(method_name::T1) where {T1 <: AbstractString}
         available_test_methods = [
             "dailythreshold", "movingavg", "dailythreshold_movingavg",
             "inferred_movingavg",
@@ -410,8 +412,8 @@ struct AlertMethod{T1<:AbstractString}
 end
 
 struct OutbreakDetectionSpecification{
-    T1<:Integer,T2<:AbstractFloat,T3<:AlertMethod,T4<:AbstractString
-}
+        T1 <: Integer, T2 <: AbstractFloat, T3 <: AlertMethod, T4 <: AbstractString,
+    }
     alert_threshold::T1
     moving_average_lag::T1
     percent_visit_clinic::T2
@@ -422,12 +424,12 @@ struct OutbreakDetectionSpecification{
 end
 
 function OutbreakDetectionSpecification(
-    alert_threshold,
-    moving_average_lag,
-    percent_visit_clinic,
-    percent_clinic_tested,
-    alert_method,
-)
+        alert_threshold,
+        moving_average_lag,
+        percent_visit_clinic,
+        percent_clinic_tested,
+        alert_method,
+    )
     alertdirpath = joinpath(
         "alertmethod_$(alert_method)", "alertthreshold_$(alert_threshold)"
     )
@@ -459,7 +461,7 @@ function OutbreakDetectionSpecification(
     )
 end
 
-struct IndividualTestSpecification{T1<:AbstractFloat,T2<:Integer}
+struct IndividualTestSpecification{T1 <: AbstractFloat, T2 <: Integer}
     sensitivity::T1
     specificity::T1
     test_result_lag::T2
@@ -468,7 +470,7 @@ end
 function get_test_description(test_specification::IndividualTestSpecification)
     description = Match.@match test_specification begin
         IndividualTestSpecification(1.0, 0.0, 0) => "Clinical case definition"
-        IndividualTestSpecification(x::AbstractFloat, x::AbstractFloat, 0) where {x<1.0} => "Imperfect Test ($(Int64(test_specification.sensitivity * 100))% Sensitive & Specific)"
+        IndividualTestSpecification(x::AbstractFloat, x::AbstractFloat, 0) where {x < 1.0} => "Imperfect Test ($(Int64(test_specification.sensitivity * 100))% Sensitive & Specific)"
         IndividualTestSpecification(1.0, 1.0, x::Int) => "Perfect Test"
     end
     return description
@@ -477,21 +479,21 @@ end
 abstract type NoiseSpecification end
 
 struct PoissonNoiseSpecification{
-    T1<:AbstractString,T2<:AbstractFloat
-} <: NoiseSpecification
+        T1 <: AbstractString, T2 <: AbstractFloat,
+    } <: NoiseSpecification
     noise_type::T1
     noise_mean_scaling::T2
 end
 
 function PoissonNoiseSpecification(
-    noise_mean_scaling::T
-) where {T<:AbstractFloat}
+        noise_mean_scaling::T
+    ) where {T <: AbstractFloat}
     return PoissonNoiseSpecification("poisson", noise_mean_scaling)
 end
 
 struct DynamicalNoiseSpecification{
-    T1<:AbstractString,T2<:AbstractFloat,T3<:Integer
-} <: NoiseSpecification
+        T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer,
+    } <: NoiseSpecification
     noise_type::T1
     R_0::T2
     latent_period::T3
@@ -503,14 +505,14 @@ struct DynamicalNoiseSpecification{
 end
 
 function DynamicalNoiseSpecification(
-    R_0::T2,
-    latent_period::T3,
-    duration_infection::T3,
-    correlation::T1,
-    noise_mean_scaling::T2,
-    min_vaccination_coverage::T2,
-    max_vaccination_coverage::T2,
-) where {T1<:AbstractString,T2<:AbstractFloat,T3<:Integer}
+        R_0::T2,
+        latent_period::T3,
+        duration_infection::T3,
+        correlation::T1,
+        noise_mean_scaling::T2,
+        min_vaccination_coverage::T2,
+        max_vaccination_coverage::T2,
+    ) where {T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer}
     return DynamicalNoiseSpecification(
         "dynamical",
         R_0,
@@ -524,14 +526,14 @@ function DynamicalNoiseSpecification(
 end
 
 function DynamicalNoiseSpecification(
-    R_0::T2,
-    latent_period::T3,
-    duration_infection::T3,
-    correlation::T1,
-    noise_mean_scaling::T2,
-    mean_vaccination_coverage::T2;
-    max_vaccination_range = 0.2,
-) where {T1<:AbstractString,T2<:AbstractFloat,T3<:Integer}
+        R_0::T2,
+        latent_period::T3,
+        duration_infection::T3,
+        correlation::T1,
+        noise_mean_scaling::T2,
+        mean_vaccination_coverage::T2;
+        max_vaccination_range = 0.2,
+    ) where {T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer}
     return DynamicalNoiseSpecification(
         "dynamical",
         R_0,
@@ -547,16 +549,18 @@ function DynamicalNoiseSpecification(
 end
 
 function calculate_min_max_vaccination_range(
-    mean_vaccination_coverage,
-    max_vaccination_range = 0.2,
-)
+        mean_vaccination_coverage,
+        max_vaccination_range = 0.2,
+    )
     @assert mean_vaccination_coverage <= 1.0
 
-    min_vaccination_range = minimum([
-        max_vaccination_range,
-        1.0 - mean_vaccination_coverage,
-        mean_vaccination_coverage,
-    ])
+    min_vaccination_range = minimum(
+        [
+            max_vaccination_range,
+            1.0 - mean_vaccination_coverage,
+            mean_vaccination_coverage,
+        ]
+    )
 
     min_vaccination_coverage = round(
         mean_vaccination_coverage - min_vaccination_range; digits = 4
@@ -568,8 +572,8 @@ function calculate_min_max_vaccination_range(
 end
 
 function get_noise_description(
-    noise_specification::T
-) where {T<:NoiseSpecification}
+        noise_specification::T
+    ) where {T <: NoiseSpecification}
     return noise_specification.noise_type
 end
 
@@ -580,20 +584,20 @@ function get_noise_description(noise_specification::DynamicalNoiseSpecification)
 end
 
 function get_noise_magnitude_description(
-    noise_specification::T
-) where {T<:NoiseSpecification}
+        noise_specification::T
+    ) where {T <: NoiseSpecification}
     return string("Poisson scaling: ", noise_specification.noise_mean_scaling)
 end
 
 function get_noise_magnitude(
-    noise_specification::T
-) where {T<:NoiseSpecification}
+        noise_specification::T
+    ) where {T <: NoiseSpecification}
     return noise_specification.noise_mean_scaling
 end
 
 function noise_table_description(
-    noise_specification::T1
-) where {T1<:PoissonNoiseSpecification}
+        noise_specification::T1
+    ) where {T1 <: PoissonNoiseSpecification}
     noise_scaling = @match noise_specification.noise_mean_scaling begin
         7 => "High"
         1 => "Low"
@@ -602,17 +606,19 @@ function noise_table_description(
 end
 
 function noise_table_description(
-    noise_specification::T1
-) where {T1<:DynamicalNoiseSpecification}
+        noise_specification::T1
+    ) where {T1 <: DynamicalNoiseSpecification}
     avg_vaccination = round(
-        mean([
-            noise_specification.min_vaccination_coverage,
-            noise_specification.max_vaccination_coverage,
-        ]);
+        mean(
+            [
+                noise_specification.min_vaccination_coverage,
+                noise_specification.max_vaccination_coverage,
+            ]
+        );
         digits = 4,
     )
     noise_scaling = @match avg_vaccination begin
-        0.1020 => "High"
+        0.102 => "High"
         0.8734 => "Low"
     end
     return "$(noise_scaling) Dynamical Noise"
@@ -639,7 +645,7 @@ end
     Centered
 end
 
-struct EWSMetricSpecification{T1<:Integer,T2<:AbstractString}
+struct EWSMetricSpecification{T1 <: Integer, T2 <: AbstractString}
     method::EWSMethod
     aggregation::Dates.Day
     bandwidth::Dates.Day
@@ -648,11 +654,11 @@ struct EWSMetricSpecification{T1<:Integer,T2<:AbstractString}
 end
 
 function EWSMetricSpecification(
-    method::EWSMethod,
-    aggregation::Dates.Day,
-    bandwidth::Dates.Day,
-    lag::T1,
-) where {T1<:Integer}
+        method::EWSMethod,
+        aggregation::Dates.Day,
+        bandwidth::Dates.Day,
+        lag::T1,
+    ) where {T1 <: Integer}
     aggregation_days_val = Dates.value(aggregation)
     bandwidth_days_val = Dates.value(bandwidth)
 
@@ -671,12 +677,12 @@ function EWSMetricSpecification(
 end
 
 function EWSMetricSpecification(
-    method::EWSMethod, aggregation::T1, bandwidth::T2, lag::T3
-) where {
-    T1<:Dates.DatePeriod,
-    T2<:Dates.DatePeriod,
-    T3<:Integer,
-}
+        method::EWSMethod, aggregation::T1, bandwidth::T2, lag::T3
+    ) where {
+        T1 <: Dates.DatePeriod,
+        T2 <: Dates.DatePeriod,
+        T3 <: Integer,
+    }
     aggregation_days_val = Dates.days(aggregation)
     bandwidth_days_val = Dates.days(bandwidth)
     aggregation_days = Dates.Day(aggregation_days_val)
@@ -697,11 +703,11 @@ function EWSMetricSpecification(
 end
 
 function _EWSMetricSpecification_path(
-    method::EWSMethod,
-    aggregation::T1,
-    bandwidth::T1,
-    lag::T1,
-) where {T1<:Integer}
+        method::EWSMethod,
+        aggregation::T1,
+        bandwidth::T1,
+        lag::T1,
+    ) where {T1 <: Integer}
     return joinpath(
         "ews-method_$(method_string(method))",
         "ews-aggregation-days_$(aggregation)",
@@ -717,10 +723,10 @@ end
 method_string(method::EWSMethod) = lowercase(split(string(method), "::")[1])
 
 struct EWSMetrics{
-    T1<:EWSMetricSpecification,
-    T2<:AbstractFloat,
-    T3<:AbstractArray{T2},
-}
+        T1 <: EWSMetricSpecification,
+        T2 <: AbstractFloat,
+        T3 <: AbstractArray{T2},
+    }
     ews_specification::T1
     mean::T3
     variance::T3
@@ -747,14 +753,14 @@ struct ExpandingThresholdWindow <: AbstractEWSThresholdWindow end
 struct RollingThresholdWindow <: AbstractEWSThresholdWindow end
 
 struct ScenarioSpecification{
-    T1<:EnsembleSpecification,
-    T2<:OutbreakSpecification,
-    T3<:NoiseSpecification,
-    T4<:OutbreakDetectionSpecification,
-    T5<:IndividualTestSpecification,
-    T6<:EWSMetricSpecification,
-    T7<:AbstractString,
-}
+        T1 <: EnsembleSpecification,
+        T2 <: OutbreakSpecification,
+        T3 <: NoiseSpecification,
+        T4 <: OutbreakDetectionSpecification,
+        T5 <: IndividualTestSpecification,
+        T6 <: EWSMetricSpecification,
+        T7 <: AbstractString,
+    }
     ensemble_specification::T1
     outbreak_specification::T2
     noise_specification::T3
@@ -765,13 +771,13 @@ struct ScenarioSpecification{
 end
 
 function ScenarioSpecification(
-    ensemble_specification::EnsembleSpecification,
-    outbreak_specification::OutbreakSpecification,
-    noise_specification::NoiseSpecification,
-    outbreak_detection_specification::OutbreakDetectionSpecification,
-    individual_test_specification::IndividualTestSpecification,
-    ewsmetric_specification::EWSMetricSpecification,
-)
+        ensemble_specification::EnsembleSpecification,
+        outbreak_specification::OutbreakSpecification,
+        noise_specification::NoiseSpecification,
+        outbreak_detection_specification::OutbreakDetectionSpecification,
+        individual_test_specification::IndividualTestSpecification,
+        ewsmetric_specification::EWSMetricSpecification,
+    )
     dirpath = joinpath(
         ensemble_specification.dirpath,
         outbreak_specification.dirpath,
@@ -791,6 +797,45 @@ function ScenarioSpecification(
         individual_test_specification,
         ewsmetric_specification,
         dirpath,
+    )
+end
+
+"""
+    OptimizationScenario
+
+Struct representing a single optimization scenario with all necessary parameters
+for EWS hyperparameter optimization.
+"""
+struct OptimizationScenario
+    noise_specification::NoiseSpecification
+    test_specification::IndividualTestSpecification
+    percent_tested::Float64
+    ews_metric_specification::EWSMetricSpecification
+    ews_enddate_type::EWSEndDateType
+    ews_threshold_window::Union{Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow}}
+    ews_threshold_burnin::Union{Dates.Day, Dates.Year}
+    ews_metric::String
+end
+
+function OptimizationScenario(;
+        noise_specification::NoiseSpecification,
+        test_specification::IndividualTestSpecification,
+        percent_tested::Float64,
+        ews_metric_specification::EWSMetricSpecification,
+        ews_enddate_type::EWSEndDateType,
+        ews_threshold_window::Union{Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow}},
+        ews_threshold_burnin::Union{Dates.Day, Dates.Year},
+        ews_metric::String
+    )
+    return OptimizationScenario(
+        noise_specification,
+        test_specification,
+        percent_tested,
+        ews_metric_specification,
+        ews_enddate_type,
+        ews_threshold_window,
+        ews_threshold_burnin,
+        ews_metric
     )
 end
 

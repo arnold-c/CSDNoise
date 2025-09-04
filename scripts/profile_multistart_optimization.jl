@@ -231,7 +231,7 @@ function analyze_type_stability(specification_vecs, data_arrs)
     println("Type analysis for ews_objective_function_with_tracking:")
     # @code_warntype ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
     println("\n\tDynamics dispatch check:")
-    @report_opt ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
+    @report_opt target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
     println("\n\tType error check:")
     @report_call target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
     return nothing

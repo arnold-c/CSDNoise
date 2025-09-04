@@ -15,8 +15,8 @@ using UnPack: @unpack
 end
 
 function calculate_bandwidth_and_return_ews_metric_spec(
-    ews_metric_spec_components...
-)
+        ews_metric_spec_components...
+    )
     @assert length(ews_metric_spec_components) == 4
 
     bandwidth = calculate_bandwidth(
@@ -37,12 +37,12 @@ function calculate_bandwidth(bandwidth_days, aggregation_days)
 end
 
 function expanding_ews_thresholds(
-    ewsmetrics::T1,
-    metric::T2,
-    window_type::Type{<:AbstractEWSThresholdWindow};
-    percentiles = (0.8, 0.95),
-    burn_in = Dates.Day(10),
-) where {T1<:EWSMetrics,T2<:Symbol}
+        ewsmetrics::T1,
+        metric::T2,
+        window_type::Type{<:AbstractEWSThresholdWindow};
+        percentiles = (0.8, 0.95),
+        burn_in = Dates.Day(10),
+    ) where {T1 <: EWSMetrics, T2 <: Symbol}
     ews_vec = getproperty(ewsmetrics, metric)
 
     @unpack aggregation = ewsmetrics.ews_specification
@@ -59,20 +59,23 @@ function expanding_ews_thresholds(
 end
 
 function _expanding_ews_thresholds(
-    ews_vec,
-    ::Type{ExpandingThresholdWindow},
-    percentiles,
-    burn_in_index::T1,
-) where {T1<:Integer}
-    ews_distributions = fill(NaN, length(ews_vec), length(percentiles))
+        ews_vec::Vector{F},
+        ::Type{ExpandingThresholdWindow},
+        percentiles,
+        burn_in_index::T1,
+    ) where {T1 <: Integer, F <: AbstractFloat}
+    # Main.@infiltrate
+    ews_vec_len = length(ews_vec)
+    ews_distributions = fill(NaN, ews_vec_len, length(percentiles))
     ews_worker_vec = fill(
         NaN, sum((!isnan).(ews_vec))
     )
-    exceeds_thresholds = zeros(Bool,
+    exceeds_thresholds = zeros(
+        Bool,
         length(ews_vec), length(percentiles),
     )
 
-    worker_ind = 0
+    worker_ind::Int64 = 0
     for i in eachindex(ews_vec)
         if isnan(ews_vec[i])
             if i > burn_in_index
@@ -108,9 +111,9 @@ end
 end
 
 function calculate_ews_enddate(
-    thresholds,
-    enddate_type::EWSEndDateType,
-)
+        thresholds::T,
+        enddate_type::EWSEndDateType,
+    ) where {T <: AbstractArray{<:Int}}
     _calculate_ews_enddate = @cases enddate_type begin
         Reff_start => calculate_Reff_start_ews_enddate
         Reff_end => calculate_Reff_end_ews_enddate
@@ -130,27 +133,27 @@ function calculate_ews_enddate(
     )
 end
 
-function calculate_Reff_start_ews_enddate(thresholds)
+function calculate_Reff_start_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
     return trygetindex(thresholds, 1, 1)
 end
 
-function calculate_Reff_end_ews_enddate(thresholds)
+function calculate_Reff_end_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
     return trygetindex(thresholds, 1, 2)
 end
 
-function calculate_Outbreak_start_ews_enddate(thresholds)
+function calculate_Outbreak_start_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
 
     return trygetindex(filtered_outbreak_thresholds, 1, 1)
 end
 
-function calculate_Outbreak_end_ews_enddate(thresholds)
+function calculate_Outbreak_end_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
 
     return trygetindex(filtered_outbreak_thresholds, 1, 2)
 end
 
-function calculate_Outbreak_ews_enddate(thresholds)
+function calculate_Outbreak_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err{BoundsError}} where {T <: AbstractArray{<:Int}}
     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
 
     if size(filtered_outbreak_thresholds, 1) == 0
@@ -159,39 +162,42 @@ function calculate_Outbreak_ews_enddate(thresholds)
 
     return Try.Ok(
         filtered_outbreak_thresholds[1, 1] +
-        (
+            (
             filtered_outbreak_thresholds[1, 2] -
-            filtered_outbreak_thresholds[1, 1] +
-            1
+                filtered_outbreak_thresholds[1, 1] +
+                1
         ) ÷ 2,
     )
 end
 
-function filter_outbreak_thresholds(thresholds; thresholds_col = 4)
+function filter_outbreak_thresholds(
+        thresholds::T; thresholds_col = 4
+    ) where {T <: AbstractArray{<:Int}}
+
     return thresholds[(thresholds[:, thresholds_col] .== 1), :]
 end
 
 function tycho_testing_plots(
-    noise_arr_tuple,
-    cases_arr_tuple,
-    plot_cases_tuple,
-    long_plotdata;
-    individual_test_specification = IndividualTestSpecification(1.0, 1.0, 0),
-    noise_specification = PoissonNoiseSpecification("poisson", 1.0),
-    plot_base_path = DrWatson.plotsdir("tycho/testing-plots"),
-    ews_method = Main.Centered,
-    ews_aggregation = 1,
-    ews_bandwidth = 52,
-    ews_lag = 1,
-    ews_metric = "variance",
-    ews_threshold_window = Main.Expanding,
-    ews_threshold_percentile = 0.95,
-    consecutive_thresholds = 2,
-    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
-    sim = 1,
-    return_objects = false,
-    force = true,
-)
+        noise_arr_tuple,
+        cases_arr_tuple,
+        plot_cases_tuple,
+        long_plotdata;
+        individual_test_specification = IndividualTestSpecification(1.0, 1.0, 0),
+        noise_specification = PoissonNoiseSpecification("poisson", 1.0),
+        plot_base_path = DrWatson.plotsdir("tycho/testing-plots"),
+        ews_method = Main.Centered,
+        ews_aggregation = 1,
+        ews_bandwidth = 52,
+        ews_lag = 1,
+        ews_metric = "variance",
+        ews_threshold_window = Main.Expanding,
+        ews_threshold_percentile = 0.95,
+        consecutive_thresholds = 2,
+        obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+        sim = 1,
+        return_objects = false,
+        force = true,
+    )
     @assert length(noise_arr_tuple) == length(cases_arr_tuple) == 3
     weekly_noise_arr, biweekly_noise_arr, monthly_noise_arr = noise_arr_tuple
     weekly_cases_arr, biweekly_cases_arr, monthly_cases_arr = cases_arr_tuple
@@ -239,9 +245,9 @@ function tycho_testing_plots(
 
     filled_monthly_test_arr =
         fill_aggregation_values(
-            monthly_test_arr;
-            week_aggregation = 4,
-        ) |>
+        monthly_test_arr;
+        week_aggregation = 4,
+    ) |>
         x -> x[1:length(plot_dates), :, :]
 
     test_plot_description = get_test_description(individual_test_specification)
@@ -251,7 +257,7 @@ function tycho_testing_plots(
 
     test_path_description = "sens-$(individual_test_specification.sensitivity)_spec-$(individual_test_specification.specificity)_lag-$(individual_test_specification.test_result_lag)"
     noise_path_description = "$(
-        replace(noise_magnitude_description," " => "_", ": " => "_")
+        replace(noise_magnitude_description, " " => "_", ": " => "_")
     )"
 
     noise_path = joinpath(
@@ -360,53 +366,53 @@ function tycho_testing_plots(
 
     weekly_test_ewsmetrics =
         map(
-            k -> EWSMetrics(
-                EWSMetricSpecification(
-                    ews_method,
-                    ews_aggregation,
-                    ews_bandwidth,
-                    ews_lag,
-                ),
-                weekly_test_arr[
-                    1:weekly_obs_index, 5, k
-                ],
+        k -> EWSMetrics(
+            EWSMetricSpecification(
+                ews_method,
+                ews_aggregation,
+                ews_bandwidth,
+                ews_lag,
             ),
-            axes(weekly_test_arr, 3),
-        ) |>
+            weekly_test_arr[
+                1:weekly_obs_index, 5, k,
+            ],
+        ),
+        axes(weekly_test_arr, 3),
+    ) |>
         x -> StructArray(x)
 
     biweekly_test_ewsmetrics =
         map(
-            k -> EWSMetrics(
-                EWSMetricSpecification(
-                    ews_method,
-                    ews_aggregation,
-                    Int(ews_bandwidth / 2),
-                    ews_lag,
-                ),
-                biweekly_test_arr[
-                    1:biweekly_obs_index, 5, k
-                ],
+        k -> EWSMetrics(
+            EWSMetricSpecification(
+                ews_method,
+                ews_aggregation,
+                Int(ews_bandwidth / 2),
+                ews_lag,
             ),
-            axes(biweekly_test_arr, 3),
-        ) |>
+            biweekly_test_arr[
+                1:biweekly_obs_index, 5, k,
+            ],
+        ),
+        axes(biweekly_test_arr, 3),
+    ) |>
         x -> StructArray(x)
 
     monthly_test_ewsmetrics =
         map(
-            k -> EWSMetrics(
-                EWSMetricSpecification(
-                    ews_method,
-                    ews_aggregation,
-                    Int(ews_bandwidth / 4),
-                    ews_lag,
-                ),
-                monthly_test_arr[
-                    1:monthly_obs_index, 5, k
-                ],
+        k -> EWSMetrics(
+            EWSMetricSpecification(
+                ews_method,
+                ews_aggregation,
+                Int(ews_bandwidth / 4),
+                ews_lag,
             ),
-            axes(monthly_test_arr, 3),
-        ) |>
+            monthly_test_arr[
+                1:monthly_obs_index, 5, k,
+            ],
+        ),
+        axes(monthly_test_arr, 3),
+    ) |>
         x -> StructArray(x)
 
     ews_metric_tau = ews_metric * "_tau"
@@ -477,7 +483,7 @@ function tycho_testing_plots(
         consecutive_thresholds = consecutive_thresholds,
     )
 
-    plotname = "$(ews_metric)_$(100*ews_threshold_percentile)-percentile_thresholds_$(test_path_description)_$(noise_path_description).png"
+    plotname = "$(ews_metric)_$(100 * ews_threshold_percentile)-percentile_thresholds_$(test_path_description)_$(noise_path_description).png"
     plotpath = joinpath(
         ewspath, plotname
     )
@@ -550,14 +556,14 @@ function tycho_testing_plots(
 end
 
 function simulation_tau_heatmap_df!(
-    ews_df,
-    test_ewsmetrics,
-    ews_metric;
-    individual_test_specification = IndividualTestSpecification(1.0, 1.0, 0),
-    ews_metric_specification = EWSMetricSpecification(Centered, 7, 52, 1),
-    ews_enddate_type = Reff_start::EWSEndDateType,
-    statistic_function = StatsBase.mean,
-)
+        ews_df,
+        test_ewsmetrics,
+        ews_metric;
+        individual_test_specification = IndividualTestSpecification(1.0, 1.0, 0),
+        ews_metric_specification = EWSMetricSpecification(Centered, 7, 52, 1),
+        ews_enddate_type = Reff_start::EWSEndDateType,
+        statistic_function = StatsBase.mean,
+    )
     @assert names(ews_df) == [
         "ews_metric",
         "test_specification",
@@ -590,28 +596,28 @@ function simulation_tau_heatmap_df!(
 end
 
 function tycho_tau_heatmap_df(
-    long_plotdata,
-    cases_arr,
-    noise_arr,
-    test_tuple;
-    week_aggregation = 1,
-    ews_metrics = [
-        :autocorrelation,
-        :autocovariance,
-        :coefficient_of_variation,
-        :index_of_dispersion,
-        :kurtosis,
-        :mean,
-        :skewness,
-        :variance,
-    ],
-    ews_method = Main.Centered,
-    ews_aggregation = 1,
-    ews_bandwidth = 52,
-    ews_lag = 1,
-    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
-    statistic_function = StatsBase.mean,
-)
+        long_plotdata,
+        cases_arr,
+        noise_arr,
+        test_tuple;
+        week_aggregation = 1,
+        ews_metrics = [
+            :autocorrelation,
+            :autocovariance,
+            :coefficient_of_variation,
+            :index_of_dispersion,
+            :kurtosis,
+            :mean,
+            :skewness,
+            :variance,
+        ],
+        ews_method = Main.Centered,
+        ews_aggregation = 1,
+        ews_bandwidth = 52,
+        ews_lag = 1,
+        obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+        statistic_function = StatsBase.mean,
+    )
     ews_df = DataFrame(
         "ews_metric" => String[],
         "test_specification" => IndividualTestSpecification[],
@@ -642,14 +648,14 @@ function tycho_tau_heatmap_df(
 
         test_ewsmetrics =
             map(
-                k -> EWSMetrics(
-                    ewsmetric_specification,
-                    test_arr[
-                        1:obs_index, 5, k
-                    ],
-                ),
-                axes(test_arr, 3),
-            ) |>
+            k -> EWSMetrics(
+                ewsmetric_specification,
+                test_arr[
+                    1:obs_index, 5, k,
+                ],
+            ),
+            axes(test_arr, 3),
+        ) |>
             x -> StructArray(x)
 
         for ews_metric in ews_metrics
@@ -677,21 +683,21 @@ function tycho_tau_heatmap_df(
 end
 
 function get_tau(
-    ews_metrics;
-    tau_metric = :variance_tau,
-    statistic_function = StatsBase.mean,
-)
+        ews_metrics;
+        tau_metric = :variance_tau,
+        statistic_function = StatsBase.mean,
+    )
     tau_vector = getproperty(ews_metrics, tau_metric)
 
     return statistic_function(tau_vector)
 end
 
 function calculate_ews_lead_time(
-    ews_thresholds;
-    week_aggregation = 1,
-    consecutive_thresholds = 2,
-    output_type = :days,
-)
+        ews_thresholds;
+        week_aggregation = 1,
+        consecutive_thresholds = 2,
+        output_type = :days,
+    )
     threshold_index = calculate_ews_trigger_index(
         ews_thresholds; consecutive_thresholds = consecutive_thresholds
     )
@@ -705,10 +711,10 @@ function calculate_ews_lead_time(
 end
 
 function calculate_ews_lead_time(
-    ews_thresholds, threshold_index;
-    week_aggregation = 1,
-    output_type = :days,
-)
+        ews_thresholds, threshold_index;
+        week_aggregation = 1,
+        output_type = :days,
+    )
     output_multiplier = @match output_type begin
         :days => 7
         :weeks => 1
@@ -716,8 +722,8 @@ function calculate_ews_lead_time(
         :years => 7 / 365
         _ =>
             error(
-                "Unknown output type: $(output_type).\nChoose between :days, :weeks, :months, or :years."
-            )
+            "Unknown output type: $(output_type).\nChoose between :days, :weeks, :months, or :years."
+        )
     end
 
     if isnothing(threshold_index)
@@ -726,13 +732,13 @@ function calculate_ews_lead_time(
     end
 
     return (length(ews_thresholds) - threshold_index) * week_aggregation *
-           output_multiplier
+        output_multiplier
 end
 
 function calculate_ews_trigger_index(
-    ews_thresholds::T1;
-    consecutive_thresholds = 2,
-) where {T1<:AbstractMatrix{<:Bool}}
+        ews_thresholds::T1;
+        consecutive_thresholds = 2,
+    ) where {T1 <: AbstractMatrix{<:Bool}}
     reshaped_ews_thresholds = reshape(ews_thresholds, :)
 
     @assert length(reshaped_ews_thresholds) == length(ews_thresholds[:, 1])
@@ -744,15 +750,15 @@ function calculate_ews_trigger_index(
 end
 
 function calculate_ews_trigger_index(
-    ews_thresholds::T1;
-    consecutive_thresholds = 2,
-) where {T1<:AbstractVector{<:Bool}}
+        ews_thresholds::T1;
+        consecutive_thresholds = 2,
+    ) where {T1 <: AbstractVector{<:Bool}}
     cumulative_thresholds = cumsum(ews_thresholds)
     for (i, v) in pairs(cumulative_thresholds)
         if i > consecutive_thresholds &&
-            v >=
-           cumulative_thresholds[i - consecutive_thresholds] +
-           consecutive_thresholds
+                v >=
+                cumulative_thresholds[i - consecutive_thresholds] +
+                consecutive_thresholds
             return i
         end
     end
@@ -760,27 +766,27 @@ function calculate_ews_trigger_index(
 end
 
 function ews_lead_time_df!(
-    lead_time_df::DataFrame,
-    cases_arr,
-    noise_arr,
-    long_plotdata,
-    individual_test_specification;
-    noise_type = "poisson",
-    noise_magnitude = 1.0,
-    week_aggregation = 1,
-    ews_method = Main.Centered,
-    ews_aggregation = 1,
-    ews_bandwidth = 52,
-    ews_lag = 1,
-    ews_metric = "variance",
-    ews_threshold_window = Main.Expanding,
-    ews_threshold_percentile = 0.95,
-    consecutive_thresholds = 2,
-    obsdate = cdc_week_to_date(1990, 3; weekday = 6),
-    lead_time_units = :days,
-    lead_time_percentile = 0.95,
-    return_objects = false,
-)
+        lead_time_df::DataFrame,
+        cases_arr,
+        noise_arr,
+        long_plotdata,
+        individual_test_specification;
+        noise_type = "poisson",
+        noise_magnitude = 1.0,
+        week_aggregation = 1,
+        ews_method = Main.Centered,
+        ews_aggregation = 1,
+        ews_bandwidth = 52,
+        ews_lag = 1,
+        ews_metric = "variance",
+        ews_threshold_window = Main.Expanding,
+        ews_threshold_percentile = 0.95,
+        consecutive_thresholds = 2,
+        obsdate = cdc_week_to_date(1990, 3; weekday = 6),
+        lead_time_units = :days,
+        lead_time_percentile = 0.95,
+        return_objects = false,
+    )
     test_arr = create_testing_arrs(
         cases_arr,
         noise_arr,
@@ -796,19 +802,19 @@ function ews_lead_time_df!(
 
     test_ewsmetrics =
         map(
-            k -> EWSMetrics(
-                EWSMetricSpecification(
-                    ews_method,
-                    ews_aggregation,
-                    Int(ews_bandwidth / week_aggregation),
-                    ews_lag,
-                ),
-                test_arr[
-                    1:obs_index, 5, k
-                ],
+        k -> EWSMetrics(
+            EWSMetricSpecification(
+                ews_method,
+                ews_aggregation,
+                Int(ews_bandwidth / week_aggregation),
+                ews_lag,
             ),
-            axes(test_arr, 3),
-        ) |>
+            test_arr[
+                1:obs_index, 5, k,
+            ],
+        ),
+        axes(test_arr, 3),
+    ) |>
         x -> StructArray(x)
 
     ews_metric_sym = Symbol(ews_metric)
@@ -876,9 +882,9 @@ function ews_lead_time_df!(
 end
 
 function calculate_auc(
-    emergent_tau,
-    null_tau,
-)
+        emergent_tau,
+        null_tau,
+    )
     combined_taus = vcat(null_tau, emergent_tau)
 
     ranks = StatsBase.tiedrank(-combined_taus)
@@ -886,5 +892,5 @@ function calculate_auc(
     n_null = length(null_tau)
     sum_null_ranks = sum(ranks[1:n_null])
     return (sum_null_ranks - n_null * (n_null + 1) / 2) /
-           (n_emergent * n_null)
+        (n_emergent * n_null)
 end

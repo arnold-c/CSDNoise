@@ -213,7 +213,7 @@ end
 Optimize EWS parameters for a single scenario using multistart optimization.
 """
 function optimize_single_scenario(
-        scenario::NamedTuple,
+        scenario::OptimizationScenario,
         data_arrs::NamedTuple,
         bounds::NamedTuple,
         config::NamedTuple
@@ -285,7 +285,7 @@ Uses pre-computed cached simulation data for efficiency.
 """
 function ews_objective_function_with_tracking(
         params_vec::Vector{Float64},
-        scenario::NamedTuple,
+        scenario::OptimizationScenario,
         cached_data::CachedSimulationData,
         tracker::OptimizationTracker
     )
@@ -385,7 +385,7 @@ Pre-compute expensive simulation data once per scenario to avoid repeated comput
 during parameter optimization. This includes noise arrays and test arrays.
 """
 function create_cached_simulation_data(
-        scenario::NamedTuple,
+        scenario::OptimizationScenario,
         data_arrs::NamedTuple
     )
     @unpack noise_specification, test_specification, percent_tested,
@@ -453,7 +453,7 @@ This replaces the nested loop approach with a DataFrame-based approach for bette
 function create_scenarios_dataframe(specification_vecs)
     scenarios = create_optimization_scenarios(specification_vecs)
 
-    # Convert to DataFrame
+    # Convert StructArray to DataFrame
     return DataFrame(scenarios)
 end
 
@@ -484,13 +484,13 @@ function create_optimization_scenarios(specification_vecs)
         ews_metric_vec
     )
 
-    # Map each combination to a NamedTuple
-    scenarios = mapreduce(vcat, combinations; init = NamedTuple[]) do (
+    # Map each combination to an OptimizationScenario struct
+    scenarios_vec = mapreduce(vcat, combinations; init = OptimizationScenario[]) do (
                 noise_spec, test_spec, percent_tested,
                 ews_metric_spec, ews_enddate_type,
                 ews_window, ews_burnin, ews_metric,
             )
-        (;
+        OptimizationScenario(
             noise_specification = noise_spec,
             test_specification = test_spec,
             percent_tested = percent_tested,
@@ -501,6 +501,9 @@ function create_optimization_scenarios(specification_vecs)
             ews_metric = ews_metric,
         )
     end
+
+    # Convert to StructArray for easier manipulation
+    scenarios = StructArray(scenarios_vec)
 
     return scenarios
 end
@@ -843,10 +846,10 @@ end
 """
     dataframe_row_to_scenario(row)
 
-Convert a DataFrame row to a scenario NamedTuple.
+Convert a DataFrame row to an OptimizationScenario struct.
 """
 function dataframe_row_to_scenario(row::DataFrameRow)
-    return (
+    return OptimizationScenario(
         noise_specification = row.noise_specification,
         test_specification = row.test_specification,
         percent_tested = row.percent_tested,
@@ -967,17 +970,12 @@ end
 
 Compare two scenarios for equality, handling floating point comparisons properly.
 """
-function scenarios_equal(scenario1::NamedTuple, scenario2::NamedTuple)
+function scenarios_equal(scenario1::OptimizationScenario, scenario2::OptimizationScenario)
     # Get all field names
-    fields1 = keys(scenario1)
-    fields2 = keys(scenario2)
-
-    if fields1 != fields2
-        return false
-    end
+    fields = fieldnames(OptimizationScenario)
 
     # Compare each field
-    for field in fields1
+    for field in fields
         val1 = getfield(scenario1, field)
         val2 = getfield(scenario2, field)
 

@@ -7,7 +7,6 @@ using REPL: REPL
 using REPL.TerminalMenus: RadioMenu, request
 using Base: rest
 using Try: Try
-using Match: Match
 using Makie: Makie
 using Printf: @sprintf
 
@@ -668,10 +667,12 @@ function optimal_ews_heatmap_df(
             :ews_metric,
         ],
     )
-    tiebreaker_args = Match.@match tiebreaker_preference begin
-        "speed" => (:ews_consecutive_thresholds, false)
-        "specificity" => (:specificity, true)
-        _ => error(
+    tiebreaker_args = tiebreaker_args = if tiebreaker_preference == "speed"
+        (:ews_consecutive_thresholds, false)
+    elseif tiebreaker_preference == "specificity"
+        (:specificity, true)
+    else
+        error(
             "Invalid preference: $tiebreaker_preference. Please choose either \"speed\" or \"specificity\"."
         )
     end

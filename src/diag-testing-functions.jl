@@ -206,21 +206,23 @@ function create_testing_arrs!(
             testlag,
         )
 
-        ewsvec[sim] = @match alert_method begin
-            "movingavg" => EWSMetrics(
+        ewsvec[sim] = if alert_method == "movingavg"
+            EWSMetrics(
                 ews_specification,
                 @view(test_movingavg_arr[:, sim]),
             )
-
-            "dailythreshold_movingavg" => EWSMetrics(
+        elseif alert_method == "dailythreshold_movingavg"
+            EWSMetrics(
                 ews_specification,
                 @view(test_movingavg_arr[:, sim]),
             )
-
-            "inferred_movingavg" => EWSMetrics(
+        elseif alert_method == "inferred_movingavg"
+            EWSMetrics(
                 ews_specification,
                 @view(inferred_positives_arr[:, sim]),
             )
+        else
+            error("alert_method must be one of \"movingavg\", \"dailythreshold_movingavg\", \"inferred_movingavg\"")
         end
     end
 

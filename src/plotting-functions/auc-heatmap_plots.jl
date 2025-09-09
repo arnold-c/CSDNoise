@@ -1,26 +1,25 @@
-using Match: @match
 using Printf: @sprintf
 function tau_auc_heatmap(
-    df,
-    textoutcome = :auc_magnitude,
-    coloroutcome = :auc_magnitude;
-    baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
-    plottitle = "Kendall's Tau $(replace(titlecase(replace(string(textoutcome), "_" => " ")), "Auc" => "AUC")) Heatmap",
-    xlabel = "Test Sensitivity & Specificity",
-    ylabel = "EWS Metric",
-    fontsize = 22,
-    legendsize = 22,
-    xlabelsize = 22,
-    ylabelsize = 22,
-    xticklabelsize = 22,
-    yticklabelsize = 22,
-    legendticklabelsize = 22,
-    legendwidth = 20,
-    colormap = :RdBu,
-    colorrange = [0.2, 0.8],
-    textcolorthreshold = (0.4, 0.68),
-    kwargs...,
-)
+        df,
+        textoutcome = :auc_magnitude,
+        coloroutcome = :auc_magnitude;
+        baseline_test = IndividualTestSpecification(1.0, 1.0, 0),
+        plottitle = "Kendall's Tau $(replace(titlecase(replace(string(textoutcome), "_" => " ")), "Auc" => "AUC")) Heatmap",
+        xlabel = "Test Sensitivity & Specificity",
+        ylabel = "EWS Metric",
+        fontsize = 22,
+        legendsize = 22,
+        xlabelsize = 22,
+        ylabelsize = 22,
+        xticklabelsize = 22,
+        yticklabelsize = 22,
+        legendticklabelsize = 22,
+        legendwidth = 20,
+        colormap = :RdBu,
+        colorrange = [0.2, 0.8],
+        textcolorthreshold = (0.4, 0.68),
+        kwargs...,
+    )
     df[!, :test_sens] = getproperty.(df.test_specification, :sensitivity)
     df[!, :test_spec] = getproperty.(df.test_specification, :sensitivity)
     df[!, :test_result_lag] =
@@ -40,10 +39,10 @@ function tau_auc_heatmap(
 
     text_ordered_df =
         unstack(
-            select(df, [:ews_metric, :test_specification, textoutcome]),
-            :test_specification,
-            textoutcome,
-        ) |>
+        select(df, [:ews_metric, :test_specification, textoutcome]),
+        :test_specification,
+        textoutcome,
+    ) |>
         df -> sort(df, order(2; rev = false))
 
     default_test_metric_order = text_ordered_df.ews_metric
@@ -57,10 +56,10 @@ function tau_auc_heatmap(
     else
         color_ordered_df =
             unstack(
-                select(df, [:ews_metric, :test_specification, coloroutcome]),
-                :test_specification,
-                coloroutcome,
-            ) |>
+            select(df, [:ews_metric, :test_specification, coloroutcome]),
+            :test_specification,
+            coloroutcome,
+        ) |>
             df -> df[indexin(default_test_metric_order, df.ews_metric), :]
         @assert text_ordered_df.ews_metric == color_ordered_df.ews_metric
 
@@ -104,11 +103,11 @@ function tau_auc_heatmap(
             textcolor = val <= textcolorthreshold ? :black : :white
         elseif length(textcolorthreshold) == 2
             textcolor =
-                if val >= textcolorthreshold[1] && val <= textcolorthreshold[2]
-                    :black
-                else
-                    :white
-                end
+            if val >= textcolorthreshold[1] && val <= textcolorthreshold[2]
+                :black
+            else
+                :white
+            end
         else
             error(
                 "variable `textcolorthreshold` should be length 1 or 2. Instead received length $(length(textcolorthreshold))"
@@ -130,9 +129,10 @@ function tau_auc_heatmap(
         (0, length(default_test_metric_order) + 1),
     )
 
-    colorlabel = @match coloroutcome begin
-        :auc => "AUC"
-        :auc_magnitude => "|AUC - 0.5|"
+    colorlabel = if coloroutcome == :auc
+        "AUC"
+    elseif coloroutcome == :auc_magnitude
+        "|AUC - 0.5|"
     end
 
     Colorbar(
@@ -147,10 +147,14 @@ function tau_auc_heatmap(
 end
 
 function clean_ews_metric_names(metric_vector)
-    return replace.(titlecase.(replace.(
-            metric_vector,
-            "_" => " ",
-        )), "Of" => "of")
+    return replace.(
+        titlecase.(
+            replace.(
+                metric_vector,
+                "_" => " ",
+            )
+        ), "Of" => "of"
+    )
 end
 
 function test_axis_label(test)

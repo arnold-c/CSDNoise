@@ -1,53 +1,50 @@
 using DataFrames: DataFrames
 using ProgressMeter
-using Match: Match
 
 function create_optimal_ews_plots(
-    optimal_ews_df,
-    ensemble_specification,
-    ensemble_single_incarr,
-    null_single_incarr,
-    ensemble_single_Reff_thresholds_vec,
-    tiebreaker_preference_vec;
-    optimal_grouping_parameters = [
-        :noise_specification,
-        :test_specification,
-        :percent_tested,
-        :ews_metric_specification,
-        :ews_enddate_type,
-        :ews_threshold_window,
-        :ews_threshold_burnin,
-        :ews_metric,
-    ],
-    ews_metrics = [
-        "autocorrelation",
-        "autocovariance",
-        "coefficient_of_variation",
-        "index_of_dispersion",
-        "kurtosis",
-        "mean",
-        "skewness",
-        "variance",
-    ],
-    force_heatmap = true,
-    force_survival = false,
-    base_plotpath = joinpath(plotsdir(), "ensemble"),
-    output_format = "png",
-    pt_per_unit = 0.75,
-    px_per_unit = 2,
-    size = (1220, 640),
-)
-    Match.@match output_format begin
-        "pdf" || "svg" => include(srcdir("cairomakie-plotting-setup.jl"))
-        "png" || "jpg" || "jpeg" => include(srcdir("makie-plotting-setup.jl"))
+        optimal_ews_df,
+        ensemble_specification,
+        ensemble_single_incarr,
+        null_single_incarr,
+        ensemble_single_Reff_thresholds_vec,
+        tiebreaker_preference_vec;
+        optimal_grouping_parameters = [
+            :noise_specification,
+            :test_specification,
+            :percent_tested,
+            :ews_metric_specification,
+            :ews_enddate_type,
+            :ews_threshold_window,
+            :ews_threshold_burnin,
+            :ews_metric,
+        ],
+        ews_metrics = [
+            "autocorrelation",
+            "autocovariance",
+            "coefficient_of_variation",
+            "index_of_dispersion",
+            "kurtosis",
+            "mean",
+            "skewness",
+            "variance",
+        ],
+        force_heatmap = true,
+        force_survival = false,
+        base_plotpath = joinpath(plotsdir(), "ensemble"),
+        output_format = "png",
+        pt_per_unit = 0.75,
+        px_per_unit = 2,
+        size = (1220, 640),
+    )
+    if output_format in ["pdf", "svg"]
+        include(srcdir("cairomakie-plotting-setup.jl"))
+        CairoMakie.activate!(; type = output_format, pt_per_unit = pt_per_unit)
+    end
+    if output_format in ["png", "jpg", "jpeg"]
+        include(srcdir("makie-plotting-setup.jl"))
+        GLMakie.activate!(; px_per_unit = px_per_unit)
     end
 
-    Match.@match output_format begin
-        "pdf" => CairoMakie.activate!(; type = "pdf", pt_per_unit = pt_per_unit)
-        "svg" => CairoMakie.activate!(; type = "svg", pt_per_unit = pt_per_unit)
-        "png" || "jpg" || "jpeg" =>
-            GLMakie.activate!(; px_per_unit = px_per_unit)
-    end
 
     grouped_optimal_ews_df = DataFrames.groupby(
         optimal_ews_df,
@@ -65,8 +62,8 @@ function create_optimal_ews_plots(
     prog = Progress(ngroups)
     for (gdf, tiebreaker_preference) in
         Iterators.product(
-        grouped_optimal_ews_df, tiebreaker_preference_vec
-    )
+            grouped_optimal_ews_df, tiebreaker_preference_vec
+        )
         optimal_heatmap_df = optimal_ews_heatmap_df(
             gdf;
             tiebreaker_preference = tiebreaker_preference,
@@ -80,9 +77,9 @@ function create_optimal_ews_plots(
 
         burnin_time = ensemble_specification.time_parameters.burnin
         @unpack min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_vaccination_coverage,
-        max_vaccination_coverage =
+            max_burnin_vaccination_coverage,
+            min_vaccination_coverage,
+            max_vaccination_coverage =
             ensemble_specification.dynamics_parameter_specification
 
         ensemble_vax_plotpath = joinpath(

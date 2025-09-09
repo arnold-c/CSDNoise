@@ -5,34 +5,36 @@
 # include("ensemble-functions.jl")
 # using .EnsembleFunctions
 using UnPack
-using Match
 
 function create_noise_arr(
-    noise_specification::DynamicalNoiseSpecification,
-    incarr;
-    ensemble_specification::EnsembleSpecification,
-    seed = 1234,
-    kwargs...,
-)
+        noise_specification::DynamicalNoiseSpecification,
+        incarr;
+        ensemble_specification::EnsembleSpecification,
+        seed = 1234,
+        kwargs...,
+    )
     seed *= 10
 
     @unpack state_parameters,
-    dynamics_parameter_specification, time_parameters,
-    nsims =
+        dynamics_parameter_specification, time_parameters,
+        nsims =
         ensemble_specification
     @unpack tlength = time_parameters
 
-    noise_beta_force = @match noise_specification.correlation begin
-        "none" => 0.0
-        _ => dynamics_parameter_specification.beta_force
+    noise_beta_force = if noise_specification.correlation == "none"
+        0.0
+    else
+        dynamics_parameter_specification.beta_force
     end
 
-    noise_seasonality = @match noise_specification.correlation begin
-        "out-of-phase" => @match dynamics_parameter_specification.seasonality begin
-            $cos => sin
-            $sin => cos
+    noise_seasonality = if noise_specification.correlation == "out-of-phase"
+        if dynamics_parameter_specification.seasonality == cos
+            sin
+        elseif dynamics_parameter_specification.seasonality == sin
+            cos
         end
-        _ => dynamics_parameter_specification.seasonality
+    else
+        dynamics_parameter_specification.seasonality
     end
 
     noise_dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
@@ -57,13 +59,13 @@ function create_noise_arr(
         noise_specification.max_vaccination_coverage,
     )
 
-    ensemble_seir_vecs = Array{typeof(state_parameters.init_states),2}(
+    ensemble_seir_vecs = Array{typeof(state_parameters.init_states), 2}(
         undef,
         tlength,
         nsims,
     )
 
-    ensemble_inc_vecs = Array{typeof(SVector(0)),2}(
+    ensemble_inc_vecs = Array{typeof(SVector(0)), 2}(
         undef,
         tlength,
         nsims,
@@ -117,20 +119,20 @@ function create_noise_arr(
     ensemble_inc_arr .+= poisson_noise
 
     return ensemble_inc_arr,
-    (;
-        mean_noise = mean_rubella_noise + mean_poisson_noise,
-        mean_poisson_noise = mean_poisson_noise,
-        mean_rubella_noise = mean_rubella_noise,
-        poisson_noise_prop = poisson_noise_prop,
-    )
+        (;
+            mean_noise = mean_rubella_noise + mean_poisson_noise,
+            mean_poisson_noise = mean_poisson_noise,
+            mean_rubella_noise = mean_rubella_noise,
+            poisson_noise_prop = poisson_noise_prop,
+        )
 end
 
 function create_noise_arr(
-    noise_specification::PoissonNoiseSpecification,
-    incarr;
-    seed = 1234,
-    kwargs...,
-)
+        noise_specification::PoissonNoiseSpecification,
+        incarr;
+        seed = 1234,
+        kwargs...,
+    )
     noise_arr = zeros(Int64, size(incarr, 1), size(incarr, 3))
 
     add_poisson_noise_arr!(
@@ -142,12 +144,12 @@ function create_noise_arr(
 end
 
 function add_poisson_noise_arr!(
-    noise_arr, incarr, noise_mean_scaling; seed = 1234
-)
+        noise_arr, incarr, noise_mean_scaling; seed = 1234
+    )
     Random.seed!(seed)
 
     @assert size(incarr, 3) == size(noise_arr, 2)
-    @inbounds for sim in axes(incarr, 3)
+    return @inbounds for sim in axes(incarr, 3)
         @views noise_arr[:, sim] += rand(
             Poisson(noise_mean_scaling * mean(incarr[:, 1, sim])),
             size(incarr, 1),

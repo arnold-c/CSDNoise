@@ -2,7 +2,7 @@
 
 julia_version = "1.11.6"
 manifest_format = "2.0"
-project_hash = "81717c3983fe1e186f513ae8e72c42345bc0bdd5"
+project_hash = "9b449e48dc46b7a97a494ce698c2db507743dd5d"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1239,6 +1239,12 @@ git-tree-sha1 = "d3c8af829abaeba27181db4acb485b18d15d89c6"
 uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.41.1+0"
 
+[[deps.LightSumTypes]]
+deps = ["MacroTools", "PrecompileTools"]
+git-tree-sha1 = "8b1680650438fff93e8600be335b1f50d157754f"
+uuid = "f56206fc-af4c-5561-a72a-43fe2ca5a923"
+version = "5.2.1"
+
 [[deps.LinearAlgebra]]
 deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -1323,7 +1329,6 @@ version = "0.4.2"
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 version = "1.11.0"
-
 [[deps.Match]]
 deps = ["MacroTools", "OrderedCollections"]
 git-tree-sha1 = "033e77ea6d39153118bda0f560d03d05287aa5dd"
@@ -2097,7 +2102,6 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 deps = ["Artifacts", "Libdl", "libblastrampoline_jll"]
 uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
 version = "7.7.0+0"
-
 [[deps.SumTypes]]
 deps = ["MacroTools", "PrecompileTools"]
 git-tree-sha1 = "900f20cc431405e75a0d260b78a5f69ceb63c8a5"

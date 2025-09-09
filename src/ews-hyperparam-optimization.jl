@@ -9,6 +9,7 @@ using Base: rest
 using Try: Try
 using Makie: Makie
 using Printf: @sprintf
+using LightSumTypes: variant
 
 function ews_hyperparam_optimization(
         specification_vecs,
@@ -451,12 +452,7 @@ function ews_hyperparam_gridsearch!(
                     )
                 end
 
-                thresholds = SumTypes.@cases ews_enddate_type begin
-                    [Reff_start, Reff_end] =>
-                        ensemble_single_Reff_thresholds_vec
-                    [Outbreak_start, Outbreak_end, Outbreak_middle] =>
-                        ensemble_single_periodsum_vecs
-                end
+                thresholds = get_enddate_thresholds(ews_enddate_type, data_arrs)
 
                 enddate_vec = zeros(Int64, size(testarr, 3))
                 failed_sims = zeros(Int64, size(testarr, 3))
@@ -688,6 +684,16 @@ function optimal_ews_heatmap_df(
         sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[1, :]
     end |>
         x -> vcat(DataFrame.(x)...; cols = :union)
+end
+
+get_enddate_thresholds(enddate_type::EWSEndDateType, data_arrs) = get_enddate_thresholds(variant(enddata_type), data_arrs)
+
+function get_enddate_thresholds(enddate_type::Union{Reff_start, Reff_end}, data_arrs)
+    return data_arrs.ensemble_single_Reff_thresholds_vec
+end
+
+function get_enddate_thresholds(enddate_type::Union{Outbreak_start, Outbreak_middle, Outbreak_end}, data_arrs)
+    return data_arrs.ensemble_single_periodsum_vecs
 end
 
 function optimal_ews_heatmap_plot(

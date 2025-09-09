@@ -1,5 +1,5 @@
 using StatsBase: StatsBase
-using SumTypes
+using LightSumTypes: variant
 using DataFrames: DataFrames
 using Bumper
 using StrideArrays
@@ -138,42 +138,49 @@ function spaero_mean!(
         timeseries,
         bandwidth::T1,
     ) where {T1 <: Integer}
-    mean_func! = _get_mean_func(method)
-    mean_func!(mean_vec, timeseries, bandwidth)
+    mean_func!(mean_vec, method, timeseries, bandwidth)
     return nothing
 end
 
-function _get_mean_func(method::EWSMethod)
-    return @cases method begin
-        Backward => _spaero_backward_mean!
-        Centered => _spaero_centered_mean!
-    end
-end
+mean_func!(
+    mean_vec,
+    method::EWSMethod,
+    timeseries,
+    bandwidth,
+) = mean_func!(variant(method))
 
-function _spaero_centered_mean!(mean_vec, timeseries, bw)
+function mean_func!(
+        mean_vec,
+        method::Centered,
+        timeseries,
+        bandwidth,
+    )
     tlength = length(timeseries)
     @inbounds for i in eachindex(timeseries)
-        if i < bw && i + bw <= tlength
-            mean_vec[i] = mean(@view(timeseries[begin:(i + bw - 1)]))
-        elseif i < bw
+        if i < bandwidth && i + bandwidth <= tlength
+            mean_vec[i] = mean(@view(timeseries[begin:(i + bandwidth - 1)]))
+        elseif i < bandwidth
             mean_vec[i] = mean(@view(timeseries[begin:end]))
-        elseif i + bw > tlength
-            mean_vec[i] = mean(@view(timeseries[(i - bw + 1):end]))
+        elseif i + bandwidth > tlength
+            mean_vec[i] = mean(@view(timeseries[(i - bandwidth + 1):end]))
         else
-            mean_vec[i] = mean(@view(timeseries[(i - bw + 1):(i + bw - 1)]))
+            mean_vec[i] = mean(@view(timeseries[(i - bandwidth + 1):(i + bandwidth - 1)]))
         end
     end
     return nothing
 end
 
-function _spaero_backward_mean!(
-        mean_vec, timeseries, bw
+function mean_func!(
+        mean_vec,
+        method::Backward,
+        timeseries,
+        bandwidth,
     )
     @inbounds for i in eachindex(timeseries)
-        if i < bw
+        if i < bandwidth
             mean_vec[i] = mean(@view(timeseries[begin:i]))
         else
-            mean_vec[i] = mean(@view(timeseries[(i - bw + 1):i]))
+            mean_vec[i] = mean(@view(timeseries[(i - bandwidth + 1):i]))
         end
     end
     return nothing

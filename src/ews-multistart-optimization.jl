@@ -445,10 +445,7 @@ function create_cached_simulation_data(
     )
 
     # Select appropriate thresholds
-    thresholds::Vector{Matrix{Int64}} = SumTypes.@cases ews_enddate_type begin
-        [Reff_start, Reff_end] => ensemble_single_Reff_thresholds_vec
-        [Outbreak_start, Outbreak_end, Outbreak_middle] => ensemble_single_periodsum_vecs
-    end
+    thresholds = get_enddate_thresholds(ews_enddate_type, data_arrs)
 
     # Pre-compute EWS metrics for all simulations
     ensemble_nsims = size(ensemble_single_incarr, 3)

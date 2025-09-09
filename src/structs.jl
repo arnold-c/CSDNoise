@@ -659,20 +659,20 @@ struct Backward end
 struct Centered end
 @sumtype EWSMethod(Backward, Centered) <: AbstractEWSMethod
 
-struct EWSMetricSpecification{T1 <: Integer, T2 <: AbstractString}
+struct EWSMetricSpecification
     method::EWSMethod
     aggregation::Dates.Day
     bandwidth::Dates.Day
-    lag::T1
-    dirpath::T2
+    lag::Int64
+    dirpath::String
 end
 
 function EWSMetricSpecification(
         method::EWSMethod,
         aggregation::Dates.Day,
         bandwidth::Dates.Day,
-        lag::T1,
-    ) where {T1 <: Integer}
+        lag::Int64,
+    )
     aggregation_days_val = Dates.value(aggregation)
     bandwidth_days_val = Dates.value(bandwidth)
 
@@ -691,11 +691,10 @@ function EWSMetricSpecification(
 end
 
 function EWSMetricSpecification(
-        method::EWSMethod, aggregation::T1, bandwidth::T2, lag::T3
+        method::EWSMethod, aggregation::T1, bandwidth::T2, lag::Int64
     ) where {
         T1 <: Dates.DatePeriod,
         T2 <: Dates.DatePeriod,
-        T3 <: Integer,
     }
     aggregation_days_val = Dates.days(aggregation)
     bandwidth_days_val = Dates.days(bandwidth)
@@ -718,10 +717,10 @@ end
 
 function _EWSMetricSpecification_path(
         method::EWSMethod,
-        aggregation::T1,
-        bandwidth::T1,
-        lag::T1,
-    ) where {T1 <: Integer}
+        aggregation::Int64,
+        bandwidth::Int64,
+        lag::Int64,
+    )
     return joinpath(
         "ews-method_$(method_string(method))",
         "ews-aggregation-days_$(aggregation)",

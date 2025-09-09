@@ -13,6 +13,7 @@ using Distributions: Distributions
 using Random: Random
 using UnPack: @unpack
 using Dates: Dates
+using LightSumTypes: @sumtype
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -649,10 +650,10 @@ function getdirpath(spec::NoiseSpecification)
     )
 end
 
-@sum_type EWSMethod begin
-    Backward
-    Centered
-end
+abstract type AbstractEWSMethod end
+struct Backward end
+struct Centered end
+@sumtype EWSMethod(Backward, Centered) <: AbstractEWSMethod
 
 struct EWSMetricSpecification{T1 <: Integer, T2 <: AbstractString}
     method::EWSMethod
@@ -755,16 +756,10 @@ struct EWSMetrics{
     autocorrelation_tau::T2
 end
 
-@sum_type EWSThresholdWindowType begin
-    ExpandingThresholdWindow
-    RollingThresholdWindow
-end
-
-# abstract type AbstractEWSThresholdWindow end
-#
-# struct ExpandingThresholdWindow <: AbstractEWSThresholdWindow end
-#
-# struct RollingThresholdWindow <: AbstractEWSThresholdWindow end
+abstract type AbstractEWSThresholdWindowType end
+struct ExpandingThresholdWindow end
+struct RollingThresholdWindow end
+@sumtype EWSThresholdWindowType(ExpandingThresholdWindow, RollingThresholdWindow) <: AbstractEWSThresholdWindowType
 
 struct ScenarioSpecification{
         T1 <: EnsembleSpecification,
@@ -814,21 +809,15 @@ function ScenarioSpecification(
     )
 end
 
-# abstract type EWSEndDateType end
-#
-# struct Reff_start <: EWSEndDateType end
-# struct Reff_end <: EWSEndDateType end
-# struct Outbreak_start <: EWSEndDateType end
-# struct Outbreak_end <: EWSEndDateType end
-# struct Outbreak_middle <: EWSEndDateType end
+abstract type AbstractEWSEndDateType end
 
-@sum_type EWSEndDateType begin
-    Reff_start
-    Reff_end
-    Outbreak_start
-    Outbreak_end
-    Outbreak_middle
-end
+struct Reff_start end
+struct Reff_end end
+struct Outbreak_start end
+struct Outbreak_middle end
+struct Outbreak_end end
+
+@sumtype EWSEndDateType(Reff_start, Reff_end, Outbreak_start, Outbreak_middle, Outbreak_end) <: AbstractEWSEndDateType
 
 """
     OptimizationScenario

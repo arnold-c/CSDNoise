@@ -116,15 +116,8 @@ function calculate_ews_enddate(
         thresholds::T,
         enddate_type::EWSEndDateType,
     ) where {T <: AbstractArray{<:Int}}
-    _calculate_ews_enddate = @cases enddate_type begin
-        Reff_start => calculate_Reff_start_ews_enddate
-        Reff_end => calculate_Reff_end_ews_enddate
-        Outbreak_start => calculate_Outbreak_start_ews_enddate
-        Outbreak_end => calculate_Outbreak_end_ews_enddate
-        Outbreak_middle => calculate_Outbreak_ews_enddate
-    end
 
-    enddate = _calculate_ews_enddate(thresholds)
+    enddate = _calculate_ews_enddate(thresholds, enddate_type)
 
     if Try.isok(enddate)
         return enddate
@@ -135,26 +128,23 @@ function calculate_ews_enddate(
     )
 end
 
-function calculate_Reff_start_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
-    return trygetindex(thresholds, 1, 1)
-end
+_calculate_ews_enddate(thresholds::T, enddate_type::EWSEndDateType) where {T <: AbstractArray{<:Int}} = _calculate_ews_enddate(thresholds, variant(enddate_type))
 
-function calculate_Reff_end_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
-    return trygetindex(thresholds, 1, 2)
-end
+_calculate_ews_enddate(thresholds, enddate_type::Reff_start) = trygetindex(thresholds, 1, 1)
+_calculate_ews_enddate(thresholds, enddate_type::Reff_end) = trygetindex(thresholds, 1, 2)
 
-function calculate_Outbreak_start_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
+function _calculate_ews_enddate(thresholds, enddate_type::Outbreak_start)
     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
     return trygetindex(filtered_outbreak_thresholds, 1, 1)
 end
 
-function calculate_Outbreak_end_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
+function _calculate_ews_enddate(thresholds, enddate_type::Outbreak_end)
     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
 
     return trygetindex(filtered_outbreak_thresholds, 1, 2)
 end
 
-function calculate_Outbreak_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err{BoundsError}} where {T <: AbstractArray{<:Int}}
+function _calculate_ews_enddate(thresholds, enddate_type::Outbreak_middle)
     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
 
     if size(filtered_outbreak_thresholds, 1) == 0
@@ -171,6 +161,42 @@ function calculate_Outbreak_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.E
     )
 end
 
+# function calculate_Reff_start_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
+#     return trygetindex(thresholds, 1, 1)
+# end
+#
+# function calculate_Reff_end_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
+#     return trygetindex(thresholds, 1, 2)
+# end
+#
+# function calculate_Outbreak_start_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
+#     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+#
+#     return trygetindex(filtered_outbreak_thresholds, 1, 1)
+# end
+#
+# function calculate_Outbreak_end_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
+#     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+#
+#     return trygetindex(filtered_outbreak_thresholds, 1, 2)
+# end
+#
+# function calculate_Outbreak_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err{BoundsError}} where {T <: AbstractArray{<:Int}}
+#     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+#
+#     if size(filtered_outbreak_thresholds, 1) == 0
+#         return Try.Err(BoundsError(thresholds, (1, 1)))
+#     end
+#
+#     return Try.Ok(
+#         filtered_outbreak_thresholds[1, 1] +
+#             (
+#             filtered_outbreak_thresholds[1, 2] -
+#                 filtered_outbreak_thresholds[1, 1] +
+#                 1
+#         ) ÷ 2,
+#     )
+# end
 
 function filter_outbreak_thresholds(
         thresholds::T; thresholds_col = 4

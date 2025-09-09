@@ -528,57 +528,19 @@ Validates specification vectors before creating combinations.
         ews_metric_vec
     ) |> collect
 
-    comlen = length(combinations)
+    # comlen = length(combinations)
 
-    noise_specs = Vector{Union{PoissonNoiseSpecification{String, Float64}, DynamicalNoiseSpecification{String, Float64, Int64}}}(undef, comlen)
-    test_specs = Vector{IndividualTestSpecification{Float64, Int64}}(undef, comlen)
-    perc_test_vec = Vector{Float64}(undef, comlen)
-    ews_msv = Vector{EWSMetricSpecification{Int64, String}}(undef, comlen)
-    ews_et = Vector{EWSEndDateType}(undef, comlen)
-    ews_wv = Vector{EWSThresholdWindowType}(undef, comlen)
-    burnin = Vector{Dates.Year}(undef, comlen)
-    ews_mv = Vector{String}(undef, comlen)
-
-    for (
-            i, (
-                noise_spec,
-                test_spec,
-                percent_tested,
-                ews_metric_spec,
-                ews_enddate_type,
-                ews_window,
-                ews_burnin,
-                ews_metric,
-            ),
-        ) in enumerate(combinations)
-        noise_specs[i] = noise_spec
-        test_specs[i] = test_spec
-        perc_test_vec[i] = percent_tested
-        ews_msv[i] = ews_metric_spec
-        ews_et[i] = ews_enddate_type
-        ews_wv[i] = ews_window
-        burnin[i] = ews_burnin
-        ews_mv[i] = ews_metric
-    end
-
-    scenarios_vec = StructVector{OptimizationScenario}(
-        (
-            noise_specs,
-            test_specs,
-            perc_test_vec,
-            ews_msv,
-            ews_et,
-            ews_wv,
-            burnin,
-            ews_mv,
-        )
-    )
-
-    # scenarios_vec = mapreduce(
-    #     vcat,
-    #     combinations;
-    #     init = Vector{OptimizationScenario}(undef, 0)
-    # ) do (
+    # noise_specs = Vector{Union{PoissonNoiseSpecification{String, Float64}, DynamicalNoiseSpecification{String, Float64, Int64}}}(undef, comlen)
+    # test_specs = Vector{IndividualTestSpecification{Float64, Int64}}(undef, comlen)
+    # perc_test_vec = Vector{Float64}(undef, comlen)
+    # ews_msv = Vector{EWSMetricSpecification{Int64, String}}(undef, comlen)
+    # ews_et = Vector{EWSEndDateType}(undef, comlen)
+    # ews_wv = Vector{EWSThresholdWindowType}(undef, comlen)
+    # burnin = Vector{Dates.Year}(undef, comlen)
+    # ews_mv = Vector{String}(undef, comlen)
+    #
+    # for (
+    #         i, (
     #             noise_spec,
     #             test_spec,
     #             percent_tested,
@@ -587,18 +549,56 @@ Validates specification vectors before creating combinations.
     #             ews_window,
     #             ews_burnin,
     #             ews_metric,
-    #         )
-    #     OptimizationScenario(
-    #         noise_spec,
-    #         test_spec,
-    #         percent_tested,
-    #         ews_metric_spec,
-    #         ews_enddate_type,
-    #         ews_window,
-    #         ews_burnin,
-    #         ews_metric,
-    #     )
+    #         ),
+    #     ) in enumerate(combinations)
+    #     noise_specs[i] = noise_spec
+    #     test_specs[i] = test_spec
+    #     perc_test_vec[i] = percent_tested
+    #     ews_msv[i] = ews_metric_spec
+    #     ews_et[i] = ews_enddate_type
+    #     ews_wv[i] = ews_window
+    #     burnin[i] = ews_burnin
+    #     ews_mv[i] = ews_metric
     # end
+    #
+    # scenarios_vec = StructVector{OptimizationScenario}(
+    #     (
+    #         noise_specs,
+    #         test_specs,
+    #         perc_test_vec,
+    #         ews_msv,
+    #         ews_et,
+    #         ews_wv,
+    #         burnin,
+    #         ews_mv,
+    #     )
+    # )
+    #
+    scenarios_vec = mapreduce(
+        vcat,
+        combinations
+        # init = Vector{OptimizationScenario}(undef, 0)
+    ) do (
+                noise_spec,
+                test_spec,
+                percent_tested,
+                ews_metric_spec,
+                ews_enddate_type,
+                ews_window,
+                ews_burnin,
+                ews_metric,
+            )
+        OptimizationScenario(
+            noise_spec,
+            test_spec,
+            percent_tested,
+            ews_metric_spec,
+            ews_enddate_type,
+            ews_window,
+            ews_burnin,
+            ews_metric,
+        )
+    end
     # println(typeof(scenarios_vec))
 
     return scenarios_vec

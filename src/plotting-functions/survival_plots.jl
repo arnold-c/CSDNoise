@@ -1,44 +1,44 @@
 function ews_reff_histogram_plot(
-    survival_df::T1;
-    noise_specification_vec = [
-        PoissonNoiseSpecification(1.0),
-        PoissonNoiseSpecification(7.0),
-        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
-        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
-    ],
-    endpoint_aggregation = Dates.Day(30),
-    linestyle_vec = [:solid, :dot],
-    emergent_color = "#C2192D",
-    null_color = "#453948",
-    tipping_point_color = ("#A4BED5", 0.7),
-    alpha = 1.0,
-    trim_burnin = true,
-    plottitle = "Survival",
-    subtitle = "",
-    nbanks = 1,
-    xlabel = "Time After Burn-In (Years)",
-    ylabel = "Survival Numbers",
-    legend_rowsize = Makie.Relative(0.05),
-    xlabel_rowsize = Makie.Relative(0.03),
-    ylabel_rowsize = Makie.Relative(0.02),
-    facet_fontsize = 20,
-    legendsize = 22,
-    xlabelsize = 22,
-    ylabelsize = 22,
-    xticklabelsize = 22,
-    yticklabelsize = 22,
-    kwargs...,
-) where {T1<:DataFrames.DataFrame}
-    kwargs_dict = Dict{Symbol,Any}(kwargs)
+        survival_df::T1;
+        noise_specification_vec = [
+            PoissonNoiseSpecification(1.0),
+            PoissonNoiseSpecification(7.0),
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+        ],
+        endpoint_aggregation = Dates.Day(30),
+        linestyle_vec = [:solid, :dot],
+        emergent_color = "#C2192D",
+        null_color = "#453948",
+        tipping_point_color = ("#A4BED5", 0.7),
+        alpha = 1.0,
+        trim_burnin = true,
+        plottitle = "Survival",
+        subtitle = "",
+        nbanks = 1,
+        xlabel = "Time After Burn-In (Years)",
+        ylabel = "Survival Numbers",
+        legend_rowsize = Makie.Relative(0.05),
+        xlabel_rowsize = Makie.Relative(0.03),
+        ylabel_rowsize = Makie.Relative(0.02),
+        facet_fontsize = 20,
+        legendsize = 22,
+        xlabelsize = 22,
+        ylabelsize = 22,
+        xticklabelsize = 22,
+        yticklabelsize = 22,
+        kwargs...,
+    ) where {T1 <: DataFrames.DataFrame}
+    kwargs_dict = Dict{Symbol, Any}(kwargs)
     if sum(
-        filter(
-            !isnothing,
-            indexin(
-                unique(survival_df.noise_specification),
-                noise_specification_vec,
+            filter(
+                !isnothing,
+                indexin(
+                    unique(survival_df.noise_specification),
+                    noise_specification_vec,
+                ),
             ),
-        ),
-    ) != sum(eachindex(noise_specification_vec))
+        ) != sum(eachindex(noise_specification_vec))
         error(
             "Not all noise structures specified are present in the dataframe.\nTrying to plot survival curves for:\n$(noise_specification_vec).\nFound these in the dataframe:\n$(unique(survival_df.noise_specification))"
         )
@@ -70,12 +70,19 @@ function ews_reff_histogram_plot(
         noise_description = noise_table_description(
             noise_gdf.noise_specification[1]
         )
-        ax_position = Match.@match noise_num begin
-            1 => (1, 1)
-            2 => (1, 2)
-            3 => (2, 1)
-            4 => (2, 2)
+
+        ax_position = if noise_num == 1
+            (1, 1)
+        elseif noise_num == 2
+            (1, 2)
+        elseif noise_num == 3
+            (2, 1)
+        elseif noise_num == 4
+            (2, 2)
+        else
+            @error "Too many noise types"
         end
+
         gl = fig[ax_position...] = GridLayout()
         hist_ax = nothing
         test_specification_vec = unique(noise_gdf.test_specification)
@@ -88,13 +95,13 @@ function ews_reff_histogram_plot(
             )
 
             times,
-            enddate_times,
-            enddate_counts,
-            detection_survival_times,
-            detection_survival_vec,
-            null_survival_times,
-            null_survival_vec,
-            nsims = prepare_survival_facet_params(
+                enddate_times,
+                enddate_counts,
+                detection_survival_times,
+                detection_survival_vec,
+                null_survival_times,
+                null_survival_vec,
+                nsims = prepare_survival_facet_params(
                 detection_survival_vecs,
                 null_survival_vecs,
                 noise_gdf.enddate;
@@ -179,7 +186,7 @@ function ews_reff_histogram_plot(
     Legend(
         fig[0, :],
         [
-            PolyElement(; color = tipping_point_color)
+            PolyElement(; color = tipping_point_color),
         ],
         ["Tipping Point"],
         "";
@@ -214,50 +221,50 @@ function ews_reff_histogram_plot(
 end
 
 function ews_survival_plot(
-    survival_df::T1;
-    test_specification_vec = [
-        IndividualTestSpecification(1.0, 1.0, 0),
-        IndividualTestSpecification(0.9, 0.9, 0),
-    ],
-    noise_specification_vec = [
-        PoissonNoiseSpecification(1.0),
-        PoissonNoiseSpecification(7.0),
-        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
-        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
-    ],
-    endpoint_aggregation = Dates.Day(30),
-    linestyle_vec = [:solid, :dot],
-    emergent_color = "#C2192D",
-    null_color = "#453948",
-    tipping_point_color = ("#A4BED5", 0.7),
-    alpha = 1.0,
-    trim_burnin = true,
-    plottitle = "Survival",
-    subtitle = "",
-    nbanks = length(test_specification_vec) + length(linestyle_vec) + 1,
-    xlabel = "Time After Burn-In (Years)",
-    ylabel = "Survival Numbers",
-    legend_rowsize = Makie.Relative(0.05),
-    xlabel_rowsize = Makie.Relative(0.03),
-    ylabel_rowsize = Makie.Relative(0.02),
-    facet_fontsize = 20,
-    legendsize = 22,
-    xlabelsize = 22,
-    ylabelsize = 22,
-    xticklabelsize = 22,
-    yticklabelsize = 22,
-    kwargs...,
-) where {T1<:DataFrames.DataFrame}
-    kwargs_dict = Dict{Symbol,Any}(kwargs)
+        survival_df::T1;
+        test_specification_vec = [
+            IndividualTestSpecification(1.0, 1.0, 0),
+            IndividualTestSpecification(0.9, 0.9, 0),
+        ],
+        noise_specification_vec = [
+            PoissonNoiseSpecification(1.0),
+            PoissonNoiseSpecification(7.0),
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+        ],
+        endpoint_aggregation = Dates.Day(30),
+        linestyle_vec = [:solid, :dot],
+        emergent_color = "#C2192D",
+        null_color = "#453948",
+        tipping_point_color = ("#A4BED5", 0.7),
+        alpha = 1.0,
+        trim_burnin = true,
+        plottitle = "Survival",
+        subtitle = "",
+        nbanks = length(test_specification_vec) + length(linestyle_vec) + 1,
+        xlabel = "Time After Burn-In (Years)",
+        ylabel = "Survival Numbers",
+        legend_rowsize = Makie.Relative(0.05),
+        xlabel_rowsize = Makie.Relative(0.03),
+        ylabel_rowsize = Makie.Relative(0.02),
+        facet_fontsize = 20,
+        legendsize = 22,
+        xlabelsize = 22,
+        ylabelsize = 22,
+        xticklabelsize = 22,
+        yticklabelsize = 22,
+        kwargs...,
+    ) where {T1 <: DataFrames.DataFrame}
+    kwargs_dict = Dict{Symbol, Any}(kwargs)
     if sum(
-        filter(
-            !isnothing,
-            indexin(
-                unique(survival_df.test_specification),
-                test_specification_vec,
+            filter(
+                !isnothing,
+                indexin(
+                    unique(survival_df.test_specification),
+                    test_specification_vec,
+                ),
             ),
-        ),
-    ) != sum(eachindex(test_specification_vec))
+        ) != sum(eachindex(test_specification_vec))
         error(
             "Not all test specified are present in the dataframe.\nTrying to plot survival curves for:\n$(test_specification_vec).\nFound these in the dataframe:\n$(unique(survival_df.test_specification))"
         )
@@ -270,14 +277,14 @@ function ews_survival_plot(
     end
 
     if sum(
-        filter(
-            !isnothing,
-            indexin(
-                unique(survival_df.noise_specification),
-                noise_specification_vec,
+            filter(
+                !isnothing,
+                indexin(
+                    unique(survival_df.noise_specification),
+                    noise_specification_vec,
+                ),
             ),
-        ),
-    ) != sum(eachindex(noise_specification_vec))
+        ) != sum(eachindex(noise_specification_vec))
         error(
             "Not all noise structures specified are present in the dataframe.\nTrying to plot survival curves for:\n$(noise_specification_vec).\nFound these in the dataframe:\n$(unique(survival_df.noise_specification))"
         )
@@ -310,12 +317,19 @@ function ews_survival_plot(
         noise_description = noise_table_description(
             noise_gdf.noise_specification[1]
         )
-        ax_position = Match.@match noise_num begin
-            1 => (1, 1)
-            2 => (1, 2)
-            3 => (2, 1)
-            4 => (2, 2)
+
+        ax_position = if noise_num == 1
+            (1, 1)
+        elseif noise_num == 2
+            (1, 2)
+        elseif noise_num == 3
+            (2, 1)
+        elseif noise_num == 4
+            (2, 2)
+        else
+            @error "Too many noise types"
         end
+
         gl = fig[ax_position...] = GridLayout()
         surv_ax = nothing
         for (i, test_specification) in pairs(test_specification_vec)
@@ -327,13 +341,13 @@ function ews_survival_plot(
             )
 
             times,
-            enddate_times,
-            enddate_counts,
-            detection_survival_times,
-            detection_survival_vec,
-            null_survival_times,
-            null_survival_vec,
-            nsims = prepare_survival_facet_params(
+                enddate_times,
+                enddate_counts,
+                detection_survival_times,
+                detection_survival_vec,
+                null_survival_times,
+                null_survival_vec,
+                nsims = prepare_survival_facet_params(
                 detection_survival_vecs,
                 null_survival_vecs,
                 noise_gdf.enddate;
@@ -400,11 +414,11 @@ function ews_survival_plot(
         vcat(
             [
                 LineElement(; linestyle = style) for
-                style in linestyle_vec[1:length(test_specification_vec)]
+                    style in linestyle_vec[1:length(test_specification_vec)]
             ],
             [
                 PolyElement(; color = col) for
-                col in [emergent_color, null_color, tipping_point_color]
+                    col in [emergent_color, null_color, tipping_point_color]
             ],
         ),
         vcat(
@@ -443,16 +457,16 @@ function ews_survival_plot(
 end
 
 function ews_survival_plot(
-    detection_survival_vecs,
-    null_survival_vecs,
-    enddate_vec;
-    facet_title = "Survival",
-    ews_aggregation = Day(7),
-    burnin = Year(5),
-    endpoint_aggregation = Day(30),
-    alpha = 1.0,
-    trim_burnin = true,
-)
+        detection_survival_vecs,
+        null_survival_vecs,
+        enddate_vec;
+        facet_title = "Survival",
+        ews_aggregation = Day(7),
+        burnin = Year(5),
+        endpoint_aggregation = Day(30),
+        alpha = 1.0,
+        trim_burnin = true,
+    )
     fig = Figure()
 
     gl = fig[1, 1] = GridLayout()
@@ -480,27 +494,27 @@ function ews_survival_plot(
 end
 
 function ews_survival_facet!(
-    gl,
-    detection_survival_vecs,
-    null_survival_vecs,
-    enddate_vec;
-    facet_title = "Survival",
-    ews_aggregation = Day(7),
-    burnin = Year(5),
-    endpoint_aggregation = Day(30),
-    emergent_color = "#C2192D",
-    null_color = "#453948",
-    alpha = 1.0,
-    trim_burnin = true,
-)
+        gl,
+        detection_survival_vecs,
+        null_survival_vecs,
+        enddate_vec;
+        facet_title = "Survival",
+        ews_aggregation = Day(7),
+        burnin = Year(5),
+        endpoint_aggregation = Day(30),
+        emergent_color = "#C2192D",
+        null_color = "#453948",
+        alpha = 1.0,
+        trim_burnin = true,
+    )
     times,
-    enddate_times,
-    enddate_counts,
-    detection_survival_times,
-    detection_survival_vec,
-    null_survival_times,
-    null_survival_vec,
-    nsims = prepare_survival_facet_params(
+        enddate_times,
+        enddate_counts,
+        detection_survival_times,
+        detection_survival_vec,
+        null_survival_times,
+        null_survival_vec,
+        nsims = prepare_survival_facet_params(
         detection_survival_vecs,
         null_survival_vecs,
         enddate_vec;
@@ -536,12 +550,12 @@ function ews_survival_facet!(
 end
 
 function prepare_survival_facet_params(
-    detection_survival_vecs,
-    null_survival_vecs,
-    enddate_vec;
-    ews_aggregation = Day(7),
-    endpoint_aggregation = Day(30),
-)
+        detection_survival_vecs,
+        null_survival_vecs,
+        enddate_vec;
+        ews_aggregation = Day(7),
+        endpoint_aggregation = Day(30),
+    )
     @unpack detection_survival_vec, detection_indices_vec =
         detection_survival_vecs
     @unpack null_survival_vec, null_indices_vec = null_survival_vecs
@@ -575,22 +589,22 @@ function prepare_survival_facet_params(
     end
 
     return times, enddate_times,
-    enddate_counts,
-    detection_survival_times,
-    detection_survival_vec,
-    null_survival_times,
-    null_survival_vec,
-    nsims
+        enddate_counts,
+        detection_survival_times,
+        detection_survival_vec,
+        null_survival_times,
+        null_survival_vec,
+        nsims
 end
 
 function survival_plot_histogram!(
-    gl,
-    enddate_times,
-    enddate_counts;
-    tipping_point_color = ("#A4BED5", 0.7),
-    trim_burnin = true,
-    burnin = Dates.Year(5),
-)
+        gl,
+        enddate_times,
+        enddate_counts;
+        tipping_point_color = ("#A4BED5", 0.7),
+        trim_burnin = true,
+        burnin = Dates.Year(5),
+    )
     hist_ax = Axis(
         gl[1, 1];
         limits = (0, maximum(enddate_times), nothing, nothing),
@@ -614,24 +628,24 @@ function survival_plot_histogram!(
 end
 
 function survival_plot_lines!(
-    gl::T1,
-    times,
-    detection_survival_times,
-    detection_survival_vec,
-    null_survival_times,
-    null_survival_vec;
-    linestyle = :solid,
-    emergent_color = "#C2192D",
-    null_color = "#453948",
-    alpha = 1.0,
-    nsims = 100,
-    facet_title = "Survival",
-    trim_burnin = true,
-    burnin = Dates.Year(5),
-    facet_fontsize = 20,
-    xlabelsize = 22,
-    ylabelsize = 22,
-) where {T1<:Makie.GridLayout}
+        gl::T1,
+        times,
+        detection_survival_times,
+        detection_survival_vec,
+        null_survival_times,
+        null_survival_vec;
+        linestyle = :solid,
+        emergent_color = "#C2192D",
+        null_color = "#453948",
+        alpha = 1.0,
+        nsims = 100,
+        facet_title = "Survival",
+        trim_burnin = true,
+        burnin = Dates.Year(5),
+        facet_fontsize = 20,
+        xlabelsize = 22,
+        ylabelsize = 22,
+    ) where {T1 <: Makie.GridLayout}
     surv_ax = Axis(
         gl[2, 1];
         xlabel = "Time (Years)",
@@ -671,20 +685,20 @@ function survival_plot_lines!(
 end
 
 function survival_plot_lines!(
-    surv_ax::T1,
-    times,
-    detection_survival_times,
-    detection_survival_vec,
-    null_survival_times,
-    null_survival_vec;
-    linestyle = :solid,
-    emergent_color = "#C2192D",
-    null_color = "#453948",
-    alpha = 1.0,
-    nsims = 100,
-    trim_burnin = true,
-    burnin = Dates.Year(5),
-) where {T1<:Makie.Axis}
+        surv_ax::T1,
+        times,
+        detection_survival_times,
+        detection_survival_vec,
+        null_survival_times,
+        null_survival_vec;
+        linestyle = :solid,
+        emergent_color = "#C2192D",
+        null_color = "#453948",
+        alpha = 1.0,
+        nsims = 100,
+        trim_burnin = true,
+        burnin = Dates.Year(5),
+    ) where {T1 <: Makie.Axis}
     lines!(
         surv_ax,
         detection_survival_times,

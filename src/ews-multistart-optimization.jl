@@ -668,9 +668,9 @@ function _validate_specification_vectors(specification_vecs)
     end
 
     # Validate EWS metric specifications
-    if !all(spec -> spec isa EWSMetricSpecification, ews_metric_specification_vec)
-        throw(ArgumentError("All EWS metric specifications must be of type EWSMetricSpecification"))
-    end
+    # if !all(spec -> spec isa EWSMetricSpecification, ews_metric_specification_vec)
+    #     throw(ArgumentError("All EWS metric specifications must be of type EWSMetricSpecification"))
+    # end
 
     # Validate EWS end date types
     if !all(enddate -> enddate isa EWSEndDateType, ews_enddate_type_vec)
@@ -678,8 +678,7 @@ function _validate_specification_vectors(specification_vecs)
     end
 
     # Validate threshold window types
-    valid_window_types = [ExpandingThresholdWindow, RollingThresholdWindow]
-    if !all(window -> window in valid_window_types, ews_threshold_window_vec)
+    if !all(window -> window isa EWSThresholdWindowType, ews_threshold_window_vec)
         throw(ArgumentError("All threshold windows must be either ExpandingThresholdWindow or RollingThresholdWindow"))
     end
 

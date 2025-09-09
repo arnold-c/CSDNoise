@@ -8,7 +8,6 @@ using Dates
 using StructArrays
 using StatsBase: StatsBase
 using CSV: CSV
-using Match: @match
 using Printf: @sprintf
 
 include(projectdir("manuscript", "scripts", "plotting-setup.jl"))

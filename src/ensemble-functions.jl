@@ -8,7 +8,6 @@ using UnPack
 using FLoops
 using ProgressMeter
 using StructArrays
-using Match
 
 # include("transmission-functions.jl")
 # # using .TransmissionFunctions
@@ -88,8 +87,8 @@ function create_ensemble_spec_combinations(
             N, init_states_prop
         )
 
-        vaccination_coverage_params = @match burnin_vaccination_coverage_params begin
-            (::Nothing, ::Float64, ::Float64) => (
+        vaccination_coverage_params = if burnin_vaccination_coverage_params isa Tuple{Nothing, Float64, Float64}
+            (
                 (
                     burnin_vaccination_coverage_params...,
                     Int64((time_p.burnin / (365.0 / time_p.tstep)) * 2),
@@ -97,16 +96,19 @@ function create_ensemble_spec_combinations(
                 vaccination_coverage_pairs,
                 states_params.init_states,
             )
-            (::Nothing, ::Float64, ::Float64, ::Int64) => (
+        elseif burnin_vaccination_coverage_params isa Tuple{Nothing, Float64, Float64, Int64}
+            (
                 burnin_vaccination_coverage_params,
                 vaccination_coverage_pairs,
                 states_params.init_states,
             )
-            (::Nothing, ::Float64) => (
+        elseif burnin_vaccination_coverage_params isa Tuple{Nothing, Float64}
+            (
                 burnin_vaccination_coverage_params,
                 vaccination_coverage_pairs,
             )
-            _ => (
+        else
+            (
                 burnin_vaccination_coverage_params...,
                 vaccination_coverage_pairs...,
             )

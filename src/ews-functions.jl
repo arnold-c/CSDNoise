@@ -1,5 +1,4 @@
-using SumTypes
-using Match: Match
+using LightSumTypes: variant
 using StatsBase: StatsBase
 using StructArrays
 using DataFrames
@@ -7,11 +6,6 @@ using Try: Try
 using TryExperimental: trygetindex
 using Dates
 using UnPack: @unpack
-
-@sum_type EWSThresholdWindow begin
-    Expanding
-    Rolling
-end
 
 function calculate_bandwidth_and_return_ews_metric_spec(
         ews_metric_spec_components...
@@ -151,7 +145,6 @@ end
 
 function calculate_Outbreak_start_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.Err} where {T <: AbstractArray{<:Int}}
     filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
-
     return trygetindex(filtered_outbreak_thresholds, 1, 1)
 end
 
@@ -177,6 +170,7 @@ function calculate_Outbreak_ews_enddate(thresholds::T)::Union{Try.Ok{Int}, Try.E
         ) ÷ 2,
     )
 end
+
 
 function filter_outbreak_thresholds(
         thresholds::T; thresholds_col = 4
@@ -722,13 +716,16 @@ function calculate_ews_lead_time(
         week_aggregation = 1,
         output_type = :days,
     )
-    output_multiplier = @match output_type begin
-        :days => 7
-        :weeks => 1
-        :months => 7 / 30.5
-        :years => 7 / 365
-        _ =>
-            error(
+    output_multiplier = if output_type == :days
+        7
+    elseif output_type == :weeks
+        1
+    elseif output_type == :months
+        7 / 30.5
+    elseif output_type == :years
+        7 / 365
+    else
+        error(
             "Unknown output type: $(output_type).\nChoose between :days, :weeks, :months, or :years."
         )
     end

@@ -7,8 +7,6 @@
 using StaticArrays
 using LabelledArrays
 using StructArrays
-using Match
-using SumTypes
 using Distributions: Distributions
 using Random: Random
 using UnPack: @unpack
@@ -448,12 +446,13 @@ function OutbreakDetectionSpecification(
         "perc_clinic_tested_$(percent_clinic_tested)",
     )
 
-    dirpath = @match alert_method begin
-        "dailythreshold" => joinpath(
+    dirpath = if alert_method == "dailythreshold"
+        joinpath(
             alertdirpath,
             testingdirpath,
         )
-        _ => joinpath(
+    else
+        joinpath(
             alertdirpath,
             "moveavglag_$(moving_average_lag)",
             testingdirpath,
@@ -478,12 +477,11 @@ struct IndividualTestSpecification{T1 <: AbstractFloat, T2 <: Integer}
 end
 
 function get_test_description(test_specification::IndividualTestSpecification)
-    description = Match.@match test_specification begin
-        IndividualTestSpecification(1.0, 0.0, 0) => "Clinical case definition"
-        IndividualTestSpecification(x::AbstractFloat, x::AbstractFloat, 0) where {x < 1.0} => "Imperfect Test ($(Int64(test_specification.sensitivity * 100))% Sensitive & Specific)"
-        IndividualTestSpecification(1.0, 1.0, x::Int) => "Perfect Test"
-    end
-    return description
+    test_specification == IndividualTestSpecification(1.0, 0.0, 0) && return "Clinical case definition"
+    test_specification.sensitivity && test_specification.specificity < 1.0 && return "Imperfect Test ($(Int64(test_specification.sensitivity * 100))% Sensitive & Specific)"
+    test_specification.sensitivity == test_specification.specificity == 1.0 && return "Perfect Test"
+    @error "Don't have a description matching the test specification"
+    return nothing
 end
 
 abstract type NoiseSpecification end
@@ -608,9 +606,12 @@ end
 function noise_table_description(
         noise_specification::T1
     ) where {T1 <: PoissonNoiseSpecification}
-    noise_scaling = @match noise_specification.noise_mean_scaling begin
-        7 => "High"
-        1 => "Low"
+    noise_scaling = if noise_specification.noise_mean_scaling == 7
+        "High"
+    elseif noise_specification.noise_mean_scaling == 1
+        "Low"
+    else
+        "Uncharacterized"
     end
     return "$(noise_scaling) Static Noise"
 end
@@ -627,9 +628,12 @@ function noise_table_description(
         );
         digits = 4,
     )
-    noise_scaling = @match avg_vaccination begin
-        0.102 => "High"
-        0.8734 => "Low"
+    noise_scaling = if avg_vaccination == 0.102
+        "High"
+    elseif avg_vaccination == 0.8734
+        "Low"
+    else
+        "Uncharacterized"
     end
     return "$(noise_scaling) Dynamical Noise"
 end

@@ -1,30 +1,31 @@
 using DataFrames
 using DrWatson: DrWatson
 using StatsBase: StatsBase
-using Match: Match
 using StructArrays
 
 function prepare_line_plot_df!(
-    output_df,
-    gdf::T1,
-    ewsmetric = "mean",
-    outcome = :accuracy,
-    tests = [
-        IndividualTestSpecification(0.8, 0.8, 0),
-        IndividualTestSpecification(0.9, 0.9, 0),
-        IndividualTestSpecification(0.95, 0.95, 0),
-        IndividualTestSpecification(0.96, 0.96, 0),
-        IndividualTestSpecification(0.97, 0.97, 0),
-        IndividualTestSpecification(0.98, 0.98, 0),
-        IndividualTestSpecification(0.99, 0.99, 0),
-        IndividualTestSpecification(1.0, 1.0, 0),
-    ];
-    tiebreaker_preference = "specificity",
-) where {T1<:Union{<:DataFrame,<:SubDataFrame}}
-    tiebreaker_args = Match.@match tiebreaker_preference begin
-        "speed" => (:ews_consecutive_thresholds, false)
-        "specificity" => (:specificity, true)
-        _ => error(
+        output_df,
+        gdf::T1,
+        ewsmetric = "mean",
+        outcome = :accuracy,
+        tests = [
+            IndividualTestSpecification(0.8, 0.8, 0),
+            IndividualTestSpecification(0.9, 0.9, 0),
+            IndividualTestSpecification(0.95, 0.95, 0),
+            IndividualTestSpecification(0.96, 0.96, 0),
+            IndividualTestSpecification(0.97, 0.97, 0),
+            IndividualTestSpecification(0.98, 0.98, 0),
+            IndividualTestSpecification(0.99, 0.99, 0),
+            IndividualTestSpecification(1.0, 1.0, 0),
+        ];
+        tiebreaker_preference = "specificity",
+    ) where {T1 <: Union{<:DataFrame, <:SubDataFrame}}
+    tiebreaker_args = if tiebreaker_preference == "speed"
+        (:ews_consecutive_thresholds, false)
+    elseif tiebreaker_preference == "specificity"
+        (:specificity, true)
+    else
+        error(
             "Invalid preference: $tiebreaker_preference. Please choose either \"speed\" or \"specificity\"."
         )
     end
@@ -37,10 +38,10 @@ function prepare_line_plot_df!(
 
     filtered_test_df =
         map(collect(groupby(metric_df, :test_specification))) do df
-            sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[
-                1, :,
-            ]
-        end |>
+        sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[
+            1, :,
+        ]
+    end |>
         x -> vcat(DataFrame.(x)...; cols = :union)
 
     filtered_test_df[!, :test_sens] =
@@ -61,21 +62,21 @@ function prepare_line_plot_df!(
 end
 
 function line_plot(
-    df;
-    xlabel = "Test Sensitivity & Specificity",
-    ylabel = "Alert Accuracy",
-    facet_fontsize = 20,
-    legendsize = 22,
-    xlabelsize = 22,
-    ylabelsize = 22,
-    xticklabelsize = 22,
-    yticklabelsize = 22,
-    legend_rowsize = Relative(0.05),
-    xlabel_rowsize = Makie.Relative(0.03),
-    ylabel_rowsize = Makie.Relative(0.02),
-    kwargs...,
-)
-    kwargs_dict = Dict{Symbol,Any}(kwargs)
+        df;
+        xlabel = "Test Sensitivity & Specificity",
+        ylabel = "Alert Accuracy",
+        facet_fontsize = 20,
+        legendsize = 22,
+        xlabelsize = 22,
+        ylabelsize = 22,
+        xticklabelsize = 22,
+        yticklabelsize = 22,
+        legend_rowsize = Relative(0.05),
+        xlabel_rowsize = Makie.Relative(0.03),
+        ylabel_rowsize = Makie.Relative(0.02),
+        kwargs...,
+    )
+    kwargs_dict = Dict{Symbol, Any}(kwargs)
 
     if !haskey(kwargs_dict, :ylims)
         ylims = (
@@ -108,12 +109,18 @@ function line_plot(
     fig = Figure()
 
     for (metric_num, metric_gdf) in enumerate(ewsmetric_grouped_dfs)
-        ax_position = Match.@match metric_num begin
-            1 => (1, 1)
-            2 => (1, 2)
-            3 => (2, 1)
-            4 => (2, 2)
+        ax_position = if metric_num == 1
+            (1, 1)
+        elseif noise_num == 2
+            (1, 2)
+        elseif noise_num == 3
+            (2, 1)
+        elseif noise_num == 4
+            (2, 2)
+        else
+            @error "Too many metric types"
         end
+
         gl = fig[ax_position...] = GridLayout()
         line_plot_facet!(
             gl,
@@ -134,7 +141,7 @@ function line_plot(
         fig[0, :],
         [
             PolyElement(; color = col) for
-            col in Makie.wong_colors()[1:num_noise_descriptions]
+                col in Makie.wong_colors()[1:num_noise_descriptions]
         ],
         noise_descriptions,
         "";
@@ -166,27 +173,27 @@ function line_plot(
 end
 
 function line_plot_facet!(
-    gl,
-    df;
-    ax_position = (1, 1),
-    num_metrics = 1,
-    facet_title = "",
-    ylims = nothing,
-    facet_fontsize = 20,
-    legendsize = 22,
-    xlabel = "",
-    ylabel = "",
-    xlabelsize = 22,
-    ylabelsize = 22,
-    xticklabelsize = 22,
-    yticklabelsize = 22,
-    kwargs...,
-)
+        gl,
+        df;
+        ax_position = (1, 1),
+        num_metrics = 1,
+        facet_title = "",
+        ylims = nothing,
+        facet_fontsize = 20,
+        legendsize = 22,
+        xlabel = "",
+        ylabel = "",
+        xlabelsize = 22,
+        ylabelsize = 22,
+        xticklabelsize = 22,
+        yticklabelsize = 22,
+        kwargs...,
+    )
     grouped_dfs = groupby(df, :noise_specification)
     unique_tests = unique(df[!, :test_specification])
     test_labels = map(
         test ->
-            "$(Int64(round(test.sensitivity*100; digits = 0)))%",
+        "$(Int64(round(test.sensitivity * 100; digits = 0)))%",
         unique_tests,
     )
 

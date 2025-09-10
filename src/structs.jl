@@ -502,59 +502,6 @@ end
 
 @sumtype NoiseSpecification(PoissonNoise, DynamicalNoise) <: AbstractNoiseSpecification
 
-function PoissonNoiseSpecification(
-        noise_mean_scaling::T
-    ) where {T <: AbstractFloat}
-    return NoiseSpecification(PoissonNoise(Float64(noise_mean_scaling)))
-end
-
-function DynamicalNoiseSpecification(
-        R_0::T2,
-        latent_period::T3,
-        duration_infection::T3,
-        correlation::T1,
-        noise_mean_scaling::T2,
-        min_vaccination_coverage::T2,
-        max_vaccination_coverage::T2,
-    ) where {T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer}
-    return NoiseSpecification(
-        DynamicalNoise(
-            Float64(R_0),
-            Int64(latent_period),
-            Int64(duration_infection),
-            String(correlation),
-            Float64(noise_mean_scaling),
-            Float64(min_vaccination_coverage),
-            Float64(max_vaccination_coverage),
-        )
-    )
-end
-
-function DynamicalNoiseSpecification(
-        R_0::T2,
-        latent_period::T3,
-        duration_infection::T3,
-        correlation::T1,
-        noise_mean_scaling::T2,
-        mean_vaccination_coverage::T2;
-        max_vaccination_range = 0.2,
-    ) where {T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer}
-    min_cov, max_cov = calculate_min_max_vaccination_range(
-        mean_vaccination_coverage,
-        max_vaccination_range,
-    )
-    return NoiseSpecification(
-        DynamicalNoise(
-            Float64(R_0),
-            Int64(latent_period),
-            Int64(duration_infection),
-            String(correlation),
-            Float64(noise_mean_scaling),
-            Float64(min_cov),
-            Float64(max_cov),
-        )
-    )
-end
 
 function calculate_min_max_vaccination_range(
         mean_vaccination_coverage,

@@ -826,10 +826,10 @@ for metric in ews_metrics
     survival_plot = ews_survival_plot(
         subset(combined_survival_df, :ews_metric => ByRow(==(metric)));
         noise_specification_vec = [
-            PoissonNoiseSpecification(1.0),
-            PoissonNoiseSpecification(7.0),
-            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
-            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+            NoiseSpecification(PoissonNoise(1.0)),
+            NoiseSpecification(PoissonNoise(7.0)),
+            NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.8734)),
+            NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.102)),
         ],
         test_specification_vec = [
             IndividualTestSpecification(1.0, 1.0, 0),
@@ -867,8 +867,8 @@ poisson_reff_only_survival_plot = ews_reff_histogram_plot(
         :ews_metric => ByRow(==("autocovariance")),
     );
     noise_specification_vec = [
-        PoissonNoiseSpecification(1.0),
-        PoissonNoiseSpecification(7.0),
+        NoiseSpecification(PoissonNoise(1.0)),
+        NoiseSpecification(PoissonNoise(7.0)),
     ],
     linestyle_vec = [:solid, :dot],
     ylabel = "Number of Simulations",
@@ -896,8 +896,8 @@ poisson_autocov_perfect_test_survival_plot = ews_survival_plot(
         :ews_metric => ByRow(==("autocovariance")),
     );
     noise_specification_vec = [
-        PoissonNoiseSpecification(1.0),
-        PoissonNoiseSpecification(7.0),
+        NoiseSpecification(PoissonNoise(1.0)),
+        NoiseSpecification(PoissonNoise(7.0)),
     ],
     test_specification_vec = [
         IndividualTestSpecification(1.0, 1.0, 0),
@@ -928,8 +928,8 @@ poisson_autocov_survival_plot = ews_survival_plot(
         :ews_metric => ByRow(==("autocovariance")),
     );
     noise_specification_vec = [
-        PoissonNoiseSpecification(1.0),
-        PoissonNoiseSpecification(7.0),
+        NoiseSpecification(PoissonNoise(1.0)),
+        NoiseSpecification(PoissonNoise(7.0)),
     ],
     test_specification_vec = [
         IndividualTestSpecification(1.0, 1.0, 0),
@@ -961,8 +961,8 @@ dynamical_autocov_survival_plot = ews_survival_plot(
         :ews_metric => ByRow(==("autocovariance")),
     );
     noise_specification_vec = [
-        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
-        DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+        NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.8734)),
+        NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.102)),
     ],
     test_specification_vec = [
         IndividualTestSpecification(1.0, 1.0, 0),

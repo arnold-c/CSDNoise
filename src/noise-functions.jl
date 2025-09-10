@@ -5,9 +5,12 @@
 # include("ensemble-functions.jl")
 # using .EnsembleFunctions
 using UnPack
+using LightSumTypes: variant
+
+create_noise_arr(noise_specification::NoiseSpecification, args...; kwargs...) = create_noise_arr(variant(noise_specification), args...; kwargs...)
 
 function create_noise_arr(
-        noise_specification::DynamicalNoiseSpecification,
+        noise_specification::DynamicalNoise,
         incarr;
         ensemble_specification::EnsembleSpecification,
         seed = 1234,
@@ -128,7 +131,7 @@ function create_noise_arr(
 end
 
 function create_noise_arr(
-        noise_specification::PoissonNoiseSpecification,
+        noise_specification::PoissonNoise,
         incarr;
         seed = 1234,
         kwargs...,

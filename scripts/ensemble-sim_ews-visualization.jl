@@ -229,7 +229,7 @@ ews_df = DataFrame(
         noise_specification, percent_tested, ews_metric_specification,
     ) in
     Iterators.product(
-        [PoissonNoiseSpecification(8.0)],
+        [NoiseSpecification(PoissonNoise(8.0))],
         percent_tested_vec,
         ews_spec_vec,
     )

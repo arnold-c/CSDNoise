@@ -162,10 +162,10 @@ null_single_Reff_thresholds_vec = get_ensemble_file(
 logfilepath = scriptsdir("ensemble-sim_ews-multistart-optimization.log.txt")
 
 noise_specification_vec = [
-    PoissonNoiseSpecification(1.0),
-    PoissonNoiseSpecification(7.0),
-    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
-    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+    NoiseSpecification(PoissonNoise(1.0)),
+    NoiseSpecification(PoissonNoise(7.0)),
+    NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.8734)),
+    NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.102)),
 ]
 
 test_specification_vec = [

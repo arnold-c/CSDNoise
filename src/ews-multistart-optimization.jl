@@ -1355,11 +1355,11 @@ Create an empty DataFrame with the correct structure for multistart optimization
 """
 function create_empty_results_dataframe()
     return DataFrame(
-        noise_specification = eltype(NoiseSpecification)[],
+        noise_specification = NoiseSpecification[],
         test_specification = eltype(IndividualTestSpecification)[],
         percent_tested = Float64[],
-        ews_metric_specification = eltype(EWSMetricSpecification)[],
-        ews_enddate_type = eltype(EWSEndDateType)[],
+        ews_metric_specification = EWSMetricSpecification[],
+        ews_enddate_type = EWSEndDateType[],
         ews_threshold_window = Union{Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow}}[],
         ews_metric = String[],
         ews_threshold_percentile = Float64[],

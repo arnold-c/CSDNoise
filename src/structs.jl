@@ -11,7 +11,7 @@ using Distributions: Distributions
 using Random: Random
 using UnPack: @unpack
 using Dates: Dates
-using LightSumTypes: @sumtype
+using LightSumTypes: @sumtype, variant
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -484,32 +484,28 @@ function get_test_description(test_specification::IndividualTestSpecification)
     return nothing
 end
 
-abstract type NoiseSpecification end
+abstract type AbstractNoiseSpecification end
 
-struct PoissonNoiseSpecification{
-        T1 <: AbstractString, T2 <: AbstractFloat,
-    } <: NoiseSpecification
-    noise_type::T1
-    noise_mean_scaling::T2
+struct PoissonNoise
+    noise_mean_scaling::Float64
 end
+
+struct DynamicalNoise
+    R_0::Float64
+    latent_period::Int64
+    duration_infection::Int64
+    correlation::String
+    noise_mean_scaling::Float64
+    min_vaccination_coverage::Float64
+    max_vaccination_coverage::Float64
+end
+
+@sumtype NoiseSpecification(PoissonNoise, DynamicalNoise) <: AbstractNoiseSpecification
 
 function PoissonNoiseSpecification(
         noise_mean_scaling::T
     ) where {T <: AbstractFloat}
-    return PoissonNoiseSpecification("poisson", noise_mean_scaling)
-end
-
-struct DynamicalNoiseSpecification{
-        T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer,
-    } <: NoiseSpecification
-    noise_type::T1
-    R_0::T2
-    latent_period::T3
-    duration_infection::T3
-    correlation::T1
-    noise_mean_scaling::T2
-    min_vaccination_coverage::T2
-    max_vaccination_coverage::T2
+    return NoiseSpecification(PoissonNoise(Float64(noise_mean_scaling)))
 end
 
 function DynamicalNoiseSpecification(
@@ -521,15 +517,16 @@ function DynamicalNoiseSpecification(
         min_vaccination_coverage::T2,
         max_vaccination_coverage::T2,
     ) where {T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer}
-    return DynamicalNoiseSpecification(
-        "dynamical",
-        R_0,
-        latent_period,
-        duration_infection,
-        correlation,
-        noise_mean_scaling,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+    return NoiseSpecification(
+        DynamicalNoise(
+            Float64(R_0),
+            Int64(latent_period),
+            Int64(duration_infection),
+            String(correlation),
+            Float64(noise_mean_scaling),
+            Float64(min_vaccination_coverage),
+            Float64(max_vaccination_coverage),
+        )
     )
 end
 
@@ -542,17 +539,20 @@ function DynamicalNoiseSpecification(
         mean_vaccination_coverage::T2;
         max_vaccination_range = 0.2,
     ) where {T1 <: AbstractString, T2 <: AbstractFloat, T3 <: Integer}
-    return DynamicalNoiseSpecification(
-        "dynamical",
-        R_0,
-        latent_period,
-        duration_infection,
-        correlation,
-        noise_mean_scaling,
-        calculate_min_max_vaccination_range(
-            mean_vaccination_coverage,
-            max_vaccination_range,
-        )...,
+    min_cov, max_cov = calculate_min_max_vaccination_range(
+        mean_vaccination_coverage,
+        max_vaccination_range,
+    )
+    return NoiseSpecification(
+        DynamicalNoise(
+            Float64(R_0),
+            Int64(latent_period),
+            Int64(duration_infection),
+            String(correlation),
+            Float64(noise_mean_scaling),
+            Float64(min_cov),
+            Float64(max_cov),
+        )
     )
 end
 
@@ -579,33 +579,31 @@ function calculate_min_max_vaccination_range(
     return min_vaccination_coverage, max_vaccination_coverage
 end
 
-function get_noise_description(
-        noise_specification::T
-    ) where {T <: NoiseSpecification}
-    return noise_specification.noise_type
+get_noise_description(noise_specification::NoiseSpecification) = get_noise_description(variant(noise_specification))
+
+function get_noise_description(noise_specification::PoissonNoise)
+    return "poisson"
 end
 
-function get_noise_description(noise_specification::DynamicalNoiseSpecification)
-    return string(
-        noise_specification.noise_type, ", ", noise_specification.correlation
-    )
+function get_noise_description(noise_specification::DynamicalNoise)
+    return string("dynamical, ", noise_specification.correlation)
 end
 
-function get_noise_magnitude_description(
-        noise_specification::T
-    ) where {T <: NoiseSpecification}
+get_noise_magnitude_description(noise_specification::NoiseSpecification) = get_noise_magnitude_description(variant(noise_specification))
+
+function get_noise_magnitude_description(noise_specification::Union{PoissonNoise, DynamicalNoise})
     return string("Poisson scaling: ", noise_specification.noise_mean_scaling)
 end
 
-function get_noise_magnitude(
-        noise_specification::T
-    ) where {T <: NoiseSpecification}
+get_noise_magnitude(noise_specification::NoiseSpecification) = get_noise_magnitude(variant(noise_specification))
+
+function get_noise_magnitude(noise_specification::Union{PoissonNoise, DynamicalNoise})
     return noise_specification.noise_mean_scaling
 end
 
-function noise_table_description(
-        noise_specification::T1
-    ) where {T1 <: PoissonNoiseSpecification}
+noise_table_description(noise_specification::NoiseSpecification) = noise_table_description(variant(noise_specification))
+
+function noise_table_description(noise_specification::PoissonNoise)
     noise_scaling = if noise_specification.noise_mean_scaling == 7
         "High"
     elseif noise_specification.noise_mean_scaling == 1
@@ -616,9 +614,7 @@ function noise_table_description(
     return "$(noise_scaling) Static Noise"
 end
 
-function noise_table_description(
-        noise_specification::T1
-    ) where {T1 <: DynamicalNoiseSpecification}
+function noise_table_description(noise_specification::DynamicalNoise)
     avg_vaccination = round(
         mean(
             [
@@ -645,6 +641,10 @@ end
 # end
 
 function getdirpath(spec::NoiseSpecification)
+    return getdirpath(variant(spec))
+end
+
+function getdirpath(spec::Union{PoissonNoise, DynamicalNoise})
     return reduce(
         joinpath,
         map(

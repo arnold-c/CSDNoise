@@ -1,5 +1,5 @@
 @testset "ews-metrics.jl" begin
-    using CSDNoise, StatsBase
+    using CSDNoise, StatsBase, Dates
 
     @testset "Timeseries aggregation" begin
         testvec = collect(1:10)
@@ -29,7 +29,7 @@
     @testset "Mean functions" begin
         testvec = collect(1:10)
         mean_vec = spaero_mean(
-            Backward, testvec, Day(2)
+            EWSMethod(Backward()), testvec, 2
         )
     end
 end

@@ -211,7 +211,7 @@ end
 #         plot_cases_tuple,
 #         long_plotdata;
 #         individual_test_specification = IndividualTestSpecification(1.0, 1.0, 0),
-#         noise_specification = PoissonNoiseSpecification("poisson", 1.0),
+#         noise_specification = NoiseSpecification(PoissonNoise(1.0)),
 #         plot_base_path = DrWatson.plotsdir("tycho/testing-plots"),
 #         ews_method = Main.Centered,
 #         ews_aggregation = 1,

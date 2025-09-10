@@ -7,8 +7,8 @@ using Dates
         # Create minimal test specification vectors
         test_specification_vecs = (
             noise_specification_vec = [
-                PoissonNoiseSpecification(1.0),
-                PoissonNoiseSpecification(2.0),
+                NoiseSpecification(PoissonNoise(1.0)),
+                NoiseSpecification(PoissonNoise(2.0)),
             ],
             test_specification_vec = [
                 IndividualTestSpecification(0.9, 0.9, 0),
@@ -52,8 +52,8 @@ using Dates
         metrics = [s.ews_metric for s in scenarios]
 
         # Should have both noise specifications
-        @test PoissonNoiseSpecification(1.0) in noise_specs
-        @test PoissonNoiseSpecification(2.0) in noise_specs
+        @test NoiseSpecification(PoissonNoise(1.0)) in noise_specs
+        @test NoiseSpecification(PoissonNoise(2.0)) in noise_specs
 
         # Should have both test specifications
         @test IndividualTestSpecification(0.9, 0.9, 0) in test_specs
@@ -65,7 +65,7 @@ using Dates
 
         # Test with single values to ensure it still works
         single_spec_vecs = (
-            noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+            noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
             test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
             percent_tested_vec = [1.0],
             ews_metric_specification_vec = [EWSMetricSpecification(Backward, Day(28), Week(52), 1)],
@@ -77,7 +77,7 @@ using Dates
 
         single_scenarios = create_optimization_scenarios(single_spec_vecs)
         @test length(single_scenarios) == 1
-        @test single_scenarios[1].noise_specification == PoissonNoiseSpecification(1.0)
+        @test single_scenarios[1].noise_specification == NoiseSpecification(PoissonNoise(1.0))
         @test single_scenarios[1].ews_metric == "autocovariance"
 
         # Test with empty vectors (edge case)
@@ -98,7 +98,7 @@ using Dates
 
         # Test validation - missing required field
         incomplete_spec_vecs = (
-            noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+            noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
             test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
             # Missing other required fields
         )
@@ -106,7 +106,7 @@ using Dates
 
         # Test validation - extra field
         extra_field_spec_vecs = (
-            noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+            noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
             test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
             percent_tested_vec = [1.0],
             ews_metric_specification_vec = [EWSMetricSpecification(Backward, Day(28), Week(52), 1)],
@@ -120,7 +120,7 @@ using Dates
 
         # Test validation - invalid metric name
         invalid_metric_spec_vecs = (
-            noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+            noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
             test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
             percent_tested_vec = [1.0],
             ews_metric_specification_vec = [EWSMetricSpecification(Backward, Day(28), Week(52), 1)],
@@ -133,7 +133,7 @@ using Dates
 
         # Test validation - invalid percent tested
         invalid_percent_spec_vecs = (
-            noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+            noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
             test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
             percent_tested_vec = [1.5],  # Invalid: > 1.0
             ews_metric_specification_vec = [EWSMetricSpecification(Backward, Day(28), Week(52), 1)],
@@ -148,7 +148,7 @@ using Dates
     @testset "_validate_specification_vectors" begin
         # Valid specification vectors for baseline
         valid_spec_vecs = (
-            noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+            noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
             test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
             percent_tested_vec = [1.0],
             ews_metric_specification_vec = [EWSMetricSpecification(Backward, Day(28), Week(52), 1)],
@@ -370,7 +370,7 @@ using Dates
         # Test empty vectors (should warn but not error)
         @testset "Empty vectors" begin
             empty_specs = (
-                noise_specification_vec = PoissonNoiseSpecification[],
+                noise_specification_vec = NoiseSpecification[],
                 test_specification_vec = IndividualTestSpecification[],
                 percent_tested_vec = Float64[],
                 ews_metric_specification_vec = EWSMetricSpecification[],
@@ -388,9 +388,9 @@ using Dates
         @testset "Mixed valid types" begin
             mixed_specs = (
                 noise_specification_vec = [
-                    PoissonNoiseSpecification(1.0),
-                    PoissonNoiseSpecification(2.0),
-                    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+                    NoiseSpecification(PoissonNoise(1.0)),
+                    NoiseSpecification(PoissonNoise(2.0)),
+                    NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.8734)),
                 ],
                 test_specification_vec = [
                     IndividualTestSpecification(0.9, 0.9, 0),

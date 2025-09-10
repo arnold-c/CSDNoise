@@ -310,7 +310,7 @@ create_optimal_ews_plots(
 debug_Reff_plots = true
 
 if debug_Reff_plots
-    # test_noise_specification = DynamicalNoiseSpecification(
+    # test_noise_specification = NoiseSpecification(DynamicalNoise(
     #     5.0,
     #     7,
     #     14,

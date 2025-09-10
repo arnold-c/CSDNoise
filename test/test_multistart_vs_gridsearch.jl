@@ -16,8 +16,8 @@ function benchmark_optimization_methods()
     # Define small test space for fair comparison
     specification_vecs = (
         noise_specification_vec = [
-            PoissonNoiseSpecification(1.0),
-            PoissonNoiseSpecification(3.0),
+            NoiseSpecification(PoissonNoise(1.0)),
+            NoiseSpecification(PoissonNoise(3.0)),
         ],
         test_specification_vec = [
             IndividualTestSpecification(0.8, 0.9, 0),
@@ -222,7 +222,7 @@ function benchmark_multistart_scaling()
 
     # Create minimal test configuration
     test_spec_vecs = (
-        noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+        noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
         test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
         percent_tested_vec = [0.2],
         ews_metric_specification_vec = [EWSMetricSpecification(Gaussian, Day(7), Day(28), 1)],
@@ -283,7 +283,7 @@ function test_multistart_basic()
 
     # Minimal test configuration
     spec_vecs = (
-        noise_specification_vec = [PoissonNoiseSpecification(1.0)],
+        noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
         test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
         percent_tested_vec = [0.2],
         ews_metric_specification_vec = [EWSMetricSpecification(Gaussian, Day(7), Day(28), 1)],
@@ -332,4 +332,3 @@ end
 
 # Export functions for easy testing
 export benchmark_optimization_methods, benchmark_multistart_scaling, test_multistart_basic
-

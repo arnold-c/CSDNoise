@@ -8,7 +8,7 @@ function create_optimization_scenarios()
     # Add different scenarios with different concrete types
     push!(
         scenarios, OptimizationScenario(
-            noise_specification = PoissonNoiseSpecification(1.0),
+            noise_specification = NoiseSpecification(PoissonNoise(1.0)),
             test_specification = IndividualTestSpecification(0.9, 0.9, 0),
             percent_tested = 0.1,
             ews_metric_specification = EWSMetricSpecification(Backward, Dates.Day(7), Dates.Day(28), 1),
@@ -21,7 +21,7 @@ function create_optimization_scenarios()
 
     push!(
         scenarios, OptimizationScenario(
-            noise_specification = DynamicalNoiseSpecification(0.1, 0.2),
+            noise_specification = NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.1, 0.1, 0.3)),
             test_specification = IndividualTestSpecification(0.95, 0.95, 1),
             percent_tested = 0.2,
             ews_metric_specification = EWSMetricSpecification(Centered, Dates.Day(14), Dates.Day(35), 2),

@@ -9,6 +9,7 @@ using StructArrays
 using StatsBase: StatsBase
 using CSV: CSV
 using Printf: @sprintf
+using LightSumTypes: variant
 
 include(projectdir("manuscript", "scripts", "plotting-setup.jl"))
 
@@ -166,15 +167,13 @@ subset_optimal_df = subset(
 )
 
 #%%
-function plot_noise_filename(
-        noise_specification::T
-    ) where {T <: PoissonNoiseSpecification}
+plot_noise_filename(noise_specification::NoiseSpecification) = plot_noise_filename(variant(noise_specification))
+
+function plot_noise_filename(noise_specification::PoissonNoise)
     return "poisson_$(noise_specification.noise_mean_scaling)x"
 end
 
-function plot_noise_filename(
-        noise_specification::T
-    ) where {T <: DynamicalNoiseSpecification}
+function plot_noise_filename(noise_specification::DynamicalNoise)
     mean_vaccination_coverage = StatsBase.mean(
         [
             noise_specification.min_vaccination_coverage,

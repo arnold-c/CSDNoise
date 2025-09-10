@@ -138,7 +138,7 @@ function create_single_test_scenario()
     """Create a single focused test scenario"""
 
     # Use moderate noise and good test characteristics
-    noise_specification_vec = [PoissonNoiseSpecification(1.0)]
+    noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))]
     test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)]
     percent_tested_vec = [1.0]
 

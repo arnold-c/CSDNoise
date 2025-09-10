@@ -159,10 +159,10 @@ null_single_Reff_thresholds_vec = get_ensemble_file(
 logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt")
 
 noise_specification_vec = [
-    PoissonNoiseSpecification(1.0),
-    PoissonNoiseSpecification(7.0),
-    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
-    DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.102),
+    NoiseSpecification(PoissonNoise(1.0)),
+    NoiseSpecification(PoissonNoise(7.0)),
+    NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.8734)),
+    NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.102)),
 ]
 
 test_specification_vec = [
@@ -319,7 +319,7 @@ if debug_Reff_plots
     #     0.8734,
     #     # 0.102,
     # )
-    test_noise_specification = PoissonNoiseSpecification(1.0)
+    test_noise_specification = NoiseSpecification(PoissonNoise(1.0))
     # test_ews_metric = "mean"
     test_ews_metric = "autocovariance"
     # test_ews_metric = "skewness"
@@ -675,7 +675,7 @@ if debug_Reff_plots
     ews_survival_plot(
         survival_df;
         noise_specification_vec = [
-            DynamicalNoiseSpecification(5.0, 7, 14, "in-phase", 0.15, 0.8734),
+            NoiseSpecification(DynamicalNoise(5.0, 7, 14, "in-phase", 0.15, 0.8734)),
         ],
         test_specification_vec = [
             IndividualTestSpecification(1.0, 1.0, 0),

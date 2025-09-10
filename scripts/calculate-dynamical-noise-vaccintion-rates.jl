@@ -71,21 +71,21 @@ ensemble_specification = EnsembleSpecification(
 
 #%%
 function calculate_dynamic_vaccination_coverage(
-    target_scaling,
-    measles_daily_incidence,
-    dynamical_noise_specification_parameters,
-    ensemble_specification;
-    vaccination_mean_range = [0.0, 1.0],
-    max_vaccination_range = 0.2,
-    maxiters = 10,
-    atol = 0.02,
-    showprogress = false,
-)
+        target_scaling,
+        measles_daily_incidence,
+        dynamical_noise_specification_parameters,
+        ensemble_specification;
+        vaccination_mean_range = [0.0, 1.0],
+        max_vaccination_range = 0.2,
+        maxiters = 10,
+        atol = 0.02,
+        showprogress = false,
+    )
     @unpack R0,
-    latent_period,
-    duration_infection,
-    correlation,
-    poisson_component = dynamical_noise_specification_parameters
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component = dynamical_noise_specification_parameters
 
     @assert length(vaccination_mean_range) == 2
 
@@ -186,30 +186,31 @@ function calculate_dynamic_vaccination_coverage(
 end
 
 function calculate_mean_dynamical_noise(
-    R0,
-    latent_period,
-    duration_infection,
-    correlation,
-    poisson_component,
-    mean_vaccination_coverage,
-    max_vaccination_range,
-    ensemble_specification,
-)
-    min_vaccination_coverage,
-    max_vaccination_coverage = calculate_min_max_vaccination_range(
-        mean_vaccination_coverage,
-        max_vaccination_range,
-    )
-
-    dynamical_noise_spec = DynamicalNoiseSpecification(
-        "dynamical",
         R0,
         latent_period,
         duration_infection,
         correlation,
         poisson_component,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+        mean_vaccination_coverage,
+        max_vaccination_range,
+        ensemble_specification,
+    )
+    min_vaccination_coverage,
+        max_vaccination_coverage = calculate_min_max_vaccination_range(
+        mean_vaccination_coverage,
+        max_vaccination_range,
+    )
+
+    dynamical_noise_spec = NoiseSpecification(
+        DynamicalNoise(
+            R0,
+            latent_period,
+            duration_infection,
+            correlation,
+            poisson_component,
+            min_vaccination_coverage,
+            max_vaccination_coverage,
+        )
     )
 
     noise_arrs = create_noise_arr(

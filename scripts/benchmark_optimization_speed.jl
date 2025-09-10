@@ -125,8 +125,8 @@ function main()
 
     # Define comprehensive test parameter space (reduced for speed)
     noise_specification_vec = [
-        PoissonNoiseSpecification(1.0),
-        PoissonNoiseSpecification(7.0),
+        NoiseSpecification(PoissonNoise(1.0)),
+        NoiseSpecification(PoissonNoise(7.0)),
     ]
 
     test_specification_vec = [
@@ -306,7 +306,7 @@ function main()
 
     # Define reference scenario for comparison (first noise, first test spec, autocovariance metric)
     reference_scenario = (
-        noise_specification = noise_specification_vec[1],  # PoissonNoiseSpecification(1.0)
+        noise_specification = noise_specification_vec[1],  # NoiseSpecification(PoissonNoise(1.0))
         test_specification = test_specification_vec[1],    # IndividualTestSpecification(0.9, 0.9, 0)
         percent_tested = percent_tested_vec[1],            # 1.0
         ews_metric = "autocovariance",

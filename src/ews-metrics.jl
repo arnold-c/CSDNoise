@@ -7,6 +7,35 @@ using Printf: @sprintf
 using TestItems
 using Dates: Dates
 
+"""
+    EWSMetrics(ews_spec::EWSMetricSpecification, timeseries)
+
+Compute Early Warning Signal (EWS) metrics from a time series using the specified configuration.
+
+This function calculates various statistical metrics that serve as early warning signals
+for critical transitions in dynamical systems. The metrics include mean, variance,
+coefficient of variation, index of dispersion, skewness, kurtosis, autocovariance,
+and autocorrelation, along with their Kendall tau correlation coefficients with time.
+
+# Arguments
+- `ews_spec::EWSMetricSpecification`: Configuration specifying the EWS method, bandwidth, aggregation, and lag parameters
+- `timeseries`: Input time series data to analyze
+
+# Returns
+- `EWSMetrics`: Struct containing all computed EWS metrics and their temporal correlations
+
+# Throws
+- `ErrorException`: If the aggregated time series length is insufficient for the specified bandwidth
+
+# Examples
+```julia
+# Create EWS specification
+spec = EWSMetricSpecification(Backward(), 50, Day(1), 1)
+
+# Compute EWS metrics from time series
+metrics = EWSMetrics(spec, my_timeseries)
+```
+"""
 function EWSMetrics(
         ews_spec::EWSMetricSpecification, timeseries
     )
@@ -75,6 +104,20 @@ function EWSMetrics(
     )
 end
 
+"""
+    aggregate_bandwidth(ews_spec::EWSMetricSpecification)
+
+Calculate the effective bandwidth after temporal aggregation.
+
+# Arguments
+- `ews_spec::EWSMetricSpecification`: EWS specification containing bandwidth and aggregation parameters
+
+# Returns
+- `Int`: Aggregated bandwidth (original bandwidth divided by aggregation period)
+
+# Throws
+- `AssertionError`: If the aggregated bandwidth is not a positive integer
+"""
 function aggregate_bandwidth(ews_spec::EWSMetricSpecification)
     aggregate_bandwidth = ews_spec.bandwidth ÷ ews_spec.aggregation
     @assert aggregate_bandwidth > 0
@@ -83,14 +126,58 @@ function aggregate_bandwidth(ews_spec::EWSMetricSpecification)
     return aggregate_bandwidth
 end
 
+"""
+    aggregate_thresholds_vec(thresholdsvec, aggregation)
+
+Aggregate a vector of threshold indicators over time periods.
+
+Uses a binary aggregation function where any threshold crossing within the aggregation
+period results in a positive indicator for that period.
+
+# Arguments
+- `thresholdsvec`: Vector of threshold indicators (typically binary)
+- `aggregation`: Temporal aggregation period
+
+# Returns
+- Aggregated threshold vector where each element indicates if any threshold was crossed in that period
+"""
 function aggregate_thresholds_vec(thresholdsvec, aggregation)
     return aggregate_timeseries(thresholdsvec, aggregation, x -> sum(x) >= 1)
 end
 
+"""
+    aggregate_Reff_vec(Reff_vec, aggregation)
+
+Aggregate effective reproduction number (Reff) values over time periods using mean aggregation.
+
+# Arguments
+- `Reff_vec`: Vector of effective reproduction numbers
+- `aggregation`: Temporal aggregation period
+
+# Returns
+- Aggregated Reff vector with mean values for each aggregation period
+"""
 function aggregate_Reff_vec(Reff_vec, aggregation)
     return aggregate_timeseries(Reff_vec, aggregation, mean)
 end
 
+"""
+    aggregate_timeseries(timeseries, aggregation::DatePeriod, stat_function=sum)
+
+Aggregate time series data over specified date periods using a statistical function.
+
+# Arguments
+- `timeseries`: Input time series data
+- `aggregation::DatePeriod`: Temporal aggregation period (e.g., Day(7) for weekly)
+- `stat_function`: Statistical function to apply during aggregation (default: sum)
+
+# Returns
+- Aggregated time series with reduced temporal resolution
+
+# Notes
+- Returns original time series unchanged if aggregation is Day(1)
+- Uses sum as default aggregation function, suitable for count data
+"""
 function aggregate_timeseries(
         timeseries,
         aggregation::T1,
@@ -102,6 +189,27 @@ function aggregate_timeseries(
     return _aggregate_timeseries(timeseries, aggregation, stat_function)
 end
 
+"""
+    _aggregate_timeseries(timeseries, aggregation::DatePeriod, stat_function=mean)
+
+Internal implementation for aggregating time series data over date periods.
+
+This function performs the actual aggregation work by dividing the time series into
+chunks based on the aggregation period and applying the statistical function to each chunk.
+
+# Arguments
+- `timeseries`: Input time series data
+- `aggregation::DatePeriod`: Temporal aggregation period
+- `stat_function`: Statistical function to apply (default: mean, unlike public version which defaults to sum)
+
+# Returns
+- Aggregated time series with length `length(timeseries) ÷ aggregation_days`
+
+# Notes
+- Uses mean as default (different from public `aggregate_timeseries` which uses sum)
+- Assumes aggregation period can be evenly divided into the time series length. If not, the end of the time series
+will be truncated
+"""
 function _aggregate_timeseries(
         timeseries,
         aggregation::T1,
@@ -122,6 +230,23 @@ function _aggregate_timeseries(
     return aggregate_timeseries
 end
 
+"""
+    spaero_mean(method::EWSMethod, timeseries, bandwidth::Integer)
+
+Calculate rolling mean of a time series using the specified EWS method.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method (Centered or Backward)
+- `timeseries`: Input time series data
+- `bandwidth::Integer`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling mean values for each time point
+
+# Notes
+- For Centered method: uses symmetric window around each point
+- For Backward method: uses only past values
+"""
 function spaero_mean(
         method::EWSMethod,
         timeseries,
@@ -132,6 +257,26 @@ function spaero_mean(
     return mean_vec
 end
 
+"""
+    spaero_mean!(mean_vec, method::EWSMethod, timeseries, bandwidth::Integer)
+
+In-place calculation of rolling mean, storing results in pre-allocated vector.
+
+This mutating version avoids memory allocation by writing results directly to the
+provided `mean_vec` array, making it more efficient for repeated calculations.
+
+# Arguments
+- `mean_vec`: Pre-allocated output vector to store mean values
+- `method::EWSMethod`: EWS calculation method (Centered or Backward)
+- `timeseries`: Input time series data
+- `bandwidth::Integer`: Window size for rolling calculation
+
+# Returns
+- `nothing` (results stored in `mean_vec`)
+
+# Notes
+- `mean_vec` must be pre-allocated with correct length
+"""
 function spaero_mean!(
         mean_vec,
         method::EWSMethod,
@@ -142,6 +287,23 @@ function spaero_mean!(
     return nothing
 end
 
+"""
+    mean_func!(mean_vec, method::EWSMethod, timeseries, bandwidth)
+
+Dispatch function for method-specific mean calculations.
+
+This function extracts the variant from the EWSMethod sum type and dispatches
+to the appropriate implementation (Centered or Backward).
+
+# Arguments
+- `mean_vec`: Pre-allocated output vector
+- `method::EWSMethod`: EWS method containing the calculation variant
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `nothing` (results stored in `mean_vec`)
+"""
 function mean_func!(
         mean_vec,
         method::EWSMethod,
@@ -152,6 +314,30 @@ function mean_func!(
     return nothing
 end
 
+"""
+    mean_func!(mean_vec, method::Centered, timeseries, bandwidth)
+
+Calculate rolling mean using centered windows around each time point.
+
+This implementation uses symmetric windows that extend both forward and backward
+from each point. At boundaries, it adapts the window size to use available data:
+- Near start: extends window from the start to the index + bandwidth - 1
+- Near end: extends window from the end to the index - bandwidth + 1
+- At extremes: uses entire available time series
+
+# Arguments
+- `mean_vec`: Pre-allocated output vector
+- `method::Centered`: Centered windowing method
+- `timeseries`: Input time series data
+- `bandwidth`: Half-width of the symmetric window
+
+# Returns
+- `nothing` (results stored in `mean_vec`)
+
+# Notes
+- Window boundaries are handled adaptively to maximize data usage
+- Provides symmetric treatment around each point when possible
+"""
 function mean_func!(
         mean_vec,
         method::Centered,
@@ -173,6 +359,31 @@ function mean_func!(
     return nothing
 end
 
+"""
+    mean_func!(mean_vec, method::Backward, timeseries, bandwidth)
+
+Calculate rolling mean using backward-looking windows.
+
+This implementation only uses past and current values, making it suitable for
+real-time applications where future data is not available. The window extends
+backward from each point:
+- Early points: uses all available past data (expanding window)
+- Later points: uses fixed bandwidth of past values
+
+# Arguments
+- `mean_vec`: Pre-allocated output vector
+- `method::Backward`: Backward-looking windowing method
+- `timeseries`: Input time series data
+- `bandwidth`: Number of past time points to include in window
+
+# Returns
+- `nothing` (results stored in `mean_vec`)
+
+# Notes
+- Early time points use expanding windows with all available history
+- For longer time series, produces functionally equivalent values as backwards
+windowing methods that have offset indices
+"""
 function mean_func!(
         mean_vec,
         method::Backward,
@@ -189,6 +400,27 @@ function mean_func!(
     return nothing
 end
 
+"""
+    _spaero_moment(method::EWSMethod, timeseries, moment, bandwidth)
+
+Calculate rolling central moments by first computing the rolling mean.
+
+This variant computes the rolling mean internally and then calculates the
+specified central moment. Less efficient when mean is already available.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `moment`: Order of the central moment (e.g., 2 for variance, 3 for skewness)
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling central moment values
+
+# Notes
+- Computes mean internally, so use the other variant if mean is pre-computed
+- Central moments are calculated as E[(X - μ)^k] where k is the moment order
+"""
 function _spaero_moment(
         method::EWSMethod, timeseries, moment, bandwidth
     )
@@ -201,6 +433,30 @@ function _spaero_moment(
     )
 end
 
+"""
+    _spaero_moment(method::EWSMethod, mean_timeseries, timeseries, moment, bandwidth)
+
+Calculate rolling central moments using pre-computed rolling mean values.
+
+This more efficient variant uses pre-computed mean values to calculate central
+moments, avoiding redundant mean calculations. Uses memory-efficient allocation
+with the Bumper.jl `@no_escape` macro.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `mean_timeseries`: Pre-computed rolling mean values
+- `timeseries`: Input time series data
+- `moment`: Order of the central moment (e.g., 2 for variance, 3 for skewness)
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling central moment values
+
+# Notes
+- More efficient when mean is already computed
+- Uses stack allocation for temporary arrays via `@no_escape`
+- Central moments: E[(X - μ)^k] where μ is the rolling mean
+"""
 function _spaero_moment(
         method::EWSMethod, mean_timeseries, timeseries, moment, bandwidth
     )
@@ -211,15 +467,69 @@ function _spaero_moment(
     end
 end
 
+"""
+    spaero_var(method::EWSMethod, timeseries, bandwidth)
+
+Calculate rolling variance of a time series.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling variance values
+
+# Notes
+- Variance is calculated as the second central moment
+"""
 function spaero_var(method::EWSMethod, timeseries, bandwidth)
     mean_vec = spaero_mean(method, timeseries, bandwidth)
     return _spaero_moment(method, mean_vec, timeseries, 2, bandwidth)
 end
 
+"""
+    spaero_var(method::EWSMethod, mean_vec, timeseries, bandwidth)
+
+Calculate rolling variance using pre-computed mean values.
+
+More efficient variant when mean values are already available.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `mean_vec`: Pre-computed rolling mean values
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling variance values
+"""
 function spaero_var(method::EWSMethod, mean_vec, timeseries, bandwidth)
     return _spaero_moment(method, mean_vec, timeseries, 2, bandwidth)
 end
 
+"""
+    spaero_cov(method::EWSMethod, timeseries, bandwidth)
+
+Calculate rolling coefficient of variation by computing mean and variance internally.
+
+This variant performs the complete calculation from raw time series data,
+computing rolling mean, variance, and standard deviation before calculating
+the coefficient of variation. Uses memory-efficient stack allocation.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling coefficient of variation values (σ/μ)
+
+# Notes
+- Computes all intermediate statistics internally
+- Less efficient than the variant using pre-computed values
+- Uses `@no_escape` for memory-efficient temporary allocations
+"""
 function spaero_cov(method::EWSMethod, timeseries, bandwidth)
     return @no_escape begin
         mean_vec = @alloc(Float64, length(timeseries))
@@ -232,20 +542,102 @@ function spaero_cov(method::EWSMethod, timeseries, bandwidth)
     end
 end
 
+"""
+    spaero_cov(sd_vec, mean_vec)
+
+Calculate coefficient of variation from standard deviation and mean vectors.
+
+The coefficient of variation is a normalized measure of dispersion, calculated as
+the ratio of standard deviation to mean.
+
+# Arguments
+- `sd_vec`: Vector of standard deviation values
+- `mean_vec`: Vector of mean values
+
+# Returns
+- `Vector{Float64}`: Coefficient of variation values (σ/μ)
+
+# Notes
+- Higher values indicate increased relative variability
+- Important EWS metric for detecting critical transitions
+"""
 function spaero_cov(sd_vec, mean_vec)
     return sd_vec ./ mean_vec
 end
 
+"""
+    spaero_iod(method::EWSMethod, timeseries, bandwidth)
+
+Calculate rolling index of dispersion by computing variance and mean internally.
+
+This variant performs the complete calculation from raw time series data,
+computing both rolling variance and mean before calculating their ratio.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling index of dispersion values (σ²/μ)
+
+# Notes
+- Computes variance and mean internally
+- Less efficient than the variant using pre-computed values
+- Useful when only raw time series data is available
+"""
 function spaero_iod(method::EWSMethod, timeseries, bandwidth)
     var_vec = spaero_var(method, timeseries, bandwidth)
     mean_vec = spaero_mean(method, timeseries, bandwidth)
     return spaero_iod(var_vec, mean_vec)
 end
 
+"""
+    spaero_iod(var_vec, mean_vec)
+
+Calculate index of dispersion from variance and mean vectors.
+
+The index of dispersion is the ratio of variance to mean, useful for detecting
+overdispersion in count data.
+
+# Arguments
+- `var_vec`: Vector of variance values
+- `mean_vec`: Vector of mean values
+
+# Returns
+- `Vector{Float64}`: Index of dispersion values (σ²/μ)
+
+# Notes
+- Values > 1 indicate overdispersion
+- Values < 1 indicate underdispersion
+- Values = 1 indicate Poisson-like behavior
+"""
 function spaero_iod(var_vec, mean_vec)
     return var_vec ./ mean_vec
 end
 
+"""
+    spaero_skew(method::EWSMethod, timeseries, bandwidth)
+
+Calculate rolling skewness by computing all required statistics internally.
+
+This variant performs the complete skewness calculation from raw time series,
+computing rolling mean, third central moment, variance, and standard deviation.
+Uses a single worker vector for memory efficiency.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling skewness values (μ₃/σ³)
+
+# Notes
+- Computes mean, variance, and third moment internally
+- Uses memory-efficient allocation with shared worker vector
+- Skewness = E[(X-μ)³]/σ³ where μ is mean and σ is standard deviation
+"""
 function spaero_skew(method::EWSMethod, timeseries, bandwidth)
     return @no_escape begin
         # use for both mean and sd vec as only one needed at a time
@@ -260,10 +652,51 @@ function spaero_skew(method::EWSMethod, timeseries, bandwidth)
     end
 end
 
+"""
+    spaero_skew(m3_vec, sd3_vec)
+
+Calculate skewness from third moment and cubed standard deviation vectors.
+
+Skewness measures the asymmetry of the probability distribution.
+
+# Arguments
+- `m3_vec`: Vector of third central moments
+- `sd3_vec`: Vector of cubed standard deviations
+
+# Returns
+- `Vector{Float64}`: Skewness values (μ₃/σ³)
+
+# Notes
+- Positive values indicate right-skewed distributions
+- Negative values indicate left-skewed distributions
+- Zero indicates symmetric distributions
+"""
 function spaero_skew(m3_vec, sd3_vec)
     return m3_vec ./ sd3_vec
 end
 
+"""
+    spaero_kurtosis(method::EWSMethod, timeseries, bandwidth)
+
+Calculate rolling kurtosis by computing all required statistics internally.
+
+This variant performs the complete kurtosis calculation from raw time series,
+computing rolling mean, fourth central moment, and variance before calculating
+the kurtosis ratio.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+
+# Returns
+- `Vector{Float64}`: Rolling kurtosis values (μ₄/σ⁴)
+
+# Notes
+- Computes mean, variance, and fourth moment internally
+- Uses memory-efficient stack allocation for temporary arrays
+- Kurtosis = E[(X-μ)⁴]/σ⁴ where μ is mean and σ² is variance
+"""
 function spaero_kurtosis(method::EWSMethod, timeseries, bandwidth)
     return @no_escape begin
         mean_vec = @alloc(Float64, length(timeseries))
@@ -276,10 +709,51 @@ function spaero_kurtosis(method::EWSMethod, timeseries, bandwidth)
     end
 end
 
+"""
+    spaero_kurtosis(m4_vec, var2_vec)
+
+Calculate kurtosis from fourth moment and squared variance vectors.
+
+Kurtosis measures the "tailedness" of the probability distribution.
+
+# Arguments
+- `m4_vec`: Vector of fourth central moments
+- `var2_vec`: Vector of squared variances
+
+# Returns
+- `Vector{Float64}`: Kurtosis values (μ₄/σ⁴)
+
+# Notes
+- Values > 3 indicate heavy-tailed distributions (leptokurtic)
+- Values < 3 indicate light-tailed distributions (platykurtic)
+- Values = 3 indicate normal distribution-like tails (mesokurtic)
+"""
 function spaero_kurtosis(m4_vec, var2_vec)
     return m4_vec ./ var2_vec
 end
 
+"""
+    spaero_autocov(method::EWSMethod, timeseries, bandwidth; lag=1)
+
+Calculate rolling autocovariance by computing the rolling mean internally.
+
+This variant computes the rolling mean from the raw time series before
+calculating autocovariance. Less efficient when mean is already available.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+- `lag`: Time lag for autocovariance calculation (default: 1)
+
+# Returns
+- `Vector{Float64}`: Rolling autocovariance values
+
+# Notes
+- Computes rolling mean internally using stack allocation
+- Less efficient than variant with pre-computed mean
+- First `lag` values are set to NaN due to insufficient data
+"""
 function spaero_autocov(method::EWSMethod, timeseries, bandwidth; lag = 1)
     return @no_escape begin
         mean_vec = @alloc(Float64, length(timeseries))
@@ -290,6 +764,27 @@ function spaero_autocov(method::EWSMethod, timeseries, bandwidth; lag = 1)
     end
 end
 
+"""
+    spaero_autocov(method::EWSMethod, mean_vec, timeseries, bandwidth; lag=1)
+
+Calculate rolling autocovariance of a time series.
+
+Autocovariance measures the covariance between a time series and a lagged version of itself.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `mean_vec`: Pre-computed rolling mean values
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+- `lag`: Time lag for autocovariance calculation (default: 1)
+
+# Returns
+- `Vector{Float64}`: Rolling autocovariance values
+
+# Notes
+- First `lag` values are set to NaN due to insufficient data
+- Higher values indicate stronger temporal correlation
+"""
 function spaero_autocov(
         method::EWSMethod,
         mean_vec,
@@ -310,6 +805,29 @@ function spaero_autocov(
     return autocov_vec
 end
 
+"""
+    spaero_autocor(method::EWSMethod, timeseries, bandwidth; lag=1)
+
+Calculate rolling autocorrelation by computing all required statistics internally.
+
+This variant performs the complete autocorrelation calculation from raw time series,
+computing variance, standard deviation, autocovariance, and the lagged standard
+deviation product needed for normalization.
+
+# Arguments
+- `method::EWSMethod`: EWS calculation method
+- `timeseries`: Input time series data
+- `bandwidth`: Window size for rolling calculation
+- `lag`: Time lag for autocorrelation calculation (default: 1)
+
+# Returns
+- `Vector{Float64}`: Rolling autocorrelation values (range: [-1, 1])
+
+# Notes
+- Computes variance, autocovariance, and lagged products internally
+- Uses memory-efficient stack allocation for temporary arrays
+- Autocorrelation = autocovariance / (σₜ × σₜ₋ₗₐ𝓰)
+"""
 function spaero_autocor(method::EWSMethod, timeseries, bandwidth; lag = 1)
     sd2 = zeros(Float64, length(timeseries))
     @no_escape begin
@@ -326,6 +844,27 @@ function spaero_autocor(method::EWSMethod, timeseries, bandwidth; lag = 1)
     return autocov_vec ./ sd2
 end
 
+"""
+    spaero_autocor(autocov_vec, sd_vec; lag=1)
+
+Calculate autocorrelation from autocovariance and standard deviation vectors.
+
+Autocorrelation is the normalized autocovariance, providing a scale-free measure
+of temporal correlation.
+
+# Arguments
+- `autocov_vec`: Vector of autocovariance values
+- `sd_vec`: Vector of standard deviation values
+- `lag`: Time lag used in autocovariance calculation (default: 1)
+
+# Returns
+- `Vector{Float64}`: Autocorrelation values (range: [-1, 1])
+
+# Notes
+- Values close to 1 indicate strong positive temporal correlation
+- Values close to -1 indicate strong negative temporal correlation
+- Values close to 0 indicate weak temporal correlation
+"""
 function spaero_autocor(autocov_vec, sd_vec; lag = 1)
     sd2 = zeros(Float64, length(sd_vec))
     @no_escape begin
@@ -336,6 +875,28 @@ function spaero_autocor(autocov_vec, sd_vec; lag = 1)
     return autocov_vec ./ sd2
 end
 
+"""
+    _lagged_vector(lagged_vec, vec, lag)
+
+Create a lagged version of a vector by shifting values backward in time.
+
+This helper function creates a time-lagged version of the input vector,
+where each element at position i contains the value from position i-lag.
+Elements without sufficient history are set to NaN.
+
+# Arguments
+- `lagged_vec`: Pre-allocated output vector to store lagged values
+- `vec`: Input vector to lag
+- `lag`: Number of time steps to lag (must be positive)
+
+# Returns
+- `nothing` (results stored in `lagged_vec`)
+
+# Notes
+- First `lag` elements are set to NaN due to insufficient history
+- Used for autocorrelation calculations requiring lagged standard deviations
+- In-place operation for memory efficiency
+"""
 function _lagged_vector(lagged_vec, vec, lag)
     @inbounds for i in eachindex(lagged_vec)
         if i <= lag
@@ -347,6 +908,26 @@ function _lagged_vector(lagged_vec, vec, lag)
     return nothing
 end
 
+"""
+    spaero_corkendall(ews_vec::Vector{F}) where {F <: AbstractFloat}
+
+Calculate Kendall's tau correlation coefficient between an EWS metric and time.
+
+This function computes the rank correlation between the EWS metric values and their
+temporal ordering, providing a measure of monotonic trend over time.
+
+# Arguments
+- `ews_vec::Vector{F}`: Vector of EWS metric values
+
+# Returns
+- `Float64`: Kendall's tau correlation coefficient (range: [-1, 1])
+
+# Notes
+- Positive values indicate increasing trend over time
+- Negative values indicate decreasing trend over time
+- NaN values are filtered out before calculation
+- Used to detect temporal trends in EWS metrics approaching critical transitions
+"""
 function spaero_corkendall(ews_vec::Vector{F}) where {F <: AbstractFloat}
     filtered_ews_vec = filter(x -> !isnan(x), ews_vec)
     return StatsBase.corkendall(
@@ -354,6 +935,29 @@ function spaero_corkendall(ews_vec::Vector{F}) where {F <: AbstractFloat}
     )
 end
 
+"""
+    compare_against_spaero(spaero_ews::DataFrame, my_ews::EWSMetrics; kwargs...)
+
+Compare EWS metrics computed by this implementation against SPAERO reference values.
+
+This function validates the accuracy of the EWS calculations by comparing against
+established SPAERO (SPAtial Early-warning Signals) reference implementations.
+
+# Arguments
+- `spaero_ews::DataFrame`: Reference EWS values from SPAERO
+- `my_ews::EWSMetrics`: EWS values computed by this implementation
+- `ews`: Vector of EWS metrics to compare (default: all standard metrics)
+- `tolerance`: Numerical tolerance for differences (default: 1e-13)
+- `showwarnings`: Whether to display warning messages (default: true)
+- `showdiffs`: Whether to display detailed differences (default: false)
+
+# Returns
+- Prints comparison results and warnings for metrics exceeding tolerance
+
+# Notes
+- Used for validation and testing of EWS implementations
+- Helps ensure numerical accuracy and consistency with established methods
+"""
 function compare_against_spaero(
         spaero_ews::T1, my_ews::T2;
         ews = [
@@ -416,17 +1020,80 @@ function compare_against_spaero(
     end
 end
 
+"""
+    compare_against_spaero(spaero_ews, my_ews)
+
+Simple comparison between two EWS vectors returning a DataFrame with differences.
+
+This simplified variant directly compares two vectors (rather than full EWSMetrics
+structs) and returns a DataFrame containing the original values and absolute
+differences for manual inspection.
+
+# Arguments
+- `spaero_ews`: Reference EWS values (vector or single metric)
+- `my_ews`: Computed EWS values to compare (vector or single metric)
+
+# Returns
+- `DataFrame`: Contains columns `:spaero`, `:mine`, and `:absdiff`
+
+# Notes
+- Simpler interface for comparing individual metrics
+- No tolerance checking or warning generation
+- Useful for detailed inspection of specific metric differences
+"""
 function compare_against_spaero(spaero_ews, my_ews)
     df = DataFrames.DataFrame([spaero_ews my_ews], [:spaero, :mine])
     df.absdiff = abs.(df.spaero .- df.mine)
     return df
 end
 
+"""
+    filter_spaero_comparison(spaero_ews, my_ews; tolerance=1e-13)
+
+Compare EWS vectors and filter results to show only differences exceeding tolerance.
+
+This variant computes the comparison DataFrame internally and then filters it
+to show only rows where the absolute difference exceeds the specified tolerance.
+
+# Arguments
+- `spaero_ews`: Reference EWS values
+- `my_ews`: Computed EWS values to compare
+- `tolerance`: Minimum difference threshold for inclusion (default: 1e-13)
+
+# Returns
+- `DataFrame`: Filtered results showing only significant differences
+
+# Notes
+- Combines comparison and filtering in one step
+- Generates warnings if significant differences are found
+- Useful for quick identification of problematic values
+"""
 function filter_spaero_comparison(spaero_ews, my_ews; tolerance = 1.0e-13)
     df = compare_against_spaero(spaero_ews, my_ews)
     return filter_spaero_comparison(df; tolerance = tolerance)
 end
 
+"""
+    filter_spaero_comparison(df; tolerance=1e-13, warn=true)
+
+Filter a pre-computed comparison DataFrame to show only significant differences.
+
+This variant operates on an existing comparison DataFrame (with `:absdiff` column)
+and filters it to show only rows exceeding the tolerance threshold.
+
+# Arguments
+- `df`: Pre-computed comparison DataFrame with `:absdiff` column
+- `tolerance`: Minimum difference threshold for inclusion (default: 1e-13)
+- `warn`: Whether to generate warnings for significant differences (default: true)
+
+# Returns
+- `DataFrame`: Filtered subset showing only differences > tolerance
+
+# Notes
+- Operates on pre-computed comparison results
+- Optional warning generation for significant differences
+- Handles missing values gracefully with `skipmissing`
+"""
 function filter_spaero_comparison(df; tolerance = 1.0e-13, warn = true)
     subsetted = DataFrames.subset(
         df, :absdiff => x -> x .> tolerance; skipmissing = true
@@ -438,6 +1105,22 @@ function filter_spaero_comparison(df; tolerance = 1.0e-13, warn = true)
     return subsetted
 end
 
+"""
+    ews_as_df(ews::EWSMetrics)
+
+Convert EWSMetrics struct to a DataFrame for analysis and visualization.
+
+# Arguments
+- `ews::EWSMetrics`: EWS metrics struct to convert
+
+# Returns
+- `DataFrame`: DataFrame with columns for each EWS metric (excluding specification and tau values)
+
+# Notes
+- Excludes the ews_specification field and tau correlation coefficients
+- Useful for data analysis, plotting, and export to other formats
+- Column names correspond to the EWS metric names
+"""
 function ews_as_df(ews::EWSMetrics)
     metrics = filter(
         x -> x != :ews_specification && !contains(string(x), "tau"),

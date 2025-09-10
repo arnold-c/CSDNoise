@@ -142,12 +142,15 @@ function spaero_mean!(
     return nothing
 end
 
-mean_func!(
-    mean_vec,
-    method::EWSMethod,
-    timeseries,
-    bandwidth,
-) = mean_func!(variant(method))
+function mean_func!(
+        mean_vec,
+        method::EWSMethod,
+        timeseries,
+        bandwidth,
+    )
+    mean_func!(mean_vec, variant(method), timeseries, bandwidth)
+    return nothing
+end
 
 function mean_func!(
         mean_vec,

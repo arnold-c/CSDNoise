@@ -42,7 +42,7 @@ Create a single focused test scenario for profiling (adapted from benchmark_ense
 """
 function create_single_test_scenario()
     # Use moderate noise and good test characteristics
-    noise_specification_vec = NoiseSpecification[PoissonNoiseSpecification(1.0)]
+    noise_specification_vec = NoiseSpecification[NoiseSpecification(PoissonNoise(1.0))]
     test_specification_vec = IndividualTestSpecification[IndividualTestSpecification(0.9, 0.9, 0)]
     percent_tested_vec = Float64[1.0]
 

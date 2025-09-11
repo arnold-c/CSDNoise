@@ -54,11 +54,14 @@ function generate_single_ensemble(ensemble_spec; seed)
     @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims = ensemble_spec
     @unpack tstep, tlength, trange = time_parameters
 
-    ensemble_seir_vecs = Array{typeof(state_parameters.init_states), 2}(
+    # Get concrete type to avoid abstract element types
+    init_state_type = typeof(state_parameters.init_states)
+    ensemble_seir_vecs = Array{init_state_type, 2}(
         undef, tlength, nsims
     )
 
-    ensemble_inc_vecs = Array{typeof(SVector(0)), 2}(
+    # Use concrete SVector type instead of typeof(SVector(0))
+    ensemble_inc_vecs = Array{SVector{1, Int64}, 2}(
         undef, tlength, nsims
     )
 
@@ -81,7 +84,7 @@ function generate_single_ensemble(ensemble_spec; seed)
             @view(ensemble_seir_vecs[:, sim]),
             @view(ensemble_inc_vecs[:, sim]),
             ensemble_beta_arr,
-            state_parameters.init_states,
+            SVector(state_parameters.init_states),
             dynamics_parameters[sim],
             time_parameters;
             seed = run_seed,

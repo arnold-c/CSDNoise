@@ -686,7 +686,7 @@ function optimal_ews_heatmap_df(
         x -> vcat(DataFrame.(x)...; cols = :union)
 end
 
-get_enddate_thresholds(enddate_type::EWSEndDateType, data_arrs) = get_enddate_thresholds(variant(enddata_type), data_arrs)
+get_enddate_thresholds(enddate_type::EWSEndDateType, data_arrs) = get_enddate_thresholds(variant(enddate_type), data_arrs)
 
 function get_enddate_thresholds(enddate_type::Union{Reff_start, Reff_end}, data_arrs)
     return data_arrs.ensemble_single_Reff_thresholds_vec

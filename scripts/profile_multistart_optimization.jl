@@ -44,20 +44,24 @@ function main()
     tracker = OptimizationTracker()
     test_params = [0.9, 5.0]
 
-    ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
+    @code_warntype ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
 
     # Example EWSMetrics instantiation
-    example_ews_spec = EWSMetricSpecification(Backward, Dates.Day(1), Dates.Day(30), 1)
+    example_ews_spec = EWSMetricSpecification(EWSMethod(Backward()), Dates.Day(1), Dates.Day(30), 1)
     example_timeseries = [
         1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
         11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0,
         21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0,
         31.0, 32.0, 33.0, 34.0, 35.0,
     ]
+    @code_warntype EWSMetrics(example_ews_spec, example_timeseries)
     @report_opt target_modules = (CSDNoise,) EWSMetrics(example_ews_spec, example_timeseries)
+    @report_call target_modules = (CSDNoise,) EWSMetrics(example_ews_spec, example_timeseries)
 
     println("Type analysis for ews_objective_function_with_tracking:")
+    @code_warntype ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
     @report_opt target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
+    @report_call target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
 
 
     if isnothing(specification_vecs) || isnothing(data_arrs)

@@ -19,11 +19,14 @@ using StaticArrays
 The in-place function to run the SEIR model with a vaccinations going directly to the R compartment and produce the transmission rate array.
 """
 function seir_mod(
-        states, dynamics_params, time_params; seed = 1234
+        states::SVector{5, Int64},
+        dynamics_params::DynamicsParameters,
+        time_params::SimTimeParameters;
+        seed = 1234
     )
     state_vec = Vector{typeof(states)}(undef, time_params.tlength)
     beta_vec = Vector{Float64}(undef, time_params.tlength)
-    inc_vec = Vector{typeof(SVector(0))}(undef, time_params.tlength)
+    inc_vec = Vector{SVector{1, Int64}}(undef, time_params.tlength)
 
     seir_mod!(
         state_vec,
@@ -44,12 +47,12 @@ end
 The in-place function to run the SEIR model and produce the transmission rate array.
 """
 function seir_mod!(
-        state_vec,
-        inc_vec,
-        beta_vec,
-        states,
-        dynamics_params,
-        time_params;
+        state_vec::Vector{SVector{5, Int64}},
+        inc_vec::Vector{SVector{1, Int64}},
+        beta_vec::Vector{Float64},
+        states::SVector{5, Int64},
+        dynamics_params::DynamicsParameters,
+        time_params::SimTimeParameters;
         seed = 1234,
     )
     Random.seed!(seed)
@@ -70,9 +73,12 @@ function seir_mod!(
         inc_vec[1] = SVector(0)
     end
 
-    @. beta_vec = calculate_beta_amp(
-        beta_mean, beta_force, trange; seasonality = dynamics_params.seasonality
-    )
+    # Use explicit loop instead of broadcasting to avoid runtime dispatch
+    for i in eachindex(beta_vec, trange)
+        beta_vec[i] = calculate_beta_amp(
+            beta_mean, beta_force, trange[i]; seasonality = dynamics_params.seasonality
+        )
+    end
 
     @inbounds for i in 2:(time_params.tlength)
         if i < Int(time_params.burnin)
@@ -103,15 +109,15 @@ end
 The inner loop that is called by `seir_mod!()` function.
 """
 function seir_mod_loop!(
-        state_vec,
-        beta_t,
-        mu,
-        epsilon,
-        sigma,
-        gamma,
-        R_0,
-        vaccination_coverage,
-        timestep,
+        state_vec::SVector{5, Int64},
+        beta_t::Float64,
+        mu::Float64,
+        epsilon::Float64,
+        sigma::Float64,
+        gamma::Float64,
+        R_0::Float64,
+        vaccination_coverage::Float64,
+        timestep::Float64,
     )
 
     # TODO: Benchmak StaticArrays implementation as potentially much faster.

@@ -229,14 +229,12 @@ function optimize_single_scenario(
     tracker = OptimizationTracker()
 
     # Create objective function closure that updates tracker
-    objective = let params = params
-        ews_objective_function_with_tracking(
-            params,
-            scenario,
-            cached_data,
-            tracker
-        )
-    end
+    objective = params -> ews_objective_function_with_tracking(
+        params,
+        scenario,
+        cached_data,
+        tracker
+    )
 
     # Setup multistart problem
     problem = MultistartOptimization.MinimizationProblem(
@@ -305,8 +303,12 @@ function ews_objective_function_with_tracking(
     # Map continuous parameters to EWS parameters
     ews_params = map_continuous_to_ews_parameters(params_vec)
 
+    # Pre-compute values outside the loop for type stability
+    ews_metric_symbol = Symbol(ews_metric)
+    threshold_percentile = ews_params.threshold_percentile
+
     # Calculate accuracy
-    ensemble_nsims = size(ensemble_single_incarr, 3)
+    valid_nsims = length(ews_metrics)
     true_positives = 0
     true_negatives = 0
 
@@ -318,9 +320,9 @@ function ews_objective_function_with_tracking(
         # Check threshold exceedances
         exceeds_threshold = expanding_ews_thresholds(
             ews_vals,
-            Symbol(ews_metric),
+            ews_metric_symbol,
             ews_threshold_window;
-            percentiles = ews_params.threshold_percentile,
+            percentiles = threshold_percentile,
             burn_in = ews_threshold_burnin,
         )[2]
 
@@ -331,9 +333,9 @@ function ews_objective_function_with_tracking(
 
         null_exceeds_threshold = expanding_ews_thresholds(
             null_ews_vals,
-            Symbol(ews_metric),
+            ews_metric_symbol,
             ews_threshold_window;
-            percentiles = ews_params.threshold_percentile,
+            percentiles = threshold_percentile,
             burn_in = ews_threshold_burnin,
         )[2]
 
@@ -352,8 +354,8 @@ function ews_objective_function_with_tracking(
     end
 
     # Calculate metrics
-    sensitivity = calculate_sensitivity(true_positives, ensemble_nsims)
-    specificity = calculate_specificity(true_negatives, ensemble_nsims)
+    sensitivity = calculate_sensitivity(true_positives, valid_nsims)
+    specificity = calculate_specificity(true_negatives, valid_nsims)
     accuracy = calculate_accuracy(sensitivity, specificity)
     loss = 1.0 - accuracy
 
@@ -382,7 +384,7 @@ function calculate_ews_metrics_for_simulation(
         threshold,
         ews_enddate_type
     )
-    enddate::Union{Try.Err{String}, Try.Ok{Int64}} = calculate_ews_enddate(threshold, ews_enddate_type)
+    enddate = calculate_ews_enddate(threshold, ews_enddate_type)
 
     if Try.isok(enddate)
         enddate_val = Try.unwrap(enddate)
@@ -449,8 +451,11 @@ function create_cached_simulation_data(
 
     # Pre-compute EWS metrics for all simulations
     ensemble_nsims = size(ensemble_single_incarr, 3)
-    ews_metrics = Vector{EWSMetrics}(undef, ensemble_nsims)
-    null_ews_metrics = Vector{EWSMetrics}(undef, ensemble_nsims)
+    ews_metrics = Vector{EWSMetrics}()
+    null_ews_metrics = Vector{EWSMetrics}()
+
+    # Keep track of valid simulation indices
+    valid_sim_indices = Vector{Int}()
 
     for sim in 1:ensemble_nsims
         ews_result, null_ews_result = calculate_ews_metrics_for_simulation(
@@ -461,9 +466,15 @@ function create_cached_simulation_data(
             ews_enddate_type
         )
         if Try.isok(ews_result)
-            ews_metrics[sim] = Try.unwrap(ews_result)
-            null_ews_metrics[sim] = Try.unwrap(null_ews_result)
+            push!(ews_metrics, Try.unwrap(ews_result))
+            push!(null_ews_metrics, Try.unwrap(null_ews_result))
+            push!(valid_sim_indices, sim)
         end
+    end
+
+    # Ensure we have at least some valid simulations
+    if isempty(ews_metrics)
+        error("No valid EWS metrics could be computed for any simulation")
     end
 
     return CachedSimulationData(
@@ -574,11 +585,7 @@ Validates specification vectors before creating combinations.
     #     )
     # )
     #
-    scenarios_vec = mapreduce(
-        vcat,
-        combinations
-        # init = Vector{OptimizationScenario}(undef, 0)
-    ) do (
+    scenarios_vec = mapreduce(vcat, combinations; init = OptimizationScenario[]) do (
                 noise_spec,
                 test_spec,
                 percent_tested,

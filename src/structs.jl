@@ -682,28 +682,24 @@ end
 
 method_string(method::EWSMethod) = lowercase(split(string(method), "::")[1])
 
-struct EWSMetrics{
-        T1 <: EWSMetricSpecification,
-        T2 <: AbstractFloat,
-        T3 <: AbstractArray{T2},
-    }
-    ews_specification::T1
-    mean::T3
-    variance::T3
-    coefficient_of_variation::T3
-    index_of_dispersion::T3
-    skewness::T3
-    kurtosis::T3
-    autocovariance::T3
-    autocorrelation::T3
-    mean_tau::T2
-    variance_tau::T2
-    coefficient_of_variation_tau::T2
-    index_of_dispersion_tau::T2
-    skewness_tau::T2
-    kurtosis_tau::T2
-    autocovariance_tau::T2
-    autocorrelation_tau::T2
+struct EWSMetrics
+    ews_specification::EWSMetricSpecification
+    mean::Vector{Float64}
+    variance::Vector{Float64}
+    coefficient_of_variation::Vector{Float64}
+    index_of_dispersion::Vector{Float64}
+    skewness::Vector{Float64}
+    kurtosis::Vector{Float64}
+    autocovariance::Vector{Float64}
+    autocorrelation::Vector{Float64}
+    mean_tau::Float64
+    variance_tau::Float64
+    coefficient_of_variation_tau::Float64
+    index_of_dispersion_tau::Float64
+    skewness_tau::Float64
+    kurtosis_tau::Float64
+    autocovariance_tau::Float64
+    autocorrelation_tau::Float64
 end
 
 abstract type AbstractEWSThresholdWindowType end

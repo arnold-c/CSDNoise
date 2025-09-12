@@ -83,12 +83,12 @@ calculate_beta_amp_impl(beta_mean, beta_force, t, ::SineSeasonality) =
 Calculate the effective reproduction number, R_eff, at each time step for a given set of parameters and contact matrix.
 """
 function calculateReffective_t!(
-        Reff_vec::Vector{Float64},
+        Reff_vec::AbstractVector{Float64},
         beta_vec::Vector{Float64},
         dynamics_params,
         contact_mat::Int64,
-        seir_arr::Matrix{Int64}
-    )::Float64
+        seir_arr::AbstractMatrix{Int64}
+    )::Nothing
     for i in eachindex(Reff_vec)
         Reff_vec[i] = calculateReffective(
             beta_vec[i],
@@ -173,8 +173,8 @@ function calculateR0(beta::Float64, gamma::Float64, mu::Float64, contact_mat::In
         convert(Float64, beta),
         convert(Float64, gamma),
         convert(Float64, mu),
-        convert(Array{Float64}, [contact_mat]),
-        convert(Array{Float64}, [pop_matrix]),
+        reshape([Float64(contact_mat)], 1, 1),
+        reshape([Float64(pop_matrix)], 1, 1),
     )
 end
 

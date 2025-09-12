@@ -87,8 +87,8 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
             ensemble_beta_arr,
             SVector(state_parameters.init_states),
             dynamics_parameters[sim],
-            time_parameters;
-            seed = run_seed,
+            time_parameters,
+            run_seed,
         )
     end
 

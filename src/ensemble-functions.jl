@@ -205,8 +205,8 @@ function run_jump_prob(ensemble_param_dict)
             ensemble_beta_arr,
             state_parameters.init_states,
             dynamics_parameters[sim],
-            time_parameters;
-            seed = run_seed,
+            time_parameters,
+            run_seed,
         )
     end
 

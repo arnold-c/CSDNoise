@@ -60,7 +60,7 @@ using StaticArrays
                 dynamics_params.beta_mean,
                 dynamics_params.beta_force,
                 100.0;
-                seasonality = cos
+                seasonality = SeasonalityFunction(CosineSeasonality())
             )
         end
 

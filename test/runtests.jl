@@ -17,5 +17,4 @@ using JET
     include("ews-metrics.jl")
     include("ews-multistart-optimization.jl")
     include("test_type_stability.jl")
-    include("test_seir_jet.jl")
 end

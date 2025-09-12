@@ -50,7 +50,7 @@ end
 
 Generate a single ensemble simulation with the given specification and seed.
 """
-function generate_single_ensemble(ensemble_spec; seed)
+function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::Int64)
     @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims = ensemble_spec
     @unpack tstep, tlength, trange = time_parameters
 
@@ -76,9 +76,10 @@ function generate_single_ensemble(ensemble_spec; seed)
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
 
-        dynamics_parameters[sim] = DynamicsParameters(
+        local dynp = DynamicsParameters(
             dynamics_parameter_specification; seed = run_seed
         )
+        dynamics_parameters[sim] = dynp
 
         seir_mod!(
             @view(ensemble_seir_vecs[:, sim]),
@@ -489,7 +490,7 @@ function create_ensemble_specs(nsims)
     )
 
     ensemble_dynamics_specification = DynamicsParameterSpecification(
-        beta_mean, 0.0, cos, SIGMA, GAMMA, mu, 27, epsilon, R0,
+        beta_mean, 0.0, cos, SIGMA, GAMMA, mu, 27.0, epsilon, R0,
         min_burnin_vaccination_coverage, 1.0, 0.6, 0.8
     )
 

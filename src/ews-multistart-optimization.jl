@@ -321,10 +321,12 @@ function ews_objective_function_with_tracking(
         exceeds_threshold = expanding_ews_thresholds(
             ews_vals,
             ews_metric_symbol,
-            ews_threshold_window;
-            percentiles = threshold_percentile,
-            burn_in = ews_threshold_burnin,
-        )[2]
+            ews_threshold_window,
+            threshold_percentile,
+            ews_threshold_burnin,
+            # percentiles = threshold_percentile,
+            # burn_in = ews_threshold_burnin,
+        )
 
         detection_index = calculate_ews_trigger_index(
             exceeds_threshold;
@@ -334,10 +336,12 @@ function ews_objective_function_with_tracking(
         null_exceeds_threshold = expanding_ews_thresholds(
             null_ews_vals,
             ews_metric_symbol,
-            ews_threshold_window;
-            percentiles = threshold_percentile,
-            burn_in = ews_threshold_burnin,
-        )[2]
+            ews_threshold_window,
+            threshold_percentile,
+            ews_threshold_burnin,
+            # percentiles = threshold_percentile,
+            # burn_in = ews_threshold_burnin,
+        )
 
         null_detection_index = calculate_ews_trigger_index(
             null_exceeds_threshold;

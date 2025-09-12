@@ -466,8 +466,6 @@ Returns ensemble_specification, null_specification, and outbreak_specification.
 """
 function create_ensemble_specs(nsims)
     # Base configuration
-    ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
-
     burnin_years = 5
     nyears = 20
     ensemble_time_specification = SimTimeParameters(;
@@ -507,13 +505,17 @@ function create_ensemble_specs(nsims)
 
     # Create specifications with specified number of simulations
     ensemble_specification = EnsembleSpecification(
-        ensemble_model_type, ensemble_state_specification,
-        ensemble_dynamics_specification, ensemble_time_specification, nsims
+        ensemble_state_specification,
+        ensemble_dynamics_specification,
+        ensemble_time_specification,
+        nsims
     )
 
     null_specification = EnsembleSpecification(
-        ensemble_model_type, ensemble_state_specification,
-        null_dynamics_specification, ensemble_time_specification, nsims
+        ensemble_state_specification,
+        null_dynamics_specification,
+        ensemble_time_specification,
+        nsims
     )
 
     outbreak_specification = OutbreakSpecification(5, 30, 500)

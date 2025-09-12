@@ -13,7 +13,8 @@ export outdir, sentencecase
 include("transmission-functions.jl")
 export calculate_beta, calculate_beta_amp,
     calculateReffective, calculateReffective_t!, calculateR0,
-    calculate_import_rate, calculate_mu
+    calculate_import_rate, calculate_mu,
+    SeasonalityFunction, CosineSeasonality, SineSeasonality
 # @reexport using .TransmissionFunctions
 
 include("dynamics-constants.jl")

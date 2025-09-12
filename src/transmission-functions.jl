@@ -1,6 +1,14 @@
 # module TransmissionFunctions
 
 using LinearAlgebra
+using LightSumTypes: @sumtype, variant
+
+# Define seasonality function variants
+struct CosineSeasonality end
+struct SineSeasonality end
+
+# Create sum type for seasonality functions
+@sumtype SeasonalityFunction(CosineSeasonality, SineSeasonality)
 
 # export calculate_beta, calculateR0, calculate_import_rate
 
@@ -52,15 +60,22 @@ end
 
 
 """
-    calculate_beta_amp(beta_mean, beta_force, t)
+    calculate_beta_amp(beta_mean, beta_force, t; seasonality)
 
 Calculate the amplitude of the transmission rate beta as a function of time.
 `beta_mean` is the mean transmission rate, `beta_force` is the amplitude of the `seasonality` function.
-`seasonality` defaults to using the `cosine` function
+`seasonality` should be a SeasonalityFunction sum type.
 """
 function calculate_beta_amp(beta_mean, beta_force, t; seasonality)
-    return beta_mean * (1 + beta_force * seasonality(2pi * t / 365))
+    return calculate_beta_amp_impl(beta_mean, beta_force, t, variant(seasonality))
 end
+
+# Dispatch on the extracted variant
+calculate_beta_amp_impl(beta_mean, beta_force, t, ::CosineSeasonality) =
+    beta_mean * (1 + beta_force * cos(2π * t / 365))
+
+calculate_beta_amp_impl(beta_mean, beta_force, t, ::SineSeasonality) =
+    beta_mean * (1 + beta_force * sin(2π * t / 365))
 
 """
     calculateReffective_t!(Reff_vec, beta_vec, dynamics_params, contact_mat, pop_matrix, seir_arr)

@@ -316,7 +316,6 @@ function StateParameters(;
 end
 
 struct EnsembleSpecification
-    modeltypes::Tuple
     state_parameters::StateParameters
     dynamics_parameter_specification::DynamicsParameterSpecification
     time_parameters::SimTimeParameters
@@ -325,7 +324,6 @@ struct EnsembleSpecification
 end
 
 function EnsembleSpecification(
-        modeltypes::Tuple,
         state_parameters::StateParameters,
         dynamics_parameter_specification::DynamicsParameterSpecification,
         time_parameters::SimTimeParameters,
@@ -333,7 +331,8 @@ function EnsembleSpecification(
     )
     dirpath = outdir(
         "ensemble",
-        modeltypes...,
+        "seasonal-infectivity-import",
+        "tau-leaping",
         "N_$(state_parameters.init_states.N)",
         "r_$(state_parameters.init_state_props.r_prop)",
         "nsims_$(nsims)",
@@ -352,7 +351,6 @@ function EnsembleSpecification(
     )
 
     return EnsembleSpecification(
-        modeltypes,
         state_parameters,
         dynamics_parameter_specification,
         time_parameters,

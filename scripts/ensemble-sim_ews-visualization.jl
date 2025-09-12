@@ -20,8 +20,6 @@ using ProgressMeter
 include(srcdir("makie-plotting-setup.jl"))
 
 #%%
-ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
-
 burnin_years = 5
 nyears = 20
 burnin_time = 365.0 * burnin_years
@@ -76,7 +74,6 @@ ensemble_dynamics_specification = DynamicsParameterSpecification(
 ensemble_nsims = 100
 
 ensemble_specification = EnsembleSpecification(
-    ensemble_model_type,
     ensemble_state_specification,
     ensemble_dynamics_specification,
     ensemble_time_specification,

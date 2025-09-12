@@ -36,7 +36,6 @@ function main()
     Random.seed!(42)
 
     # Setup ensemble configuration (using realistic parameters from ensemble-sim_ews-optimization.jl)
-    ensemble_model_type = ("seasonal-infectivity-import", "tau-leaping")
 
     burnin_years = 5
     nyears = 20
@@ -104,7 +103,6 @@ function main()
     ensemble_nsims = 30
 
     ensemble_specification = EnsembleSpecification(
-        ensemble_model_type,
         ensemble_state_specification,
         ensemble_dynamics_specification,
         ensemble_time_specification,
@@ -112,7 +110,6 @@ function main()
     )
 
     null_specification = EnsembleSpecification(
-        ensemble_model_type,
         ensemble_state_specification,
         null_dynamics_specification,
         ensemble_time_specification,

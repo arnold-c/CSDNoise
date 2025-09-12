@@ -66,15 +66,15 @@ Calculate the amplitude of the transmission rate beta as a function of time.
 `beta_mean` is the mean transmission rate, `beta_force` is the amplitude of the `seasonality` function.
 `seasonality` should be a SeasonalityFunction sum type.
 """
-function calculate_beta_amp(beta_mean, beta_force, t; seasonality)
-    return calculate_beta_amp_impl(beta_mean, beta_force, t, variant(seasonality))
+function calculate_beta_amp(beta_mean, beta_force, t; seasonality::SeasonalityFunction)
+    return _calculate_beta_amp(beta_mean, beta_force, t, variant(seasonality))
 end
 
 # Dispatch on the extracted variant
-calculate_beta_amp_impl(beta_mean, beta_force, t, ::CosineSeasonality) =
+_calculate_beta_amp(beta_mean, beta_force, t, ::CosineSeasonality) =
     beta_mean * (1 + beta_force * cos(2π * t / 365))
 
-calculate_beta_amp_impl(beta_mean, beta_force, t, ::SineSeasonality) =
+_calculate_beta_amp(beta_mean, beta_force, t, ::SineSeasonality) =
     beta_mean * (1 + beta_force * sin(2π * t / 365))
 
 """

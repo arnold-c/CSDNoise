@@ -216,10 +216,10 @@ Optimize EWS parameters for a single scenario using multistart optimization.
 """
 function optimize_single_scenario(
         scenario::OptimizationScenario,
-        data_arrs::NamedTuple,
-        bounds::NamedTuple,
-        config::NamedTuple
-    )
+        data_arrs::T1,
+        bounds::T2,
+        config::T3
+    ) where {T1 <: NamedTuple, T2 <: NamedTuple, T3 <: NamedTuple}
     @unpack ews_metric = scenario
 
     # Pre-compute expensive simulation data once per scenario
@@ -248,7 +248,6 @@ function optimize_single_scenario(
         config.local_algorithm;
         xtol_rel = config.xtol_rel,
         xtol_abs = config.xtol_abs,
-        # ftol_rel = config.ftol_rel,
         maxeval = config.maxeval,
     )
 
@@ -860,16 +859,16 @@ implementation details because it reasons about tasks, not threads.
 """
 function optimize_scenarios_in_batches(
         missing_scenarios_df::DataFrame,
-        data_arrs::NamedTuple,
-        bounds::NamedTuple,
-        optim_config::NamedTuple;
+        data_arrs::T1,
+        bounds::T2,
+        optim_config::T3;
         batch_size::Int = 10,
         executor = FLoops.SequentialEx(),
         save_every_n::Int = 10,
         save_results = true,
         checkpoint_dir::String = "",
         verbose::Bool = true
-    )
+    ) where {T1 <: NamedTuple, T2 <: NamedTuple, T3 <: NamedTuple}
     n_missing = nrow(missing_scenarios_df)
 
     if n_missing == 0

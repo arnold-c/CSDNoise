@@ -6,13 +6,20 @@
 # using .EnsembleFunctions
 using UnPack
 using LightSumTypes: variant
+using StaticArrays: SVector
 
-create_noise_arr(noise_specification::NoiseSpecification, args...; kwargs...) = create_noise_arr(variant(noise_specification), args...; kwargs...)
+function create_noise_arr(
+        noise_specification::NoiseSpecification,
+        args...;
+        kwargs...
+    )
+    return create_noise_arr(variant(noise_specification), args...; kwargs...)
+end
 
 function create_noise_arr(
         noise_specification::DynamicalNoise,
-        incarr;
-        ensemble_specification::EnsembleSpecification,
+        incarr,
+        ensemble_specification::EnsembleSpecification;
         seed = 1234,
         kwargs...,
     )
@@ -89,7 +96,7 @@ function create_noise_arr(
             @view(ensemble_seir_vecs[:, sim]),
             @view(ensemble_inc_vecs[:, sim]),
             ensemble_beta_arr,
-            state_parameters.init_states,
+            SVector(state_parameters.init_states),
             noise_dynamics_parameters[sim],
             time_parameters,
             run_seed,
@@ -134,7 +141,8 @@ end
 
 function create_noise_arr(
         noise_specification::PoissonNoise,
-        incarr;
+        incarr,
+        ensemble_specification::EnsembleSpecification;
         seed = 1234,
         kwargs...,
     )

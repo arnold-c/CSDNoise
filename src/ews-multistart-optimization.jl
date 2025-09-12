@@ -426,8 +426,8 @@ function create_cached_simulation_data(
     # Create noise array once per scenario (expensive operation)
     noisearr = create_noise_arr(
         noise_specification,
-        ensemble_single_incarr;
-        ensemble_specification = ensemble_specification,
+        ensemble_single_incarr,
+        ensemble_specification;
         seed = 1234,
     )[1]
 

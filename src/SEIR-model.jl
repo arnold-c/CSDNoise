@@ -47,8 +47,8 @@ end
 The in-place function to run the SEIR model and produce the transmission rate array.
 """
 function seir_mod!(
-        state_vec::Vector{SVector{5, Int64}},
-        inc_vec::Vector{SVector{1, Int64}},
+        state_vec::Union{SubArray{SVector{5, Int64}}, Vector{SVector{5, Int64}}},
+        inc_vec::Union{SubArray{SVector{1, Int64}}, Vector{SVector{1, Int64}}},
         beta_vec::Vector{Float64},
         states::SVector{5, Int64},
         dynamics_params::DynamicsParameters,

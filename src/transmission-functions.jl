@@ -17,8 +17,8 @@ julia> calculate_beta(2.0, 1 / 8, 0.0, ones(1, 1), [1_000])
 """
 # TODO: Currently only works when the populations are the same size as each other, and doesn't account for an exposed state.
 function calculate_beta(
-    R_0::T, gamma::T, mu::T, contact_mat::Array{T}, pop_matrix::Array{T}
-) where {T<:AbstractFloat}
+        R_0::T, gamma::T, mu::T, contact_mat::Array{T}, pop_matrix::Array{T}
+    ) where {T <: AbstractFloat}
     if size(contact_mat, 1) == size(contact_mat, 2)
         nothing
     else
@@ -50,6 +50,7 @@ function calculate_beta(R_0, gamma, mu, contact_mat, pop_matrix)
     )
 end
 
+
 """
     calculate_beta_amp(beta_mean, beta_force, t)
 
@@ -57,7 +58,7 @@ Calculate the amplitude of the transmission rate beta as a function of time.
 `beta_mean` is the mean transmission rate, `beta_force` is the amplitude of the `seasonality` function.
 `seasonality` defaults to using the `cosine` function
 """
-function calculate_beta_amp(beta_mean, beta_force, t; seasonality = cos)
+function calculate_beta_amp(beta_mean, beta_force, t; seasonality)
     return beta_mean * (1 + beta_force * seasonality(2pi * t / 365))
 end
 
@@ -67,8 +68,12 @@ end
 Calculate the effective reproduction number, R_eff, at each time step for a given set of parameters and contact matrix.
 """
 function calculateReffective_t!(
-    Reff_vec, beta_vec, dynamics_params, contact_mat, seir_arr
-)
+        Reff_vec::Vector{Float64},
+        beta_vec::Vector{Float64},
+        dynamics_params,
+        contact_mat::Int64,
+        seir_arr::Matrix{Int64}
+    )::Float64
     for i in eachindex(Reff_vec)
         Reff_vec[i] = calculateReffective(
             beta_vec[i],
@@ -88,15 +93,19 @@ end
 Calculate the effective reproduction number, R_eff, for a given set of parameters and contact matrix.
 """
 function calculateReffective(
-    beta_t, dynamics_params, contact_mat, S, N
-)
+        beta_t::Float64,
+        dynamics_params,
+        contact_mat::Int64,
+        S::Int64,
+        N::Int64
+    )::Float64
     s_prop = S / N
 
     Reff =
         calculateR0(
-            beta_t, dynamics_params.gamma, dynamics_params.mu, contact_mat,
-            N
-        ) * s_prop
+        beta_t, dynamics_params.gamma, dynamics_params.mu, contact_mat,
+        N
+    ) * s_prop
 
     return Reff
 end
@@ -118,8 +127,8 @@ julia> calculateR0(0.00025, 1 / 8, 0.0, ones(1, 1), [1_000])
 * * *
 """
 function calculateR0(
-    beta::T, gamma::T, mu::T, contact_mat::Array{T}, pop_matrix::Array{T}
-) where {T<:AbstractFloat}
+        beta::T, gamma::T, mu::T, contact_mat::Matrix{T}, pop_matrix::Matrix{T}
+    )::Float64 where {T <: AbstractFloat}
     if size(contact_mat, 1) == size(contact_mat, 2)
         nothing
     else
@@ -144,7 +153,7 @@ function calculateR0(
     return R_0
 end
 
-function calculateR0(beta, gamma, mu, contact_mat, pop_matrix)
+function calculateR0(beta::Float64, gamma::Float64, mu::Float64, contact_mat::Int64, pop_matrix::Int64)::Float64
     return calculateR0(
         convert(Float64, beta),
         convert(Float64, gamma),

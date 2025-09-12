@@ -36,10 +36,10 @@ function SimTimeParameters(;
     )
 end
 
-struct DynamicsParameterSpecification
+struct DynamicsParameterSpecification{F <: Function}
     beta_mean::Float64
     beta_force::Float64
-    seasonality::Function
+    seasonality::F
     sigma::Float64
     gamma::Float64
     mu::Float64
@@ -202,10 +202,10 @@ function calculate_vaccination_rate_to_achieve_Reff(
     return round(vaccination_coverage; digits = 4)
 end
 
-struct DynamicsParameters
+struct DynamicsParameters{F <: Function}
     beta_mean::Float64
     beta_force::Float64
-    seasonality::Function
+    seasonality::F
     sigma::Float64
     gamma::Float64
     mu::Float64

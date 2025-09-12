@@ -91,8 +91,8 @@ function create_noise_arr(
             ensemble_beta_arr,
             state_parameters.init_states,
             noise_dynamics_parameters[sim],
-            time_parameters;
-            seed = run_seed,
+            time_parameters,
+            run_seed,
         )
     end
 

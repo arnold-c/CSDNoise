@@ -65,8 +65,8 @@ using StaticArrays
                 ensemble_beta_arr,
                 SVector(state_parameters.init_states),
                 dynamics_params,
-                time_parameters;
-                seed = 42
+                time_parameters,
+                42
             )
 
         end

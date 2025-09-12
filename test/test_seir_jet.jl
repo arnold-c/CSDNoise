@@ -40,8 +40,8 @@ using StaticArrays
             beta_vec,
             initial_states,
             dynamics_params,
-            time_params;
-            seed = 42
+            time_params,
+            42
         )
     end
 

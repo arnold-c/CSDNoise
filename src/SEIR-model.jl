@@ -12,6 +12,7 @@ using Distributions: Poisson, Binomial
 using Random
 using UnPack
 using StaticArrays
+using LabelledArrays: SLVector
 
 """
     seir_mod(states, dynamics_params, trange; tstep, type = "stoch")
@@ -22,7 +23,7 @@ function seir_mod(
         states::SVector{5, Int64},
         dynamics_params::DynamicsParameters,
         time_params::SimTimeParameters;
-        seed = 1234
+        seed::Int64 = 1234
     )
     state_vec = Vector{typeof(states)}(undef, time_params.tlength)
     beta_vec = Vector{Float64}(undef, time_params.tlength)
@@ -34,8 +35,8 @@ function seir_mod(
         beta_vec,
         states,
         dynamics_params,
-        time_params;
-        seed = seed,
+        time_params,
+        seed,
     )
 
     return state_vec, inc_vec, beta_vec
@@ -47,13 +48,13 @@ end
 The in-place function to run the SEIR model and produce the transmission rate array.
 """
 function seir_mod!(
-        state_vec::Union{SubArray{SVector{5, Int64}}, Vector{SVector{5, Int64}}},
-        inc_vec::Union{SubArray{SVector{1, Int64}}, Vector{SVector{1, Int64}}},
+        state_vec::AbstractVector,
+        inc_vec::AbstractVector{SVector{1, Int64}},
         beta_vec::Vector{Float64},
         states::SVector{5, Int64},
         dynamics_params::DynamicsParameters,
-        time_params::SimTimeParameters;
-        seed = 1234,
+        time_params::SimTimeParameters,
+        seed::Int64,
     )
     Random.seed!(seed)
 
@@ -87,8 +88,8 @@ function seir_mod!(
             vaccination_coverage = dynamics_params.vaccination_coverage
         end
 
-        state_vec[i], inc_vec[i] = seir_mod_loop!(
-            state_vec[i - 1],
+        new_state, new_inc = seir_mod_loop!(
+            SVector(state_vec[i - 1]),
             beta_vec[i],
             mu,
             epsilon,
@@ -98,6 +99,8 @@ function seir_mod!(
             vaccination_coverage,
             timestep,
         )
+        state_vec[i] = SLVector(S = new_state[1], E = new_state[2], I = new_state[3], R = new_state[4], N = new_state[5])
+        inc_vec[i] = new_inc
     end
 
     return nothing

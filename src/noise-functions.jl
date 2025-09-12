@@ -31,10 +31,12 @@ function create_noise_arr(
     end
 
     noise_seasonality = if noise_specification.correlation == "out-of-phase"
-        if dynamics_parameter_specification.seasonality == cos
-            sin
-        elseif dynamics_parameter_specification.seasonality == sin
-            cos
+        if variant(dynamics_parameter_specification.seasonality) isa CosineSeasonality
+            SeasonalityFunction(SineSeasonality())
+        elseif variant(dynamics_parameter_specification.seasonality) isa SineSeasonality
+            SeasonalityFunction(CosineSeasonality())
+        else
+            dynamics_parameter_specification.seasonality
         end
     else
         dynamics_parameter_specification.seasonality

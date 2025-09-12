@@ -11,7 +11,7 @@ using Distributions: Distributions
 using Random: Random
 using UnPack: @unpack
 using Dates: Dates
-using LightSumTypes: @sumtype, variant
+using LightSumTypes: variant
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -36,10 +36,10 @@ function SimTimeParameters(;
     )
 end
 
-struct DynamicsParameterSpecification{F <: Function}
+struct DynamicsParameterSpecification
     beta_mean::Float64
     beta_force::Float64
-    seasonality::F
+    seasonality::SeasonalityFunction
     sigma::Float64
     gamma::Float64
     mu::Float64
@@ -202,10 +202,10 @@ function calculate_vaccination_rate_to_achieve_Reff(
     return round(vaccination_coverage; digits = 4)
 end
 
-struct DynamicsParameters{F <: Function}
+struct DynamicsParameters
     beta_mean::Float64
     beta_force::Float64
-    seasonality::F
+    seasonality::SeasonalityFunction
     sigma::Float64
     gamma::Float64
     mu::Float64

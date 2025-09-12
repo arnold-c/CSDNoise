@@ -32,7 +32,7 @@ using StaticArrays
 
         # Test array allocations used in generate_single_ensemble
         @testset "Array allocations" begin
-            @test_opt Vector{DynamicsParameters}(undef, nsims)
+            @test_opt Vector{DynamicsParameters}(undef, ensemble_spec.nsims)
         end
 
         @testset "Core simulation loop components" begin

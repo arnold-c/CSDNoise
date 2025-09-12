@@ -490,7 +490,7 @@ function create_ensemble_specs(nsims)
     )
 
     ensemble_dynamics_specification = DynamicsParameterSpecification(
-        beta_mean, 0.0, cos, SIGMA, GAMMA, mu, 27.0, epsilon, R0,
+        beta_mean, 0.0, SeasonalityFunction(CosineSeasonality()), SIGMA, GAMMA, mu, 27.0, epsilon, R0,
         min_burnin_vaccination_coverage, 1.0, 0.6, 0.8
     )
 

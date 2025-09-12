@@ -51,10 +51,10 @@ end
 function expanding_ews_thresholds(
         ewsmetrics::T1,
         metric::T2,
-        window_type::EWSThresholdWindowType;
-        percentiles = (0.8, 0.95),
-        burn_in = Dates.Day(10),
-    ) where {T1 <: EWSMetrics, T2 <: Symbol}
+        window_type::EWSThresholdWindowType,
+        percentile::Float64 = 0.95,
+        burn_in::P = Dates.Day(10),
+    ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
     ews_vec = get_ews_metric_vec(ewsmetrics, metric)
 
     @unpack aggregation = ewsmetrics.ews_specification
@@ -64,31 +64,29 @@ function expanding_ews_thresholds(
 
     return _expanding_ews_thresholds(
         ews_vec,
-        percentiles,
+        percentile,
         burn_in_index,
     )
 end
 
 function _expanding_ews_thresholds(
-        ews_vec::Vector{F},
-        percentiles,
-        burn_in_index::T1,
-    ) where {T1 <: Integer, F <: AbstractFloat}
+        ews_vec::Vector{Float64},
+        percentile::Float64,
+        burn_in_index::Int64,
+    )
+    # ) where {T1 <: Integer, F <: AbstractFloat}
     ews_vec_len = length(ews_vec)
-    ews_distributions = fill(NaN, ews_vec_len, length(percentiles))
+    ews_distributions = fill(NaN, ews_vec_len)
     ews_worker_vec = fill(
         NaN, sum((!isnan).(ews_vec))
     )
-    exceeds_thresholds = zeros(
-        Bool,
-        length(ews_vec), length(percentiles),
-    )
+    exceeds_thresholds = zeros(Bool, ews_vec_len)
 
     worker_ind = 0
     for i in eachindex(ews_vec)
         if isnan(ews_vec[i])
             if i > burn_in_index
-                ews_distributions[i, :] .= ews_distributions[(i - 1), :]
+                ews_distributions[i] = ews_distributions[(i - 1)]
             end
             continue
         end
@@ -96,20 +94,18 @@ function _expanding_ews_thresholds(
         # use online stats to build up new distribution to avoid computing quantiles for vectors containing NaNs
         ews_worker_vec[worker_ind] = ews_vec[i]
         if i > burn_in_index
-            for (j, p) in pairs(percentiles)
-                ews_distributions[i, j] = StatsBase.quantile(
-                    @view(ews_worker_vec[1:worker_ind]),
-                    p
-                )
-            end
+            ews_distributions[i] = StatsBase.quantile(
+                @view(ews_worker_vec[1:worker_ind]),
+                percentile
+            )
 
-            exceeds_thresholds[i, :] .= ews_vec[i] .>= ews_distributions[(i - 1), :]
+            exceeds_thresholds[i] = ews_vec[i] >= ews_distributions[(i - 1)]
         end
     end
 
     @assert worker_ind == length(ews_worker_vec)
 
-    return ews_distributions, exceeds_thresholds, ews_worker_vec
+    return exceeds_thresholds
 end
 
 function calculate_ews_enddate(

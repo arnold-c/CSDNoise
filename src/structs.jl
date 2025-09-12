@@ -738,14 +738,14 @@ struct Outbreak_end end
 Struct representing a single optimization scenario with all necessary parameters
 for EWS hyperparameter optimization.
 """
-struct OptimizationScenario
+struct OptimizationScenario{P <: Dates.Period}
     noise_specification::NoiseSpecification
     test_specification::IndividualTestSpecification
     percent_tested::Float64
     ews_metric_specification::EWSMetricSpecification
     ews_enddate_type::EWSEndDateType
     ews_threshold_window::EWSThresholdWindowType
-    ews_threshold_burnin::Dates.Period
+    ews_threshold_burnin::P
     ews_metric::String
 end
 

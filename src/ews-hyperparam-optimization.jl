@@ -34,12 +34,10 @@ function ews_hyperparam_optimization(
             percent_tested = Float64[],
             ews_metric_specification = EWSMetricSpecification[],
             ews_enddate_type = EWSEndDateType[],
-            ews_threshold_window = Union{
-                Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
-            }[],
+            ews_threshold_window = EWSThresholdWindowType[],
             ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
             ews_threshold_percentile = Float64[],
-            ews_consecutive_thresholds = Int[],
+            ews_consecutive_thresholds = Int64[],
             ews_metric = String[],
         ),
         subset_optimal_parameters = [],
@@ -157,9 +155,7 @@ function ews_hyperparam_gridsearch(
             percent_tested = Float64[],
             ews_metric_specification = EWSMetricSpecification[],
             ews_enddate_type = EWSEndDateType[],
-            ews_threshold_window = Union{
-                Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
-            }[],
+            ews_threshold_window = EWSThresholdWindowType[],
             ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
             ews_threshold_percentile = Float64[],
             ews_consecutive_thresholds = Int[],
@@ -327,9 +323,7 @@ function ews_hyperparam_gridsearch!(
             percent_tested = Float64[],
             ews_metric_specification = EWSMetricSpecification[],
             ews_enddate_type = EWSEndDateType[],
-            ews_threshold_window = Union{
-                Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
-            }[],
+            ews_threshold_window = EWSThresholdWindowType[],
             ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
             ews_threshold_percentile = Float64[],
             ews_consecutive_thresholds = Int[],
@@ -400,8 +394,8 @@ function ews_hyperparam_gridsearch!(
 
         noisearr = create_noise_arr(
             noise_specification,
-            ensemble_single_incarr;
-            ensemble_specification = ensemble_specification,
+            ensemble_single_incarr,
+            ensemble_specification;
             seed = 1234,
         )[1]
 
@@ -465,20 +459,20 @@ function ews_hyperparam_gridsearch!(
                 fill!(ews_vals_vec, missing)
                 fill!(null_ews_vals_vec, missing)
 
-                exceeds_threshold_arr = Array{Matrix{Bool}, 2}(
-                    undef, size(testarr, 3), length(missing_ews_metric_vec)
+                # exceeds_threshold_arr = Array{Matrix{Bool}, 2}(
+                #     undef, size(testarr, 3), length(missing_ews_metric_vec)
+                # )
+                # null_exceeds_threshold_arr = Array{Matrix{Bool}, 2}(
+                #     undef, size(testarr, 3), length(missing_ews_metric_vec)
+                # )
+
+                # Fill with 0 as not a valid index in julia so can filter out later
+                detection_index_arr = zeros(
+                    Int64, size(testarr, 3), length(missing_ews_metric_vec)
                 )
-                null_exceeds_threshold_arr = Array{Matrix{Bool}, 2}(
-                    undef, size(testarr, 3), length(missing_ews_metric_vec)
+                null_detection_index_arr = zeros(
+                    Int64, size(testarr, 3), length(missing_ews_metric_vec)
                 )
-                detection_index_arr = Array{Union{Nothing, Int64}, 2}(
-                    undef, size(testarr, 3), length(missing_ews_metric_vec)
-                )
-                null_detection_index_arr = Array{Union{Nothing, Int64}, 2}(
-                    undef, size(testarr, 3), length(missing_ews_metric_vec)
-                )
-                fill!(detection_index_arr, nothing)
-                fill!(null_detection_index_arr, nothing)
 
                 for sim in axes(testarr, 3)
                     enddate = calculate_ews_enddate(
@@ -500,31 +494,38 @@ function ews_hyperparam_gridsearch!(
                         )
 
                         for (j, ews_metric) in pairs(missing_ews_metric_vec)
-                            exceeds_threshold_arr[sim, j] = expanding_ews_thresholds(
+                            exceeds_thresholds = expanding_ews_thresholds(
                                 ews_vals_vec[sim],
                                 Symbol(ews_metric),
-                                ews_threshold_window;
-                                percentiles = ews_threshold_percentile,
-                                burn_in = ews_threshold_burnin,
-                            )[2]
-
-                            detection_index_arr[sim, j] = Try.@? calculate_ews_trigger_index(
-                                exceeds_threshold_arr[sim, j];
-                                consecutive_thresholds = ews_consecutive_thresholds,
+                                ews_threshold_window,
+                                ews_threshold_percentile,
+                                ews_threshold_burnin,
                             )
 
-                            null_exceeds_threshold_arr[sim, j] = expanding_ews_thresholds(
+                            detection_index_result = calculate_ews_trigger_index(
+                                exceeds_thresholds,
+                                ews_consecutive_thresholds,
+                            )
+                            if Try.isok(detection_index_result)
+                                detection_index_arr[sim, j] = Try.unwrap(detection_index_result)
+                            end
+
+                            null_exceeds_thresholds = expanding_ews_thresholds(
                                 null_ews_vals_vec[sim],
                                 Symbol(ews_metric),
-                                ews_threshold_window;
-                                percentiles = ews_threshold_percentile,
-                                burn_in = ews_threshold_burnin,
-                            )[2]
-
-                            null_detection_index_arr[sim, j] = Try.@? calculate_ews_trigger_index(
-                                null_exceeds_threshold_arr[sim, j];
-                                consecutive_thresholds = ews_consecutive_thresholds,
+                                ews_threshold_window,
+                                ews_threshold_percentile,
+                                ews_threshold_burnin,
                             )
+
+                            null_detection_index_result = calculate_ews_trigger_index(
+                                null_exceeds_thresholds,
+                                ews_consecutive_thresholds,
+                            )
+                            if Try.isok(null_detection_index_result)
+                                null_detection_index_arr[sim, j] = Try.unwrap(null_detection_index_result)
+                            end
+
                         end
 
                     else
@@ -540,10 +541,10 @@ function ews_hyperparam_gridsearch!(
 
                 for (j, ews_metric) in pairs(missing_ews_metric_vec)
                     true_positives = length(
-                        filter(!isnothing, detection_index_arr[:, j])
+                        filter(!(==(0)), detection_index_arr[:, j])
                     )
                     true_negatives = length(
-                        filter(isnothing, null_detection_index_arr[:, j])
+                        filter(==(0), null_detection_index_arr[:, j])
                     )
                     sensitivity = true_positives / ensemble_nsims
                     specificity = true_negatives / ensemble_nsims

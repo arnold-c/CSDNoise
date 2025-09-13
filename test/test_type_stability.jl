@@ -230,6 +230,7 @@ end
         end
 
         @testset "Medium Priority Scenario Management Functions" begin
+
             @test_opt target_modules = (CSDNoise,) create_optimization_scenarios(
                 specification_vecs
             )
@@ -238,20 +239,6 @@ end
             scenarios = create_optimization_scenarios(specification_vecs)
             scenario = scenarios[1]
             cached_data = create_cached_simulation_data(scenario, data_arrs)
-
-            # scenario::OptimizationScenario,
-            #     data_arrs::T1,
-            #     bounds::T2,
-            #     config::T3
-            #     config.local_algorithm;
-            #     xtol_rel = config.xtol_rel,
-            #     xtol_abs = config.xtol_abs,
-            #     # ftol_rel = config.ftol_rel,
-            #     maxeval = config.maxeval,
-            # )
-            #
-            # # Configure multistart method (TikTak uses Sobol sequences)
-            # multistart_method = MultistartOptimization.TikTak(config.n_sobol_points)
 
             bounds = (;
                 lowers = [0.5, 2.0],
@@ -287,18 +274,21 @@ end
 
             # Test create_results_dataframe
             scenarios = create_optimization_scenarios(specification_vecs)
-            dummy_results = [
-                (
-                    accuracy = 0.85,
-                    sensitivity = 0.8,
-                    specificity = 0.9,
-                    ews_threshold_percentile = 0.9,
-                    ews_consecutive_thresholds = 5,
-                    loss = 0.15,
-                ),
-            ]
+            dummy_results = StructVector(
+                [
+                    OptimizedValues(
+                        0.9,
+                        5,
+                        0.85,
+                        0.8,
+                        0.9,
+                    ),
+                ]
+            )
+
             @test_opt target_modules = (CSDNoise,) CSDNoise.create_results_dataframe(
-                dummy_results, scenarios[1:1]
+                scenarios,
+                dummy_results,
             )
 
             # Test scenarios_equal

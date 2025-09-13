@@ -28,6 +28,15 @@ mutable struct OptimizationTracker
     end
 end
 
+struct OptimizedValues
+    threshold_percentile::Float64
+    consecutive_thresholds::Int64
+    accuracy::Float64
+    sensitivity::Float64
+    specificity::Float64
+end
+
+
 """
     CachedSimulationData
 
@@ -264,14 +273,12 @@ function optimize_single_scenario(
     # Extract optimal parameters from tracker (which has the best metrics)
     optimal_params = map_continuous_to_ews_parameters(tracker.best_params)
 
-    return (
-        optimal_threshold_percentile = optimal_params.threshold_percentile,
-        optimal_consecutive_thresholds = optimal_params.consecutive_thresholds,
-        accuracy = tracker.best_accuracy,
-        sensitivity = tracker.best_sensitivity,
-        specificity = tracker.best_specificity,
-        # n_evaluations = result.n_calls,
-        # convergence_status = string(result.ret_code),
+    return OptimizedValues(
+        optimal_params.threshold_percentile,
+        optimal_params.consecutive_thresholds,
+        tracker.best_accuracy,
+        tracker.best_sensitivity,
+        tracker.best_specificity,
     )
 end
 
@@ -300,6 +307,7 @@ function ews_objective_function_with_tracking(
         null_ews_metrics = cached_data
 
     # Map continuous parameters to EWS parameters
+    # TODO: Confirm if it's possible to optimize with integer values
     ews_params = map_continuous_to_ews_parameters(params_vec)
 
     # Pre-compute values outside the loop for type stability
@@ -542,52 +550,6 @@ Validates specification vectors before creating combinations.
         ews_metric_vec
     ) |> collect
 
-    # comlen = length(combinations)
-
-    # noise_specs = Vector{Union{PoissonNoiseSpecification{String, Float64}, DynamicalNoiseSpecification{String, Float64, Int64}}}(undef, comlen)
-    # test_specs = Vector{IndividualTestSpecification{Float64, Int64}}(undef, comlen)
-    # perc_test_vec = Vector{Float64}(undef, comlen)
-    # ews_msv = Vector{EWSMetricSpecification{Int64, String}}(undef, comlen)
-    # ews_et = Vector{EWSEndDateType}(undef, comlen)
-    # ews_wv = Vector{EWSThresholdWindowType}(undef, comlen)
-    # burnin = Vector{Dates.Year}(undef, comlen)
-    # ews_mv = Vector{String}(undef, comlen)
-    #
-    # for (
-    #         i, (
-    #             noise_spec,
-    #             test_spec,
-    #             percent_tested,
-    #             ews_metric_spec,
-    #             ews_enddate_type,
-    #             ews_window,
-    #             ews_burnin,
-    #             ews_metric,
-    #         ),
-    #     ) in enumerate(combinations)
-    #     noise_specs[i] = noise_spec
-    #     test_specs[i] = test_spec
-    #     perc_test_vec[i] = percent_tested
-    #     ews_msv[i] = ews_metric_spec
-    #     ews_et[i] = ews_enddate_type
-    #     ews_wv[i] = ews_window
-    #     burnin[i] = ews_burnin
-    #     ews_mv[i] = ews_metric
-    # end
-    #
-    # scenarios_vec = StructVector{OptimizationScenario}(
-    #     (
-    #         noise_specs,
-    #         test_specs,
-    #         perc_test_vec,
-    #         ews_msv,
-    #         ews_et,
-    #         ews_wv,
-    #         burnin,
-    #         ews_mv,
-    #     )
-    # )
-    #
     scenarios_vec = mapreduce(vcat, combinations; init = OptimizationScenario[]) do (
                 noise_spec,
                 test_spec,
@@ -609,13 +571,11 @@ Validates specification vectors before creating combinations.
             ews_metric,
         )
     end
-    # println(typeof(scenarios_vec))
 
-    return scenarios_vec
     # Convert to StructArray for easier manipulation
-    # scenarios::StructVector{OptimizationScenario} = StructVector(scenarios_vec)
-    #
-    # return scenarios
+    scenarios = StructVector(scenarios_vec)
+
+    return scenarios
 end
 
 """
@@ -906,7 +866,7 @@ function optimize_scenarios_in_batches(
         # Process batch in parallel (thread-safe within batch)
         # THREAD SAFETY: Pre-allocate fixed-size array where each task writes to unique index
         # This avoids the threadid() anti-pattern and follows task-based parallelism principles
-        batch_results = Vector{NamedTuple}(undef, batch_size_actual)
+        batch_results = Vector{OptimizedValues}(undef, batch_size_actual)
 
         FLoops.@floop executor for (idx, scenario_row) in pairs(eachrow(batch_scenarios))
             # Convert DataFrame row to NamedTuple
@@ -926,8 +886,11 @@ function optimize_scenarios_in_batches(
 
         # SERIAL PHASE: Convert batch results to DataFrame (single-threaded)
         # All parallel tasks have completed at this point (implicit barrier)
-        batch_scenarios_vec = [dataframe_row_to_scenario(row) for row in eachrow(batch_scenarios)]
-        batch_df = create_results_dataframe(batch_results, batch_scenarios_vec)
+        batch_scenarios_vec = StructVector([dataframe_row_to_scenario(row) for row in eachrow(batch_scenarios)])
+        batch_df = create_results_dataframe(
+            batch_scenarios_vec,
+            StructVector(batch_results),
+        )
 
         # Add to results (single-threaded - no race conditions)
         push!(all_results, batch_df)
@@ -959,14 +922,14 @@ Convert a DataFrame row to an OptimizationScenario struct.
 """
 function dataframe_row_to_scenario(row::DataFrameRow)
     return OptimizationScenario(
-        noise_specification = row.noise_specification,
-        test_specification = row.test_specification,
-        percent_tested = row.percent_tested,
-        ews_metric_specification = row.ews_metric_specification,
-        ews_enddate_type = row.ews_enddate_type,
-        ews_threshold_window = row.ews_threshold_window,
-        ews_threshold_burnin = row.ews_threshold_burnin,
-        ews_metric = row.ews_metric,
+        row.noise_specification,
+        row.test_specification,
+        row.percent_tested,
+        row.ews_metric_specification,
+        row.ews_enddate_type,
+        row.ews_threshold_window,
+        row.ews_threshold_burnin,
+        row.ews_metric,
     )
 end
 
@@ -1199,28 +1162,33 @@ end
 
 Convert optimization results to DataFrame format.
 """
-function create_results_dataframe(results::Vector, scenarios::Vector)
-    @assert length(scenarios) == length(results)
-    df = DataFrame(
-        noise_specification = [s.noise_specification for s in scenarios],
-        test_specification = [s.test_specification for s in scenarios],
-        percent_tested = [s.percent_tested for s in scenarios],
-        ews_metric_specification = [s.ews_metric_specification for s in scenarios],
-        ews_enddate_type = [s.ews_enddate_type for s in scenarios],
-        ews_threshold_window = [s.ews_threshold_window for s in scenarios],
-        ews_metric = [s.ews_metric for s in scenarios],
-        ews_threshold_percentile = [r.optimal_threshold_percentile for r in results],
-        ews_consecutive_thresholds = [r.optimal_consecutive_thresholds for r in results],
-        ews_threshold_burnin = [s.ews_threshold_burnin for s in scenarios],
-        accuracy = [r.accuracy for r in results],
-        sensitivity = [r.sensitivity for r in results],
-        specificity = [r.specificity for r in results],
-        # n_evaluations = [r.n_evaluations for r in results],
-        # convergence_status = [r.convergence_status for r in results],
+function create_results_dataframe(
+        scenarios::StructVector{OptimizationScenario},
+        results::StructVector{OptimizedValues},
     )
-
-
-    return df
+    @assert length(scenarios) == length(results)
+    scenarios_df = DataFrame(scenarios)
+    results_df = DataFrame(results)
+    return hcat(scenarios_df, results_df)
+    # df = DataFrame(
+    #     noise_specification = [s.noise_specification for s in scenarios],
+    #     test_specification = [s.test_specification for s in scenarios],
+    #     percent_tested = [s.percent_tested for s in scenarios],
+    #     ews_metric_specification = [s.ews_metric_specification for s in scenarios],
+    #     ews_enddate_type = [s.ews_enddate_type for s in scenarios],
+    #     ews_threshold_window = [s.ews_threshold_window for s in scenarios],
+    #     ews_metric = [s.ews_metric for s in scenarios],
+    #     # ews_threshold_burnin = [s.ews_threshold_burnin for s in scenarios], # NOTE: type instability as burnin <:Period
+    #     ews_threshold_percentile = [r.optimal_threshold_percentile for r in results],
+    #     ews_consecutive_thresholds = [r.optimal_consecutive_thresholds for r in results],
+    #     accuracy = [r.accuracy for r in results],
+    #     sensitivity = [r.sensitivity for r in results],
+    #     specificity = [r.specificity for r in results],
+    #     # n_evaluations = [r.n_evaluations for r in results],
+    #     # convergence_status = [r.convergence_status for r in results],
+    # )
+    #
+    # return df
 end
 
 """

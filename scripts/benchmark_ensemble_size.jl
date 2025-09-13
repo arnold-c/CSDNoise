@@ -82,7 +82,7 @@ function main()
                 data_arrs;
                 n_sobol_points = n_sobol_points,
                 maxeval = 1000,
-                executor = FLoops.ThreadedEx(),
+                executor = FLoops.SequentialEx(),
                 percentile_bounds = (0.5, 0.99),
                 consecutive_bounds = (2.0, 30.0),
                 force = true,

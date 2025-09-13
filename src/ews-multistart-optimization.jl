@@ -78,6 +78,8 @@ Alternative to grid search that scales better with parameter dimensionality.
 - `return_df`: Return DataFrame of results (default: true)
 - `save_results`: Save results to file (default: true)
 - `verbose`: Print progress information (default: true)
+- `batch_size`: Batch size for processing scenarios. If specified, saves checkpoint after each batch. If `nothing`, runs all multithreaded (default: 10)
+- `disable_time_check`: Skip time estimation confirmation (default: false)
 
 # Returns
 - DataFrame with optimal parameters for each scenario
@@ -110,7 +112,6 @@ function ews_multistart_optimization(
         verbose = true,
         # Caching options
         batch_size = 10,
-        save_every_n = 10,
         disable_time_check = false,
     )
     if !isdir(filedir)
@@ -189,7 +190,6 @@ function ews_multistart_optimization(
         optim_config;
         batch_size = batch_size,
         executor = executor,
-        save_every_n = save_every_n,
         save_results = save_results,
         checkpoint_dir = checkpoint_dir,
         verbose = verbose
@@ -222,6 +222,7 @@ end
     optimize_single_scenario(scenario, data_arrs, bounds, config)
 
 Optimize EWS parameters for a single scenario using multistart optimization.
+Returns an OptimizationResult struct containing both scenario parameters and optimized values.
 """
 function optimize_single_scenario(
         scenario::OptimizationScenario,
@@ -273,12 +274,22 @@ function optimize_single_scenario(
     # Extract optimal parameters from tracker (which has the best metrics)
     optimal_params = map_continuous_to_ews_parameters(tracker.best_params)
 
-    return OptimizedValues(
+    return OptimizationResult(
+        # From scenario
+        scenario.noise_specification,
+        scenario.test_specification,
+        scenario.percent_tested,
+        scenario.ews_metric_specification,
+        scenario.ews_enddate_type,
+        scenario.ews_threshold_window,
+        scenario.ews_threshold_burnin,
+        scenario.ews_metric,
+        # From optimized values
         optimal_params.threshold_percentile,
         optimal_params.consecutive_thresholds,
         tracker.best_accuracy,
         tracker.best_sensitivity,
-        tracker.best_specificity,
+        tracker.best_specificity
     )
 end
 
@@ -307,7 +318,9 @@ function ews_objective_function_with_tracking(
         null_ews_metrics = cached_data
 
     # Map continuous parameters to EWS parameters
-    # TODO: Confirm if it's possible to optimize with integer values
+    # Note: We use continuous optimization with rounding for integer parameters.
+    # This is appropriate since consecutive_thresholds has a small integer range (1-10)
+    # and mixed-integer optimization would be more complex without significant benefit.
     ews_params = map_continuous_to_ews_parameters(params_vec)
 
     # Pre-compute values outside the loop for type stability
@@ -1035,12 +1048,16 @@ function confirm_optimization_run(
 end
 
 """
-    optimize_scenarios_in_batches(
-        missing_scenarios_df, data_arrs, bounds, optim_config;
-        batch_size=10, executor=FLoops.SequentialEx(), save_every_n=5, checkpoint_dir=""
+    optimize_scenarios_in_batches_structvector(
+        missing_scenarios, data_arrs, bounds, optim_config;
+        batch_size=nothing, executor=FLoops.SequentialEx(), save_results=true, checkpoint_dir="", verbose=true
     )
 
 Optimize scenarios in batches with thread safety and incremental saving.
+
+# Behavior:
+- If `batch_size` is specified: Process scenarios in batches and save a checkpoint after each batch
+- If `batch_size` is `nothing`: Run all simulations multithreaded without batching or checkpoints
 
 # Thread Safety Design
 This function follows a fork-join pattern with clear phase separation:
@@ -1067,9 +1084,8 @@ function optimize_scenarios_in_batches_structvector(
         data_arrs::T1,
         bounds::T2,
         optim_config::T3;
-        batch_size::Int = 10,
         executor = FLoops.SequentialEx(),
-        save_every_n::Int = 10,
+        batch_size::Union{Int64, Nothing} = nothing,
         save_results = true,
         checkpoint_dir::String = "",
         verbose::Bool = true
@@ -1081,15 +1097,42 @@ function optimize_scenarios_in_batches_structvector(
         return StructVector(OptimizationResult[])
     end
 
-    # Auto-configure batch size for threaded execution
-    if executor isa FLoops.ThreadedEx
-        if batch_size == 10  # Default value
-            # Choose a bigger batch size than the number of threads so Julia can
-            # allocate tasks to threads appropriately
-            suggested_batch_size = max(1, Threads.nthreads() * 4)
-            batch_size = clamp(suggested_batch_size, 1, 100)
-            verbose && @info "Auto-configured batch size for threading: $batch_size (suggested: $suggested_batch_size)"
+    # If no batch_size specified, run all scenarios multithreaded without checkpointing
+    if isnothing(batch_size)
+        verbose && @info "Running all $n_missing scenarios multithreaded without batching"
+
+        # Setup progress tracking
+        if verbose
+            prog = Progress(n_missing; desc = "Optimizing scenarios: ", showspeed = true)
         end
+
+        # Process all scenarios in parallel
+        FLoops.@floop executor for scenario in missing_scenarios
+            FLoops.@reduce all_results = vcat(
+                OptimizationResult[],
+                optimize_single_scenario(
+                    scenario,
+                    data_arrs,
+                    bounds,
+                    optim_config
+                )
+            )
+        end
+
+        verbose && ProgressMeter.finish!(prog)
+        return StructVector(all_results)
+    end
+
+    # Batched execution with checkpointing
+    verbose && @info "Running $n_missing scenarios in batches of $batch_size with checkpointing"
+
+    # Auto-configure batch size for threaded execution
+    if executor isa FLoops.ThreadedEx && !isnothing(batch_size) # Default value
+        # Choose a bigger batch size than the number of threads so Julia can
+        # allocate tasks to threads appropriately and can use at least as many
+        # tasks as there are threads
+        batch_size < Threads.nthreads() && @warn "Consider setting the batch size to at least the number of threads ($(Threads.nthreads()))"
+        batch_size % Threads.nthreads() == 0 && @warn "Consider setting the batch size to a multiple of the number of threads ($(Threads.nthreads()))"
     end
 
     # Initialize results storage
@@ -1111,8 +1154,8 @@ function optimize_scenarios_in_batches_structvector(
 
         FLoops.@floop executor for scenario in batch_scenarios
             # Direct struct access - no conversion needed!
-            FLoops.@reduce batch_optimized = vcat(
-                OptimizedValues[],
+            FLoops.@reduce batch_results = vcat(
+                OptimizationResult[],
                 optimize_single_scenario(
                     scenario,
                     data_arrs,
@@ -1122,39 +1165,20 @@ function optimize_scenarios_in_batches_structvector(
             )
         end
 
-        # Combine scenarios with their optimized values into OptimizationResult
-        for (scenario, optimized) in zip(batch_scenarios, batch_optimized)
-            push!(
-                all_results, OptimizationResult(
-                    # From scenario
-                    scenario.noise_specification,
-                    scenario.test_specification,
-                    scenario.percent_tested,
-                    scenario.ews_metric_specification,
-                    scenario.ews_enddate_type,
-                    scenario.ews_threshold_window,
-                    scenario.ews_threshold_burnin,
-                    scenario.ews_metric,
-                    # From optimized values
-                    optimized.threshold_percentile,
-                    optimized.consecutive_thresholds,
-                    optimized.accuracy,
-                    optimized.sensitivity,
-                    optimized.specificity
-                )
-            )
-        end
+        # Add batch results to accumulated results
+        append!(all_results, batch_results)
 
         # Update progress
         verbose && ProgressMeter.update!(prog, sum(length.(scenario_batches[1:batch_idx])))
 
-        # Save checkpoint periodically (direct StructVector serialization)
-        if batch_idx % save_every_n == 0 && save_results && !isempty(checkpoint_dir)
+        # Save checkpoint after each batch when batch_size is specified
+        if save_results && !isempty(checkpoint_dir)
             save_checkpoint_structvector(
                 StructVector(all_results),
                 checkpoint_dir,
                 batch_idx
             )
+            verbose && @info "Saved checkpoint after batch $batch_idx"
         end
     end
 

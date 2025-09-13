@@ -540,15 +540,22 @@ function ews_hyperparam_gridsearch!(
                 end
 
                 for (j, ews_metric) in pairs(missing_ews_metric_vec)
+                    # Calculate confusion matrix components
                     true_positives = length(
                         filter(!(==(0)), detection_index_arr[:, j])
                     )
                     true_negatives = length(
                         filter(==(0), null_detection_index_arr[:, j])
                     )
-                    sensitivity = true_positives / ensemble_nsims
-                    specificity = true_negatives / ensemble_nsims
-                    accuracy = (sensitivity + specificity) / 2
+
+                    # Explicit sample counts for each simulation type
+                    n_emergent_sims = size(detection_index_arr, 1)
+                    n_null_sims = size(null_detection_index_arr, 1)
+
+                    # Calculate performance metrics
+                    sensitivity = calculate_sensitivity(true_positives, n_emergent_sims)
+                    specificity = calculate_specificity(true_negatives, n_null_sims)
+                    balanced_accuracy = calculate_balanced_accuracy(sensitivity, specificity)
 
                     push!(
                         ews_df,
@@ -565,7 +572,7 @@ function ews_hyperparam_gridsearch!(
                             ews_metric,
                             true_positives,
                             true_negatives,
-                            accuracy,
+                            balanced_accuracy,
                             sensitivity,
                             specificity,
                         ),

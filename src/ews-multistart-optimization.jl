@@ -328,7 +328,8 @@ function ews_objective_function_with_tracking(
     threshold_percentile = ews_params.threshold_percentile
 
     # Calculate accuracy
-    valid_nsims = length(ews_metrics)
+    n_emergent_sims = length(ews_metrics)
+    n_null_sims = length(null_ews_metrics)
     true_positives = 0
     true_negatives = 0
 
@@ -378,9 +379,9 @@ function ews_objective_function_with_tracking(
     end
 
     # Calculate metrics
-    sensitivity = calculate_sensitivity(true_positives, valid_nsims)
-    specificity = calculate_specificity(true_negatives, valid_nsims)
-    accuracy = calculate_accuracy(sensitivity, specificity)
+    sensitivity = calculate_sensitivity(true_positives, n_emergent_sims)
+    specificity = calculate_specificity(true_negatives, n_null_sims)
+    accuracy = calculate_balanced_accuracy(sensitivity, specificity)
     loss = 1.0 - accuracy
 
     # Update tracker if this is the best solution so far

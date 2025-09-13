@@ -271,7 +271,7 @@ end
             )
 
             # Test create_results_dataframe
-            scenarios = create_optimization_scenarios(specification_vecs)
+            scenarios_sv = create_scenarios_structvector(specification_vecs)
             dummy_results = StructVector(
                 [
                     OptimizedValues(
@@ -285,7 +285,7 @@ end
             )
 
             @test_opt target_modules = (CSDNoise,) CSDNoise.create_results_dataframe(
-                scenarios,
+                scenarios_sv,
                 dummy_results,
             )
 
@@ -293,6 +293,53 @@ end
             scenario1 = scenarios[1]
             scenario2 = scenarios[1]
             @test_opt target_modules = (CSDNoise,) CSDNoise.scenarios_equal(scenario1, scenario2)
+
+            # Test find_missing_scenarios_structvector when no scenarios missing
+            @test_opt target_modules = (CSDNoise,) CSDNoise.find_missing_scenarios_structvector(
+                scenarios_sv, StructVector(
+                    [
+                        OptimizationResult(
+                            scenarios[1].noise_specification,
+                            scenarios[1].test_specification,
+                            scenarios[1].percent_tested,
+                            scenarios[1].ews_metric_specification,
+                            scenarios[1].ews_enddate_type,
+                            scenarios[1].ews_threshold_window,
+                            scenarios[1].ews_threshold_burnin,
+                            scenarios[1].ews_metric,
+                            dummy_results[1].threshold_percentile,
+                            dummy_results[1].consecutive_thresholds,
+                            dummy_results[1].accuracy,
+                            dummy_results[1].sensitivity,
+                            dummy_results[1].specificity,
+                        ),
+                    ]
+                )
+            )
+
+            # Change metric so there is a missing scenario
+            @test_opt target_modules = (CSDNoise,) CSDNoise.find_missing_scenarios_structvector(
+                scenarios_sv, StructVector(
+                    [
+                        OptimizationResult(
+                            scenarios[1].noise_specification,
+                            scenarios[1].test_specification,
+                            scenarios[1].percent_tested,
+                            scenarios[1].ews_metric_specification,
+                            scenarios[1].ews_enddate_type,
+                            scenarios[1].ews_threshold_window,
+                            scenarios[1].ews_threshold_burnin,
+                            "mean",
+                            dummy_results[1].threshold_percentile,
+                            dummy_results[1].consecutive_thresholds,
+                            dummy_results[1].accuracy,
+                            dummy_results[1].sensitivity,
+                            dummy_results[1].specificity,
+                        ),
+                    ]
+                )
+            )
+
         end
     end
 

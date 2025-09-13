@@ -120,9 +120,9 @@ function ews_multistart_optimization(
     # Setup checkpoint directory
     checkpoint_dir = joinpath(filedir, "checkpoints")
 
-    # Create all scenario combinations as DataFrame
-    all_scenarios_df = create_scenarios_dataframe(specification_vecs)
-    n_total_scenarios = nrow(all_scenarios_df)
+    # Create all scenario combinations as StructVector
+    all_scenarios = create_scenarios_structvector(specification_vecs)
+    n_total_scenarios = length(all_scenarios)
 
     if verbose
         println(styled"{green:Starting Multistart Optimization with Caching}")
@@ -131,20 +131,20 @@ function ews_multistart_optimization(
     end
 
     # Load existing results (including checkpoints)
-    existing_results_df = if force
-        create_empty_results_dataframe()
+    existing_results = if force
+        StructVector(OptimizationResult[])
     else
-        load_previous_multistart_results_df(filedir, optimization_filename_base)
+        load_previous_multistart_results_structvector(filedir, optimization_filename_base)
     end
 
-    n_existing = nrow(existing_results_df)
+    n_existing = length(existing_results)
     if verbose && n_existing > 0
         println(styled"Found {cyan:$n_existing} existing results")
     end
 
     # Find missing scenarios
-    missing_scenarios_df = find_missing_scenarios(all_scenarios_df, existing_results_df)
-    n_missing = nrow(missing_scenarios_df)
+    missing_scenarios = find_missing_scenarios_structvector(all_scenarios, existing_results)
+    n_missing = length(missing_scenarios)
 
     if verbose
         println(styled"Missing scenarios to optimize: {yellow:$n_missing}")
@@ -152,17 +152,17 @@ function ews_multistart_optimization(
 
     # Check with user if needed
     if n_missing > 0
-        if !confirm_optimization_run(
-                missing_scenarios_df,
+        if !confirm_optimization_run_structvector(
+                missing_scenarios,
                 n_sobol_points;
                 disable_time_check = disable_time_check
             )
             @info "Optimization cancelled by user"
-            return return_df ? existing_results_df : nothing
+            return return_df ? DataFrame(existing_results) : existing_results
         end
     else
         @info "All scenarios already optimized"
-        return return_df ? existing_results_df : nothing
+        return return_df ? DataFrame(existing_results) : existing_results
     end
 
     # Define parameter bounds (only percentile and consecutive thresholds)
@@ -182,8 +182,8 @@ function ews_multistart_optimization(
     )
 
     # Run optimization for missing scenarios in batches
-    new_results_df = optimize_scenarios_in_batches(
-        missing_scenarios_df,
+    new_results = optimize_scenarios_in_batches_structvector(
+        missing_scenarios,
         data_arrs,
         bounds,
         optim_config;
@@ -196,26 +196,26 @@ function ews_multistart_optimization(
     )
 
     # Combine existing and new results
-    final_results_df = if nrow(existing_results_df) > 0
-        merge_results_safely(existing_results_df, new_results_df)
+    final_results = if !isempty(existing_results)
+        vcat(existing_results, new_results)
     else
-        new_results_df
+        new_results
     end
 
     # Save final results
     if save_results
-        save_results_atomically(final_results_df, optimization_output_filepath)
+        save_results_structvector(final_results, optimization_output_filepath)
 
         # Clean up checkpoints after successful save
         cleanup_checkpoints(checkpoint_dir)
     end
 
     if verbose
-        n_final = nrow(final_results_df)
+        n_final = length(final_results)
         println(styled"{green:Optimization complete! Total results: {yellow:$n_final}}")
     end
 
-    return return_df ? final_results_df : nothing
+    return return_df ? DataFrame(final_results) : final_results
 end
 
 """
@@ -518,10 +518,14 @@ end
 Create a DataFrame containing all scenario combinations for optimization.
 This replaces the nested loop approach with a DataFrame-based approach for better caching.
 """
-function create_scenarios_dataframe(specification_vecs)
-    scenarios = create_optimization_scenarios(specification_vecs) |> StructVector
+function create_scenarios_structvector(specification_vecs)
+    scenarios = create_optimization_scenarios(specification_vecs)
+    return StructVector(scenarios)
+end
 
-    # Convert StructArray to DataFrame
+# Keep old function for backward compatibility
+function create_scenarios_dataframe(specification_vecs)
+    scenarios = create_scenarios_structvector(specification_vecs)
     return DataFrame(scenarios)
 end
 
@@ -574,10 +578,249 @@ Validates specification vectors before creating combinations.
         )
     end
 
-    # Convert to StructArray for easier manipulation
-    scenarios = StructVector(scenarios_vec)
+    return scenarios_vec
+end
 
-    return scenarios
+# StructVector-based I/O functions
+
+"""
+    load_previous_multistart_results_structvector(filedir, filename_base)
+
+Load previous multistart optimization results as StructVector, including checkpoints.
+Returns empty StructVector if no results found.
+"""
+function load_previous_multistart_results_structvector(filedir::String, filename_base::String)
+    if !isdir(filedir)
+        return StructVector(OptimizationResult[])
+    end
+
+    # Get most recent file
+    load_filepath = get_most_recent_hyperparam_filepath(filename_base, filedir)
+
+    if Try.iserr(load_filepath)
+        # Try to load checkpoint files
+        return load_checkpoint_results_structvector(filedir)
+    end
+
+    try
+        data = JLD2.load(Try.unwrap(load_filepath))
+
+        # Try to load as StructVector first (new format)
+        if haskey(data, "multistart_optimization_results")
+            return data["multistart_optimization_results"]::StructVector{OptimizationResult}
+        end
+
+        # Fall back to DataFrame format (old format) and convert
+        if haskey(data, "multistart_optimization_df")
+            df = data["multistart_optimization_df"]
+            return df_to_structvector(df, OptimizationResult)
+        end
+
+        return StructVector(OptimizationResult[])
+    catch
+        # Try to load checkpoint files as fallback
+        return load_checkpoint_results_structvector(filedir)
+    end
+end
+
+"""
+    load_checkpoint_results_structvector(filedir)
+
+Load and merge all checkpoint files in the directory as StructVector.
+"""
+function load_checkpoint_results_structvector(filedir::String)
+    checkpoint_dir = joinpath(filedir, "checkpoints")
+
+    if !isdir(checkpoint_dir)
+        return StructVector(OptimizationResult[])
+    end
+
+    checkpoint_files = filter(
+        f -> endswith(f, ".jld2") && startswith(f, "checkpoint_"),
+        readdir(checkpoint_dir)
+    )
+
+    if isempty(checkpoint_files)
+        return StructVector(OptimizationResult[])
+    end
+
+    all_results = OptimizationResult[]
+
+    for file in checkpoint_files
+        filepath = joinpath(checkpoint_dir, file)
+        try
+            data = JLD2.load(filepath)
+            if haskey(data, "results")
+                results = data["results"]
+                if results isa StructVector{OptimizationResult}
+                    append!(all_results, results)
+                elseif results isa DataFrame
+                    # Convert DataFrame to StructVector
+                    sv = df_to_structvector(results, OptimizationResult)
+                    append!(all_results, sv)
+                end
+            end
+        catch e
+            @warn "Failed to load checkpoint file $file: $e"
+        end
+    end
+
+    return StructVector(all_results)
+end
+
+"""
+    save_results_structvector(results, filepath)
+
+Save StructVector results directly to JLD2 file.
+"""
+function save_results_structvector(results::StructVector{OptimizationResult}, filepath::String)
+    # Ensure directory exists
+    dir = dirname(filepath)
+    !isdir(dir) && mkpath(dir)
+
+    # Create temporary file with .jld2 extension
+    temp_filepath = filepath * ".tmp.jld2"
+
+    return try
+        # Save StructVector directly to JLD2
+        jldsave(temp_filepath; multistart_optimization_results = results)
+
+        # Atomic rename
+        mv(temp_filepath, filepath; force = true)
+        @info "Saved optimization results to $filepath"
+
+    catch e
+        # Clean up temp file if something went wrong
+        isfile(temp_filepath) && rm(temp_filepath; force = true)
+        rethrow(e)
+    end
+end
+
+"""
+    df_to_structvector(df, ::Type{OptimizationResult})
+
+Convert DataFrame to StructVector{OptimizationResult} for migration from old format.
+"""
+function df_to_structvector(df::DataFrame, ::Type{OptimizationResult})
+    return StructVector(
+        map(eachrow(df)) do row
+            OptimizationResult(
+                row.noise_specification,
+                row.test_specification,
+                row.percent_tested,
+                row.ews_metric_specification,
+                row.ews_enddate_type,
+                row.ews_threshold_window,
+                row.ews_threshold_burnin,
+                row.ews_metric,
+                row.threshold_percentile,
+                row.consecutive_thresholds,
+                row.accuracy,
+                row.sensitivity,
+                row.specificity
+            )
+        end
+    )
+end
+
+"""
+    save_checkpoint_structvector(results, checkpoint_dir, batch_idx)
+
+Save checkpoint file atomically for StructVector results.
+"""
+function save_checkpoint_structvector(results::StructVector{OptimizationResult}, checkpoint_dir::String, batch_idx::Int)
+    if !isdir(checkpoint_dir)
+        mkpath(checkpoint_dir)
+    end
+
+    checkpoint_file = joinpath(checkpoint_dir, "checkpoint_batch_$(batch_idx).jld2")
+    temp_file = checkpoint_file * ".tmp"
+
+    jldsave(temp_file; results = results, batch_idx = batch_idx)
+    return mv(temp_file, checkpoint_file; force = true)
+end
+
+"""
+    find_missing_scenarios_structvector(all_scenarios, completed_results)
+
+Find scenarios that haven't been computed yet using StructVector operations.
+Returns StructVector of missing scenarios.
+"""
+function find_missing_scenarios_structvector(
+        all_scenarios::StructVector{OptimizationScenario},
+        completed_results::StructVector{OptimizationResult}
+    )::StructVector{OptimizationScenario}
+    if isempty(completed_results)
+        return all_scenarios
+    end
+
+    # Extract scenario keys from results
+    completed_keys = Set(
+        map(completed_results) do result
+            (
+                result.noise_specification,
+                result.test_specification,
+                result.percent_tested,
+                result.ews_metric_specification,
+                result.ews_enddate_type,
+                result.ews_threshold_window,
+                result.ews_threshold_burnin,
+                result.ews_metric,
+            )
+        end
+    )
+
+    # Filter to find missing scenarios
+    missing_mask = map(all_scenarios) do scenario
+        key = (
+            scenario.noise_specification,
+            scenario.test_specification,
+            scenario.percent_tested,
+            scenario.ews_metric_specification,
+            scenario.ews_enddate_type,
+            scenario.ews_threshold_window,
+            scenario.ews_threshold_burnin,
+            scenario.ews_metric,
+        )
+        !(key in completed_keys)
+    end
+
+    return all_scenarios[missing_mask]
+end
+
+"""
+    confirm_optimization_run_structvector(missing_scenarios, n_sobol_points; disable_time_check)
+
+Confirm with user before running optimization on StructVector of scenarios.
+"""
+function confirm_optimization_run_structvector(
+        missing_scenarios::StructVector{OptimizationScenario},
+        n_sobol_points::Int;
+        disable_time_check::Bool = false
+    )
+    n_missing = length(missing_scenarios)
+
+    if n_missing == 0
+        @info "No missing scenarios to optimize"
+        return false
+    end
+
+    if disable_time_check
+        return true
+    end
+
+    # Estimate time (convert to DataFrame temporarily for existing function)
+    missing_df = DataFrame(missing_scenarios)
+    estimated_time = estimate_optimization_time(missing_df, n_sobol_points)
+
+    if estimated_time > 300  # 5 minutes
+        println(styled"{yellow:Warning:} Estimated optimization time: {red:$(round(estimated_time/60, digits=1))} minutes")
+        print("Continue? (y/N): ")
+        response = readline()
+        return lowercase(strip(response)) in ["y", "yes"]
+    end
+
+    return true
 end
 
 """
@@ -819,6 +1062,104 @@ https://julialang.org/blog/2023/07/PSA-dont-use-threadid/
 The design is robust to task migration, thread adoption, and other Julia threading
 implementation details because it reasons about tasks, not threads.
 """
+function optimize_scenarios_in_batches_structvector(
+        missing_scenarios::StructVector{OptimizationScenario},
+        data_arrs::T1,
+        bounds::T2,
+        optim_config::T3;
+        batch_size::Int = 10,
+        executor = FLoops.SequentialEx(),
+        save_every_n::Int = 10,
+        save_results = true,
+        checkpoint_dir::String = "",
+        verbose::Bool = true
+    ) where {T1 <: NamedTuple, T2 <: NamedTuple, T3 <: NamedTuple}
+
+    n_missing = length(missing_scenarios)
+
+    if n_missing == 0
+        return StructVector(OptimizationResult[])
+    end
+
+    # Auto-configure batch size for threaded execution
+    if executor isa FLoops.ThreadedEx
+        if batch_size == 10  # Default value
+            suggested_batch_size = max(1, n_missing ÷ (Threads.nthreads() * 4))
+            batch_size = clamp(suggested_batch_size, 1, 100)
+            verbose && @info "Auto-configured batch size for threading: $batch_size (suggested: $suggested_batch_size)"
+        end
+    end
+
+    # Initialize results storage
+    all_results = OptimizationResult[]
+
+    # Setup progress tracking
+    if verbose
+        prog = Progress(n_missing; desc = "Optimizing scenarios: ", showspeed = true)
+    end
+
+    # Process scenarios in batches
+    scenario_batches = collect(Iterators.partition(1:n_missing, batch_size))
+
+    for (batch_idx, batch_indices) in pairs(scenario_batches)
+        batch_scenarios = @view missing_scenarios[batch_indices]
+        batch_size_actual = length(batch_indices)
+
+        verbose && println(styled"{green:Processing batch $batch_idx/$(length(scenario_batches)) ($(batch_size_actual) scenarios)}")
+
+        # Pre-allocate optimization results
+        batch_optimized = Vector{OptimizedValues}(undef, batch_size_actual)
+
+        FLoops.@floop executor for (idx, scenario) in pairs(batch_scenarios)
+            # Direct struct access - no conversion needed!
+            batch_optimized[idx] = optimize_single_scenario(
+                scenario,
+                data_arrs,
+                bounds,
+                optim_config
+            )
+        end
+
+        # Combine scenarios with their optimized values into OptimizationResult
+        for (scenario, optimized) in zip(batch_scenarios, batch_optimized)
+            push!(
+                all_results, OptimizationResult(
+                    # From scenario
+                    scenario.noise_specification,
+                    scenario.test_specification,
+                    scenario.percent_tested,
+                    scenario.ews_metric_specification,
+                    scenario.ews_enddate_type,
+                    scenario.ews_threshold_window,
+                    scenario.ews_threshold_burnin,
+                    scenario.ews_metric,
+                    # From optimized values
+                    optimized.threshold_percentile,
+                    optimized.consecutive_thresholds,
+                    optimized.accuracy,
+                    optimized.sensitivity,
+                    optimized.specificity
+                )
+            )
+        end
+
+        # Update progress
+        verbose && ProgressMeter.update!(prog, sum(length.(scenario_batches[1:batch_idx])))
+
+        # Save checkpoint periodically (direct StructVector serialization)
+        if batch_idx % save_every_n == 0 && save_results && !isempty(checkpoint_dir)
+            save_checkpoint_structvector(
+                StructVector(all_results),
+                checkpoint_dir,
+                batch_idx
+            )
+        end
+    end
+
+    return StructVector(all_results)
+end
+
+# Keep old function for backward compatibility
 function optimize_scenarios_in_batches(
         missing_scenarios_df::DataFrame,
         data_arrs::T1,

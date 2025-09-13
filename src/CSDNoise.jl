@@ -50,6 +50,7 @@ export SimTimeParameters, EnsembleSpecification,
     Outbreak_end,
     Outbreak_middle,
     OptimizationScenario,
+    OptimizationResult,
     EWSMetrics
 # @reexport using .ODStructs
 
@@ -100,7 +101,13 @@ export ews_multistart_optimization,
     create_cached_simulation_data,
     CachedSimulationData,
     OptimizationTracker,
-    OptimizedValues
+    OptimizedValues,
+    find_missing_scenarios_structvector,
+    confirm_optimization_run_structvector,
+    optimize_scenarios_in_batches_structvector,
+    load_previous_multistart_results_structvector,
+    save_results_structvector,
+    create_scenarios_structvector
 
 include("ews-survival.jl")
 export simulate_and_plot_ews_survival,

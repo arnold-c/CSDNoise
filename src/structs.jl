@@ -775,4 +775,22 @@ function OptimizationScenario(
     )
 end
 
+struct OptimizationResult
+    # Scenario fields (from OptimizationScenario)
+    noise_specification::NoiseSpecification
+    test_specification::IndividualTestSpecification
+    percent_tested::Float64
+    ews_metric_specification::EWSMetricSpecification
+    ews_enddate_type::EWSEndDateType
+    ews_threshold_window::EWSThresholdWindowType
+    ews_threshold_burnin::Dates.Day
+    ews_metric::String
+    # Result fields (from OptimizedValues)
+    threshold_percentile::Float64
+    consecutive_thresholds::Int64
+    accuracy::Float64
+    sensitivity::Float64
+    specificity::Float64
+end
+
 # end

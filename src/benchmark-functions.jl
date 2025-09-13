@@ -257,7 +257,8 @@ function compare_all_scenarios(grid_results, multistart_results, specification_v
             # Find matching scenario in multistart results
             ms_scenario = filter(
                 row -> all(
-                    row[col] == scenario_id[col] for col in scenario_cols
+                    # Don't match on optimization parameters
+                    row[col] == scenario_id[col] for col in setdiff(scenario_cols, [:ews_threshold_window, :ews_threshold_burnin])
                 ), ms_results
             )
 
@@ -279,8 +280,8 @@ function compare_all_scenarios(grid_results, multistart_results, specification_v
                         grid_sensitivity = best_grid_row.sensitivity,
                         grid_specificity = best_grid_row.specificity,
                         ms_accuracy = best_ms_acc,
-                        ms_percentile = best_ms_row.ews_threshold_percentile,
-                        ms_consecutive = best_ms_row.ews_consecutive_thresholds,
+                        ms_percentile = best_ms_row.threshold_percentile,
+                        ms_consecutive = best_ms_row.consecutive_thresholds,
                         ms_sensitivity = best_ms_row.sensitivity,
                         ms_specificity = best_ms_row.specificity,
                         n_sobol = n_sobol,
@@ -554,8 +555,8 @@ function save_benchmark_comparison_results(results_dict, filename_prefix; output
                     opt_time = get(result, :opt_time, missing),
                     total_time = get(result, :total_time, missing),
                     best_accuracy = result.best_accuracy,
-                    best_percentile = result.best_params.ews_threshold_percentile,
-                    best_consecutive = result.best_params.ews_consecutive_thresholds,
+                    best_percentile = result.best_params.threshold_percentile,
+                    best_consecutive = result.best_params.consecutive_thresholds,
                     sensitivity = result.best_params.sensitivity,
                     specificity = result.best_params.specificity,
                 )

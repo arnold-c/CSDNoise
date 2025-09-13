@@ -176,37 +176,3 @@ function profile_with_pprof(specification_vecs, data_arrs)
     println("✅ CPU profiling complete. Check the generated flamegraph.")
     return println("   Open the HTML file that was created to view detailed CPU usage.")
 end
-
-# =============================================================================
-# TYPE STABILITY ANALYSIS
-# =============================================================================
-
-"""
-Check type stability of key functions.
-"""
-function analyze_type_stability(specification_vecs, data_arrs)
-    println("\n🔍 Type Stability Analysis")
-    println("-"^40)
-
-    scenarios_vec = create_optimization_scenarios(specification_vecs)
-    scenario = scenarios_vec[1]
-
-    println("\nType analysis for create_cached_simulation_data:")
-    # @code_warntype create_cached_simulation_data(scenario, data_arrs)
-    println("\n\tDynamics dispatch check:")
-    @report_opt create_cached_simulation_data(scenario, data_arrs)
-    println("\n\tType error check:")
-    @report_call target_modules = (CSDNoise,) create_cached_simulation_data(scenario, data_arrs)
-    cached_data = create_cached_simulation_data(scenario, data_arrs)
-
-    tracker = OptimizationTracker()
-    test_params = [0.9, 5.0]
-
-    println("Type analysis for ews_objective_function_with_tracking:")
-    @code_warntype ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
-    println("\n\tDynamics dispatch check:")
-    @report_opt target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
-    println("\n\tType error check:")
-    @report_call target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
-    return nothing
-end

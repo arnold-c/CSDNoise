@@ -240,6 +240,7 @@ function main()
             data_arrs;
             n_sobol_points = 1,
             maxeval = 10,
+            # executor = FLoops.SequentialEx(),
             executor = FLoops.ThreadedEx(),
             force = true,
             return_df = true,
@@ -277,7 +278,8 @@ function main()
                 consecutive_bounds = (2.0, 30.0),  # Custom bounds
                 n_sobol_points = n_sobol,
                 maxeval = 1000,
-                executor = FLoops.ThreadedEx(),          # Executor for parallel processing
+                executor = FLoops.SequentialEx(),          # Executor for sequential processing
+                # executor = FLoops.ThreadedEx(),          # Executor for parallel processing
                 force = true,
                 return_df = true,
                 save_results = false,

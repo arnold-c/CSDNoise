@@ -6,6 +6,7 @@ using CSDNoise
 using StaticArrays
 using Dates
 using NLopt
+using StructArrays
 
 # Helper function to create test specification vectors
 function create_test_specification_vectors()

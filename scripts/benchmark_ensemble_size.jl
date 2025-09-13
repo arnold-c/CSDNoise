@@ -143,7 +143,7 @@ function create_single_test_scenario()
     percent_tested_vec = [1.0]
 
     # Focus on autocovariance metric
-    ews_method_vec = [Backward]
+    ews_method_vec = [EWSMethod(Backward())]
     ews_aggregation_vec = [Day(28)]
     ews_bandwidth_vec = [Week(52)]
     ews_lag_days_vec = [1]
@@ -154,8 +154,8 @@ function create_single_test_scenario()
     )
 
     ews_metric_vec = ["autocovariance"]
-    ews_enddate_type_vec = [Reff_start]
-    ews_threshold_window_vec = [ExpandingThresholdWindow]
+    ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
+    ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
     ews_threshold_percentile_vec = collect(0.5:0.02:0.99)
     ews_consecutive_thresholds_vec = collect(2:2:30)
     ews_threshold_burnin_vec = [Year(5)]
@@ -168,8 +168,6 @@ function create_single_test_scenario()
         ews_enddate_type_vec,
         ews_threshold_window_vec,
         ews_threshold_burnin_vec,
-        ews_threshold_percentile_vec,
-        ews_consecutive_thresholds_vec,
         ews_metric_vec,
     )
 end

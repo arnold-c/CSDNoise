@@ -19,6 +19,7 @@ using DrWatson
 # Core dependencies
 using CSDNoise
 using JET
+using Dates
 
 println("🔍 EWS Multistart Optimization Profiler")
 println("="^50)

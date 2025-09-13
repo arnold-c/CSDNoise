@@ -34,8 +34,6 @@ function main()
     # Setup
     specification_vecs, data_arrs = create_test_data_for_profiling()
 
-    @code_warntype create_optimization_scenarios(specification_vecs)
-
     scenarios_vec = create_optimization_scenarios(specification_vecs)
 
     scenario = scenarios_vec[1]
@@ -43,8 +41,6 @@ function main()
 
     tracker = OptimizationTracker()
     test_params = [0.9, 5.0]
-
-    @code_warntype ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
 
     # Example EWSMetrics instantiation
     example_ews_spec = EWSMetricSpecification(EWSMethod(Backward()), Dates.Day(1), Dates.Day(30), 1)
@@ -54,15 +50,6 @@ function main()
         21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0,
         31.0, 32.0, 33.0, 34.0, 35.0,
     ]
-    @code_warntype EWSMetrics(example_ews_spec, example_timeseries)
-    @report_opt target_modules = (CSDNoise,) EWSMetrics(example_ews_spec, example_timeseries)
-    @report_call target_modules = (CSDNoise,) EWSMetrics(example_ews_spec, example_timeseries)
-
-    println("Type analysis for ews_objective_function_with_tracking:")
-    @code_warntype ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
-    @report_opt target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
-    @report_call target_modules = (CSDNoise,) ews_objective_function_with_tracking(test_params, scenario, cached_data, tracker)
-
 
     if isnothing(specification_vecs) || isnothing(data_arrs)
         println("❌ Could not create test data. Please check data loading.")
@@ -75,9 +62,6 @@ function main()
 
         # CPU profiling (comment out if you don't want the interactive flamegraph)
         # profile_with_pprof(specification_vecs, data_arrs)
-
-        # Type stability analysis
-        analyze_type_stability(specification_vecs, data_arrs)
 
         println("\n✅ Profiling analysis complete!")
         println("\n📋 Summary of Recommendations:")

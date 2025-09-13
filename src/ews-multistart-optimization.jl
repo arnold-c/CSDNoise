@@ -336,8 +336,8 @@ function ews_objective_function_with_tracking(
         )
 
         detection_index = calculate_ews_trigger_index(
-            exceeds_threshold;
-            consecutive_thresholds = ews_params.consecutive_thresholds,
+            exceeds_threshold,
+            ews_params.consecutive_thresholds,
         )
 
         null_exceeds_threshold = expanding_ews_thresholds(
@@ -351,8 +351,8 @@ function ews_objective_function_with_tracking(
         )
 
         null_detection_index = calculate_ews_trigger_index(
-            null_exceeds_threshold;
-            consecutive_thresholds = ews_params.consecutive_thresholds,
+            null_exceeds_threshold,
+            ews_params.consecutive_thresholds,
         )
 
         # Update counts

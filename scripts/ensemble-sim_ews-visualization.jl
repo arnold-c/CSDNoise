@@ -323,8 +323,8 @@ ews_df = DataFrame(
                         )[2]
 
                         detection_index_arr[sim, j] = Try.@? calculate_ews_trigger_index(
-                            exceeds_threshold_arr[sim, j];
-                            consecutive_thresholds = consecutive_thresholds,
+                            exceeds_threshold_arr[sim, j],
+                            consecutive_thresholds,
                         )
                     end
 

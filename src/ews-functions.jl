@@ -493,18 +493,18 @@ end
 #     )
 #
 #     weekly_detection_index = Try.@? calculate_ews_trigger_index(
-#         weekly_thresholds[2];
-#         consecutive_thresholds = consecutive_thresholds,
+#         weekly_thresholds[2],
+#         consecutive_thresholds,
 #     )
 #
 #     biweekly_detection_index = Try.@? calculate_ews_trigger_index(
-#         biweekly_thresholds[2];
-#         consecutive_thresholds = consecutive_thresholds,
+#         biweekly_thresholds[2],
+#         consecutive_thresholds,
 #     )
 #
 #     monthly_detection_index = Try.@? calculate_ews_trigger_index(
-#         monthly_thresholds[2];
-#         consecutive_thresholds = consecutive_thresholds,
+#         monthly_thresholds[2],
+#          consecutive_thresholds,
 #     )
 #
 #     plotname = "$(ews_metric)_$(100 * ews_threshold_percentile)-percentile_thresholds_$(test_path_description)_$(noise_path_description).png"
@@ -722,7 +722,7 @@ function calculate_ews_lead_time(
         output_type = :days,
     )
     threshold_index = Try.@? calculate_ews_trigger_index(
-        ews_thresholds; consecutive_thresholds = consecutive_thresholds
+        ews_thresholds, consecutive_thresholds
     )
 
     return calculate_ews_lead_time(
@@ -762,7 +762,7 @@ function calculate_ews_lead_time(
 end
 
 function calculate_ews_trigger_index(
-        ews_thresholds::T1;
+        ews_thresholds::T1,
         consecutive_thresholds = 2,
     ) where {T1 <: AbstractMatrix{<:Bool}}
     reshaped_ews_thresholds = reshape(ews_thresholds, :)
@@ -770,13 +770,13 @@ function calculate_ews_trigger_index(
     @assert length(reshaped_ews_thresholds) == length(ews_thresholds[:, 1])
 
     return calculate_ews_trigger_index(
-        reshaped_ews_thresholds;
-        consecutive_thresholds = consecutive_thresholds,
+        reshaped_ews_thresholds,
+        consecutive_thresholds,
     )
 end
 
 function calculate_ews_trigger_index(
-        ews_thresholds::T1;
+        ews_thresholds::T1,
         consecutive_thresholds = 2,
     ) where {T1 <: AbstractVector{<:Bool}}
     cumulative_thresholds = cumsum(ews_thresholds)

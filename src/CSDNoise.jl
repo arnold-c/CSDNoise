@@ -99,7 +99,8 @@ export ews_multistart_optimization,
     create_optimization_scenarios,
     create_cached_simulation_data,
     CachedSimulationData,
-    OptimizationTracker
+    OptimizationTracker,
+    OptimizedValues
 
 include("ews-survival.jl")
 export simulate_and_plot_ews_survival,

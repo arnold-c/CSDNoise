@@ -163,17 +163,17 @@
         ]
 
         @test isequal(
-            Try.unwrap(calculate_ews_trigger_index(thresholds; consecutive_thresholds = 1)),
+            Try.unwrap(calculate_ews_trigger_index(thresholds, 1)),
             3,
         )
 
         @test isequal(
-            Try.unwrap(calculate_ews_trigger_index(thresholds; consecutive_thresholds = 2)),
+            Try.unwrap(calculate_ews_trigger_index(thresholds, 2)),
             7,
         )
 
         @test isequal(
-            Try.unwrap(calculate_ews_trigger_index(thresholds; consecutive_thresholds = 3)),
+            Try.unwrap(calculate_ews_trigger_index(thresholds, 3)),
             11,
         )
     end

@@ -278,8 +278,8 @@ function main()
                 consecutive_bounds = (2.0, 30.0),  # Custom bounds
                 n_sobol_points = n_sobol,
                 maxeval = 1000,
-                executor = FLoops.SequentialEx(),          # Executor for sequential processing
-                # executor = FLoops.ThreadedEx(),          # Executor for parallel processing
+                # executor = FLoops.SequentialEx(),          # Executor for sequential processing
+                executor = FLoops.ThreadedEx(),          # Executor for parallel processing
                 force = true,
                 return_df = true,
                 save_results = false,

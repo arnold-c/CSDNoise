@@ -22,27 +22,28 @@ using Match
 # include("structs.jl")
 # using .ODStructs
 
-function create_combinations_vec(custom_function, combinations)
+function create_combinations_vec(custom_function, combinations; init = custom_function[])
     combs = Iterators.product(combinations...)
 
-    return vec(map(combination -> custom_function(combination...), combs))
+    # TODO: make type stable
+    return mapreduce(combination -> custom_function(combination...), vcat, combs; init = init)
 end
 
 function create_ensemble_spec_combinations(
-    beta_force_vec,
-    seasonality_vec,
-    sigma_vec,
-    gamma_vec,
-    annual_births_per_k_vec,
-    R_0_vec,
-    burnin_vaccination_coverage_params_vec,
-    vaccination_coverage_params_vec,
-    N_vec,
-    init_states_prop_dict,
-    model_types_vec,
-    time_p_vec,
-    nsims_vec,
-)
+        beta_force_vec,
+        seasonality_vec,
+        sigma_vec,
+        gamma_vec,
+        annual_births_per_k_vec,
+        R_0_vec,
+        burnin_vaccination_coverage_params_vec,
+        vaccination_coverage_params_vec,
+        N_vec,
+        init_states_prop_dict,
+        model_types_vec,
+        time_p_vec,
+        nsims_vec,
+    )
     ensemble_spec_combinations = Iterators.product(
         beta_force_vec,
         seasonality_vec,
@@ -62,23 +63,23 @@ function create_ensemble_spec_combinations(
     ensemble_spec_vec = Vector(undef, length(ensemble_spec_combinations))
 
     for (
-        i,
-        (
-            beta_force,
-            seasonality,
-            sigma,
-            gamma,
-            annual_births_per_k,
-            R_0,
-            burnin_vaccination_coverage_params,
-            vaccination_coverage_pairs,
-            N,
-            init_states_prop,
-            model_type,
-            time_p,
-            nsims,
-        ),
-    ) in enumerate(ensemble_spec_combinations)
+            i,
+            (
+                beta_force,
+                seasonality,
+                sigma,
+                gamma,
+                annual_births_per_k,
+                R_0,
+                burnin_vaccination_coverage_params,
+                vaccination_coverage_pairs,
+                N,
+                init_states_prop,
+                model_type,
+                time_p,
+                nsims,
+            ),
+        ) in enumerate(ensemble_spec_combinations)
         mu = calculate_mu(annual_births_per_k)
         beta_mean = calculate_beta(R_0, gamma, mu, 1, N)
         epsilon = calculate_import_rate(mu, R_0, N)
@@ -149,6 +150,7 @@ function run_ensemble_jump_prob(dict_of_ensemble_params; force = false)
         )
         next!(prog)
     end
+    return
 end
 
 """
@@ -156,24 +158,24 @@ end
 """
 function run_jump_prob(ensemble_param_dict)
     @unpack ensemble_spec,
-    seed,
-    executor,
-    outbreak_spec_dict = ensemble_param_dict
+        seed,
+        executor,
+        outbreak_spec_dict = ensemble_param_dict
 
     @unpack state_parameters,
-    dynamics_parameter_specification, time_parameters,
-    nsims =
+        dynamics_parameter_specification, time_parameters,
+        nsims =
         ensemble_spec
 
     @unpack tstep, tlength, trange = time_parameters
 
-    ensemble_seir_vecs = Array{typeof(state_parameters.init_states),2}(
+    ensemble_seir_vecs = Array{typeof(state_parameters.init_states), 2}(
         undef,
         tlength,
         nsims,
     )
 
-    ensemble_inc_vecs = Array{typeof(SVector(0)),2}(
+    ensemble_inc_vecs = Array{typeof(SVector(0)), 2}(
         undef,
         tlength,
         nsims,
@@ -182,7 +184,7 @@ function run_jump_prob(ensemble_param_dict)
     ensemble_beta_arr = zeros(Float64, tlength)
 
     ensemble_Reff_arr = zeros(Float64, tlength, nsims)
-    ensemble_Reff_thresholds_vec = Vector{Array{Int64,2}}(
+    ensemble_Reff_thresholds_vec = Vector{Array{Int64, 2}}(
         undef, size(ensemble_inc_vecs, 2)
     )
 
@@ -236,9 +238,9 @@ function run_jump_prob(ensemble_param_dict)
 end
 
 function run_define_outbreaks(
-    dict_of_outbreak_spec_params; executor = ThreadedEx()
-)
-    @floop executor for outbreak_spec_params in dict_of_outbreak_spec_params
+        dict_of_outbreak_spec_params; executor = ThreadedEx()
+    )
+    return @floop executor for outbreak_spec_params in dict_of_outbreak_spec_params
         @produce_or_load(
             define_outbreaks,
             outbreak_spec_params,
@@ -252,8 +254,8 @@ end
 
 function define_outbreaks(incidence_param_dict)
     @unpack ensemble_spec,
-    ensemble_inc_vecs,
-    outbreak_spec = incidence_param_dict
+        ensemble_inc_vecs,
+        outbreak_spec = incidence_param_dict
 
     ensemble_inc_arr, ensemble_thresholds_vec = create_inc_infec_arr(
         ensemble_inc_vecs, outbreak_spec
@@ -265,8 +267,8 @@ end
 function get_ensemble_file() end
 
 function get_ensemble_file(
-    ensemble_spec::EnsembleSpecification, outbreak_spec::OutbreakSpecification
-)
+        ensemble_spec::EnsembleSpecification, outbreak_spec::OutbreakSpecification
+    )
     dirpath = joinpath(ensemble_spec.dirpath, outbreak_spec.dirpath)
 
     return load(collect_ensemble_file("incidence-array", dirpath)...)
@@ -277,10 +279,10 @@ function get_ensemble_file(spec::EnsembleSpecification)
 end
 
 function get_ensemble_file(
-    ensemble_spec::EnsembleSpecification,
-    outbreak_spec::OutbreakSpecification,
-    ews_spec::EWSMetricSpecification,
-)
+        ensemble_spec::EnsembleSpecification,
+        outbreak_spec::OutbreakSpecification,
+        ews_spec::EWSMetricSpecification,
+    )
     return load(
         collect_ensemble_file(
             "incidence-ews-metrics",
@@ -307,7 +309,7 @@ function collect_ensemble_file(type, dirpath)
 end
 
 function match_ensemble_file!(criteria, dirpath, container, file)
-    if occursin(criteria, file)
+    return if occursin(criteria, file)
         push!(container, joinpath(dirpath, file))
     end
 end

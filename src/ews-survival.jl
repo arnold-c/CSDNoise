@@ -348,7 +348,7 @@ function simulate_ews_survival_data(
                     burn_in = ews_threshold_burnin,
                 )[1]
 
-                detection_index_vec[sim] = calculate_ews_trigger_index(
+                detection_index_vec[sim] = Try.@? calculate_ews_trigger_index(
                     exceeds_threshold_vec[sim];
                     consecutive_thresholds = ews_consecutive_thresholds,
                 )
@@ -369,7 +369,7 @@ function simulate_ews_survival_data(
                     burn_in = ews_threshold_burnin,
                 )[1]
 
-                null_detection_index_vec[sim] = calculate_ews_trigger_index(
+                null_detection_index_vec[sim] = Try.@? calculate_ews_trigger_index(
                     null_exceeds_threshold_vec[sim];
                     consecutive_thresholds = ews_consecutive_thresholds,
                 )

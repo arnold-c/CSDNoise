@@ -22,11 +22,10 @@ using StructArrays
 using SumTypes
 using Try
 using StaticArrays
-using StatsBase: StatsBase
 using Distributions: Distributions
 using ProgressMeter
 using FLoops
-using Statistics
+using StatsBase
 using CSV
 
 function main()

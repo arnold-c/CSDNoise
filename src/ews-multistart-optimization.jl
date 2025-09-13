@@ -39,6 +39,8 @@ struct CachedSimulationData
     testarr::Array{Int64, 3}
     null_testarr::Array{Int64, 3}
     thresholds::Vector{Matrix{Int64}}
+    ews_metrics::Vector{EWSMetrics}
+    null_ews_metrics::Vector{EWSMetrics}
 end
 
 """
@@ -296,7 +298,9 @@ function ews_objective_function_with_tracking(
     @unpack ensemble_single_incarr,
         testarr,
         null_testarr,
-        thresholds = cached_data
+        thresholds,
+        ews_metrics,
+        null_ews_metrics = cached_data
 
     # Map continuous parameters to EWS parameters
     ews_params = map_continuous_to_ews_parameters(params_vec)
@@ -306,57 +310,44 @@ function ews_objective_function_with_tracking(
     true_positives = 0
     true_negatives = 0
 
-    for sim in 1:ensemble_nsims
-        enddate::Union{Try.Err{String}, Try.Ok{Int64}} = calculate_ews_enddate(thresholds[sim], ews_enddate_type)
+    for sim in eachindex(ews_metrics)
+        # Use pre-computed EWS metrics
+        ews_vals = ews_metrics[sim]
+        null_ews_vals = null_ews_metrics[sim]
 
-        if Try.isok(enddate)
-            enddate_val = Try.unwrap(enddate)
+        # Check threshold exceedances
+        exceeds_threshold = expanding_ews_thresholds(
+            ews_vals,
+            Symbol(ews_metric),
+            ews_threshold_window;
+            percentiles = ews_params.threshold_percentile,
+            burn_in = ews_threshold_burnin,
+        )[2]
 
-            # Calculate EWS metrics
-            ews_vals = EWSMetrics(
-                ews_metric_specification,
-                @view(testarr[1:enddate_val, 5, sim])
-            )
+        detection_index = calculate_ews_trigger_index(
+            exceeds_threshold;
+            consecutive_thresholds = ews_params.consecutive_thresholds,
+        )
 
-            null_ews_vals = EWSMetrics(
-                ews_metric_specification,
-                @view(null_testarr[1:enddate_val, 5, sim])
-            )
+        null_exceeds_threshold = expanding_ews_thresholds(
+            null_ews_vals,
+            Symbol(ews_metric),
+            ews_threshold_window;
+            percentiles = ews_params.threshold_percentile,
+            burn_in = ews_threshold_burnin,
+        )[2]
 
-            # Check threshold exceedances
-            exceeds_threshold = expanding_ews_thresholds(
-                ews_vals,
-                Symbol(ews_metric),
-                ews_threshold_window;
-                percentiles = ews_params.threshold_percentile,
-                burn_in = ews_threshold_burnin,
-            )[2]
+        null_detection_index = calculate_ews_trigger_index(
+            null_exceeds_threshold;
+            consecutive_thresholds = ews_params.consecutive_thresholds,
+        )
 
-            detection_index = calculate_ews_trigger_index(
-                exceeds_threshold;
-                consecutive_thresholds = ews_params.consecutive_thresholds,
-            )
-
-            null_exceeds_threshold = expanding_ews_thresholds(
-                null_ews_vals,
-                Symbol(ews_metric),
-                ews_threshold_window;
-                percentiles = ews_params.threshold_percentile,
-                burn_in = ews_threshold_burnin,
-            )[2]
-
-            null_detection_index = calculate_ews_trigger_index(
-                null_exceeds_threshold;
-                consecutive_thresholds = ews_params.consecutive_thresholds,
-            )
-
-            # Update counts
-            if !isnothing(detection_index)
-                true_positives += 1
-            end
-            if isnothing(null_detection_index)
-                true_negatives += 1
-            end
+        # Update counts
+        if Try.isok(detection_index)
+            true_positives += 1
+        end
+        if Try.iserr(null_detection_index)
+            true_negatives += 1
         end
     end
 
@@ -379,17 +370,52 @@ function ews_objective_function_with_tracking(
 end
 
 """
+    calculate_ews_metrics_for_simulation(ews_metric_specification, testarr_view, null_testarr_view, threshold, ews_enddate_type)
+
+Calculate EWS metrics for a single simulation given the test array views and threshold.
+Returns a tuple of (ews_metrics, null_ews_metrics) wrapped in Try types.
+"""
+function calculate_ews_metrics_for_simulation(
+        ews_metric_specification,
+        testarr_view,
+        null_testarr_view,
+        threshold,
+        ews_enddate_type
+    )
+    enddate::Union{Try.Err{String}, Try.Ok{Int64}} = calculate_ews_enddate(threshold, ews_enddate_type)
+
+    if Try.isok(enddate)
+        enddate_val = Try.unwrap(enddate)
+
+        # Calculate EWS metrics
+        ews_vals = EWSMetrics(
+            ews_metric_specification,
+            @view(testarr_view[1:enddate_val, 5])
+        )
+
+        null_ews_vals = EWSMetrics(
+            ews_metric_specification,
+            @view(null_testarr_view[1:enddate_val, 5])
+        )
+
+        return (Try.Ok(ews_vals), Try.Ok(null_ews_vals))
+    else
+        return (enddate, enddate)  # Both are Try.Err
+    end
+end
+
+"""
     create_cached_simulation_data(scenario, data_arrs)
 
 Pre-compute expensive simulation data once per scenario to avoid repeated computation
-during parameter optimization. This includes noise arrays and test arrays.
+during parameter optimization. This includes noise arrays, test arrays, and EWS metrics.
 """
 function create_cached_simulation_data(
         scenario::OptimizationScenario,
         data_arrs::NamedTuple
     )
     @unpack noise_specification, test_specification, percent_tested,
-        ews_enddate_type = scenario
+        ews_enddate_type, ews_metric_specification = scenario
 
     @unpack ensemble_single_incarr, null_single_incarr,
         ensemble_specification, ensemble_single_Reff_thresholds_vec,
@@ -424,11 +450,32 @@ function create_cached_simulation_data(
         [Outbreak_start, Outbreak_end, Outbreak_middle] => ensemble_single_periodsum_vecs
     end
 
+    # Pre-compute EWS metrics for all simulations
+    ensemble_nsims = size(ensemble_single_incarr, 3)
+    ews_metrics = Vector{EWSMetrics}(undef, ensemble_nsims)
+    null_ews_metrics = Vector{EWSMetrics}(undef, ensemble_nsims)
+
+    for sim in 1:ensemble_nsims
+        ews_result, null_ews_result = calculate_ews_metrics_for_simulation(
+            ews_metric_specification,
+            @view(testarr[:, :, sim]),
+            @view(null_testarr[:, :, sim]),
+            thresholds[sim],
+            ews_enddate_type
+        )
+        if Try.isok(ews_result)
+            ews_metrics[sim] = Try.unwrap(ews_result)
+            null_ews_metrics[sim] = Try.unwrap(null_ews_result)
+        end
+    end
+
     return CachedSimulationData(
         ensemble_single_incarr,
         testarr,
         null_testarr,
-        thresholds
+        thresholds,
+        ews_metrics,
+        null_ews_metrics
     )
 end
 
@@ -451,7 +498,7 @@ Create a DataFrame containing all scenario combinations for optimization.
 This replaces the nested loop approach with a DataFrame-based approach for better caching.
 """
 function create_scenarios_dataframe(specification_vecs)
-    scenarios = create_optimization_scenarios(specification_vecs)
+    scenarios = create_optimization_scenarios(specification_vecs) |> StructVector
 
     # Convert StructArray to DataFrame
     return DataFrame(scenarios)
@@ -463,7 +510,7 @@ end
 Create all scenario combinations for optimization.
 Validates specification vectors before creating combinations.
 """
-function create_optimization_scenarios(specification_vecs)
+@unstable function create_optimization_scenarios(specification_vecs)
     # Validate specification vectors before processing
     _validate_specification_vectors(specification_vecs)
 
@@ -482,30 +529,86 @@ function create_optimization_scenarios(specification_vecs)
         ews_threshold_window_vec,
         ews_threshold_burnin_vec,
         ews_metric_vec
-    )
+    ) |> collect
 
-    # Map each combination to an OptimizationScenario struct
-    scenarios_vec = mapreduce(vcat, combinations; init = OptimizationScenario[]) do (
-                noise_spec, test_spec, percent_tested,
-                ews_metric_spec, ews_enddate_type,
-                ews_window, ews_burnin, ews_metric,
-            )
-        OptimizationScenario(
-            noise_specification = noise_spec,
-            test_specification = test_spec,
-            percent_tested = percent_tested,
-            ews_metric_specification = ews_metric_spec,
-            ews_enddate_type = ews_enddate_type,
-            ews_threshold_window = ews_window,
-            ews_threshold_burnin = ews_burnin,
-            ews_metric = ews_metric,
-        )
+    comlen = length(combinations)
+
+    noise_specs = Vector{Union{PoissonNoiseSpecification{String, Float64}, DynamicalNoiseSpecification{String, Float64, Int64}}}(undef, comlen)
+    test_specs = Vector{IndividualTestSpecification{Float64, Int64}}(undef, comlen)
+    perc_test_vec = Vector{Float64}(undef, comlen)
+    ews_msv = Vector{EWSMetricSpecification{Int64, String}}(undef, comlen)
+    ews_et = Vector{EWSEndDateType}(undef, comlen)
+    ews_wv = Vector{EWSThresholdWindowType}(undef, comlen)
+    burnin = Vector{Dates.Year}(undef, comlen)
+    ews_mv = Vector{String}(undef, comlen)
+
+    for (
+            i, (
+                noise_spec,
+                test_spec,
+                percent_tested,
+                ews_metric_spec,
+                ews_enddate_type,
+                ews_window,
+                ews_burnin,
+                ews_metric,
+            ),
+        ) in enumerate(combinations)
+        noise_specs[i] = noise_spec
+        test_specs[i] = test_spec
+        perc_test_vec[i] = percent_tested
+        ews_msv[i] = ews_metric_spec
+        ews_et[i] = ews_enddate_type
+        ews_wv[i] = ews_window
+        burnin[i] = ews_burnin
+        ews_mv[i] = ews_metric
     end
 
-    # Convert to StructArray for easier manipulation
-    scenarios = StructArray(scenarios_vec)
+    scenarios_vec = StructVector{OptimizationScenario}(
+        (
+            noise_specs,
+            test_specs,
+            perc_test_vec,
+            ews_msv,
+            ews_et,
+            ews_wv,
+            burnin,
+            ews_mv,
+        )
+    )
 
-    return scenarios
+    # scenarios_vec = mapreduce(
+    #     vcat,
+    #     combinations;
+    #     init = Vector{OptimizationScenario}(undef, 0)
+    # ) do (
+    #             noise_spec,
+    #             test_spec,
+    #             percent_tested,
+    #             ews_metric_spec,
+    #             ews_enddate_type,
+    #             ews_window,
+    #             ews_burnin,
+    #             ews_metric,
+    #         )
+    #     OptimizationScenario(
+    #         noise_spec,
+    #         test_spec,
+    #         percent_tested,
+    #         ews_metric_spec,
+    #         ews_enddate_type,
+    #         ews_window,
+    #         ews_burnin,
+    #         ews_metric,
+    #     )
+    # end
+    # println(typeof(scenarios_vec))
+
+    return scenarios_vec
+    # Convert to StructArray for easier manipulation
+    # scenarios::StructVector{OptimizationScenario} = StructVector(scenarios_vec)
+    #
+    # return scenarios
 end
 
 """

@@ -269,15 +269,24 @@ function DynamicsParameters(
         )
     end
 
-    return DynamicsParameters(
-        [
-            getfield(dynamic_parameter_specification, f) for
-                f in fieldnames(DynamicsParameterSpecification)
-        ]
-        ...,
+    dynamics_parameters = DynamicsParameters(
+        dynamic_parameter_specification.beta_mean,
+        dynamic_parameter_specification.beta_force,
+        dynamic_parameter_specification.seasonality,
+        dynamic_parameter_specification.sigma,
+        dynamic_parameter_specification.gamma,
+        dynamic_parameter_specification.mu,
+        dynamic_parameter_specification.annual_births_per_k,
+        dynamic_parameter_specification.epsilon,
+        dynamic_parameter_specification.R_0,
+        dynamic_parameter_specification.min_burnin_vaccination_coverage,
+        dynamic_parameter_specification.max_burnin_vaccination_coverage,
+        dynamic_parameter_specification.min_vaccination_coverage,
+        dynamic_parameter_specification.max_vaccination_coverage,
         burnin_vaccination_coverage,
         vaccination_coverage,
     )
+    return dynamics_parameters
 end
 
 struct StateParameters{T1 <: SLArray, T2 <: SLArray}
@@ -746,11 +755,16 @@ struct EWSMetrics{
     autocorrelation_tau::T2
 end
 
-abstract type AbstractEWSThresholdWindow end
+@sum_type EWSThresholdWindowType begin
+    ExpandingThresholdWindow
+    RollingThresholdWindow
+end
 
-struct ExpandingThresholdWindow <: AbstractEWSThresholdWindow end
-
-struct RollingThresholdWindow <: AbstractEWSThresholdWindow end
+# abstract type AbstractEWSThresholdWindow end
+#
+# struct ExpandingThresholdWindow <: AbstractEWSThresholdWindow end
+#
+# struct RollingThresholdWindow <: AbstractEWSThresholdWindow end
 
 struct ScenarioSpecification{
         T1 <: EnsembleSpecification,
@@ -800,20 +814,43 @@ function ScenarioSpecification(
     )
 end
 
+# abstract type EWSEndDateType end
+#
+# struct Reff_start <: EWSEndDateType end
+# struct Reff_end <: EWSEndDateType end
+# struct Outbreak_start <: EWSEndDateType end
+# struct Outbreak_end <: EWSEndDateType end
+# struct Outbreak_middle <: EWSEndDateType end
+
+@sum_type EWSEndDateType begin
+    Reff_start
+    Reff_end
+    Outbreak_start
+    Outbreak_end
+    Outbreak_middle
+end
+
 """
     OptimizationScenario
 
 Struct representing a single optimization scenario with all necessary parameters
 for EWS hyperparameter optimization.
 """
-struct OptimizationScenario
-    noise_specification::NoiseSpecification
-    test_specification::IndividualTestSpecification
+struct OptimizationScenario{
+        T1 <: NoiseSpecification,
+        T2 <: IndividualTestSpecification,
+        T3 <: EWSMetricSpecification,
+        T4 <: EWSThresholdWindowType,
+        T5 <: EWSEndDateType,
+        D <: Dates.Period,
+    }
+    noise_specification::T1
+    test_specification::T2
     percent_tested::Float64
-    ews_metric_specification::EWSMetricSpecification
-    ews_enddate_type::EWSEndDateType
-    ews_threshold_window::Union{Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow}}
-    ews_threshold_burnin::Union{Dates.Day, Dates.Year}
+    ews_metric_specification::T3
+    ews_enddate_type::T5
+    ews_threshold_window::T4
+    ews_threshold_burnin::D
     ews_metric::String
 end
 
@@ -823,7 +860,7 @@ function OptimizationScenario(;
         percent_tested::Float64,
         ews_metric_specification::EWSMetricSpecification,
         ews_enddate_type::EWSEndDateType,
-        ews_threshold_window::Union{Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow}},
+        ews_threshold_window::EWSThresholdWindowType,
         ews_threshold_burnin::Union{Dates.Day, Dates.Year},
         ews_metric::String
     )

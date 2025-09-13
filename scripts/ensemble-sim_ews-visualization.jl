@@ -226,13 +226,13 @@ ews_df = DataFrame(
 )
 
 @showprogress for (
-    noise_specification, percent_tested, ews_metric_specification
-) in
-                  Iterators.product(
-    [PoissonNoiseSpecification(8.0)],
-    percent_tested_vec,
-    ews_spec_vec,
-)
+        noise_specification, percent_tested, ews_metric_specification,
+    ) in
+    Iterators.product(
+        [PoissonNoiseSpecification(8.0)],
+        percent_tested_vec,
+        ews_spec_vec,
+    )
     println(
         styled"{green:\n=================================================================}"
     )
@@ -250,10 +250,10 @@ ews_df = DataFrame(
 
     for ews_enddate_type in
         (
-        Main.Reff_start,
-        Main.Reff_end,
-        Main.Outbreak_start,
-    )
+            Main.Reff_start,
+            Main.Reff_end,
+            Main.Outbreak_start,
+        )
         ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
         println(
             styled"\t\tEWS end date type: {magenta: $(ews_enddate_type_str)}"
@@ -279,19 +279,19 @@ ews_df = DataFrame(
             )
             enddate_vec = zeros(Int64, size(testarr, 3))
             failed_sims = zeros(Int64, size(testarr, 3))
-            ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+            ews_vals_vec = Vector{Union{Missing, EWSMetrics}}(
                 undef, size(testarr, 3)
             )
-            inc_ews_vals_vec = Vector{Union{Missing,EWSMetrics}}(
+            inc_ews_vals_vec = Vector{Union{Missing, EWSMetrics}}(
                 undef, size(testarr, 3)
             )
             fill!(ews_vals_vec, missing)
             fill!(inc_ews_vals_vec, missing)
 
-            exceeds_threshold_arr = Array{Matrix{Bool},2}(
+            exceeds_threshold_arr = Array{Matrix{Bool}, 2}(
                 undef, size(testarr, 3), length(ews_metrics)
             )
-            detection_index_arr = Array{Union{Nothing,Int64},2}(
+            detection_index_arr = Array{Union{Nothing, Int64}, 2}(
                 undef, size(testarr, 3), length(ews_metrics)
             )
             fill!(detection_index_arr, nothing)
@@ -325,7 +325,7 @@ ews_df = DataFrame(
                             percentiles = ews_threshold_percentile,
                         )[2]
 
-                        detection_index_arr[sim, j] = calculate_ews_trigger_index(
+                        detection_index_arr[sim, j] = Try.@? calculate_ews_trigger_index(
                             exceeds_threshold_arr[sim, j];
                             consecutive_thresholds = consecutive_thresholds,
                         )
@@ -384,7 +384,7 @@ ews_df = DataFrame(
                         ews_vals_sa,
                         inc_ews_vals_sa,
                         ews_metric;
-                        plottitle = "$(get_test_description(test_specification)) ($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(ews_enddate_type_str) EWS $(ews_metric) Tau Distribution",
+                        plottitle = "$(get_test_description(test_specification)) ($(percent_tested * 100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(get_noise_magnitude_description(noise_specification)): $(method_string(ews_metric_specification.method)) $(ews_enddate_type_str) EWS $(ews_metric) Tau Distribution",
                     )
 
                     save(
@@ -461,9 +461,9 @@ ews_df = DataFrame(
 
                 aggregated_outbreak_thresholds_arr =
                     ensemble_single_periodsum_vecs[sim][
-                        (ensemble_single_periodsum_vecs[sim][:, 4] .== 1),
-                        [1, 2],
-                    ] .÷ ews_metric_specification.aggregation
+                    (ensemble_single_periodsum_vecs[sim][:, 4] .== 1),
+                    [1, 2],
+                ] .÷ ews_metric_specification.aggregation
 
                 plotdir = joinpath(
                     ensemble_ews_plotpath, "single-scenario", "sim-$(sim)"
@@ -526,7 +526,7 @@ ews_df = DataFrame(
                     ByRow(==(ews_metric_specification)),
             );
             statistic_function = titlecase("mean"),
-            plottitle = "Kendall's Tau Heatmap (Mean)\n($(percent_tested*100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(ews_metric_specification.dirpath), $(ews_enddate_type_str), $(get_noise_magnitude_description(noise_specification))",
+            plottitle = "Kendall's Tau Heatmap (Mean)\n($(percent_tested * 100)% tested), $(min_vaccination_coverage)-$(max_vaccination_coverage) Vaccination Coverage, $(ews_metric_specification.dirpath), $(ews_enddate_type_str), $(get_noise_magnitude_description(noise_specification))",
         )
 
         save(

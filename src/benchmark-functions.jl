@@ -303,8 +303,8 @@ end
 Display summary statistics of accuracy comparison between grid search and multistart.
 """
 function display_accuracy_comparison_summary(comparison_df)
-    println(styled"\n{bold:Accuracy Comparison Summary}")
-    println("-"^40)
+    log_both(styled"\n{bold:Accuracy Comparison Summary}")
+    log_both("-"^40)
 
     # Group by n_sobol configuration
     for n_sobol in sort(unique(comparison_df.n_sobol))
@@ -319,30 +319,30 @@ function display_accuracy_comparison_summary(comparison_df)
         max_diff = maximum(abs.(config_df.accuracy_diff))
         mean_rel_diff = mean(config_df.relative_diff_pct)
 
-        println(styled"\n{cyan:$n_sobol Sobol points}:")
-        println(styled"  Scenarios compared: {yellow:$n_scenarios}")
-        println(styled"  Matching accuracy (±1e-4): {green:$n_matching} ({green:$(round(match_rate, digits=1))%})")
-        println(styled"  Mean accuracy difference: {yellow:$(round(mean_diff, digits=5))}")
-        println(styled"  Std accuracy difference: {yellow:$(round(std_diff, digits=5))}")
-        println(styled"  Max absolute difference: {yellow:$(round(max_diff, digits=5))}")
-        println(styled"  Mean relative difference: {yellow:$(round(mean_rel_diff, digits=2))%}")
+        log_both(styled"\n{cyan:$n_sobol Sobol points}:")
+        log_both(styled"  Scenarios compared: {yellow:$n_scenarios}")
+        log_both(styled"  Matching accuracy (±1e-4): {green:$n_matching} ({green:$(round(match_rate, digits=1))%})")
+        log_both(styled"  Mean accuracy difference: {yellow:$(round(mean_diff, digits=5))}")
+        log_both(styled"  Std accuracy difference: {yellow:$(round(std_diff, digits=5))}")
+        log_both(styled"  Max absolute difference: {yellow:$(round(max_diff, digits=5))}")
+        log_both(styled"  Mean relative difference: {yellow:$(round(mean_rel_diff, digits=2))%}")
 
         # Identify scenarios with largest discrepancies
         if max_diff > 1.0e-3
             worst_scenarios = sort(config_df, :accuracy_diff)[1:min(3, nrow(config_df)), :]
-            println(styled"  {red:Scenarios with largest negative differences}:")
+            log_both(styled"  {red:Scenarios with largest negative differences}:")
             for row in eachrow(worst_scenarios)
                 metric = row.scenario_id.ews_metric
                 noise = get_noise_magnitude_description(row.scenario_id.noise_specification)
                 diff = round(row.accuracy_diff, digits = 4)
-                println(styled"    - $metric, $noise: {red:$diff}")
+                log_both(styled"    - $metric, $noise: {red:$diff}")
             end
         end
 
         # Show scenarios where multistart performs better
         better_scenarios = filter(row -> row.accuracy_diff > 1.0e-4, config_df)
         if nrow(better_scenarios) > 0
-            println(styled"  {green:Scenarios where multistart performs better}: {green:$(nrow(better_scenarios))}")
+            log_both(styled"  {green:Scenarios where multistart performs better}: {green:$(nrow(better_scenarios))}")
         end
     end
     return
@@ -358,39 +358,39 @@ function generate_accuracy_verification_report(
         grid_time,
         multistart_results
     )
-    println(styled"\n{bold blue:DETAILED VERIFICATION REPORT}")
-    println("="^60)
+    log_both(styled"\n{bold blue:DETAILED VERIFICATION REPORT}")
+    log_both("="^60)
 
     # Performance summary
-    println(styled"\n{bold:Performance Summary}")
-    println(styled"Grid search time: {yellow:$(round(grid_time, digits=2))}s")
+    log_both(styled"\n{bold:Performance Summary}")
+    log_both(styled"Grid search time: {yellow:$(round(grid_time, digits=2))}s")
 
     for (n_sobol, ms_data) in sort(collect(multistart_results))
         ms_time = ms_data.time
         speedup = round(grid_time / ms_time, digits = 1)
-        println(styled"Multistart ($n_sobol points): {yellow:$(round(ms_time, digits=2))}s (speedup: {green:$(speedup)x})")
+        log_both(styled"Multistart ($n_sobol points): {yellow:$(round(ms_time, digits=2))}s (speedup: {green:$(speedup)x})")
     end
 
     # Accuracy verification by metric
-    println(styled"\n{bold:Accuracy Verification by EWS Metric}")
+    log_both(styled"\n{bold:Accuracy Verification by EWS Metric}")
     metrics = unique([row.scenario_id.ews_metric for row in eachrow(comparison_df)])
 
     for metric in metrics
         metric_df = filter(row -> row.scenario_id.ews_metric == metric, comparison_df)
 
-        println(styled"\n{cyan:$metric}:")
+        log_both(styled"\n{cyan:$metric}:")
         for n_sobol in sort(unique(metric_df.n_sobol))
             sobol_df = filter(row -> row.n_sobol == n_sobol, metric_df)
             n_match = sum(sobol_df.matches)
             n_total = nrow(sobol_df)
             match_pct = round(n_match / n_total * 100, digits = 1)
 
-            println(styled"  $n_sobol Sobol points: {yellow:$n_match/$n_total matching ($match_pct%)}")
+            log_both(styled"  $n_sobol Sobol points: {yellow:$n_match/$n_total matching ($match_pct%)}")
         end
     end
 
     # Parameter convergence analysis
-    println(styled"\n{bold:Parameter Convergence Analysis}")
+    log_both(styled"\n{bold:Parameter Convergence Analysis}")
 
     for n_sobol in sort(unique(comparison_df.n_sobol))
         config_df = filter(row -> row.n_sobol == n_sobol, comparison_df)
@@ -402,9 +402,9 @@ function generate_accuracy_verification_report(
         mean_perc_diff = mean(percentile_diffs)
         mean_cons_diff = mean(consecutive_diffs)
 
-        println(styled"\n{cyan:$n_sobol Sobol points}:")
-        println(styled"  Mean percentile difference: {yellow:$(round(mean_perc_diff, digits=4))}")
-        println(styled"  Mean consecutive threshold difference: {yellow:$(round(mean_cons_diff, digits=2))}")
+        log_both(styled"\n{cyan:$n_sobol Sobol points}:")
+        log_both(styled"  Mean percentile difference: {yellow:$(round(mean_perc_diff, digits=4))}")
+        log_both(styled"  Mean consecutive threshold difference: {yellow:$(round(mean_cons_diff, digits=2))}")
     end
 
     # Save detailed comparison to CSV for further analysis
@@ -456,7 +456,7 @@ function generate_accuracy_verification_report(
 
     export_df = DataFrame(export_data)
     CSV.write(output_file, export_df)
-    return println(styled"\n{green:Detailed comparison saved to: $output_file}")
+    return log_both(styled"\n{green:Detailed comparison saved to: $output_file}")
 end
 
 """

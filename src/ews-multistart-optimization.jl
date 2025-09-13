@@ -1084,7 +1084,9 @@ function optimize_scenarios_in_batches_structvector(
     # Auto-configure batch size for threaded execution
     if executor isa FLoops.ThreadedEx
         if batch_size == 10  # Default value
-            suggested_batch_size = max(1, n_missing ÷ (Threads.nthreads() * 4))
+            # Choose a bigger batch size than the number of threads so Julia can
+            # allocate tasks to threads appropriately
+            suggested_batch_size = max(1, Threads.nthreads() * 4)
             batch_size = clamp(suggested_batch_size, 1, 100)
             verbose && @info "Auto-configured batch size for threading: $batch_size (suggested: $suggested_batch_size)"
         end
@@ -1107,16 +1109,16 @@ function optimize_scenarios_in_batches_structvector(
 
         verbose && println(styled"{green:Processing batch $batch_idx/$(length(scenario_batches)) ($(batch_size_actual) scenarios)}")
 
-        # Pre-allocate optimization results
-        batch_optimized = Vector{OptimizedValues}(undef, batch_size_actual)
-
-        FLoops.@floop executor for (idx, scenario) in pairs(batch_scenarios)
+        FLoops.@floop executor for scenario in batch_scenarios
             # Direct struct access - no conversion needed!
-            batch_optimized[idx] = optimize_single_scenario(
-                scenario,
-                data_arrs,
-                bounds,
-                optim_config
+            FLoops.@reduce batch_optimized = vcat(
+                OptimizedValues[],
+                optimize_single_scenario(
+                    scenario,
+                    data_arrs,
+                    bounds,
+                    optim_config
+                )
             )
         end
 

@@ -217,16 +217,13 @@ end
             )
 
             @test_opt target_modules = (CSDNoise,) CSDNoise.calculate_ews_metrics_for_simulation(
-                cached_data.ensemble_single_incarr,
-                cached_data.null_testarr,
-                scenario,
-                0.9,
-                5
+                scenario.ews_metric_specification,
+                cached_data.testarr[:, :, 1],
+                cached_data.null_testarr[:, :, 1],
+                cached_data.thresholds[1],
+                scenario.ews_enddate_type
             )
 
-            @test_opt target_modules = (CSDNoise,) map_continuous_to_ews_parameters(
-                test_params
-            )
         end
 
         @testset "Medium Priority Scenario Management Functions" begin

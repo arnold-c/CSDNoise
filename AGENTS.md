@@ -4,6 +4,7 @@
 - **Run all tests**: `julia --project=. -e "using Pkg; Pkg.test()"`
 - **Run single test file**: `julia --startup-file=no -e 'using Test; @testset "filename" include("test/filename.jl")'`
 - **Build manuscript**: `just manuscript` (requires Just and Typst)
+- **Run tests + manuscript**: `just` (default target)
 - **Format code**: `runic -i path/to/file` (use Runic.jl for formatting)
 
 ## Code Style Guidelines

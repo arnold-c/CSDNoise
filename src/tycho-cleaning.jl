@@ -42,10 +42,10 @@ function fill_aggregation_values(vals; week_aggregation = 1)
 end
 
 function calculate_ews_enddate(
-    long_cases_df;
-    week_aggregation = 1,
-    obsdate = cdc_week_to_date(1990, 34; weekday = 6),
-)
+        long_cases_df;
+        week_aggregation = 1,
+        obsdate = cdc_week_to_date(1990, 34; weekday = 6),
+    )
     subset_cases = subset(
         long_cases_df,
         :aggregation_weeks => x -> x .== week_aggregation,

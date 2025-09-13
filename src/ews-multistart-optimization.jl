@@ -411,9 +411,9 @@ function calculate_ews_metrics_for_simulation(
             @view(null_testarr_view[1:enddate_val, 5])
         )
 
-        return (Try.Ok(ews_vals), Try.Ok(null_ews_vals))
+        return Try.Ok((ews_vals, null_ews_vals))
     else
-        return (enddate, enddate)  # Both are Try.Err
+        return enddate  # Both are Try.Err
     end
 end
 
@@ -469,16 +469,18 @@ function create_cached_simulation_data(
     valid_sim_indices = Vector{Int}()
 
     for sim in 1:ensemble_nsims
-        ews_result, null_ews_result = calculate_ews_metrics_for_simulation(
+        ews_metric_result = calculate_ews_metrics_for_simulation(
             ews_metric_specification,
             @view(testarr[:, :, sim]),
             @view(null_testarr[:, :, sim]),
             thresholds[sim],
             ews_enddate_type
         )
-        if Try.isok(ews_result)
-            push!(ews_metrics, Try.unwrap(ews_result))
-            push!(null_ews_metrics, Try.unwrap(null_ews_result))
+        if Try.isok(ews_metric_result)
+            ews_result, null_ews_result = Try.unwrap(ews_metric_result)
+
+            push!(ews_metrics, ews_result)
+            push!(null_ews_metrics, null_ews_result)
             push!(valid_sim_indices, sim)
         end
     end

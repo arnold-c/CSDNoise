@@ -18,7 +18,7 @@ using Dates
 using Random
 using Printf
 using StyledStrings
-using Statistics
+using StatsBase
 using CSV
 using FLoops
 using UnPack

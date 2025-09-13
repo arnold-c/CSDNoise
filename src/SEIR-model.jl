@@ -7,7 +7,7 @@ This is a simulation of an SIR model that uses Tau-leaping, with commuter
 imports. All jumps are manually defined.
 """
 
-using Statistics
+using StatsBase
 using Distributions: Poisson, Binomial
 using Random
 using UnPack
@@ -19,8 +19,8 @@ using StaticArrays
 The in-place function to run the SEIR model with a vaccinations going directly to the R compartment and produce the transmission rate array.
 """
 function seir_mod(
-    states, dynamics_params, time_params; seed = 1234
-)
+        states, dynamics_params, time_params; seed = 1234
+    )
     state_vec = Vector{typeof(states)}(undef, time_params.tlength)
     beta_vec = Vector{Float64}(undef, time_params.tlength)
     inc_vec = Vector{typeof(SVector(0))}(undef, time_params.tlength)
@@ -44,14 +44,14 @@ end
 The in-place function to run the SEIR model and produce the transmission rate array.
 """
 function seir_mod!(
-    state_vec,
-    inc_vec,
-    beta_vec,
-    states,
-    dynamics_params,
-    time_params;
-    seed = 1234,
-)
+        state_vec,
+        inc_vec,
+        beta_vec,
+        states,
+        dynamics_params,
+        time_params;
+        seed = 1234,
+    )
     Random.seed!(seed)
 
     @inbounds begin
@@ -103,16 +103,16 @@ end
 The inner loop that is called by `seir_mod!()` function.
 """
 function seir_mod_loop!(
-    state_vec,
-    beta_t,
-    mu,
-    epsilon,
-    sigma,
-    gamma,
-    R_0,
-    vaccination_coverage,
-    timestep,
-)
+        state_vec,
+        beta_t,
+        mu,
+        epsilon,
+        sigma,
+        gamma,
+        R_0,
+        vaccination_coverage,
+        timestep,
+    )
 
     # TODO: Benchmak StaticArrays implementation as potentially much faster.
     # Would need to use permutedims(reshape(reinterperate(Float64, SVector), (...), (...))
@@ -144,7 +144,7 @@ function seir_mod_loop!(
     end
 
     return (
-        SVector(S + dS, E + dE, I + dI, R + dR, N + dN), SVector(contact_inf)
+        SVector(S + dS, E + dE, I + dI, R + dR, N + dN), SVector(contact_inf),
     )
 end
 

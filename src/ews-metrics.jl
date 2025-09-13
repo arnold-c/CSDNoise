@@ -8,8 +8,8 @@ using TestItems
 using Dates: Dates
 
 function EWSMetrics(
-    ews_spec::EWSMetricSpecification, timeseries
-)
+        ews_spec::EWSMetricSpecification, timeseries
+    )
     aggregated_timeseries = aggregate_timeseries(
         timeseries, ews_spec.aggregation
     )
@@ -92,10 +92,10 @@ function aggregate_Reff_vec(Reff_vec, aggregation)
 end
 
 function aggregate_timeseries(
-    timeseries,
-    aggregation::T1,
-    stat_function = sum,
-) where {T1<:Dates.DatePeriod}
+        timeseries,
+        aggregation::T1,
+        stat_function = sum,
+    ) where {T1 <: Dates.DatePeriod}
     if aggregation == Dates.Day(1)
         return timeseries
     end
@@ -103,10 +103,10 @@ function aggregate_timeseries(
 end
 
 function _aggregate_timeseries(
-    timeseries,
-    aggregation::T1,
-    stat_function = mean,
-) where {T1<:Dates.DatePeriod}
+        timeseries,
+        aggregation::T1,
+        stat_function = mean,
+    ) where {T1 <: Dates.DatePeriod}
     aggregation_days = Dates.days(aggregation)
     aggregate_timeseries = zeros(
         eltype(stat_function(@view(timeseries[1:2]))),
@@ -123,21 +123,21 @@ function _aggregate_timeseries(
 end
 
 function spaero_mean(
-    method::EWSMethod,
-    timeseries,
-    bandwidth::T1,
-) where {T1<:Integer}
+        method::EWSMethod,
+        timeseries,
+        bandwidth::T1,
+    ) where {T1 <: Integer}
     mean_vec = zeros(Float64, length(timeseries))
     spaero_mean!(mean_vec, method, timeseries, bandwidth)
     return mean_vec
 end
 
 function spaero_mean!(
-    mean_vec,
-    method::EWSMethod,
-    timeseries,
-    bandwidth::T1,
-) where {T1<:Integer}
+        mean_vec,
+        method::EWSMethod,
+        timeseries,
+        bandwidth::T1,
+    ) where {T1 <: Integer}
     mean_func! = _get_mean_func(method)
     mean_func!(mean_vec, timeseries, bandwidth)
     return nothing
@@ -167,8 +167,8 @@ function _spaero_centered_mean!(mean_vec, timeseries, bw)
 end
 
 function _spaero_backward_mean!(
-    mean_vec, timeseries, bw
-)
+        mean_vec, timeseries, bw
+    )
     @inbounds for i in eachindex(timeseries)
         if i < bw
             mean_vec[i] = mean(@view(timeseries[begin:i]))
@@ -180,8 +180,8 @@ function _spaero_backward_mean!(
 end
 
 function _spaero_moment(
-    method::EWSMethod, timeseries, moment, bandwidth
-)
+        method::EWSMethod, timeseries, moment, bandwidth
+    )
     return _spaero_moment(
         method,
         spaero_mean(method, timeseries, bandwidth),
@@ -192,9 +192,9 @@ function _spaero_moment(
 end
 
 function _spaero_moment(
-    method::EWSMethod, mean_timeseries, timeseries, moment, bandwidth
-)
-    @no_escape begin
+        method::EWSMethod, mean_timeseries, timeseries, moment, bandwidth
+    )
+    return @no_escape begin
         diff = @alloc(Float64, length(timeseries))
         diff .= (timeseries .- mean_timeseries) .^ moment
         spaero_mean(method, diff, bandwidth)
@@ -211,7 +211,7 @@ function spaero_var(method::EWSMethod, mean_vec, timeseries, bandwidth)
 end
 
 function spaero_cov(method::EWSMethod, timeseries, bandwidth)
-    @no_escape begin
+    return @no_escape begin
         mean_vec = @alloc(Float64, length(timeseries))
         var_vec = @alloc(Float64, length(timeseries))
         mean_vec = spaero_mean(method, timeseries, bandwidth)
@@ -237,7 +237,7 @@ function spaero_iod(var_vec, mean_vec)
 end
 
 function spaero_skew(method::EWSMethod, timeseries, bandwidth)
-    @no_escape begin
+    return @no_escape begin
         # use for both mean and sd vec as only one needed at a time
         worker_vec = @alloc(Float64, length(timeseries))
         m3_vec = @alloc(Float64, length(timeseries))
@@ -255,7 +255,7 @@ function spaero_skew(m3_vec, sd3_vec)
 end
 
 function spaero_kurtosis(method::EWSMethod, timeseries, bandwidth)
-    @no_escape begin
+    return @no_escape begin
         mean_vec = @alloc(Float64, length(timeseries))
         m4_vec = @alloc(Float64, length(timeseries))
         var2_vec = @alloc(Float64, length(timeseries))
@@ -271,7 +271,7 @@ function spaero_kurtosis(m4_vec, var2_vec)
 end
 
 function spaero_autocov(method::EWSMethod, timeseries, bandwidth; lag = 1)
-    @no_escape begin
+    return @no_escape begin
         mean_vec = @alloc(Float64, length(timeseries))
         mean_vec .= spaero_mean(method, timeseries, bandwidth)
         spaero_autocov(
@@ -281,12 +281,12 @@ function spaero_autocov(method::EWSMethod, timeseries, bandwidth; lag = 1)
 end
 
 function spaero_autocov(
-    method::EWSMethod,
-    mean_vec,
-    timeseries,
-    bandwidth;
-    lag = 1,
-)
+        method::EWSMethod,
+        mean_vec,
+        timeseries,
+        bandwidth;
+        lag = 1,
+    )
     meandiff = timeseries .- mean_vec
     autocov_vec = zeros(Float64, length(timeseries))
     @inbounds for i in eachindex(timeseries)
@@ -337,12 +337,7 @@ function _lagged_vector(lagged_vec, vec, lag)
     return nothing
 end
 
-function spaero_corkendall(ews_vec)
-    sum(isnan.(ews_vec)) == 0 &&
-        return StatsBase.corkendall(
-            collect(1:length(ews_vec)), ews_vec
-        )
-
+function spaero_corkendall(ews_vec::Vector{F}) where {F <: AbstractFloat}
     filtered_ews_vec = filter(x -> !isnan(x), ews_vec)
     return StatsBase.corkendall(
         collect(1:length(filtered_ews_vec)), filtered_ews_vec
@@ -350,21 +345,21 @@ function spaero_corkendall(ews_vec)
 end
 
 function compare_against_spaero(
-    spaero_ews::T1, my_ews::T2;
-    ews = [
-        :autocorrelation,
-        :autocovariance,
-        :coefficient_of_variation,
-        :index_of_dispersion,
-        :kurtosis,
-        :mean,
-        :skewness,
-        :variance,
-    ],
-    tolerance = 1e-13,
-    showwarnings = true,
-    showdiffs = false,
-) where {T1<:DataFrames.DataFrame,T2<:EWSMetrics}
+        spaero_ews::T1, my_ews::T2;
+        ews = [
+            :autocorrelation,
+            :autocovariance,
+            :coefficient_of_variation,
+            :index_of_dispersion,
+            :kurtosis,
+            :mean,
+            :skewness,
+            :variance,
+        ],
+        tolerance = 1.0e-13,
+        showwarnings = true,
+        showdiffs = false,
+    ) where {T1 <: DataFrames.DataFrame, T2 <: EWSMetrics}
     warnings = 0
     maxabsdiff = 0.0
     warning_metric = :none
@@ -403,7 +398,7 @@ function compare_against_spaero(
         end
     end
     println()
-    if warnings > 0
+    return if warnings > 0
         maxabsdiff = @sprintf("%.4E", maxabsdiff)
         @warn "🟡 There were warnings in $warnings metrics for the $(my_ews.ews_specification.method) 🟡\n The max absolute difference was $maxabsdiff and occured in $warning_metric"
     else
@@ -417,12 +412,12 @@ function compare_against_spaero(spaero_ews, my_ews)
     return df
 end
 
-function filter_spaero_comparison(spaero_ews, my_ews; tolerance = 1e-13)
+function filter_spaero_comparison(spaero_ews, my_ews; tolerance = 1.0e-13)
     df = compare_against_spaero(spaero_ews, my_ews)
     return filter_spaero_comparison(df; tolerance = tolerance)
 end
 
-function filter_spaero_comparison(df; tolerance = 1e-13, warn = true)
+function filter_spaero_comparison(df; tolerance = 1.0e-13, warn = true)
     subsetted = DataFrames.subset(
         df, :absdiff => x -> x .> tolerance; skipmissing = true
     )
@@ -440,9 +435,9 @@ function ews_as_df(ews::EWSMetrics)
     )
     df =
         reduce(
-            hcat,
-            map(metric -> getproperty(ews, metric), metrics),
-        ) |>
+        hcat,
+        map(metric -> getproperty(ews, metric), metrics),
+    ) |>
         array -> DataFrames.DataFrame(array, [metrics...])
     return df
 end

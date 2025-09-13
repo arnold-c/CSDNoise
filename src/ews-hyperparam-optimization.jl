@@ -52,12 +52,12 @@ function ews_hyperparam_optimization(
             :ews_metric,
             :ews_threshold_window,
             :ews_threshold_burnin,
-    ],
-    disable_time_check = false,
-    time_per_run_s = 0.08,
-    verbose = true,
-    save_results = true,
-)
+        ],
+        disable_time_check = false,
+        time_per_run_s = 0.08,
+        verbose = true,
+        save_results = true,
+    )
     if !isdir(filedir)
         mkpath(filedir)
     end
@@ -167,10 +167,10 @@ function ews_hyperparam_gridsearch(
         ),
         disable_time_check = false,
         time_per_run_s = 0.08,
-    return_df = true,
-    verbose = true,
-    save_results = true,
-)
+        return_df = true,
+        verbose = true,
+        save_results = true,
+    )
     load_filepath = get_most_recent_hyperparam_filepath(
         filename_base,
         filedir,
@@ -513,7 +513,7 @@ function ews_hyperparam_gridsearch!(
                                 burn_in = ews_threshold_burnin,
                             )[2]
 
-                            detection_index_arr[sim, j] = calculate_ews_trigger_index(
+                            detection_index_arr[sim, j] = Try.@? calculate_ews_trigger_index(
                                 exceeds_threshold_arr[sim, j];
                                 consecutive_thresholds = ews_consecutive_thresholds,
                             )
@@ -526,7 +526,7 @@ function ews_hyperparam_gridsearch!(
                                 burn_in = ews_threshold_burnin,
                             )[2]
 
-                            null_detection_index_arr[sim, j] = calculate_ews_trigger_index(
+                            null_detection_index_arr[sim, j] = Try.@? calculate_ews_trigger_index(
                                 null_exceeds_threshold_arr[sim, j];
                                 consecutive_thresholds = ews_consecutive_thresholds,
                             )

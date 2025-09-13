@@ -3,7 +3,6 @@ using Match: Match
 using StatsBase: StatsBase
 using StructArrays
 using DataFrames
-using Debugger: Debugger
 using Try: Try
 using TryExperimental: trygetindex
 using Dates
@@ -36,14 +35,33 @@ function calculate_bandwidth(bandwidth_days, aggregation_days)
     return bandwidth_days ÷ aggregation_days
 end
 
+function get_ews_metric_vec(
+        ewsmetrics::T1,
+        metric::T2,
+    ) where {T1 <: EWSMetrics, T2 <: Symbol}
+    @assert metric in [
+        :mean,
+        :variance,
+        :coefficient_of_variation,
+        :index_of_dispersion,
+        :skewness,
+        :kurtosis,
+        :autocovariance,
+        :autocorrelation,
+    ]
+
+    ews_vec = getproperty(ewsmetrics, metric)::Vector{Float64}
+    return ews_vec
+end
+
 function expanding_ews_thresholds(
         ewsmetrics::T1,
         metric::T2,
-        window_type::Type{<:AbstractEWSThresholdWindow};
+        window_type::EWSThresholdWindowType;
         percentiles = (0.8, 0.95),
         burn_in = Dates.Day(10),
     ) where {T1 <: EWSMetrics, T2 <: Symbol}
-    ews_vec = getproperty(ewsmetrics, metric)
+    ews_vec = get_ews_metric_vec(ewsmetrics, metric)
 
     @unpack aggregation = ewsmetrics.ews_specification
     burn_in_index = Int64(Dates.days(burn_in) ÷ Dates.days(aggregation))
@@ -52,7 +70,6 @@ function expanding_ews_thresholds(
 
     return _expanding_ews_thresholds(
         ews_vec,
-        window_type,
         percentiles,
         burn_in_index,
     )
@@ -60,11 +77,9 @@ end
 
 function _expanding_ews_thresholds(
         ews_vec::Vector{F},
-        ::Type{ExpandingThresholdWindow},
         percentiles,
         burn_in_index::T1,
     ) where {T1 <: Integer, F <: AbstractFloat}
-    # Main.@infiltrate
     ews_vec_len = length(ews_vec)
     ews_distributions = fill(NaN, ews_vec_len, length(percentiles))
     ews_worker_vec = fill(
@@ -75,7 +90,7 @@ function _expanding_ews_thresholds(
         length(ews_vec), length(percentiles),
     )
 
-    worker_ind::Int64 = 0
+    worker_ind = 0
     for i in eachindex(ews_vec)
         if isnan(ews_vec[i])
             if i > burn_in_index
@@ -87,27 +102,20 @@ function _expanding_ews_thresholds(
         # use online stats to build up new distribution to avoid computing quantiles for vectors containing NaNs
         ews_worker_vec[worker_ind] = ews_vec[i]
         if i > burn_in_index
-            ews_distributions[i, :] .= map(
-                p -> StatsBase.quantile(@view(ews_worker_vec[1:worker_ind]), p),
-                percentiles,
-            )
+            for (j, p) in pairs(percentiles)
+                ews_distributions[i, j] = StatsBase.quantile(
+                    @view(ews_worker_vec[1:worker_ind]),
+                    p
+                )
+            end
 
-            exceeds_thresholds[i, :] .=
-                ews_vec[i] .>= ews_distributions[(i - 1), :]
+            exceeds_thresholds[i, :] .= ews_vec[i] .>= ews_distributions[(i - 1), :]
         end
     end
 
     @assert worker_ind == length(ews_worker_vec)
 
     return ews_distributions, exceeds_thresholds, ews_worker_vec
-end
-
-@sum_type EWSEndDateType begin
-    Reff_start
-    Reff_end
-    Outbreak_start
-    Outbreak_end
-    Outbreak_middle
 end
 
 function calculate_ews_enddate(
@@ -468,17 +476,17 @@ function tycho_testing_plots(
         percentiles = ews_threshold_percentile,
     )
 
-    weekly_detection_index = calculate_ews_trigger_index(
+    weekly_detection_index = Try.@? calculate_ews_trigger_index(
         weekly_thresholds[2];
         consecutive_thresholds = consecutive_thresholds,
     )
 
-    biweekly_detection_index = calculate_ews_trigger_index(
+    biweekly_detection_index = Try.@? calculate_ews_trigger_index(
         biweekly_thresholds[2];
         consecutive_thresholds = consecutive_thresholds,
     )
 
-    monthly_detection_index = calculate_ews_trigger_index(
+    monthly_detection_index = Try.@? calculate_ews_trigger_index(
         monthly_thresholds[2];
         consecutive_thresholds = consecutive_thresholds,
     )
@@ -489,7 +497,6 @@ function tycho_testing_plots(
     )
 
     # if !isfile(plotpath) || force
-    Debugger.@bp
     plot = tycho_epicurve(
         plot_dates,
         (
@@ -698,7 +705,7 @@ function calculate_ews_lead_time(
         consecutive_thresholds = 2,
         output_type = :days,
     )
-    threshold_index = calculate_ews_trigger_index(
+    threshold_index = Try.@? calculate_ews_trigger_index(
         ews_thresholds; consecutive_thresholds = consecutive_thresholds
     )
 
@@ -759,10 +766,10 @@ function calculate_ews_trigger_index(
                 v >=
                 cumulative_thresholds[i - consecutive_thresholds] +
                 consecutive_thresholds
-            return i
+            return Try.Ok(i)
         end
     end
-    return nothing
+    return Try.Err(nothing)
 end
 
 function ews_lead_time_df!(

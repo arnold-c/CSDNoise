@@ -29,6 +29,43 @@ function calculate_bandwidth(bandwidth_days, aggregation_days)
     return bandwidth_days ÷ aggregation_days
 end
 
+function exceeds_ews_threshold(
+        ewsmetrics::T1,
+        metric::T2,
+        window_type::EWSThresholdWindowType,
+        percentile::Float64 = 0.95,
+        burn_in::P = Dates.Day(10),
+    ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
+    return exceeds_ews_threshold(
+        ewsmetrics,
+        metric,
+        variant(window_type),
+        percentile,
+        burn_in,
+    )
+end
+
+function exceeds_ews_threshold(
+        ewsmetrics::T1,
+        metric::T2,
+        window_type::ExpandingThresholdWindow,
+        percentile::Float64 = 0.95,
+        burn_in::P = Dates.Day(10),
+    ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
+    ews_vec = get_ews_metric_vec(ewsmetrics, metric)
+
+    @unpack aggregation = ewsmetrics.ews_specification
+    burn_in_index = Int64(Dates.days(burn_in) ÷ Dates.days(aggregation))
+
+    @assert burn_in_index >= 1 && burn_in_index <= length(ews_vec)
+
+    return _expanding_ews_thresholds(
+        ews_vec,
+        percentile,
+        burn_in_index,
+    )
+end
+
 function get_ews_metric_vec(
         ewsmetrics::T1,
         metric::T2,
@@ -48,26 +85,6 @@ function get_ews_metric_vec(
     return ews_vec
 end
 
-function expanding_ews_thresholds(
-        ewsmetrics::T1,
-        metric::T2,
-        window_type::EWSThresholdWindowType,
-        percentile::Float64 = 0.95,
-        burn_in::P = Dates.Day(10),
-    ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
-    ews_vec = get_ews_metric_vec(ewsmetrics, metric)
-
-    @unpack aggregation = ewsmetrics.ews_specification
-    burn_in_index = Int64(Dates.days(burn_in) ÷ Dates.days(aggregation))
-
-    @assert burn_in_index >= 1 && burn_in_index <= length(ews_vec)
-
-    return _expanding_ews_thresholds(
-        ews_vec,
-        percentile,
-        burn_in_index,
-    )
-end
 
 function _expanding_ews_thresholds(
         ews_vec::Vector{Float64},

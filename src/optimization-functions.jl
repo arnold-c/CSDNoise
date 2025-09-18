@@ -1,4 +1,111 @@
-export calculate_sensitivity, calculate_specificity, calculate_balanced_accuracy
+using UnPack: @unpack
+using Try: Try
+
+export EWSClassificationResults,
+    calculate_sensitivity,
+    calculate_specificity,
+    calculate_balanced_accuracy
+
+
+"""
+    EWSClassificationResults
+
+Stores binary classification results from Early Warning Signal (EWS) detection analysis.
+
+Contains the confusion matrix components and total counts for evaluating EWS performance
+across emergent (positive class) and null (negative class) simulations.
+
+# Fields
+- `true_positives::Float64`: Number of emergent simulations correctly identified by EWS metric
+- `true_negatives::Float64`: Number of null simulations correctly identified as by EWS metric
+- `false_positives::Float64`: Number of null simulations incorrectly identified by EWS metric
+- `false_negatives::Float64`: Number of emergent simulations incorrectly identified by EWS metric
+- `n_emergent_sims::Int64`: Total number of emergent (positive class) simulations
+- `n_null_sims::Int64`: Total number of null (negative class) simulations
+
+# Notes
+The classification counts are stored as Float64 to support weighted or fractional classifications,
+while the total simulation counts remain as integers. This struct serves as an intermediate
+representation for calculating performance metrics like sensitivity, specificity, and accuracy.
+"""
+struct EWSClassificationResults
+    true_positives::Float64
+    true_negatives::Float64
+    false_positives::Float64
+    false_negatives::Float64
+    n_emergent_sims::Int64
+    n_null_sims::Int64
+end
+
+function calculate_ews_classification_results(
+        scenario,
+        ews_metrics,
+        null_ews_metrics,
+    )
+    @unpack ews_metric,
+        ews_threshold_window,
+        ews_threshold_burnin,
+        threshold_percentile,
+        consecutive_thresholds = scenario
+
+    ews_metric_symbol = Symbol(ews_metric)
+
+    n_emergent_sims = length(ews_metrics)
+    n_null_sims = length(null_ews_metrics)
+
+    true_positives = 0
+    true_negatives = 0
+
+    for sim in eachindex(ews_metrics)
+        # Use pre-computed EWS metrics
+        ews_vals = ews_metrics[sim]
+        null_ews_vals = null_ews_metrics[sim]
+
+        # Check threshold exceedances
+        exceeds_threshold = exceeds_ews_threshold(
+            ews_vals,
+            ews_metric_symbol,
+            ews_threshold_window,
+            threshold_percentile,
+            ews_threshold_burnin,
+        )
+
+        detection_index = calculate_ews_trigger_index(
+            exceeds_threshold,
+            consecutive_thresholds,
+        )
+
+        null_exceeds_threshold = exceeds_ews_threshold(
+            null_ews_vals,
+            ews_metric_symbol,
+            ews_threshold_window,
+            threshold_percentile,
+            ews_threshold_burnin,
+        )
+
+        null_detection_index = calculate_ews_trigger_index(
+            null_exceeds_threshold,
+            consecutive_thresholds,
+        )
+
+        # Update counts
+        if Try.isok(detection_index)
+            true_positives += 1
+        end
+        if Try.iserr(null_detection_index)
+            true_negatives += 1
+        end
+    end
+
+    return EWSClassificationResults(
+        true_positives,
+        true_negatives,
+        n_null_sims - true_negatives,
+        n_emergent_sims - true_positives,
+        n_emergent_sims,
+        n_null_sims
+    )
+end
 
 """
     calculate_balanced_accuracy(sensitivity, specificity)
@@ -23,6 +130,10 @@ balanced_accuracy = calculate_balanced_accuracy(0.8, 0.9)  # Returns 0.85
 """
 function calculate_balanced_accuracy(sensitivity, specificity)
     return (sensitivity + specificity) / 2
+end
+
+function calculate_sensitivity(classification_results::EWSClassificationResults)
+    return calculate_sensitivity(classification_results.true_positives, classification_results.n_emergent_sims)
 end
 
 """
@@ -50,6 +161,10 @@ sensitivity = calculate_sensitivity(80, 100)  # Returns 0.8
 function calculate_sensitivity(true_positives, n_emergent_sims)
     return true_positives / n_emergent_sims
 
+end
+
+function calculate_specificity(classification_results::EWSClassificationResults)
+    return calculate_specificity(classification_results.true_negatives, classification_results.n_null_sims)
 end
 
 """

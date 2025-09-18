@@ -49,7 +49,9 @@ export SimTimeParameters, EnsembleSpecification,
     Outbreak_start,
     Outbreak_end,
     Outbreak_middle,
+    CachedSimulationData,
     OptimizationScenario,
+    GridSearchScenario,
     OptimizationResult,
     EWSMetrics
 # @reexport using .ODStructs
@@ -70,16 +72,15 @@ export aggregate_Reff_vec, aggregate_thresholds_vec, aggregate_timeseries,
 
 include("ews-functions.jl")
 export calculate_bandwidth, calculate_bandwidth_and_return_ews_metric_spec,
-    expanding_ews_thresholds,
+    exceeds_ews_threshold,
     calculate_ews_enddate,
-    tycho_testing_plots,
     simulation_tau_heatmap_df!,
-    tycho_tau_heatmap_df,
     calculate_ews_lead_time,
     calculate_ews_trigger_index,
-    ews_lead_time_df!,
     calculate_auc
 
+include("optimization-setup-functions.jl")
+include("optimization-checkpointing-functions.jl")
 include("optimization-functions.jl")
 
 include("ews-hyperparam-optimization.jl")
@@ -92,21 +93,26 @@ export ews_hyperparam_optimization,
     optimal_ews_heatmap_df,
     optimal_ews_heatmap_plot
 
+include("ews-hyperparam-gridsearch-structvector.jl")
+export ews_hyperparam_gridsearch_structvector,
+    create_gridsearch_scenarios_structvector,
+    evaluate_single_gridsearch_scenario,
+    evaluate_gridsearch_scenarios,
+    find_missing_scenarios,
+    load_previous_gridsearch_results_structvector,
+    confirm_gridsearch_run_structvector
+
 include("ews-multistart-optimization.jl")
 export ews_multistart_optimization,
     optimize_single_scenario,
     ews_objective_function_with_tracking,
     map_continuous_to_ews_parameters,
     create_optimization_scenarios,
-    create_cached_simulation_data,
-    CachedSimulationData,
     OptimizationTracker,
     OptimizedValues,
-    find_missing_scenarios_structvector,
     confirm_optimization_run_structvector,
     optimize_scenarios_in_batches_structvector,
     load_previous_multistart_results_structvector,
-    save_results_structvector,
     create_scenarios_structvector
 
 include("ews-survival.jl")

@@ -3,6 +3,7 @@ uuid = "8cb15dc8-b3ab-4164-9f0c-296b8d5139d2"
 authors = ["Callum Arnold"]
 
 [deps]
+BangBang = "198e06fe-97b7-11e9-32a5-e1d131e6ad66"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Bumper = "8ce10254-0962-460f-a3d8-1f77fea1446e"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -24,6 +25,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+MicroCollections = "128add7d-3638-4c79-886c-908ea0c25c34"
 MultistartOptimization = "3933049c-43be-478e-a8bb-6e0f7fd53575"
 NLopt = "76087f3c-5699-56af-9a33-bf431cd00edd"
 NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
@@ -50,6 +52,8 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 VimBindings = "51b3953f-5e5d-4a6b-bd62-c64b6fa1518a"
 
 [compat]
+BangBang = "0.4.4"
 DispatchDoctor = "0.4.26"
 InteractiveUtils = "1.11.0"
 LightSumTypes = "5.2.1"
+MicroCollections = "0.2.0"

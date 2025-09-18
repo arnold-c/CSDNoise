@@ -5,6 +5,7 @@ using UnPack: @unpack
 using MultistartOptimization
 using NLopt
 using FLoops: FLoops
+using BangBang: BangBang
 using StyledStrings
 using Try: Try
 using DrWatson: @tagsave
@@ -36,21 +37,6 @@ struct OptimizedValues
     specificity::Float64
 end
 
-
-"""
-    CachedSimulationData
-
-Pre-computed simulation data that can be reused across parameter evaluations.
-This avoids expensive recomputation of noise arrays and test arrays.
-"""
-struct CachedSimulationData
-    ensemble_single_incarr::Array{Int64, 3}
-    testarr::Array{Int64, 3}
-    null_testarr::Array{Int64, 3}
-    thresholds::Vector{Matrix{Int64}}
-    ews_metrics::Vector{EWSMetrics}
-    null_ews_metrics::Vector{EWSMetrics}
-end
 
 """
     ews_multistart_optimization(specification_vecs, data_arrs; kwargs...)
@@ -144,7 +130,7 @@ function ews_multistart_optimization(
     end
 
     # Find missing scenarios
-    missing_scenarios = find_missing_scenarios_structvector(all_scenarios, existing_results)
+    missing_scenarios = find_missing_scenarios(all_scenarios, existing_results)
     n_missing = length(missing_scenarios)
 
     if verbose
@@ -276,6 +262,8 @@ function optimize_single_scenario(
 
     return OptimizationResult(
         # From scenario
+        scenario.ensemble_specification,
+        scenario.null_specification,
         scenario.noise_specification,
         scenario.test_specification,
         scenario.percent_tested,
@@ -310,8 +298,7 @@ function ews_objective_function_with_tracking(
         ews_enddate_type,
         ews_threshold_window, ews_threshold_burnin, ews_metric = scenario
 
-    @unpack ensemble_single_incarr,
-        testarr,
+    @unpack testarr,
         null_testarr,
         thresholds,
         ews_metrics,
@@ -339,14 +326,12 @@ function ews_objective_function_with_tracking(
         null_ews_vals = null_ews_metrics[sim]
 
         # Check threshold exceedances
-        exceeds_threshold = expanding_ews_thresholds(
+        exceeds_threshold = exceeds_ews_threshold(
             ews_vals,
             ews_metric_symbol,
             ews_threshold_window,
             threshold_percentile,
             ews_threshold_burnin,
-            # percentiles = threshold_percentile,
-            # burn_in = ews_threshold_burnin,
         )
 
         detection_index = calculate_ews_trigger_index(
@@ -354,14 +339,12 @@ function ews_objective_function_with_tracking(
             ews_params.consecutive_thresholds,
         )
 
-        null_exceeds_threshold = expanding_ews_thresholds(
+        null_exceeds_threshold = exceeds_ews_threshold(
             null_ews_vals,
             ews_metric_symbol,
             ews_threshold_window,
             threshold_percentile,
             ews_threshold_burnin,
-            # percentiles = threshold_percentile,
-            # burn_in = ews_threshold_burnin,
         )
 
         null_detection_index = calculate_ews_trigger_index(
@@ -405,113 +388,16 @@ Returns a tuple of (ews_metrics, null_ews_metrics) wrapped in Try types.
 function calculate_ews_metrics_for_simulation(
         ews_metric_specification,
         testarr_view,
-        null_testarr_view,
         threshold,
-        ews_enddate_type
+        ews_enddate_val
     )
-    enddate = calculate_ews_enddate(threshold, ews_enddate_type)
-
-    if Try.isok(enddate)
-        enddate_val = Try.unwrap(enddate)
-
-        # Calculate EWS metrics
-        ews_vals = EWSMetrics(
-            ews_metric_specification,
-            @view(testarr_view[1:enddate_val, 5])
-        )
-
-        null_ews_vals = EWSMetrics(
-            ews_metric_specification,
-            @view(null_testarr_view[1:enddate_val, 5])
-        )
-
-        return Try.Ok((ews_vals, null_ews_vals))
-    else
-        return enddate  # Both are Try.Err
-    end
-end
-
-"""
-    create_cached_simulation_data(scenario, data_arrs)
-
-Pre-compute expensive simulation data once per scenario to avoid repeated computation
-during parameter optimization. This includes noise arrays, test arrays, and EWS metrics.
-"""
-function create_cached_simulation_data(
-        scenario::OptimizationScenario,
-        data_arrs::NamedTuple
-    )
-    @unpack noise_specification, test_specification, percent_tested,
-        ews_enddate_type, ews_metric_specification = scenario
-
-    @unpack ensemble_single_incarr, null_single_incarr,
-        ensemble_specification, ensemble_single_Reff_thresholds_vec,
-        ensemble_single_periodsum_vecs = data_arrs
-
-    # Create noise array once per scenario (expensive operation)
-    noisearr = create_noise_arr(
-        noise_specification,
-        ensemble_single_incarr,
-        ensemble_specification;
-        seed = 1234,
-    )[1]
-
-    # Create test arrays once per scenario (expensive operation)
-    testarr = create_testing_arrs(
-        ensemble_single_incarr,
-        noisearr,
-        percent_tested,
-        test_specification,
+    # Calculate EWS metrics
+    ews_vals = EWSMetrics(
+        ews_metric_specification,
+        @view(testarr_view[1:ews_enddate_val, 5])
     )
 
-    null_testarr = create_testing_arrs(
-        null_single_incarr,
-        noisearr,
-        percent_tested,
-        test_specification,
-    )
-
-    # Select appropriate thresholds
-    thresholds = get_enddate_thresholds(ews_enddate_type, data_arrs)
-
-    # Pre-compute EWS metrics for all simulations
-    ensemble_nsims = size(ensemble_single_incarr, 3)
-    ews_metrics = Vector{EWSMetrics}()
-    null_ews_metrics = Vector{EWSMetrics}()
-
-    # Keep track of valid simulation indices
-    valid_sim_indices = Vector{Int}()
-
-    for sim in 1:ensemble_nsims
-        ews_metric_result = calculate_ews_metrics_for_simulation(
-            ews_metric_specification,
-            @view(testarr[:, :, sim]),
-            @view(null_testarr[:, :, sim]),
-            thresholds[sim],
-            ews_enddate_type
-        )
-        if Try.isok(ews_metric_result)
-            ews_result, null_ews_result = Try.unwrap(ews_metric_result)
-
-            push!(ews_metrics, ews_result)
-            push!(null_ews_metrics, null_ews_result)
-            push!(valid_sim_indices, sim)
-        end
-    end
-
-    # Ensure we have at least some valid simulations
-    if isempty(ews_metrics)
-        error("No valid EWS metrics could be computed for any simulation")
-    end
-
-    return CachedSimulationData(
-        ensemble_single_incarr,
-        testarr,
-        null_testarr,
-        thresholds,
-        ews_metrics,
-        null_ews_metrics
-    )
+    return ews_vals
 end
 
 """
@@ -553,13 +439,21 @@ Validates specification vectors before creating combinations.
     # Validate specification vectors before processing
     _validate_specification_vectors(specification_vecs)
 
-    @unpack noise_specification_vec, test_specification_vec,
-        percent_tested_vec, ews_metric_specification_vec,
-        ews_enddate_type_vec, ews_threshold_window_vec,
-        ews_threshold_burnin_vec, ews_metric_vec = specification_vecs
+    @unpack ensemble_specification_vec,
+        null_specification_vec,
+        noise_specification_vec,
+        test_specification_vec,
+        percent_tested_vec,
+        ews_metric_specification_vec,
+        ews_enddate_type_vec,
+        ews_threshold_window_vec,
+        ews_threshold_burnin_vec,
+        ews_metric_vec = specification_vecs
 
     # Use Iterators.product instead of nested loops
     combinations = Iterators.product(
+        ensemble_specification_vec,
+        null_specification_vec,
         noise_specification_vec,
         test_specification_vec,
         percent_tested_vec,
@@ -571,6 +465,8 @@ Validates specification vectors before creating combinations.
     ) |> collect
 
     scenarios_vec = mapreduce(vcat, combinations; init = OptimizationScenario[]) do (
+                ensemble_spec,
+                null_spec,
                 noise_spec,
                 test_spec,
                 percent_tested,
@@ -581,6 +477,8 @@ Validates specification vectors before creating combinations.
                 ews_metric,
             )
         OptimizationScenario(
+            ensemble_spec,
+            null_spec,
             noise_spec,
             test_spec,
             percent_tested,
@@ -683,34 +581,6 @@ function load_checkpoint_results_structvector(filedir::String)
 end
 
 """
-    save_results_structvector(results, filepath)
-
-Save StructVector results directly to JLD2 file.
-"""
-function save_results_structvector(results::StructVector{OptimizationResult}, filepath::String)
-    # Ensure directory exists
-    dir = dirname(filepath)
-    !isdir(dir) && mkpath(dir)
-
-    # Create temporary file with .jld2 extension
-    temp_filepath = filepath * ".tmp.jld2"
-
-    return try
-        # Save StructVector directly to JLD2
-        jldsave(temp_filepath; multistart_optimization_results = results)
-
-        # Atomic rename
-        mv(temp_filepath, filepath; force = true)
-        @info "Saved optimization results to $filepath"
-
-    catch e
-        # Clean up temp file if something went wrong
-        isfile(temp_filepath) && rm(temp_filepath; force = true)
-        rethrow(e)
-    end
-end
-
-"""
     df_to_structvector(df, ::Type{OptimizationResult})
 
 Convert DataFrame to StructVector{OptimizationResult} for migration from old format.
@@ -737,70 +607,6 @@ function df_to_structvector(df::DataFrame, ::Type{OptimizationResult})
     )
 end
 
-"""
-    save_checkpoint_structvector(results, checkpoint_dir, batch_idx)
-
-Save checkpoint file atomically for StructVector results.
-"""
-function save_checkpoint_structvector(results::StructVector{OptimizationResult}, checkpoint_dir::String, batch_idx::Int)
-    if !isdir(checkpoint_dir)
-        mkpath(checkpoint_dir)
-    end
-
-    checkpoint_file = joinpath(checkpoint_dir, "checkpoint_batch_$(batch_idx).jld2")
-    temp_file = checkpoint_file * ".tmp"
-
-    jldsave(temp_file; results = results, batch_idx = batch_idx)
-    return mv(temp_file, checkpoint_file; force = true)
-end
-
-"""
-    find_missing_scenarios_structvector(all_scenarios, completed_results)
-
-Find scenarios that haven't been computed yet using StructVector operations.
-Returns StructVector of missing scenarios.
-"""
-function find_missing_scenarios_structvector(
-        all_scenarios::StructVector{OptimizationScenario},
-        completed_results::StructVector{OptimizationResult}
-    )::StructVector{OptimizationScenario}
-    if isempty(completed_results)
-        return all_scenarios
-    end
-
-    # Extract scenario keys from results
-    completed_keys = Set(
-        map(completed_results) do result
-            (
-                result.noise_specification,
-                result.test_specification,
-                result.percent_tested,
-                result.ews_metric_specification,
-                result.ews_enddate_type,
-                result.ews_threshold_window,
-                result.ews_threshold_burnin,
-                result.ews_metric,
-            )
-        end
-    )
-
-    # Filter to find missing scenarios
-    missing_mask = map(all_scenarios) do scenario
-        key = (
-            scenario.noise_specification,
-            scenario.test_specification,
-            scenario.percent_tested,
-            scenario.ews_metric_specification,
-            scenario.ews_enddate_type,
-            scenario.ews_threshold_window,
-            scenario.ews_threshold_burnin,
-            scenario.ews_metric,
-        )
-        !(key in completed_keys)
-    end
-
-    return all_scenarios[missing_mask]
-end
 
 """
     confirm_optimization_run_structvector(missing_scenarios, n_sobol_points; disable_time_check)
@@ -847,6 +653,8 @@ function _validate_specification_vectors(specification_vecs)
     # Define required fields
     required_fields = Set(
         [
+            :ensemble_specification_vec,
+            :null_specification_vec,
             :noise_specification_vec,
             :test_specification_vec,
             :percent_tested_vec,
@@ -873,10 +681,21 @@ function _validate_specification_vectors(specification_vecs)
         throw(ArgumentError("Unexpected extra fields provided: $(join(sort(collect(extra_fields)), ", ")). Only these fields are allowed: $(join(sort(collect(required_fields)), ", "))"))
     end
 
-    @unpack noise_specification_vec, test_specification_vec,
-        percent_tested_vec, ews_metric_specification_vec,
-        ews_enddate_type_vec, ews_threshold_window_vec,
-        ews_threshold_burnin_vec, ews_metric_vec = specification_vecs
+    @unpack ensemble_specification_vec,
+        null_specification_vec,
+        noise_specification_vec,
+        test_specification_vec,
+        percent_tested_vec,
+        ews_metric_specification_vec,
+        ews_enddate_type_vec,
+        ews_threshold_window_vec,
+        ews_threshold_burnin_vec,
+        ews_metric_vec = specification_vecs
+
+    # Validate ensemble specifications
+    if !all(spec -> spec isa EnsembleSpecification, vcat(ensemble_specification_vec, null_specification_vec))
+        throw(ArgumentError("All emergent and null specifications must be of type EnsembleSpecification"))
+    end
 
     # Validate noise specifications
     if !all(spec -> spec isa NoiseSpecification, noise_specification_vec)
@@ -1100,7 +919,7 @@ function optimize_scenarios_in_batches_structvector(
 
     # If no batch_size specified, run all scenarios multithreaded without checkpointing
     if isnothing(batch_size)
-        verbose && @info "Running all $n_missing scenarios multithreaded without batching"
+        verbose && @info "Running all $n_missing scenarios without batching"
 
         # Setup progress tracking
         if verbose
@@ -1127,8 +946,8 @@ function optimize_scenarios_in_batches_structvector(
     # Batched execution with checkpointing
     verbose && @info "Running $n_missing scenarios in batches of $batch_size with checkpointing"
 
-    # Auto-configure batch size for threaded execution
-    if executor isa FLoops.ThreadedEx && !isnothing(batch_size) # Default value
+    # Ensure batch size is reasonable for threading
+    if executor isa FLoops.ThreadedEx # Default value
         # Choose a bigger batch size than the number of threads so Julia can
         # allocate tasks to threads appropriately and can use at least as many
         # tasks as there are threads
@@ -1155,19 +974,19 @@ function optimize_scenarios_in_batches_structvector(
 
         FLoops.@floop executor for scenario in batch_scenarios
             # Direct struct access - no conversion needed!
-            FLoops.@reduce batch_results = vcat(
+            FLoops.@reduce batch_results = BangBang.append!!(
                 OptimizationResult[],
-                optimize_single_scenario(
-                    scenario,
-                    data_arrs,
-                    bounds,
-                    optim_config
-                )
+                [
+                    optimize_single_scenario(
+                        scenario,
+                        data_arrs,
+                        bounds,
+                        optim_config
+                    ),
+                ]
             )
         end
-
-        # Add batch results to accumulated results
-        append!(all_results, batch_results)
+        BangBang.append!!(all_results, batch_results)
 
         # Update progress
         verbose && ProgressMeter.update!(prog, sum(length.(scenario_batches[1:batch_idx])))
@@ -1292,6 +1111,8 @@ Convert a DataFrame row to an OptimizationScenario struct.
 """
 function dataframe_row_to_scenario(row::DataFrameRow)
     return OptimizationScenario(
+        row.ensemble_specification,
+        row.null_specification,
         row.noise_specification,
         row.test_specification,
         row.percent_tested,
@@ -1418,6 +1239,8 @@ function scenarios_equal(scenario1::OptimizationScenario, scenario2::Optimizatio
     # If the previous equality fails, check all struct properties
     # Doing in a loop results in runtime dispatch (type groundedness as type in loop not determined just
     # by the method argument types)
+    scenario1.ensemble_specification != scenario2.ensemble_specification && return false
+    scenario1.null_specification != scenario2.null_specification && return false
     scenario1.noise_specification != scenario2.noise_specification && return false
     scenario1.test_specification != scenario2.test_specification && return false
     # Check the error isn't due to minor floating point errors

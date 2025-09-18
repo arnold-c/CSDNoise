@@ -130,7 +130,8 @@ function calculate_scenarios(spec_vecs)
         length(spec_vecs.ews_metric_specification_vec) *
         length(spec_vecs.ews_enddate_type_vec) *
         length(spec_vecs.ews_threshold_window_vec) *
-        length(spec_vecs.ews_metric_vec)
+        length(spec_vecs.ews_metric_vec) *
+        length(spec_vecs.ews_threshold_burnin_vec)
 end
 
 """
@@ -140,8 +141,7 @@ Calculate the total number of grid points from specification vectors.
 """
 function calculate_grid_points(spec_vecs)
     return length(spec_vecs.ews_threshold_percentile_vec) *
-        length(spec_vecs.ews_consecutive_thresholds_vec) *
-        length(spec_vecs.ews_threshold_burnin_vec)
+        length(spec_vecs.ews_consecutive_thresholds_vec)
 end
 
 """

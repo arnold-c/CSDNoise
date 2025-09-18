@@ -29,6 +29,8 @@ function ews_hyperparam_optimization(
         force = false,
         return_df = true,
         specification_vec_tuples = (
+            ensemble_specification = EnsembleSpecification[],
+            null_specification = EnsembleSpecification[],
             noise_specification = NoiseSpecification[],
             test_specification = IndividualTestSpecification[],
             percent_tested = Float64[],
@@ -150,6 +152,8 @@ function ews_hyperparam_gridsearch(
         logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
         force = false,
         specification_vec_tuples = (
+            ensemble_specification = EnsembleSpecification[],
+            null_specification = EnsembleSpecification[],
             noise_specification = NoiseSpecification[],
             test_specification = IndividualTestSpecification[],
             percent_tested = Float64[],
@@ -318,6 +322,8 @@ function ews_hyperparam_gridsearch!(
         data_arrs;
         logfilepath = scriptsdir("ensemble-sim_ews-optimization.log.txt"),
         specification_vec_tuples = (
+            ensemble_specification = EnsembleSpecification[],
+            null_specification = EnsembleSpecification[],
             noise_specification = NoiseSpecification[],
             test_specification = IndividualTestSpecification[],
             percent_tested = Float64[],
@@ -358,7 +364,9 @@ function ews_hyperparam_gridsearch!(
     end ==
         (propertynames(specification_vecs)..., :runs)
 
-    @unpack missing_noise_specification_vec,
+    @unpack missing_ensemble_specification_vec,
+        missing_null_specification_vec,
+        missing_noise_specification_vec,
         missing_test_specification_vec,
         missing_percent_tested_vec,
         missing_ews_metric_specification_vec,
@@ -382,7 +390,10 @@ function ews_hyperparam_gridsearch!(
     logfile = open(logfilepath, "a")
 
     start_time = time()
-    for noise_specification in missing_noise_specification_vec
+    for ensemble_specification in missing_ensemble_specification_vec,
+            null_specification in missing_null_specification_vec,
+            noise_specification in missing_noise_specification_vec
+
         if verbose
             println(
                 styled"{green:\n=================================================================}"
@@ -494,7 +505,7 @@ function ews_hyperparam_gridsearch!(
                         )
 
                         for (j, ews_metric) in pairs(missing_ews_metric_vec)
-                            exceeds_thresholds = expanding_ews_thresholds(
+                            exceeds_thresholds = exceeds_ews_threshold(
                                 ews_vals_vec[sim],
                                 Symbol(ews_metric),
                                 ews_threshold_window,
@@ -510,7 +521,7 @@ function ews_hyperparam_gridsearch!(
                                 detection_index_arr[sim, j] = Try.unwrap(detection_index_result)
                             end
 
-                            null_exceeds_thresholds = expanding_ews_thresholds(
+                            null_exceeds_thresholds = exceeds_ews_threshold(
                                 null_ews_vals_vec[sim],
                                 Symbol(ews_metric),
                                 ews_threshold_window,
@@ -560,6 +571,8 @@ function ews_hyperparam_gridsearch!(
                     push!(
                         ews_df,
                         (
+                            ensemble_specification,
+                            null_specification,
                             noise_specification,
                             test_specification,
                             percent_tested,
@@ -589,6 +602,8 @@ function check_missing_ews_hyperparameter_simulations(
         ews_df,
         specification_vecs;
         specification_vec_names = (
+            :ensemble_specification,
+            :null_specification,
             :noise_specification,
             :test_specification,
             :percent_tested,

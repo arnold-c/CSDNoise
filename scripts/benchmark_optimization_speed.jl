@@ -20,6 +20,9 @@ using FLoops
 using DataFrames
 using Logging
 using LoggingExtras
+using StructArrays: StructVector
+using StatsBase
+using DataFrames
 
 function main()
     # Create consistent filename base for both CSV and markdown files
@@ -109,12 +112,16 @@ function main()
             ensemble_nsims,
         )
 
+        ensemble_specification_vec = [ensemble_specification]
+
         null_specification = EnsembleSpecification(
             ensemble_state_specification,
             null_dynamics_specification,
             ensemble_time_specification,
             ensemble_nsims,
         )
+
+        null_specification_vec = [null_specification]
 
         ensemble_outbreak_specification = OutbreakSpecification(
             5, 30, 500
@@ -161,11 +168,13 @@ function main()
 
         ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
         ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
-        ews_threshold_percentile_vec = collect(0.5:0.02:0.99)  # Reduced resolution for speed
-        ews_consecutive_thresholds_vec = collect(2:2:30)       # Reduced resolution for speed
+        ews_threshold_percentile_vec = collect(0.5:0.05:0.99)
+        ews_consecutive_thresholds_vec = collect(2:1:10)
         ews_threshold_burnin_vec = [Year(5)]
 
         specification_vecs = (;
+            ensemble_specification_vec,
+            null_specification_vec,
             noise_specification_vec,
             test_specification_vec,
             percent_tested_vec,
@@ -177,6 +186,8 @@ function main()
             ews_consecutive_thresholds_vec,
             ews_metric_vec,
         )
+        # Remove unused vectors for multivariate optimization
+        optimization_spec_vecs = Base.structdiff(specification_vecs, (; ews_threshold_percentile_vec, ews_consecutive_thresholds_vec))
 
         log_both(styled"Generating ensemble data...")
         data_arrs = generate_ensemble_data(ensemble_specification, null_specification, ensemble_outbreak_specification)
@@ -197,7 +208,9 @@ function main()
         log_both(styled"Running single scenario to compile functions...")
 
         compilation_spec_vecs = map(spec -> [spec[1]], specification_vecs)
+        compilation_optim_spec_vecs = map(spec -> [spec[1]], optimization_spec_vecs)
 
+        log_both(styled"\n{bold green:STRUCTVECTOR GRID SEARCH BENCHMARK}")
         compilation_time = @elapsed _ = ews_hyperparam_optimization(
             compilation_spec_vecs,
             data_arrs;
@@ -207,8 +220,37 @@ function main()
             save_results = false,
             verbose = false,
         )
-
         log_both(styled"Compilation completed in {yellow:$(round(compilation_time, digits=2))} seconds")
+
+        log_both(styled"\n{bold yellow:GRID SEARCH (STRUCTVECTOR) COMPILATION RUN}")
+        structvector_compilation_time = @elapsed structvector_grid_results = ews_hyperparam_gridsearch_structvector(
+            compilation_spec_vecs,
+            data_arrs;
+            executor = FLoops.ThreadedEx(),
+            disable_time_check = true,
+            force = true,
+            return_results = true,
+            save_results = false,
+            save_checkpoints = false,
+            verbose = false,
+        )
+        log_both(styled"Compilation completed in {yellow:$(round(structvector_compilation_time, digits=2))} seconds")
+
+        log_both(styled"\n{bold yellow:MULTIVARIATE OPTIMIZATION COMPILATION RUN}")
+        # Compilation run for multistart optimization
+        multistart_compilation_time = @elapsed _ = ews_multistart_optimization(
+            compilation_optim_spec_vecs,
+            data_arrs;
+            n_sobol_points = 10,
+            maxeval = 10,
+            executor = FLoops.ThreadedEx(),
+            force = true,
+            return_df = true,
+            save_results = false,
+            verbose = false,
+            disable_time_check = true,
+        )
+        log_both(styled"Multivariate optimization compilation completed in {yellow:$(round(multistart_compilation_time, digits=2))} seconds")
 
         # Benchmark grid search
         log_both(styled"\n{bold green:GRID SEARCH BENCHMARK}")
@@ -224,32 +266,30 @@ function main()
             verbose = false,
         )
 
-        log_both("Grid search complete")
+        log_both("Grid search complete ($grid_time)")
 
-        # Remove unused vectors for optimization
-        optimization_spec_vecs = Base.structdiff(specification_vecs, (; ews_threshold_percentile_vec, ews_consecutive_thresholds_vec))
-        compilation_optim_spec_vecs = map(spec -> [spec[1]], optimization_spec_vecs)
-
-        # Compilation run for multistart optimization
-        log_both(styled"\n{bold yellow:MULTISTART COMPILATION RUN}")
+        # Compilation run - single scenario to pre-compile functions
+        # Benchmark StructVector grid search
+        log_both(styled"\n{bold green:STRUCTVECTOR GRID SEARCH BENCHMARK}")
         log_both("-"^40)
-        log_both(styled"Running single multistart scenario to compile functions...")
 
-        multistart_compilation_time = @elapsed _ = ews_multistart_optimization(
-            compilation_optim_spec_vecs,
+        structvector_grid_time = @elapsed structvector_grid_results = ews_hyperparam_gridsearch_structvector(
+            specification_vecs,
             data_arrs;
-            n_sobol_points = 1,
-            maxeval = 10,
-            # executor = FLoops.SequentialEx(),
-            executor = FLoops.ThreadedEx(),
-            force = true,
-            return_df = true,
-            save_results = false,
-            verbose = false,
+            # executor = FLoops.ThreadedEx(),
+            executor = FLoops.SequentialEx(),
             disable_time_check = true,
+            force = true,
+            return_results = true,
+            save_results = false,
+            save_checkpoints = false,
+            verbose = false,
         )
 
-        log_both(styled"Multistart compilation completed in {yellow:$(round(multistart_compilation_time, digits=2))} seconds")
+        log_both("$(length(structvector_grid_results))")
+
+        log_both("StructVector grid search complete ($structvector_grid_time)")
+
 
         # Benchmark multistart with different configurations
         multistart_configs = [
@@ -289,7 +329,7 @@ function main()
 
             multistart_results[n_sobol] = (; time = ms_time, res = results)
 
-            log_both("Multistart $name complete")
+            log_both("Multistart $name complete ($ms_time)")
         end
 
         # Summary comparison - fix to specific scenario for fair comparison
@@ -307,8 +347,6 @@ function main()
             ews_threshold_window = ews_threshold_window_vec[1],
             ews_threshold_burnin = ews_threshold_burnin_vec[1],
         )
-
-        get_test_description(reference_scenario.test_specification)
 
         log_both(styled"Reference scenario:")
         log_both(styled"  Noise: {cyan:$(get_noise_magnitude_description(reference_scenario.noise_specification))}")
@@ -334,7 +372,7 @@ function main()
         best_grid_idx = argmax(grid_scenario_results.accuracy)
         best_grid_row = grid_scenario_results[best_grid_idx, :]
 
-        log_both(styled"Grid Search (reference scenario):")
+        log_both(styled"Grid Search (DataFrame, reference scenario):")
         log_both(styled"  Time: {yellow:$(round(grid_time, digits=2))}s")
         log_both(styled"  Best accuracy: {green:$(round(best_grid_acc, digits=4))}")
         log_both(styled"  Best parameters (optimized):")
@@ -342,6 +380,39 @@ function main()
         log_both(styled"    Consecutive thresholds: {cyan:$(best_grid_row.ews_consecutive_thresholds)}")
         log_both(styled"    Sensitivity: {green:$(round(best_grid_row.sensitivity, digits=4))}")
         log_both(styled"    Specificity: {green:$(round(best_grid_row.specificity, digits=4))}")
+
+        # Filter StructVector grid results to reference scenario
+        structvector_grid_scenario_results = filter(structvector_grid_results) do row
+            reference_scenario_burnin_days = Dates.Day(round(Dates.days(reference_scenario.ews_threshold_burnin)))
+
+            row.noise_specification == reference_scenario.noise_specification &&
+                row.test_specification == reference_scenario.test_specification &&
+                row.percent_tested == reference_scenario.percent_tested &&
+                row.ews_metric == reference_scenario.ews_metric &&
+                row.ews_metric_specification == reference_scenario.ews_metric_specification &&
+                row.ews_enddate_type == reference_scenario.ews_enddate_type &&
+                row.ews_threshold_window == reference_scenario.ews_threshold_window &&
+                row.ews_threshold_burnin == reference_scenario_burnin_days
+        end
+
+        best_structvector_grid_acc = maximum(structvector_grid_scenario_results.accuracy)
+        best_structvector_grid_idx = argmax(structvector_grid_scenario_results.accuracy)
+        best_structvector_grid_row = structvector_grid_scenario_results[best_structvector_grid_idx]
+
+        structvector_speedup = round(grid_time / structvector_grid_time, digits = 1)
+        structvector_reduction_pct = round(100 * (1 - structvector_grid_time / grid_time), digits = 1)
+
+        log_both(styled"\nGrid Search (StructVector + FLoops, reference scenario):")
+        log_both(styled"  Time: {yellow:$(round(structvector_grid_time, digits=2))}s")
+        log_both(styled"  Speedup vs DataFrame: {green:$(structvector_speedup)}x")
+        log_both(styled"  Time reduction: {green:$(structvector_reduction_pct)}%")
+        log_both(styled"  Best accuracy: {green:$(round(best_structvector_grid_acc, digits=4))}")
+        log_both(styled"  Δ Accuracy vs DataFrame Grid: {yellow:$(round(best_structvector_grid_acc - best_grid_acc, digits=4))}")
+        log_both(styled"  Best parameters (optimized):")
+        log_both(styled"    Threshold percentile: {cyan:$(round(best_structvector_grid_row.threshold_percentile, digits=3))}")
+        log_both(styled"    Consecutive thresholds: {cyan:$(best_structvector_grid_row.consecutive_thresholds)}")
+        log_both(styled"    Sensitivity: {green:$(round(best_structvector_grid_row.sensitivity, digits=4))}")
+        log_both(styled"    Specificity: {green:$(round(best_structvector_grid_row.specificity, digits=4))}")
 
         for config in multistart_configs
             n_sobol = config.n_sobol
@@ -391,33 +462,38 @@ function main()
             log_both(styled"    Specificity: {green:$(round(best_row.specificity, digits=4))}")
         end
 
-        # NEW: Comprehensive accuracy comparison across all scenarios
-        log_both(styled"\n{bold blue:COMPREHENSIVE ACCURACY VERIFICATION}")
+        # NEW: Basic accuracy comparison summary
+        log_both(styled"\n{bold blue:ACCURACY COMPARISON SUMMARY}")
         log_both("="^60)
 
-        # Perform detailed comparison
-        comparison_results = compare_all_scenarios(
-            grid_results,
-            multistart_results,
-            specification_vecs
-        )
+        log_both(styled"DataFrame Grid Search:")
+        log_both(styled"  Total scenarios: {cyan:$(nrow(grid_results))}")
+        log_both(styled"  Best accuracy: {green:$(round(maximum(grid_results.accuracy), digits=4))}")
+        log_both(styled"  Mean accuracy: {yellow:$(round(mean(grid_results.accuracy), digits=4))}")
 
-        # Display summary statistics
-        display_accuracy_comparison_summary(comparison_results)
+        log_both(styled"\nStructVector Grid Search:")
+        log_both(styled"  Total scenarios: {cyan:$(length(structvector_grid_results))}")
+        log_both(styled"  Best accuracy: {green:$(round(maximum(structvector_grid_results.accuracy), digits=4))}")
+        log_both(styled"  Mean accuracy: {yellow:$(round(mean(structvector_grid_results.accuracy), digits=4))}")
+        log_both(styled"  Accuracy difference vs DataFrame: {yellow:$(round(mean(structvector_grid_results.accuracy) - mean(grid_results.accuracy), digits=6))}")
 
-        # Generate detailed report
-        generate_accuracy_verification_report(
-            comparison_results,
-            grid_time,
-            multistart_results
-        )
+        for config in multistart_configs
+            n_sobol = config.n_sobol
+            name = config.name
+            results = multistart_results[n_sobol][:res]
+
+            log_both(styled"\nMultistart ($name - $n_sobol Sobol points):")
+            log_both(styled"  Total scenarios: {cyan:$(nrow(results))}")
+            log_both(styled"  Best accuracy: {green:$(round(maximum(results.accuracy), digits=4))}")
+            log_both(styled"  Mean accuracy: {yellow:$(round(mean(results.accuracy), digits=4))}")
+        end
 
         @info ""
         @info "---"
         @info ""
         @info "**Report saved to:** `$markdown_filename`"
 
-        return grid_results, multistart_results, comparison_results
+        return grid_results, structvector_grid_results, multistart_results
     finally
         cleanup_logging()
     end

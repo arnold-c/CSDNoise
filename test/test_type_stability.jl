@@ -7,9 +7,15 @@ using StaticArrays
 using Dates
 using NLopt
 using StructArrays
+using FLoops
+using Try
 
-# Helper function to create test specification vectors
-function create_test_specification_vectors()
+# Helper function to create test specification vectors for grid search
+function create_gridsearch_test_specification_vectors()
+    ensemble_spec, null_spec, _ = create_ensemble_specs(3)
+    ensemble_specification_vec = [ensemble_spec]
+    null_specification_vec = [null_spec]
+
     noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))]
     test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)]
     percent_tested_vec = [1.0]
@@ -32,6 +38,50 @@ function create_test_specification_vectors()
     ews_threshold_burnin_vec = [Year(5)]
 
     return (;
+        ensemble_specification_vec,
+        null_specification_vec,
+        noise_specification_vec,
+        test_specification_vec,
+        percent_tested_vec,
+        ews_metric_specification_vec,
+        ews_enddate_type_vec,
+        ews_threshold_window_vec,
+        ews_threshold_burnin_vec,
+        ews_threshold_percentile_vec,
+        ews_consecutive_thresholds_vec,
+        ews_metric_vec,
+    )
+end
+
+# Helper function to create test specification vectors for multistart optimization
+function create_multistart_test_specification_vectors()
+    # Create ensemble and null specifications
+    ensemble_spec, null_spec, _ = create_ensemble_specs(3)
+    ensemble_specification_vec = [ensemble_spec]
+    null_specification_vec = [null_spec]
+
+    noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))]
+    test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)]
+    percent_tested_vec = [1.0]
+
+    ews_method_vec = [EWSMethod(Backward())]
+    ews_aggregation_vec = [Day(28)]
+    ews_bandwidth_vec = [Week(52)]
+    ews_lag_days_vec = [1]
+
+    ews_metric_specification_vec = create_combinations_vec(
+        EWSMetricSpecification,
+        (ews_method_vec, ews_aggregation_vec, ews_bandwidth_vec, ews_lag_days_vec)
+    )
+
+    ews_metric_vec = ["autocovariance"]
+    ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
+    ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
+    ews_threshold_burnin_vec = [Year(5)]
+
+    return (;
+        ensemble_specification_vec,
+        null_specification_vec,
         noise_specification_vec,
         test_specification_vec,
         percent_tested_vec,
@@ -195,7 +245,7 @@ end
 
     @testset "Multistart Optimization Functions" begin
         # Create test data for optimization functions
-        specification_vecs = create_test_specification_vectors()
+        specification_vecs = create_multistart_test_specification_vectors()
         data_arrs = generate_ensemble_data(ensemble_spec, null_spec, outbreak_spec)
 
         @testset "High Priority Optimization Functions" begin
@@ -217,12 +267,14 @@ end
                 test_params, scenario, cached_data, tracker
             )
 
+            ews_enddate = calculate_ews_enddate(cached_data.thresholds[1], scenario.ews_enddate_type)
+            ews_enddate_val = Try.unwrap(ews_enddate)
+
             @test_opt target_modules = (CSDNoise,) CSDNoise.calculate_ews_metrics_for_simulation(
                 scenario.ews_metric_specification,
                 cached_data.testarr[:, :, 1],
-                cached_data.null_testarr[:, :, 1],
                 cached_data.thresholds[1],
-                scenario.ews_enddate_type
+                ews_enddate_val
             )
 
         end
@@ -263,6 +315,7 @@ end
             scenarios_df = CSDNoise.create_scenarios_dataframe(specification_vecs)
             test_row = scenarios_df[1, :]
             @test_opt target_modules = (CSDNoise,) CSDNoise.dataframe_row_to_scenario(test_row)
+
         end
 
         @testset "Lower Priority Data Management Functions" begin
@@ -289,16 +342,21 @@ end
                 dummy_results,
             )
 
+            # Get scenarios for testing
+            scenarios = create_optimization_scenarios(specification_vecs)
+
             # Test scenarios_equal
             scenario1 = scenarios[1]
             scenario2 = scenarios[1]
             @test_opt target_modules = (CSDNoise,) CSDNoise.scenarios_equal(scenario1, scenario2)
 
             # Test find_missing_scenarios_structvector when no scenarios missing
-            @test_opt target_modules = (CSDNoise,) CSDNoise.find_missing_scenarios_structvector(
+            @test_opt target_modules = (CSDNoise,) CSDNoise.find_missing_scenarios(
                 scenarios_sv, StructVector(
                     [
                         OptimizationResult(
+                            scenarios[1].ensemble_specification,
+                            scenarios[1].null_specification,
                             scenarios[1].noise_specification,
                             scenarios[1].test_specification,
                             scenarios[1].percent_tested,
@@ -318,10 +376,12 @@ end
             )
 
             # Change metric so there is a missing scenario
-            @test_opt target_modules = (CSDNoise,) CSDNoise.find_missing_scenarios_structvector(
+            @test_opt target_modules = (CSDNoise,) CSDNoise.find_missing_scenarios(
                 scenarios_sv, StructVector(
                     [
                         OptimizationResult(
+                            scenarios[1].ensemble_specification,
+                            scenarios[1].null_specification,
                             scenarios[1].noise_specification,
                             scenarios[1].test_specification,
                             scenarios[1].percent_tested,
@@ -341,6 +401,21 @@ end
             )
 
         end
+    end
+
+    @testset "Grid Search StructVector Implementation" begin
+        specification_vecs = create_gridsearch_test_specification_vectors()
+
+        @report_opt target_modules = (CSDNoise,) create_gridsearch_scenarios_structvector(
+            specification_vecs;
+            executor = FLoops.SequentialEx(),
+        )
+
+        @code_warntype create_gridsearch_scenarios_structvector(
+            specification_vecs;
+            executor = FLoops.SequentialEx(),
+        )
+
     end
 
     @testset "Helper Functions for create_ensemble_specs" begin
@@ -403,20 +478,6 @@ end
         end
     end
 
-    @testset "Benchmark Functions" begin
-        @testset "Ensemble and scenario calculation functions" begin
-            # Test create_ensemble_specs
-            @test_opt target_modules = (CSDNoise,) create_ensemble_specs(100)
-
-            # Test calculate_scenarios
-            specification_vecs = create_test_specification_vectors()
-            @test_opt target_modules = (CSDNoise,) calculate_scenarios(specification_vecs)
-
-            # Test calculate_grid_points
-            @test_opt target_modules = (CSDNoise,) calculate_grid_points(specification_vecs)
-        end
-    end
-
     @testset "EWS Metrics Functions" begin
         # Test EWSMetrics constructor with various specifications
         example_ews_spec = EWSMetricSpecification(EWSMethod(Backward()), Dates.Day(1), Dates.Day(30), 1)
@@ -424,10 +485,9 @@ end
 
         @test_opt target_modules = (CSDNoise,) EWSMetrics(example_ews_spec, example_timeseries)
 
-        # Test expanding_ews_thresholds function
         example_ews_metrics = EWSMetrics(example_ews_spec, example_timeseries)
 
-        @test_opt target_modules = (CSDNoise,) expanding_ews_thresholds(
+        @test_opt target_modules = (CSDNoise,) exceeds_ews_threshold(
             example_ews_metrics,
             :mean,
             EWSThresholdWindowType(ExpandingThresholdWindow()),
@@ -435,5 +495,66 @@ end
             Dates.Day(5)
         )
 
+    end
+
+    @testset "High-Level Optimization Functions" begin
+        @testset "StructVector grid search optimization" begin
+            # Create test data for grid search functions
+            gridsearch_specification_vecs = create_gridsearch_test_specification_vectors()
+            data_arrs = generate_ensemble_data(ensemble_spec, null_spec, outbreak_spec)
+
+            # Test ews_hyperparam_gridsearch_structvector with minimal parameters
+            @test_opt target_modules = (CSDNoise,) ews_hyperparam_gridsearch_structvector(
+                gridsearch_specification_vecs,
+                data_arrs;
+                executor = FLoops.SequentialEx(),
+                disable_time_check = true,
+                force = true,
+                return_results = true,
+                save_results = false,
+                save_checkpoints = false,
+                verbose = false
+            )
+        end
+
+        @testset "Multistart optimization" begin
+            # Create test data for multistart optimization functions
+            multistart_specification_vecs = create_multistart_test_specification_vectors()
+            data_arrs = generate_ensemble_data(ensemble_spec, null_spec, outbreak_spec)
+
+            # Test ews_multistart_optimization with minimal parameters
+            @test_opt target_modules = (CSDNoise,) ews_multistart_optimization(
+                multistart_specification_vecs,
+                data_arrs;
+                n_sobol_points = 5,
+                maxeval = 10,
+                executor = FLoops.SequentialEx(),
+                force = true,
+                return_df = true,
+                save_results = false,
+                verbose = false,
+                disable_time_check = true
+            )
+        end
+    end
+
+    @testset "Utility Description Functions" begin
+        @testset "Test and noise description functions" begin
+            # Test get_test_description
+            test_spec = IndividualTestSpecification(0.9, 0.9, 0)
+            @test_opt target_modules = (CSDNoise,) get_test_description(test_spec)
+
+            # Test get_noise_magnitude_description with PoissonNoise
+            poisson_noise = PoissonNoise(1.0)
+            @test_opt target_modules = (CSDNoise,) get_noise_magnitude_description(poisson_noise)
+
+            # Test get_noise_magnitude_description with DynamicalNoise
+            dynamical_noise = DynamicalNoise(2.5, 8, 5, "positive", 0.102, 0.6, 0.8)
+            @test_opt target_modules = (CSDNoise,) get_noise_magnitude_description(dynamical_noise)
+
+            # Test get_noise_magnitude_description with NoiseSpecification wrapper
+            noise_spec = NoiseSpecification(poisson_noise)
+            @test_opt target_modules = (CSDNoise,) get_noise_magnitude_description(noise_spec)
+        end
     end
 end

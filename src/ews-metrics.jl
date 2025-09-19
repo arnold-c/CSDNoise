@@ -2,9 +2,7 @@ using StatsBase: StatsBase
 using LightSumTypes: variant
 using DataFrames: DataFrames
 using Bumper
-using StrideArrays
 using Printf: @sprintf
-using TestItems
 using Dates: Dates
 
 """

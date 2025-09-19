@@ -1,14 +1,9 @@
 using BenchmarkTools
-using PProf
-using ProfileCanvas
-using ProfileView
 using JET
 using StatsBase
 using Dates
 using NLopt
 using InteractiveUtils: @code_warntype
-
-export create_test_data_for_profiling, create_single_test_scenario, benchmark_individual_functions, profile_with_pprof, analyze_type_stability
 
 # =============================================================================
 # SETUP TEST DATA AND SCENARIOS

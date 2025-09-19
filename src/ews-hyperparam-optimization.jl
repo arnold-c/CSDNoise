@@ -7,7 +7,7 @@ using REPL: REPL
 using REPL.TerminalMenus: RadioMenu, request
 using Base: rest
 using Try: Try
-using Makie: Makie
+using GLMakie: GLMakie
 using Printf: @sprintf
 using LightSumTypes: variant
 

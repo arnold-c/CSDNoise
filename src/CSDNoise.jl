@@ -213,8 +213,6 @@ export ews_survival_plot, ews_reff_histogram_plot
 
 include("benchmark-functions.jl")
 
-include("profiling-functions.jl")
-
 include("logging-utilities.jl")
 
 @static if false

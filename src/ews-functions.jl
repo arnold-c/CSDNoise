@@ -45,6 +45,17 @@ function exceeds_ews_threshold(
     )
 end
 
+# TODO: Implement this method. Place holder as needed for type stability
+function exceeds_ews_threshold(
+        ewsmetrics::T1,
+        metric::T2,
+        window_type::RollingThresholdWindow,
+        percentile::Float64 = 0.95,
+        burn_in::P = Dates.Day(10),
+    ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
+    return fill(false, 2)
+end
+
 function exceeds_ews_threshold(
         ewsmetrics::T1,
         metric::T2,

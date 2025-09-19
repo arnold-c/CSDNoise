@@ -251,7 +251,7 @@ function optimize_single_scenario(
     multistart_method = MultistartOptimization.TikTak(config.n_sobol_points)
 
     # Run optimization
-    result = MultistartOptimization.multistart_minimization(
+    MultistartOptimization.multistart_minimization(
         multistart_method,
         local_method,
         problem

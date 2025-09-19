@@ -61,10 +61,7 @@ function ews_hyperparam_gridsearch_structvector(
 
     # Create all grid search scenarios as StructVector
     # This includes all combinations with grid parameters
-    all_scenarios = create_gridsearch_scenarios_structvector(
-        specification_vecs;
-        executor = executor
-    )
+    all_scenarios = create_gridsearch_scenarios_structvector(specification_vecs)
     n_total_scenarios = length(all_scenarios)
 
     if verbose
@@ -149,10 +146,7 @@ end
 Create all grid search scenarios including parameter combinations.
 Returns StructVector{GridSearchScenario} with all combinations.
 """
-function create_gridsearch_scenarios_structvector(
-        specification_vecs;
-        executor = FLoops.ThreadedEx(),
-    )
+function create_gridsearch_scenarios_structvector(specification_vecs)
     @unpack ensemble_specification_vec,
         null_specification_vec,
         noise_specification_vec,
@@ -166,7 +160,6 @@ function create_gridsearch_scenarios_structvector(
         ews_threshold_percentile_vec,
         ews_consecutive_thresholds_vec = specification_vecs
 
-    # Create all combinations including grid parameters
     combinations = Iterators.product(
         ensemble_specification_vec,
         null_specification_vec,
@@ -180,9 +173,46 @@ function create_gridsearch_scenarios_structvector(
         ews_metric_vec,
         ews_threshold_percentile_vec,
         ews_consecutive_thresholds_vec
-    ) |> collect
+    )
+    n_combinations = length(combinations)
 
-    FLoops.@floop executor for (
+    # Create all combinations including grid parameters
+    # Use explicit type annotation and avoid collect(...) splat pattern
+    CombinationType = Tuple{
+        EnsembleSpecification,
+        EnsembleSpecification,
+        NoiseSpecification,
+        IndividualTestSpecification,
+        Float64,
+        EWSMetricSpecification,
+        EWSEndDateType,
+        EWSThresholdWindowType,
+        Year,
+        String,
+        Float64,
+        Int64,
+    }
+
+    scenarios_vec = Vector{GridSearchScenario}(undef, n_combinations)
+
+    for (
+            i, (
+                ensemble_spec,
+                null_spec,
+                noise_spec,
+                test_spec,
+                percent_tested,
+                ews_metric_spec,
+                ews_enddate_type,
+                ews_window,
+                ews_burnin,
+                ews_metric,
+                threshold_percentile,
+                consecutive_thresholds,
+            ),
+        ) in enumerate(combinations)
+
+        scenarios_vec[i] = GridSearchScenario(
             ensemble_spec,
             null_spec,
             noise_spec,
@@ -195,29 +225,6 @@ function create_gridsearch_scenarios_structvector(
             ews_metric,
             threshold_percentile,
             consecutive_thresholds,
-        ) in combinations
-
-        local grid_scenario = GridSearchScenario(
-            ensemble_spec,
-            null_spec,
-            noise_spec,
-            test_spec,
-            percent_tested,
-            ews_metric_spec,
-            ews_enddate_type,
-            ews_window,
-            ews_burnin,
-            ews_metric,
-            threshold_percentile,
-            consecutive_thresholds,
-        )
-
-        # Create GridSearchScenario structs with parameters
-        FLoops.@reduce(
-            scenarios_vec = BangBang.append!!(
-                MicroCollections.EmptyVector(),
-                [grid_scenario]
-            )
         )
     end
 
@@ -483,7 +490,6 @@ function evaluate_gridsearch_scenarios(
                                                         ],
                                                     )
 
-                                                    verbose && next!(prog)
                                                 end
 
                                                 append!(all_results, optimization_result)
@@ -498,6 +504,11 @@ function evaluate_gridsearch_scenarios(
                                                     verbose && @info "Saved checkpoint after batch $checkpoint_num"
                                                     checkpoint_num += 1
                                                 end
+
+                                                if verbose
+                                                    next!(prog)
+                                                end
+
 
                                             end
                                         end

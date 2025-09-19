@@ -1,4 +1,4 @@
-using CairoMakie
+using GLMakie
 function theme_adjustments()
     return Theme(;
         fontsize = 16,
@@ -23,8 +23,8 @@ set_theme!(
 )
 
 update_theme!(; size = (1300, 800))
-CairoMakie.activate!(
-    ; type = "svg",
-    pt_per_unit = 0.75,
-    px_per_unit = 2,
+GLMakie.activate!(
+    # ; type = "svg",
+    # pt_per_unit = 0.75,
+    # px_per_unit = 2,
 )

@@ -36,10 +36,10 @@ function create_optimal_ews_plots(
         px_per_unit = 2,
         size = (1220, 640),
     )
-    if output_format in ["pdf", "svg"]
-        include(srcdir("cairomakie-plotting-setup.jl"))
-        CairoMakie.activate!(; type = output_format, pt_per_unit = pt_per_unit)
-    end
+    # if output_format in ["pdf", "svg"]
+    #     include(srcdir("cairomakie-plotting-setup.jl"))
+    #     CairoMakie.activate!(; type = output_format, pt_per_unit = pt_per_unit)
+    # end
     if output_format in ["png", "jpg", "jpeg"]
         include(srcdir("makie-plotting-setup.jl"))
         GLMakie.activate!(; px_per_unit = px_per_unit)

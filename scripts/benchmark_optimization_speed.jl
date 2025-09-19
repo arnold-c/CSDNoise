@@ -168,8 +168,8 @@ function main()
 
         ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
         ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
-        ews_threshold_percentile_vec = collect(0.5:0.05:0.99)
-        ews_consecutive_thresholds_vec = collect(2:1:10)
+        ews_threshold_percentile_vec = collect(0.5:0.01:0.99)
+        ews_consecutive_thresholds_vec = collect(2:1:20)
         ews_threshold_burnin_vec = [Year(5)]
 
         specification_vecs = (;
@@ -210,7 +210,7 @@ function main()
         compilation_spec_vecs = map(spec -> [spec[1]], specification_vecs)
         compilation_optim_spec_vecs = map(spec -> [spec[1]], optimization_spec_vecs)
 
-        log_both(styled"\n{bold green:STRUCTVECTOR GRID SEARCH BENCHMARK}")
+        log_both(styled"\n{bold yellow:GRID SEARCH (DATAFRAME) COMPILATION RUN}")
         compilation_time = @elapsed _ = ews_hyperparam_optimization(
             compilation_spec_vecs,
             data_arrs;
@@ -285,8 +285,6 @@ function main()
             save_checkpoints = false,
             verbose = false,
         )
-
-        log_both("$(length(structvector_grid_results))")
 
         log_both("StructVector grid search complete ($structvector_grid_time)")
 

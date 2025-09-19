@@ -406,15 +406,34 @@ end
     @testset "Grid Search StructVector Implementation" begin
         specification_vecs = create_gridsearch_test_specification_vectors()
 
-        @report_opt target_modules = (CSDNoise,) create_gridsearch_scenarios_structvector(
-            specification_vecs;
-            executor = FLoops.SequentialEx(),
-        )
+        @testset "Creating scenarios" begin
+            @test_opt target_modules = (CSDNoise,) create_gridsearch_scenarios_structvector(specification_vecs)
+        end
 
-        @code_warntype create_gridsearch_scenarios_structvector(
-            specification_vecs;
-            executor = FLoops.SequentialEx(),
-        )
+        all_scenarios = create_gridsearch_scenarios_structvector(specification_vecs)
+        existing_results = StructVector(OptimizationResult[])
+
+        @testset "Missing scenarios" begin
+            # find_missing_scenarios
+            @test_opt target_modules = (CSDNoise,) find_missing_scenarios(all_scenarios, existing_results)
+
+        end
+        missing_scenarios = find_missing_scenarios(all_scenarios, existing_results)
+
+        @testset "Evaluate missing scenarios" begin
+            data_arrs = generate_ensemble_data(ensemble_spec, null_spec, outbreak_spec)
+
+            @test_opt target_modules = (CSDNoise,) evaluate_gridsearch_scenarios(
+                missing_scenarios,
+                data_arrs;
+                executor = FLoops.ThreadedEx(),
+                save_results = false,
+                save_checkpoints = false,
+                checkpoint_dir = "",
+                verbose = false
+            )
+
+        end
 
     end
 

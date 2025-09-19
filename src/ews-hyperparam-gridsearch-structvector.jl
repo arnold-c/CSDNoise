@@ -9,7 +9,34 @@ using Try: Try
 using DrWatson: @tagsave
 using JLD2
 using StructArrays: StructVector
+using Bumper
 
+# Computation key structs for hierarchical grouping to minimize allocations
+struct NoiseComputationKey
+    ensemble_specification
+    null_specification
+    noise_specification
+end
+
+struct TestingComputationKey
+    noise_key::NoiseComputationKey
+    percent_tested
+    test_specification
+end
+
+struct EWSComputationKey
+    testing_key::TestingComputationKey
+    ews_metric_specification
+    ews_enddate_type
+end
+
+struct ScenarioComputationKey
+    ews_key::EWSComputationKey
+    ews_metric
+    ews_threshold_window
+    ews_threshold_burnin
+    consecutive_thresholds
+end
 
 """
     ews_hyperparam_gridsearch_structvector(specification_vecs, data_arrs; kwargs...)
@@ -305,6 +332,155 @@ function confirm_gridsearch_run_structvector(
     return true
 end
 
+function evaluate_gridsearch_scenarios2(
+        missing_scenarios::StructVector{GridSearchScenario},
+        data_arrs::NamedTuple{T};
+        executor = FLoops.ThreadedEx(),
+        save_results = true,
+        save_checkpoints = false,
+        checkpoint_dir::String = "",
+        verbose::Bool = true
+    ) where {T}
+
+    n_missing = length(missing_scenarios)
+
+    if n_missing == 0
+        return StructVector(OptimizationResult[])
+    end
+
+    all_results = OptimizationResult[]
+
+    # Setup progress tracking
+    if verbose
+        prog = Progress(n_missing; desc = "Evaluating grid points: ", showspeed = true)
+    end
+
+    checkpoint_num = 0
+
+    @unpack ensemble_single_incarr,
+        null_single_incarr = data_arrs
+    # Creating the incidence, noise, testing arrays and EWS metrics is expensive
+    # Loop through all unique combinations in a nested loop to allow re-use within
+    # the optimization and grid search steps
+    unique_ensemble_specs = unique(missing_scenarios.ensemble_specification)
+    unique_null_specs = unique(missing_scenarios.null_specification)
+    unique_noise_specs = unique(missing_scenarios.noise_specification)
+    unique_perc_tested = unique(missing_scenarios.percent_tested)
+    unique_test_specs = unique(missing_scenarios.test_specification)
+    unique_enddate_types = unique(missing_scenarios.ews_enddate_type)
+    unique_ews_metric_specs = unique(missing_scenarios.ews_metric_specification)
+    unique_ews_metrics = unique(missing_scenarios.ews_metric)
+    unique_threshold_windows = unique(missing_scenarios.ews_threshold_window)
+    unique_threshold_burnin = unique(missing_scenarios.ews_threshold_burnin)
+    unique_consecutive_thresholds = unique(missing_scenarios.consecutive_thresholds)
+    unique_threshold_percentiles = unique(missing_scenarios.threshold_percentile)
+
+    for ensemble_specification in unique_ensemble_specs
+        for null_specification in unique_null_specs
+            for noise_specification in unique_noise_specs
+
+                noisearr = create_noise_arr(
+                    noise_specification,
+                    ensemble_single_incarr,
+                    ensemble_specification;
+                    seed = 1234,
+                )[1]
+
+                for percent_tested in unique_perc_tested
+                    for test_specification in unique_test_specs
+
+                        testarr = create_testing_arrs(
+                            ensemble_single_incarr,
+                            noisearr,
+                            percent_tested,
+                            test_specification,
+                        )
+
+                        null_testarr = create_testing_arrs(
+                            null_single_incarr,
+                            noisearr,
+                            percent_tested,
+                            test_specification,
+                        )
+
+                        for ews_enddate_type in unique_enddate_types
+                            for ews_metric_specification in unique_ews_metric_specs
+
+                                ews_metrics, null_ews_metrics = generate_ensemble_ews_metrics(
+                                    data_arrs,
+                                    testarr,
+                                    null_testarr,
+                                    ews_metric_specification,
+                                    ews_enddate_type,
+                                )
+
+                                isempty(ews_metrics) && error("No valid EWS metrics could be computed for any emergent simulation")
+                                isempty(null_ews_metrics) && error("No valid EWS metrics could be computed for any null simulation")
+
+                                n_emergent_sims = length(ews_metrics)
+                                n_null_sims = length(null_ews_metrics)
+
+                                for ews_metric in unique_ews_metrics
+                                    for ews_threshold_window in unique_threshold_windows
+                                        for ews_threshold_burnin in unique_threshold_burnin
+                                            for consecutive_thresholds in unique_consecutive_thresholds
+                                                optimization_results = Vector{OptimizationResult}(undef, length(unique_threshold_percentiles))
+                                                FLoops.@floop executor for (i, threshold_percentile) in pairs(unique_threshold_percentiles)
+                                                    local grid_scenario = GridSearchScenario(
+                                                        ensemble_specification,
+                                                        null_specification,
+                                                        noise_specification,
+                                                        test_specification,
+                                                        percent_tested,
+                                                        ews_metric_specification,
+                                                        ews_enddate_type,
+                                                        ews_threshold_window,
+                                                        ews_threshold_burnin,
+                                                        ews_metric,
+                                                        threshold_percentile,
+                                                        consecutive_thresholds
+                                                    )
+
+                                                    optimization_results[i] = gridsearch_optimization_function(
+                                                        grid_scenario,
+                                                        ews_metrics,
+                                                        null_ews_metrics
+                                                    )
+                                                end
+
+                                                BangBang.append!!(all_results, optimization_results)
+
+                                                # Save checkpoint after each batch
+                                                if save_results && save_checkpoints && !isempty(checkpoint_dir)
+                                                    save_checkpoint_structvector(
+                                                        StructVector(all_results),
+                                                        checkpoint_dir,
+                                                        checkpoint_num
+                                                    )
+                                                    verbose && @info "Saved checkpoint after batch $checkpoint_num"
+                                                    checkpoint_num += 1
+                                                end
+
+                                                if verbose
+                                                    next!(prog)
+                                                end
+
+
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return StructVector(all_results)
+end
+
 
 """
     evaluate_gridsearch_scenarios(
@@ -463,7 +639,9 @@ function evaluate_gridsearch_scenarios(
                                                 )
 
                                                 unique_threshold_percentiles = unique(consecutive_thresh_specific_scenarios.threshold_percentile)
-                                                FLoops.@floop executor for threshold_percentile in unique_threshold_percentiles
+
+                                                optimization_results = Vector{OptimizationResult}(undef, length(unique_threshold_percentiles))
+                                                FLoops.@floop executor for (i, threshold_percentile) in pairs(unique_threshold_percentiles)
                                                     local grid_scenario = GridSearchScenario(
                                                         ensemble_specification,
                                                         null_specification,
@@ -479,20 +657,14 @@ function evaluate_gridsearch_scenarios(
                                                         consecutive_thresholds
                                                     )
 
-                                                    FLoops.@reduce optimization_result = BangBang.append!!(
-                                                        MicroCollections.EmptyVector(),
-                                                        [
-                                                            gridsearch_optimization_function(
-                                                                grid_scenario,
-                                                                ews_metrics,
-                                                                null_ews_metrics
-                                                            ),
-                                                        ],
+                                                    optimization_results[i] = gridsearch_optimization_function(
+                                                        grid_scenario,
+                                                        ews_metrics,
+                                                        null_ews_metrics
                                                     )
-
                                                 end
 
-                                                append!(all_results, optimization_result)
+                                                BangBang.append!!(all_results, optimization_results)
 
                                                 # Save checkpoint after each batch
                                                 if save_results && save_checkpoints && !isempty(checkpoint_dir)
@@ -523,6 +695,346 @@ function evaluate_gridsearch_scenarios(
     end
 
     return StructVector(all_results)
+end
+
+function evaluate_gridsearch_scenarios_optimized(
+        missing_scenarios::StructVector{GridSearchScenario},
+        data_arrs::NamedTuple{T};
+        executor = FLoops.ThreadedEx(),
+        save_results = true,
+        save_checkpoints = false,
+        checkpoint_dir::String = "",
+        verbose::Bool = true
+    ) where {T}
+
+    n_missing = length(missing_scenarios)
+
+    if n_missing == 0
+        return StructVector(OptimizationResult[])
+    end
+
+    all_results = Vector{OptimizationResult}()
+    sizehint!(all_results, n_missing)
+
+    if verbose
+        prog = Progress(n_missing; desc = "Evaluating grid points (optimized): ", showspeed = true)
+    end
+
+    checkpoint_num = 0
+    processed_scenarios = 0
+
+    @unpack ensemble_single_incarr, null_single_incarr = data_arrs
+
+    noise_groups = group_by_noise_key(missing_scenarios)
+
+    for (noise_key, noise_scenarios) in noise_groups
+        noisearr = create_noise_arr(
+            noise_key.noise_specification,
+            ensemble_single_incarr,
+            noise_key.ensemble_specification;
+            seed = 1234,
+        )[1]
+
+        testing_groups = group_by_testing_key(noise_scenarios)
+
+        for (testing_key, testing_scenarios) in testing_groups
+            testarr = create_testing_arrs(
+                ensemble_single_incarr,
+                noisearr,
+                testing_key.percent_tested,
+                testing_key.test_specification,
+            )
+
+            null_testarr = create_testing_arrs(
+                null_single_incarr,
+                noisearr,
+                testing_key.percent_tested,
+                testing_key.test_specification,
+            )
+
+            ews_groups = group_by_ews_key(testing_scenarios)
+
+            for (ews_key, ews_scenarios) in ews_groups
+                ews_metrics, null_ews_metrics = generate_ensemble_ews_metrics(
+                    data_arrs,
+                    testarr,
+                    null_testarr,
+                    ews_key.ews_metric_specification,
+                    ews_key.ews_enddate_type,
+                )
+
+                isempty(ews_metrics) && error("No valid EWS metrics could be computed for any emergent simulation")
+                isempty(null_ews_metrics) && error("No valid EWS metrics could be computed for any null simulation")
+
+                scenario_groups = group_by_scenario_key(ews_scenarios)
+
+                for (scenario_key, final_scenarios) in scenario_groups
+                    unique_percentiles = unique(s.threshold_percentile for s in final_scenarios)
+                    group_results = Vector{OptimizationResult}(undef, length(unique_percentiles))
+
+                    FLoops.@floop executor for (i, threshold_percentile) in pairs(unique_percentiles)
+                        grid_scenario = GridSearchScenario(
+                            scenario_key.ews_key.testing_key.noise_key.ensemble_specification,
+                            scenario_key.ews_key.testing_key.noise_key.null_specification,
+                            scenario_key.ews_key.testing_key.noise_key.noise_specification,
+                            scenario_key.ews_key.testing_key.test_specification,
+                            scenario_key.ews_key.testing_key.percent_tested,
+                            scenario_key.ews_key.ews_metric_specification,
+                            scenario_key.ews_key.ews_enddate_type,
+                            scenario_key.ews_threshold_window,
+                            scenario_key.ews_threshold_burnin,
+                            scenario_key.ews_metric,
+                            threshold_percentile,
+                            scenario_key.consecutive_thresholds
+                        )
+
+                        group_results[i] = gridsearch_optimization_function(
+                            grid_scenario,
+                            ews_metrics,
+                            null_ews_metrics
+                        )
+                    end
+
+                    append!(all_results, group_results)
+                    processed_scenarios += length(group_results)
+
+                    if save_results && save_checkpoints && !isempty(checkpoint_dir)
+                        save_checkpoint_structvector(
+                            StructVector(all_results),
+                            checkpoint_dir,
+                            checkpoint_num
+                        )
+                        verbose && @info "Saved checkpoint after batch $checkpoint_num"
+                        checkpoint_num += 1
+                    end
+
+                    if verbose
+                        for _ in 1:length(group_results)
+                            next!(prog)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return StructVector(all_results)
+end
+
+function evaluate_gridsearch_scenarios_bumper(
+        missing_scenarios::StructVector{GridSearchScenario},
+        data_arrs::NamedTuple{T};
+        executor = FLoops.ThreadedEx(),
+        save_results = true,
+        save_checkpoints = false,
+        checkpoint_dir::String = "",
+        verbose::Bool = true
+    ) where {T}
+
+    n_missing = length(missing_scenarios)
+
+    if n_missing == 0
+        return StructVector(OptimizationResult[])
+    end
+
+    # Pre-allocate results
+    all_results = Vector{OptimizationResult}(undef, n_missing)
+    result_idx = 0
+
+    if verbose
+        prog = Progress(n_missing; desc = "Evaluating grid points (Bumper): ", showspeed = true)
+    end
+
+    checkpoint_num = 0
+
+    # Sort scenarios once to group related computations
+    # Create sortable keys by converting structs to strings
+    function make_sort_key(s)
+        return (
+            string(s.ensemble_specification),
+            string(s.null_specification),
+            string(s.noise_specification),
+            s.percent_tested,
+            string(s.test_specification),
+            string(s.ews_metric_specification),
+            string(s.ews_enddate_type),
+            s.ews_metric,
+            string(s.ews_threshold_window),
+            string(s.ews_threshold_burnin),
+            s.consecutive_thresholds,
+            s.threshold_percentile,
+        )
+    end
+
+    indexed_scenarios = [(i, make_sort_key(s)) for (i, s) in enumerate(missing_scenarios)]
+    sort!(indexed_scenarios, by = x -> x[2])
+    sorted_indices = [i for (i, _) in indexed_scenarios]
+
+    @unpack ensemble_single_incarr, null_single_incarr = data_arrs
+
+    # Track current computation state to avoid redundant work
+    current_noise_key = nothing
+    current_testing_key = nothing
+    current_ews_key = nothing
+    current_scenario_key = nothing
+
+    current_noisearr = nothing
+    current_testarr = nothing
+    current_null_testarr = nothing
+    current_ews_metrics = nothing
+    current_null_ews_metrics = nothing
+
+    # Process sorted scenarios
+    i = 1
+    while i <= n_missing
+        idx = sorted_indices[i]
+        scenario = missing_scenarios[idx]
+
+        # Check if we need new noise array
+        noise_key = (
+            scenario.ensemble_specification, scenario.null_specification, scenario.noise_specification,
+        )
+        if noise_key != current_noise_key
+            current_noisearr = create_noise_arr(
+                scenario.noise_specification,
+                ensemble_single_incarr,
+                scenario.ensemble_specification;
+                seed = 1234,
+            )[1]
+            current_noise_key = noise_key
+            current_testing_key = nothing
+        end
+
+        # Check if we need new testing arrays
+        testing_key = (noise_key..., scenario.percent_tested, scenario.test_specification)
+        if testing_key != current_testing_key
+            current_testarr = create_testing_arrs(
+                ensemble_single_incarr,
+                current_noisearr,
+                scenario.percent_tested,
+                scenario.test_specification,
+            )
+            current_null_testarr = create_testing_arrs(
+                null_single_incarr,
+                current_noisearr,
+                scenario.percent_tested,
+                scenario.test_specification,
+            )
+            current_testing_key = testing_key
+            current_ews_key = nothing
+        end
+
+        # Check if we need new EWS metrics
+        ews_key = (testing_key..., scenario.ews_metric_specification, scenario.ews_enddate_type)
+        if ews_key != current_ews_key
+            current_ews_metrics, current_null_ews_metrics = generate_ensemble_ews_metrics(
+                data_arrs,
+                current_testarr,
+                current_null_testarr,
+                scenario.ews_metric_specification,
+                scenario.ews_enddate_type,
+            )
+
+            isempty(current_ews_metrics) &&
+                error("No valid EWS metrics could be computed for any emergent simulation")
+            isempty(current_null_ews_metrics) &&
+                error("No valid EWS metrics could be computed for any null simulation")
+
+            current_ews_key = ews_key
+            current_scenario_key = nothing
+        end
+
+        # Find all scenarios with same expensive computations
+        scenario_key = (
+            ews_key..., scenario.ews_metric, scenario.ews_threshold_window,
+            scenario.ews_threshold_burnin, scenario.consecutive_thresholds,
+        )
+
+        if scenario_key != current_scenario_key
+            # Count matching scenarios first
+            n_matching = 0
+            j = i
+            while j <= n_missing
+                s = missing_scenarios[sorted_indices[j]]
+                if (
+                        s.ensemble_specification, s.null_specification, s.noise_specification,
+                        s.percent_tested, s.test_specification, s.ews_metric_specification,
+                        s.ews_enddate_type, s.ews_metric, s.ews_threshold_window,
+                        s.ews_threshold_burnin, s.consecutive_thresholds,
+                    ) == scenario_key
+                    n_matching += 1
+                    j += 1
+                else
+                    break
+                end
+            end
+
+            # Use Bumper only for isbits types (Int indices)
+            # OptimizationResult is not isbits, so use regular allocation
+            batch_results = @no_escape begin
+                batch_indices = @alloc(Int, n_matching)
+
+                for k in 1:n_matching
+                    batch_indices[k] = sorted_indices[i + k - 1]
+                end
+
+                # Use regular allocation for OptimizationResult since it's not isbits
+                batch_results_temp = Vector{OptimizationResult}(undef, n_matching)
+
+                for k in 1:n_matching
+                    local s = missing_scenarios[batch_indices[k]]
+                    local grid_scenario = GridSearchScenario(
+                        s.ensemble_specification,
+                        s.null_specification,
+                        s.noise_specification,
+                        s.test_specification,
+                        s.percent_tested,
+                        s.ews_metric_specification,
+                        s.ews_enddate_type,
+                        s.ews_threshold_window,
+                        s.ews_threshold_burnin,
+                        s.ews_metric,
+                        s.threshold_percentile,
+                        s.consecutive_thresholds,
+                    )
+
+                    batch_results_temp[k] = gridsearch_optimization_function(
+                        grid_scenario, current_ews_metrics, current_null_ews_metrics
+                    )
+                end
+
+                batch_results_temp
+            end
+
+            # Copy results to main array
+            for k in 1:n_matching
+                all_results[result_idx + k] = batch_results[k]
+            end
+            result_idx += n_matching
+
+            # Save checkpoint after each batch
+            if save_results && save_checkpoints && !isempty(checkpoint_dir)
+                save_checkpoint_structvector(
+                    StructVector(@view all_results[1:result_idx]), checkpoint_dir, checkpoint_num
+                )
+                verbose && @info "Saved checkpoint after batch $checkpoint_num"
+                checkpoint_num += 1
+            end
+
+            if verbose
+                for _ in 1:n_matching
+                    next!(prog)
+                end
+            end
+
+            i += n_matching
+            current_scenario_key = scenario_key
+        else
+            i += 1
+        end
+    end
+
+    return StructVector(@view all_results[1:result_idx])
 end
 
 """
@@ -590,4 +1102,90 @@ function gridsearch_optimization_function(
         sensitivity,
         specificity,
     )
+end
+
+# Grouping helper functions for hierarchical computation optimization
+
+function group_by_noise_key(scenarios)
+    groups = Dict{NoiseComputationKey, Vector{GridSearchScenario}}()
+    for scenario in scenarios
+        key = NoiseComputationKey(
+            scenario.ensemble_specification,
+            scenario.null_specification,
+            scenario.noise_specification
+        )
+        push!(get!(groups, key, GridSearchScenario[]), scenario)
+    end
+    return groups
+end
+
+function group_by_testing_key(scenarios)
+    groups = Dict{TestingComputationKey, Vector{GridSearchScenario}}()
+    for scenario in scenarios
+        noise_key = NoiseComputationKey(
+            scenario.ensemble_specification,
+            scenario.null_specification,
+            scenario.noise_specification
+        )
+        key = TestingComputationKey(
+            noise_key,
+            scenario.percent_tested,
+            scenario.test_specification
+        )
+        push!(get!(groups, key, GridSearchScenario[]), scenario)
+    end
+    return groups
+end
+
+function group_by_ews_key(scenarios)
+    groups = Dict{EWSComputationKey, Vector{GridSearchScenario}}()
+    for scenario in scenarios
+        noise_key = NoiseComputationKey(
+            scenario.ensemble_specification,
+            scenario.null_specification,
+            scenario.noise_specification
+        )
+        testing_key = TestingComputationKey(
+            noise_key,
+            scenario.percent_tested,
+            scenario.test_specification
+        )
+        key = EWSComputationKey(
+            testing_key,
+            scenario.ews_metric_specification,
+            scenario.ews_enddate_type
+        )
+        push!(get!(groups, key, GridSearchScenario[]), scenario)
+    end
+    return groups
+end
+
+function group_by_scenario_key(scenarios)
+    groups = Dict{ScenarioComputationKey, Vector{GridSearchScenario}}()
+    for scenario in scenarios
+        noise_key = NoiseComputationKey(
+            scenario.ensemble_specification,
+            scenario.null_specification,
+            scenario.noise_specification
+        )
+        testing_key = TestingComputationKey(
+            noise_key,
+            scenario.percent_tested,
+            scenario.test_specification
+        )
+        ews_key = EWSComputationKey(
+            testing_key,
+            scenario.ews_metric_specification,
+            scenario.ews_enddate_type
+        )
+        key = ScenarioComputationKey(
+            ews_key,
+            scenario.ews_metric,
+            scenario.ews_threshold_window,
+            scenario.ews_threshold_burnin,
+            scenario.consecutive_thresholds
+        )
+        push!(get!(groups, key, GridSearchScenario[]), scenario)
+    end
+    return groups
 end

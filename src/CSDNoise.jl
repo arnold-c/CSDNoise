@@ -93,18 +93,6 @@ export ews_hyperparam_optimization,
     optimal_ews_heatmap_df,
     optimal_ews_heatmap_plot
 
-include("ews-hyperparam-gridsearch-structvector.jl")
-export ews_hyperparam_gridsearch_structvector,
-    create_gridsearch_scenarios_structvector,
-    evaluate_single_gridsearch_scenario,
-    evaluate_gridsearch_scenarios,
-    evaluate_gridsearch_scenarios2,
-    evaluate_gridsearch_scenarios_optimized,
-    evaluate_gridsearch_scenarios_bumper,
-    find_missing_scenarios,
-    load_previous_gridsearch_results_structvector,
-    confirm_gridsearch_run_structvector
-
 include("ews-multistart-optimization.jl")
 export ews_multistart_optimization,
     optimize_single_scenario,
@@ -117,6 +105,21 @@ export ews_multistart_optimization,
     optimize_scenarios_in_batches_structvector,
     load_previous_multistart_results_structvector,
     create_scenarios_structvector
+
+include("ews-hyperparam-gridsearch-structvector.jl")
+export ews_hyperparam_gridsearch_structvector,
+    create_gridsearch_scenarios_structvector,
+    evaluate_single_gridsearch_scenario,
+    evaluate_gridsearch_scenarios,
+    evaluate_gridsearch_scenarios2,
+    evaluate_gridsearch_scenarios_optimized,
+    evaluate_gridsearch_scenarios_bumper,
+    evaluate_gridsearch_scenarios_multistart,
+    optimize_percentile_threshold_multistart,
+    percentile_only_objective_function_with_tracking,
+    find_missing_scenarios,
+    load_previous_gridsearch_results_structvector,
+    confirm_gridsearch_run_structvector
 
 include("ews-survival.jl")
 export simulate_and_plot_ews_survival,

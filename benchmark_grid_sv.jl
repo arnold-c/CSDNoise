@@ -55,55 +55,32 @@ function create_gridsearch_test_specification_vectors()
     )
 end
 
-# Helper function to create test specification vectors for multistart optimization
-function create_multistart_test_specification_vectors()
-    ensemble_spec, null_spec, _ = create_ensemble_specs(3)
-    ensemble_specification_vec = [ensemble_spec]
-    null_specification_vec = [null_spec]
-
-    noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))]
-    test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)]
-    percent_tested_vec = [1.0]
-
-    ews_method_vec = [EWSMethod(Backward())]
-    ews_aggregation_vec = [Day(28)]
-    ews_bandwidth_vec = [Week(52)]
-    ews_lag_days_vec = [1]
-
-    ews_metric_specification_vec = create_combinations_vec(
-        EWSMetricSpecification,
-        (ews_method_vec, ews_aggregation_vec, ews_bandwidth_vec, ews_lag_days_vec)
-    )
-
-    ews_metric_vec = ["autocovariance"]
-    ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
-    ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
-    ews_threshold_burnin_vec = [Year(5)]
-
-    # Note: multistart optimization doesn't use percentile/consecutive threshold vectors
-    # as these are optimized parameters
-    return (;
-        ensemble_specification_vec,
-        null_specification_vec,
-        noise_specification_vec,
-        test_specification_vec,
-        percent_tested_vec,
-        ews_metric_specification_vec,
-        ews_enddate_type_vec,
-        ews_threshold_window_vec,
-        ews_threshold_burnin_vec,
-        ews_metric_vec,
-    )
-end
-
 #%%
 specification_vecs = create_gridsearch_test_specification_vectors()
-multistart_specification_vecs = create_multistart_test_specification_vectors()
+
+multivariate_optimization_vecs = specification_vecs[
+    setdiff(
+        propertynames(specification_vecs), (
+            :ews_consecutive_thresholds_vec,
+            :ews_threshold_percentile_vec,
+        )
+    ),
+]
+
+univariate_optimization_vecs = (
+    specification_vecs[setdiff(propertynames(specification_vecs), (:ews_threshold_percentile_vec,))]...,
+    ews_threshold_percentile_vec = [0.9],
+)
 
 all_scenarios = create_gridsearch_scenarios_structvector(specification_vecs)
+univariate_optim_scenarios = create_gridsearch_scenarios_structvector(univariate_optimization_vecs)
+
 existing_results = StructVector(OptimizationResult[])
 
 missing_scenarios = find_missing_scenarios(all_scenarios, existing_results)
+univariate_optim_missing_scenarios = find_missing_scenarios(univariate_optim_scenarios, existing_results)
+
+@assert length(univariate_optim_missing_scenarios) == length(missing_scenarios) / length(specification_vecs.ews_threshold_percentile_vec)
 
 ensemble_spec, null_spec, outbreak_spec = create_ensemble_specs(3)
 data_arrs = generate_ensemble_data(ensemble_spec, null_spec, outbreak_spec)
@@ -212,9 +189,9 @@ begin
     display(a)
 
     for n in [20, 50, 100, 150]
-        println("\n\nMultistart Optimization (Fast - $n Sobol points)")
+        println("\n\nMultistart Multivariate Optimization ($n Sobol points)")
         local a = @benchmark ews_multistart_optimization(
-            $multistart_specification_vecs,
+            $multivariate_optimization_vecs,
             $data_arrs;
             percentile_bounds = (0.5, 0.99),
             consecutive_bounds = (2.0, 30.0),
@@ -225,7 +202,28 @@ begin
             return_df = true,
             save_results = false,
             verbose = false,
-            disable_time_check = true
+            disable_time_check = true,
+            xtol_rel = 1.0e-3,
+            xtol_abs = 1.0e-3,
+            ftol_rel = 1.0e-4,
+        )
+        display(a)
+
+        println("\n\nMultistart Univariate Optimization ($n Sobol points)")
+        local a = @benchmark CSDNoise.evaluate_gridsearch_scenarios_multistart(
+            $univariate_optim_missing_scenarios,
+            $data_arrs;
+            percentile_bounds = (0.5, 0.99),
+            save_results = true,
+            save_checkpoints = false,
+            verbose = false,
+            # Optimization configuration
+            n_sobol_points = $n,
+            local_algorithm = NLopt.LN_BOBYQA,
+            maxeval = 1000,
+            xtol_rel = 1.0e-3,
+            xtol_abs = 1.0e-3,
+            ftol_rel = 1.0e-4,
         )
         display(a)
     end
@@ -241,7 +239,17 @@ original_res = evaluate_gridsearch_scenarios(
     save_checkpoints = false,
     checkpoint_dir = "",
     verbose = false
-)
+);
+
+original_res_threaded = evaluate_gridsearch_scenarios(
+    missing_scenarios,
+    data_arrs;
+    executor = FLoops.ThreadedEx(),
+    save_results = false,
+    save_checkpoints = false,
+    checkpoint_dir = "",
+    verbose = false
+);
 
 #%%
 original_res2 = evaluate_gridsearch_scenarios2(
@@ -253,7 +261,7 @@ original_res2 = evaluate_gridsearch_scenarios2(
     save_checkpoints = false,
     checkpoint_dir = "",
     verbose = false
-)
+);
 
 #%%
 optimized_res = evaluate_gridsearch_scenarios_optimized(
@@ -265,7 +273,7 @@ optimized_res = evaluate_gridsearch_scenarios_optimized(
     save_checkpoints = false,
     checkpoint_dir = "",
     verbose = false
-)
+);
 
 #%%
 bumper_res = evaluate_gridsearch_scenarios_bumper(
@@ -277,7 +285,7 @@ bumper_res = evaluate_gridsearch_scenarios_bumper(
     save_checkpoints = false,
     checkpoint_dir = "",
     verbose = false
-)
+);
 
 #%%
 df_results = ews_hyperparam_gridsearch(
@@ -288,7 +296,7 @@ df_results = ews_hyperparam_gridsearch(
     return_df = false,
     verbose = false,
     disable_time_check = true
-)
+);
 
 #%%
 # Run multistart optimization with different configurations for comparison
@@ -305,7 +313,7 @@ multistart_fast_results = ews_multistart_optimization(
     save_results = false,
     verbose = false,
     disable_time_check = true
-)
+);
 
 multistart_balanced_results = ews_multistart_optimization(
     multistart_specification_vecs,
@@ -320,7 +328,7 @@ multistart_balanced_results = ews_multistart_optimization(
     save_results = false,
     verbose = false,
     disable_time_check = true
-)
+);
 
 multistart_thorough_results = ews_multistart_optimization(
     multistart_specification_vecs,
@@ -335,11 +343,12 @@ multistart_thorough_results = ews_multistart_optimization(
     save_results = false,
     verbose = false,
     disable_time_check = true
-)
+);
 
 
 #%%
 original_res == original_res2
+original_res == original_res_threaded
 original_res == optimized_res
 original_res == bumper_res
 

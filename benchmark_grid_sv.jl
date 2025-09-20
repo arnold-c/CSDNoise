@@ -55,8 +55,50 @@ function create_gridsearch_test_specification_vectors()
     )
 end
 
+# Helper function to create test specification vectors for multistart optimization
+function create_multistart_test_specification_vectors()
+    ensemble_spec, null_spec, _ = create_ensemble_specs(3)
+    ensemble_specification_vec = [ensemble_spec]
+    null_specification_vec = [null_spec]
+
+    noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))]
+    test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)]
+    percent_tested_vec = [1.0]
+
+    ews_method_vec = [EWSMethod(Backward())]
+    ews_aggregation_vec = [Day(28)]
+    ews_bandwidth_vec = [Week(52)]
+    ews_lag_days_vec = [1]
+
+    ews_metric_specification_vec = create_combinations_vec(
+        EWSMetricSpecification,
+        (ews_method_vec, ews_aggregation_vec, ews_bandwidth_vec, ews_lag_days_vec)
+    )
+
+    ews_metric_vec = ["autocovariance"]
+    ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
+    ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
+    ews_threshold_burnin_vec = [Year(5)]
+
+    # Note: multistart optimization doesn't use percentile/consecutive threshold vectors
+    # as these are optimized parameters
+    return (;
+        ensemble_specification_vec,
+        null_specification_vec,
+        noise_specification_vec,
+        test_specification_vec,
+        percent_tested_vec,
+        ews_metric_specification_vec,
+        ews_enddate_type_vec,
+        ews_threshold_window_vec,
+        ews_threshold_burnin_vec,
+        ews_metric_vec,
+    )
+end
+
 #%%
 specification_vecs = create_gridsearch_test_specification_vectors()
+multistart_specification_vecs = create_multistart_test_specification_vectors()
 
 all_scenarios = create_gridsearch_scenarios_structvector(specification_vecs)
 existing_results = StructVector(OptimizationResult[])
@@ -92,64 +134,102 @@ data_arrs = generate_ensemble_data(ensemble_spec, null_spec, outbreak_spec)
 #
 
 #%%
-@benchmark evaluate_gridsearch_scenarios(
-    $missing_scenarios,
-    $data_arrs;
-    # executor = FLoops.ThreadedEx(),
-    executor = FLoops.SequentialEx(),
-    save_results = false,
-    save_checkpoints = false,
-    checkpoint_dir = "",
-    verbose = false
-)
+begin
+    println("Original StructVector (Sequential)")
+    a = @benchmark evaluate_gridsearch_scenarios(
+        $missing_scenarios,
+        $data_arrs;
+        # executor = FLoops.ThreadedEx(),
+        executor = FLoops.SequentialEx(),
+        save_results = false,
+        save_checkpoints = false,
+        checkpoint_dir = "",
+        verbose = false
+    )
+    display(a)
 
-#%%
-@benchmark evaluate_gridsearch_scenarios2(
-    $missing_scenarios,
-    $data_arrs;
-    # executor = FLoops.ThreadedEx(),
-    executor = FLoops.SequentialEx(),
-    save_results = false,
-    save_checkpoints = false,
-    checkpoint_dir = "",
-    verbose = false
-)
+    println("\n\nOriginal StructVector (Multithreaded)")
+    a = @benchmark evaluate_gridsearch_scenarios(
+        $missing_scenarios,
+        $data_arrs;
+        executor = FLoops.ThreadedEx(),
+        save_results = false,
+        save_checkpoints = false,
+        checkpoint_dir = "",
+        verbose = false
+    )
+    display(a)
 
-#%%
-@benchmark evaluate_gridsearch_scenarios_optimized(
-    $missing_scenarios,
-    $data_arrs;
-    # executor = FLoops.ThreadedEx(),
-    executor = FLoops.SequentialEx(),
-    save_results = false,
-    save_checkpoints = false,
-    checkpoint_dir = "",
-    verbose = false
-)
 
-#%%
-@benchmark evaluate_gridsearch_scenarios_bumper(
-    $missing_scenarios,
-    $data_arrs;
-    # executor = FLoops.ThreadedEx(),
-    executor = FLoops.SequentialEx(),
-    save_results = false,
-    save_checkpoints = false,
-    checkpoint_dir = "",
-    verbose = false
-)
+    println("\n\nStructVector without filters")
+    a = @benchmark evaluate_gridsearch_scenarios2(
+        $missing_scenarios,
+        $data_arrs;
+        # executor = FLoops.ThreadedEx(),
+        executor = FLoops.SequentialEx(),
+        save_results = false,
+        save_checkpoints = false,
+        checkpoint_dir = "",
+        verbose = false
+    )
+    display(a)
 
-#%%
-# Benchmark DataFrame implementation
-@benchmark ews_hyperparam_gridsearch(
-    $specification_vecs,
-    $data_arrs;
-    force = true,
-    save_results = false,
-    verbose = false,
-    disable_time_check = true
-)
+    println("\n\nStructVector with cached data")
+    a = @benchmark evaluate_gridsearch_scenarios_optimized(
+        $missing_scenarios,
+        $data_arrs;
+        # executor = FLoops.ThreadedEx(),
+        executor = FLoops.SequentialEx(),
+        save_results = false,
+        save_checkpoints = false,
+        checkpoint_dir = "",
+        verbose = false
+    )
+    display(a)
 
+    println("\n\nStructVector with Bumper")
+    a = @benchmark evaluate_gridsearch_scenarios_bumper(
+        $missing_scenarios,
+        $data_arrs;
+        # executor = FLoops.ThreadedEx(),
+        executor = FLoops.SequentialEx(),
+        save_results = false,
+        save_checkpoints = false,
+        checkpoint_dir = "",
+        verbose = false
+    )
+    display(a)
+
+    println("\n\nDataFrames")
+    a = @benchmark ews_hyperparam_gridsearch(
+        $specification_vecs,
+        $data_arrs;
+        force = true,
+        save_results = false,
+        verbose = false,
+        disable_time_check = true
+    )
+    display(a)
+
+    for n in [20, 50, 100, 150]
+        println("\n\nMultistart Optimization (Fast - $n Sobol points)")
+        local a = @benchmark ews_multistart_optimization(
+            $multistart_specification_vecs,
+            $data_arrs;
+            percentile_bounds = (0.5, 0.99),
+            consecutive_bounds = (2.0, 30.0),
+            n_sobol_points = $n,
+            maxeval = 1000,
+            executor = FLoops.SequentialEx(),
+            force = true,
+            return_df = true,
+            save_results = false,
+            verbose = false,
+            disable_time_check = true
+        )
+        display(a)
+    end
+end
 
 #%%
 original_res = evaluate_gridsearch_scenarios(
@@ -204,6 +284,54 @@ df_results = ews_hyperparam_gridsearch(
     specification_vecs,
     data_arrs;
     force = true,
+    save_results = false,
+    return_df = false,
+    verbose = false,
+    disable_time_check = true
+)
+
+#%%
+# Run multistart optimization with different configurations for comparison
+multistart_fast_results = ews_multistart_optimization(
+    multistart_specification_vecs,
+    data_arrs;
+    percentile_bounds = (0.5, 0.99),
+    consecutive_bounds = (2.0, 30.0),
+    n_sobol_points = 20,
+    maxeval = 100,
+    executor = FLoops.SequentialEx(),
+    force = true,
+    return_df = true,
+    save_results = false,
+    verbose = false,
+    disable_time_check = true
+)
+
+multistart_balanced_results = ews_multistart_optimization(
+    multistart_specification_vecs,
+    data_arrs;
+    percentile_bounds = (0.5, 0.99),
+    consecutive_bounds = (2.0, 30.0),
+    n_sobol_points = 50,
+    maxeval = 200,
+    executor = FLoops.SequentialEx(),
+    force = true,
+    return_df = true,
+    save_results = false,
+    verbose = false,
+    disable_time_check = true
+)
+
+multistart_thorough_results = ews_multistart_optimization(
+    multistart_specification_vecs,
+    data_arrs;
+    percentile_bounds = (0.5, 0.99),
+    consecutive_bounds = (2.0, 30.0),
+    n_sobol_points = 100,
+    maxeval = 500,
+    executor = FLoops.SequentialEx(),
+    force = true,
+    return_df = true,
     save_results = false,
     verbose = false,
     disable_time_check = true
@@ -427,3 +555,36 @@ println("Debug: Full DataFrame results: $(nrow(df_results)) rows")
 println("Debug: Full StructVector results: $(length(original_res)) rows")
 
 comparison_df = compare_all_results(df_results, original_res);
+
+#%%
+# Compare multistart optimization results with grid search
+println("\n=== MULTISTART OPTIMIZATION RESULTS COMPARISON ===")
+println("Grid Search (DataFrame) - Best accuracy: $(round(maximum(df_results.accuracy), digits = 4))")
+println("Grid Search (StructVector) - Best accuracy: $(round(maximum(original_res.accuracy), digits = 4))")
+println("Multistart Fast (20 Sobol) - Best accuracy: $(round(maximum(multistart_fast_results.accuracy), digits = 4))")
+println("Multistart Balanced (50 Sobol) - Best accuracy: $(round(maximum(multistart_balanced_results.accuracy), digits = 4))")
+println("Multistart Thorough (100 Sobol) - Best accuracy: $(round(maximum(multistart_thorough_results.accuracy), digits = 4))")
+
+println("\nMean accuracies:")
+println("Grid Search (DataFrame): $(round(mean(df_results.accuracy), digits = 4))")
+println("Grid Search (StructVector): $(round(mean(original_res.accuracy), digits = 4))")
+println("Multistart Fast: $(round(mean(multistart_fast_results.accuracy), digits = 4))")
+println("Multistart Balanced: $(round(mean(multistart_balanced_results.accuracy), digits = 4))")
+println("Multistart Thorough: $(round(mean(multistart_thorough_results.accuracy), digits = 4))")
+
+println("\nOptimal parameters found:")
+best_grid_idx = argmax(df_results.accuracy)
+best_grid_row = df_results[best_grid_idx, :]
+println("Grid Search - Percentile: $(round(best_grid_row.ews_threshold_percentile, digits = 3)), Consecutive: $(best_grid_row.ews_consecutive_thresholds)")
+
+best_fast_idx = argmax(multistart_fast_results.accuracy)
+best_fast_row = multistart_fast_results[best_fast_idx, :]
+println("Multistart Fast - Percentile: $(round(best_fast_row.threshold_percentile, digits = 3)), Consecutive: $(best_fast_row.consecutive_thresholds)")
+
+best_balanced_idx = argmax(multistart_balanced_results.accuracy)
+best_balanced_row = multistart_balanced_results[best_balanced_idx, :]
+println("Multistart Balanced - Percentile: $(round(best_balanced_row.threshold_percentile, digits = 3)), Consecutive: $(best_balanced_row.consecutive_thresholds)")
+
+best_thorough_idx = argmax(multistart_thorough_results.accuracy)
+best_thorough_row = multistart_thorough_results[best_thorough_idx, :]
+println("Multistart Thorough - Percentile: $(round(best_thorough_row.threshold_percentile, digits = 3)), Consecutive: $(best_thorough_row.consecutive_thresholds)")

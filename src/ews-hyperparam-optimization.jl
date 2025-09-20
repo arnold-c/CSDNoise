@@ -221,7 +221,9 @@ function ews_hyperparam_gridsearch(
         "$(round(time_taken_s / 60; digits = 2)) minutes"
     end
 
-    @info "🟢 ews_hyperparam_optimization.jl completed $(missing_runs) missing simulations in $(time_taken_message) ($(round(time_per_run_s; digits = 4)) seconds per run). 🟢"
+    # if verbose
+    #     @info "🟢 ews_hyperparam_optimization.jl completed $(missing_runs) missing simulations in $(time_taken_message) ($(round(time_per_run_s; digits = 4)) seconds per run). 🟢"
+    # end
 
     if save_results
         @tagsave(output_filepath, Dict("ews_df" => ews_df))

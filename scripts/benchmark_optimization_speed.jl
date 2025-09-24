@@ -168,7 +168,7 @@ function main()
 
         ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
         ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
-        ews_threshold_percentile_vec = collect(0.5:0.01:0.99)
+        ews_threshold_quantile_vec = collect(0.5:0.01:0.99)
         ews_consecutive_thresholds_vec = collect(2:1:20)
         ews_threshold_burnin_vec = [Year(5)]
 
@@ -182,12 +182,12 @@ function main()
             ews_enddate_type_vec,
             ews_threshold_window_vec,
             ews_threshold_burnin_vec,
-            ews_threshold_percentile_vec,
+            ews_threshold_quantile_vec,
             ews_consecutive_thresholds_vec,
             ews_metric_vec,
         )
         # Remove unused vectors for multivariate optimization
-        optimization_spec_vecs = Base.structdiff(specification_vecs, (; ews_threshold_percentile_vec, ews_consecutive_thresholds_vec))
+        optimization_spec_vecs = Base.structdiff(specification_vecs, (; ews_threshold_quantile_vec, ews_consecutive_thresholds_vec))
 
         log_both(styled"Generating ensemble data...")
         data_arrs = generate_ensemble_data(ensemble_specification, null_specification, ensemble_outbreak_specification)
@@ -312,7 +312,7 @@ function main()
             ms_time = @elapsed results = ews_multistart_optimization(
                 optimization_spec_vecs,
                 data_arrs;
-                percentile_bounds = (0.5, 0.99),  # Custom bounds
+                quantile_bounds = (0.5, 0.99),  # Custom bounds
                 consecutive_bounds = (2.0, 30.0),  # Custom bounds
                 n_sobol_points = n_sobol,
                 maxeval = 1000,
@@ -374,7 +374,7 @@ function main()
         log_both(styled"  Time: {yellow:$(round(grid_time, digits=2))}s")
         log_both(styled"  Best accuracy: {green:$(round(best_grid_acc, digits=4))}")
         log_both(styled"  Best parameters (optimized):")
-        log_both(styled"    Threshold percentile: {cyan:$(round(best_grid_row.ews_threshold_percentile, digits=3))}")
+        log_both(styled"    Threshold quantile: {cyan:$(round(best_grid_row.ews_threshold_quantile, digits=3))}")
         log_both(styled"    Consecutive thresholds: {cyan:$(best_grid_row.ews_consecutive_thresholds)}")
         log_both(styled"    Sensitivity: {green:$(round(best_grid_row.sensitivity, digits=4))}")
         log_both(styled"    Specificity: {green:$(round(best_grid_row.specificity, digits=4))}")
@@ -407,7 +407,7 @@ function main()
         log_both(styled"  Best accuracy: {green:$(round(best_structvector_grid_acc, digits=4))}")
         log_both(styled"  Δ Accuracy vs DataFrame Grid: {yellow:$(round(best_structvector_grid_acc - best_grid_acc, digits=4))}")
         log_both(styled"  Best parameters (optimized):")
-        log_both(styled"    Threshold percentile: {cyan:$(round(best_structvector_grid_row.threshold_percentile, digits=3))}")
+        log_both(styled"    Threshold quantile: {cyan:$(round(best_structvector_grid_row.threshold_quantile, digits=3))}")
         log_both(styled"    Consecutive thresholds: {cyan:$(best_structvector_grid_row.consecutive_thresholds)}")
         log_both(styled"    Sensitivity: {green:$(round(best_structvector_grid_row.sensitivity, digits=4))}")
         log_both(styled"    Specificity: {green:$(round(best_structvector_grid_row.specificity, digits=4))}")
@@ -454,7 +454,7 @@ function main()
 
             # Print optimized parameters (only the ones that vary)
             log_both(styled"  Best parameters (optimized):")
-            log_both(styled"    Threshold percentile: {cyan:$(round(best_row.threshold_percentile, digits=3))}")
+            log_both(styled"    Threshold quantile: {cyan:$(round(best_row.threshold_quantile, digits=3))}")
             log_both(styled"    Consecutive thresholds: {cyan:$(best_row.consecutive_thresholds)}")
             log_both(styled"    Sensitivity: {green:$(round(best_row.sensitivity, digits=4))}")
             log_both(styled"    Specificity: {green:$(round(best_row.specificity, digits=4))}")

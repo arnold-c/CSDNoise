@@ -4,7 +4,7 @@
 
         @testset "No NaNs" begin
             testvec = Float64.(collect(1:20))
-            percentiles = [0.5, 0.9]
+            quantiles = [0.5, 0.9]
             daily_burn_in_int = 5
             daily_burn_in = Day(daily_burn_in_int)
 
@@ -19,75 +19,75 @@
                 repeat([1.0], 8)...,
             )
 
-            outer_res_percentiles, outer_exceeds_thresholds = expanding_ews_thresholds(
+            outer_res_quantiles, outer_exceeds_thresholds = expanding_ews_thresholds(
                 test_ewsmetrics,
                 :mean,
                 ExpandingThresholdWindow;
-                percentiles = percentiles,
+                quantiles = quantiles,
                 burn_in = daily_burn_in,
             )[1:2]
 
-            res_percentiles, exceeds_thresholds = CSDNoise._expanding_ews_thresholds(
+            res_quantiles, exceeds_thresholds = CSDNoise._expanding_ews_thresholds(
                 testvec,
                 ExpandingThresholdWindow,
-                percentiles,
+                quantiles,
                 daily_burn_in_int,
             )[1:2]
 
-            expected_percentiles = map(
-                i -> StatsBase.quantile(testvec[1:i], percentiles[1]),
+            expected_quantiles = map(
+                i -> StatsBase.quantile(testvec[1:i], quantiles[1]),
                 eachindex(testvec),
             )
-            expected_percentiles = hcat(
-                expected_percentiles,
+            expected_quantiles = hcat(
+                expected_quantiles,
                 map(
-                    i -> StatsBase.quantile(testvec[1:i], percentiles[2]),
+                    i -> StatsBase.quantile(testvec[1:i], quantiles[2]),
                     eachindex(testvec),
                 ),
             )
-            expected_percentiles[1:daily_burn_in_int, :] .= NaN
+            expected_quantiles[1:daily_burn_in_int, :] .= NaN
 
-            @test isequal(sum(isnan.(res_percentiles)), 10)
+            @test isequal(sum(isnan.(res_quantiles)), 10)
             @test isequal(sum(exceeds_thresholds), 28)
-            @test isequal(res_percentiles, expected_percentiles)
+            @test isequal(res_quantiles, expected_quantiles)
 
-            @test isequal(outer_res_percentiles, res_percentiles)
+            @test isequal(outer_res_quantiles, res_quantiles)
             @test isequal(outer_exceeds_thresholds, exceeds_thresholds)
 
             weekly_burn_in_int = 1
             weekly_burn_in = Week(weekly_burn_in_int)
 
-            weekly_outer_res_percentiles, weekly_outer_exceeds_thresholds = expanding_ews_thresholds(
+            weekly_outer_res_quantiles, weekly_outer_exceeds_thresholds = expanding_ews_thresholds(
                 test_ewsmetrics,
                 :mean,
                 ExpandingThresholdWindow;
-                percentiles = percentiles,
+                quantiles = quantiles,
                 burn_in = weekly_burn_in,
             )[1:2]
 
-            weekly_expected_percentiles = map(
-                i -> StatsBase.quantile(testvec[1:i], percentiles[1]),
+            weekly_expected_quantiles = map(
+                i -> StatsBase.quantile(testvec[1:i], quantiles[1]),
                 eachindex(testvec),
             )
-            weekly_expected_percentiles = hcat(
-                weekly_expected_percentiles,
+            weekly_expected_quantiles = hcat(
+                weekly_expected_quantiles,
                 map(
-                    i -> StatsBase.quantile(testvec[1:i], percentiles[2]),
+                    i -> StatsBase.quantile(testvec[1:i], quantiles[2]),
                     eachindex(testvec),
                 ),
             )
-            weekly_expected_percentiles[
+            weekly_expected_quantiles[
                 1:(Dates.days(weekly_burn_in)), :,
             ] .= NaN
 
             @test isequal(
-                weekly_outer_res_percentiles, weekly_expected_percentiles
+                weekly_outer_res_quantiles, weekly_expected_quantiles
             )
         end
 
         @testset "NaNs" begin
             testvec = [NaN, NaN, collect(1:10)..., NaN, collect(11:20)...]
-            percentiles = 0.5
+            quantiles = 0.5
             burn_in_int = 5
             burn_in = Day(burn_in_int)
 
@@ -102,33 +102,33 @@
                 repeat([1.0], 8)...,
             )
 
-            outer_res_percentiles, outer_exceeds_thresholds = expanding_ews_thresholds(
+            outer_res_quantiles, outer_exceeds_thresholds = expanding_ews_thresholds(
                 test_ewsmetrics,
                 :mean,
                 ExpandingThresholdWindow;
-                percentiles = percentiles,
+                quantiles = quantiles,
                 burn_in = burn_in,
             )[1:2]
 
-            res_percentiles, exceeds_thresholds, worker_vec = CSDNoise._expanding_ews_thresholds(
+            res_quantiles, exceeds_thresholds, worker_vec = CSDNoise._expanding_ews_thresholds(
                 testvec,
                 ExpandingThresholdWindow,
-                percentiles,
+                quantiles,
                 burn_in_int,
             )
 
             filtered_testvec = filter(!isnan, testvec)
-            expected_percentiles = map(
-                i -> StatsBase.quantile(filtered_testvec[1:i], percentiles[1]),
+            expected_quantiles = map(
+                i -> StatsBase.quantile(filtered_testvec[1:i], quantiles[1]),
                 eachindex(filtered_testvec),
             )
-            expected_percentiles[1:(burn_in_int - 2)] .= NaN
-            expected_percentiles = vcat(
+            expected_quantiles[1:(burn_in_int - 2)] .= NaN
+            expected_quantiles = vcat(
                 NaN,
                 NaN,
-                expected_percentiles[1:10],
-                expected_percentiles[10],
-                expected_percentiles[11:20],
+                expected_quantiles[1:10],
+                expected_quantiles[10],
+                expected_quantiles[11:20],
             )
 
             expected_exceeds_thresholds = vcat(
@@ -138,11 +138,11 @@
                 repeat([true], 10),
             )
 
-            @test isequal(sum(isnan.(res_percentiles)), 5)
+            @test isequal(sum(isnan.(res_quantiles)), 5)
             @test isequal(vec(exceeds_thresholds), expected_exceeds_thresholds)
-            @test isequal(vec(res_percentiles), expected_percentiles)
+            @test isequal(vec(res_quantiles), expected_quantiles)
 
-            @test isequal(outer_res_percentiles, res_percentiles)
+            @test isequal(outer_res_quantiles, res_quantiles)
             @test isequal(outer_exceeds_thresholds, exceeds_thresholds)
         end
     end

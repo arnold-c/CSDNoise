@@ -140,7 +140,7 @@ end
 Calculate the total number of grid points from specification vectors.
 """
 function calculate_grid_points(spec_vecs)
-    return length(spec_vecs.ews_threshold_percentile_vec) *
+    return length(spec_vecs.ews_threshold_quantile_vec) *
         length(spec_vecs.ews_consecutive_thresholds_vec)
 end
 
@@ -209,7 +209,7 @@ function display_benchmark_summary(results, label)
     best_row = results[best_idx, :]
 
     println(styled"Best parameters:")
-    println(styled"  Threshold percentile: {cyan:$(round(best_row.ews_threshold_percentile, digits=3))}")
+    println(styled"  Threshold quantile: {cyan:$(round(best_row.ews_threshold_quantile, digits=3))}")
     println(styled"  Consecutive thresholds: {cyan:$(best_row.ews_consecutive_thresholds)}")
     println(styled"  Sensitivity: {green:$(round(best_row.sensitivity, digits=4))}")
     return println(styled"  Specificity: {green:$(round(best_row.specificity, digits=4))}")
@@ -275,12 +275,12 @@ function compare_all_scenarios(grid_results, multistart_results, specification_v
                     comparison_data, (
                         scenario_id = scenario_id,
                         grid_accuracy = best_grid_acc,
-                        grid_percentile = best_grid_row.ews_threshold_percentile,
+                        grid_quantile = best_grid_row.ews_threshold_quantile,
                         grid_consecutive = best_grid_row.ews_consecutive_thresholds,
                         grid_sensitivity = best_grid_row.sensitivity,
                         grid_specificity = best_grid_row.specificity,
                         ms_accuracy = best_ms_acc,
-                        ms_percentile = best_ms_row.threshold_percentile,
+                        ms_quantile = best_ms_row.threshold_quantile,
                         ms_consecutive = best_ms_row.consecutive_thresholds,
                         ms_sensitivity = best_ms_row.sensitivity,
                         ms_specificity = best_ms_row.specificity,
@@ -396,14 +396,14 @@ function generate_accuracy_verification_report(
         config_df = filter(row -> row.n_sobol == n_sobol, comparison_df)
 
         # Calculate parameter differences
-        percentile_diffs = abs.(config_df.grid_percentile .- config_df.ms_percentile)
+        quantile_diffs = abs.(config_df.grid_quantile .- config_df.ms_quantile)
         consecutive_diffs = abs.(config_df.grid_consecutive .- config_df.ms_consecutive)
 
-        mean_perc_diff = mean(percentile_diffs)
+        mean_perc_diff = mean(quantile_diffs)
         mean_cons_diff = mean(consecutive_diffs)
 
         log_both(styled"\n{cyan:$n_sobol Sobol points}:")
-        log_both(styled"  Mean percentile difference: {yellow:$(round(mean_perc_diff, digits=4))}")
+        log_both(styled"  Mean quantile difference: {yellow:$(round(mean_perc_diff, digits=4))}")
         log_both(styled"  Mean consecutive threshold difference: {yellow:$(round(mean_cons_diff, digits=2))}")
     end
 
@@ -437,12 +437,12 @@ function generate_accuracy_verification_report(
             NamedTuple(scenario_fields),
             (
                 grid_accuracy = row.grid_accuracy,
-                grid_percentile = row.grid_percentile,
+                grid_quantile = row.grid_quantile,
                 grid_consecutive = row.grid_consecutive,
                 grid_sensitivity = row.grid_sensitivity,
                 grid_specificity = row.grid_specificity,
                 ms_accuracy = row.ms_accuracy,
-                ms_percentile = row.ms_percentile,
+                ms_quantile = row.ms_quantile,
                 ms_consecutive = row.ms_consecutive,
                 ms_sensitivity = row.ms_sensitivity,
                 ms_specificity = row.ms_specificity,
@@ -555,7 +555,7 @@ function save_benchmark_comparison_results(results_dict, filename_prefix; output
                     opt_time = get(result, :opt_time, missing),
                     total_time = get(result, :total_time, missing),
                     best_accuracy = result.best_accuracy,
-                    best_percentile = result.best_params.threshold_percentile,
+                    best_quantile = result.best_params.threshold_quantile,
                     best_consecutive = result.best_params.consecutive_thresholds,
                     sensitivity = result.best_params.sensitivity,
                     specificity = result.best_params.specificity,

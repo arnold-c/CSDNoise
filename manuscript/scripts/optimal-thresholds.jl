@@ -298,8 +298,8 @@ for (noise_num, gdf) in enumerate(gdfs)
                 vec_of_null_ews_vals_vec,
                 vec_of_exceed_thresholds,
                 vec_of_null_exceed_thresholds,
-                vec_of_threshold_percentiles,
-                vec_of_null_threshold_percentiles,
+                vec_of_threshold_quantiles,
+                vec_of_null_threshold_quantiles,
                 vec_of_detection_index_vec,
                 vec_of_null_detection_index_vec,
             ), noisearr = simulate_ews_survival_data(

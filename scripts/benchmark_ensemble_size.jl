@@ -83,7 +83,7 @@ function main()
                 n_sobol_points = n_sobol_points,
                 maxeval = 1000,
                 executor = FLoops.SequentialEx(),
-                percentile_bounds = (0.5, 0.99),
+                quantile_bounds = (0.5, 0.99),
                 consecutive_bounds = (2.0, 30.0),
                 force = true,
                 return_df = true,
@@ -156,7 +156,7 @@ function create_single_test_scenario()
     ews_metric_vec = ["autocovariance"]
     ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
     ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
-    ews_threshold_percentile_vec = collect(0.5:0.02:0.99)
+    ews_threshold_quantile_vec = collect(0.5:0.02:0.99)
     ews_consecutive_thresholds_vec = collect(2:2:30)
     ews_threshold_burnin_vec = [Year(5)]
 
@@ -372,24 +372,24 @@ function display_parameter_comparison(results)
     params_10000 = results[10000].best_params
 
     # Create parameter comparison table for markdown
-    param_headers = ["Ensemble Size", "Threshold Percentile", "Consecutive Thresholds"]
+    param_headers = ["Ensemble Size", "Threshold Quantile", "Consecutive Thresholds"]
     param_rows = [
-        ["100 sims", "$(round(params_100.ews_threshold_percentile, digits = 3))", "$(params_100.ews_consecutive_thresholds)"],
-        ["1000 sims", "$(round(params_1000.ews_threshold_percentile, digits = 3))", "$(params_1000.ews_consecutive_thresholds)"],
-        ["10000 sims", "$(round(params_10000.ews_threshold_percentile, digits = 3))", "$(params_10000.ews_consecutive_thresholds)"],
+        ["100 sims", "$(round(params_100.ews_threshold_quantile, digits = 3))", "$(params_100.ews_consecutive_thresholds)"],
+        ["1000 sims", "$(round(params_1000.ews_threshold_quantile, digits = 3))", "$(params_1000.ews_consecutive_thresholds)"],
+        ["10000 sims", "$(round(params_10000.ews_threshold_quantile, digits = 3))", "$(params_10000.ews_consecutive_thresholds)"],
     ]
     param_table = format_markdown_table(param_headers, param_rows)
 
-    log_both(styled"Threshold Percentile:", "#### Threshold Percentile")
-    log_both(styled"  100 sims:   {cyan:$(round(params_100.ews_threshold_percentile, digits=3))}", "")
-    log_both(styled"  1000 sims:  {cyan:$(round(params_1000.ews_threshold_percentile, digits=3))}", "")
-    log_both(styled"  10000 sims: {cyan:$(round(params_10000.ews_threshold_percentile, digits=3))}", "")
+    log_both(styled"Threshold Quantile:", "#### Threshold Quantile")
+    log_both(styled"  100 sims:   {cyan:$(round(params_100.ews_threshold_quantile, digits=3))}", "")
+    log_both(styled"  1000 sims:  {cyan:$(round(params_1000.ews_threshold_quantile, digits=3))}", "")
+    log_both(styled"  10000 sims: {cyan:$(round(params_10000.ews_threshold_quantile, digits=3))}", "")
 
-    perc_diff_1000_100 = abs(params_100.ews_threshold_percentile - params_1000.ews_threshold_percentile)
-    perc_diff_10000_1000 = abs(params_1000.ews_threshold_percentile - params_10000.ews_threshold_percentile)
-    perc_diff_10000_100 = abs(params_100.ews_threshold_percentile - params_10000.ews_threshold_percentile)
+    perc_diff_1000_100 = abs(params_100.ews_threshold_quantile - params_1000.ews_threshold_quantile)
+    perc_diff_10000_1000 = abs(params_1000.ews_threshold_quantile - params_10000.ews_threshold_quantile)
+    perc_diff_10000_100 = abs(params_100.ews_threshold_quantile - params_10000.ews_threshold_quantile)
 
-    log_both(styled"  Differences:", "**Percentile Differences:**")
+    log_both(styled"  Differences:", "**Quantile Differences:**")
     log_both(styled"    1000 vs 100:   {yellow:$(round(perc_diff_1000_100, digits=3))}", "- 1000 vs 100: *$(round(perc_diff_1000_100, digits = 3))*")
     log_both(styled"    10000 vs 1000: {yellow:$(round(perc_diff_10000_1000, digits=3))}", "- 10000 vs 1000: *$(round(perc_diff_10000_1000, digits = 3))*")
     log_both(styled"    10000 vs 100:  {yellow:$(round(perc_diff_10000_100, digits=3))}", "- 10000 vs 100: *$(round(perc_diff_10000_100, digits = 3))*")

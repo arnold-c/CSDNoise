@@ -1,31 +1,31 @@
 using UnPack: @unpack
 
 function hyperparam_debugging_Reff_plot(
-    inc_vec,
-    null_inc_vec,
-    Reff_vec,
-    null_Reff_vec,
-    Reff_thresholds,
-    null_Reff_thresholds,
-    outbreak_bounds,
-    null_outbreak_bounds,
-    ewsmetric,
-    test_positive_vec,
-    null_test_positive_vec,
-    noise_vec,
-    ews_vals_vec,
-    null_ews_vals_vec,
-    exceed_thresholds_vec,
-    null_exceed_thresholds_vec,
-    threshold_percentiles_vec,
-    null_threshold_percentiles_vec,
-    detection_index_vec,
-    null_detection_index_vec,
-    ensemble_time_specification;
-    plottitle = "",
-    xlims = (0, 12),
-    kwargs...,
-)
+        inc_vec,
+        null_inc_vec,
+        Reff_vec,
+        null_Reff_vec,
+        Reff_thresholds,
+        null_Reff_thresholds,
+        outbreak_bounds,
+        null_outbreak_bounds,
+        ewsmetric,
+        test_positive_vec,
+        null_test_positive_vec,
+        noise_vec,
+        ews_vals_vec,
+        null_ews_vals_vec,
+        exceed_thresholds_vec,
+        null_exceed_thresholds_vec,
+        threshold_quantiles_vec,
+        null_threshold_quantiles_vec,
+        detection_index_vec,
+        null_detection_index_vec,
+        ensemble_time_specification;
+        plottitle = "",
+        xlims = (0, 12),
+        kwargs...,
+    )
     ews_specification = ews_vals_vec.ews_specification
     @unpack aggregation = ews_specification
     aggregation_int = Dates.days(aggregation)
@@ -75,8 +75,8 @@ function hyperparam_debugging_Reff_plot(
         aggregated_null_outbreak_bounds,
         exceed_thresholds_vec,
         null_exceed_thresholds_vec,
-        threshold_percentiles_vec,
-        null_threshold_percentiles_vec,
+        threshold_quantiles_vec,
+        null_threshold_quantiles_vec,
         detection_index_vec,
         null_detection_index_vec,
         ensemble_time_specification;
@@ -87,23 +87,23 @@ function hyperparam_debugging_Reff_plot(
 end
 
 function hyperparam_debugging_Reff_plot(
-    inc_vec,
-    Reff_vec,
-    Reff_thresholds,
-    outbreak_bounds,
-    ewsmetric,
-    test_positive_vec,
-    noise_vec,
-    ews_vals_vec,
-    exceed_thresholds_vec,
-    threshold_percentiles_vec,
-    detection_index_vec,
-    ensemble_time_specification;
-    xlims = (0, 12),
-    rowsize = Makie.Relative(0.03),
-    legends = true,
-    kwargs...,
-)
+        inc_vec,
+        Reff_vec,
+        Reff_thresholds,
+        outbreak_bounds,
+        ewsmetric,
+        test_positive_vec,
+        noise_vec,
+        ews_vals_vec,
+        exceed_thresholds_vec,
+        threshold_quantiles_vec,
+        detection_index_vec,
+        ensemble_time_specification;
+        xlims = (0, 12),
+        rowsize = Makie.Relative(0.03),
+        legends = true,
+        kwargs...,
+    )
     ews_specification = ews_vals_vec.ews_specification
     @unpack aggregation = ews_specification
     aggregation_int = Dates.days(aggregation)

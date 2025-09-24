@@ -128,7 +128,7 @@ function create_optimal_ews_plots(
             heatmap_subtitle =
                 "Noise: $(noise_descripton), Percent Tested: $(percent_tested), $(ews_enddate_type)" *
                 "\n$(get_ews_metric_specification_description(ews_metric_specification)), Threshold Burnin: $(ews_threshold_burnin), Tiebreaker: $(tiebreaker_preference)" *
-                "\nP = Percentile Threshold, C = Consecutive Thresholds, S = Specificity"
+                "\nP = Quantile Threshold, C = Consecutive Thresholds, S = Specificity"
 
             optimal_heatmap_plot = optimal_ews_heatmap_plot(
                 optimal_heatmap_df; subtitle = heatmap_subtitle

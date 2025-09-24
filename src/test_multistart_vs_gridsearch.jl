@@ -31,7 +31,7 @@ function benchmark_optimization_methods()
         ews_threshold_window_vec = [ExpandingThresholdWindow],
         ews_metric_vec = ["mean", "variance"],
         # Grid search specific parameters
-        ews_threshold_percentile_vec = [0.5, 0.7, 0.9, 0.95],
+        ews_threshold_quantile_vec = [0.5, 0.7, 0.9, 0.95],
         ews_consecutive_thresholds_vec = [1, 3, 5, 7, 10],
         ews_threshold_burnin_vec = [Day(7), Day(30), Day(90), Day(180)],
     )
@@ -73,7 +73,7 @@ function benchmark_optimization_methods()
         length(specification_vecs.ews_threshold_window_vec) *
         length(specification_vecs.ews_metric_vec)
 
-    n_grid_points = length(specification_vecs.ews_threshold_percentile_vec) *
+    n_grid_points = length(specification_vecs.ews_threshold_quantile_vec) *
         length(specification_vecs.ews_consecutive_thresholds_vec) *
         length(specification_vecs.ews_threshold_burnin_vec)
 
@@ -143,7 +143,7 @@ function benchmark_optimization_methods()
 
     println("\nGrid Search Best:")
     println("  Accuracy: $(round(best_grid.accuracy, digits = 4))")
-    println("  Percentile: $(best_grid.ews_threshold_percentile)")
+    println("  Quantile: $(best_grid.ews_threshold_quantile)")
     println("  Consecutive: $(best_grid.ews_consecutive_thresholds)")
     println("  Burnin: $(best_grid.ews_threshold_burnin)")
 
@@ -154,7 +154,7 @@ function benchmark_optimization_methods()
 
         println("\nMultistart ($n_sobol points) Best:")
         println("  Accuracy: $(round(best_ms.accuracy, digits = 4))")
-        println("  Percentile: $(round(best_ms.ews_threshold_percentile, digits = 3))")
+        println("  Quantile: $(round(best_ms.ews_threshold_quantile, digits = 3))")
         println("  Consecutive: $(best_ms.ews_consecutive_thresholds)")
         println("  Burnin: $(best_ms.ews_threshold_burnin)")
 
@@ -321,7 +321,7 @@ function test_multistart_basic()
     println("  Best parameters:")
 
     best_row = results[argmax(results.accuracy), :]
-    println("    Percentile: $(round(best_row.ews_threshold_percentile, digits = 3))")
+    println("    Quantile: $(round(best_row.ews_threshold_quantile, digits = 3))")
     println("    Consecutive: $(best_row.ews_consecutive_thresholds)")
     println("    Burnin: $(best_row.ews_threshold_burnin)")
     println("    Evaluations: $(best_row.n_evaluations)")

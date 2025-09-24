@@ -813,7 +813,7 @@ struct GridSearchScenario
     ews_threshold_burnin::Dates.Day
     ews_metric::String
     # Grid search parameters
-    threshold_percentile::Float64
+    threshold_quantile::Float64
     consecutive_thresholds::Int64
 end
 
@@ -828,7 +828,7 @@ function GridSearchScenario(
         ews_threshold_window::EWSThresholdWindowType,
         threshold_burnin::P,
         ews_metric::String,
-        threshold_percentile::Float64,
+        threshold_quantile::Float64,
         consecutive_thresholds::Int64
     ) where {P <: Dates.Period}
 
@@ -845,7 +845,7 @@ function GridSearchScenario(
         ews_threshold_window,
         ews_threshold_burnin,
         ews_metric,
-        threshold_percentile,
+        threshold_quantile,
         consecutive_thresholds
     )
 end
@@ -863,7 +863,7 @@ struct OptimizationResult
     ews_threshold_burnin::Dates.Day
     ews_metric::String
     # Result fields (from OptimizedValues)
-    threshold_percentile::Float64
+    threshold_quantile::Float64
     consecutive_thresholds::Int64
     accuracy::Float64
     sensitivity::Float64

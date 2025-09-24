@@ -45,7 +45,7 @@ function calculate_ews_classification_results(
     @unpack ews_metric,
         ews_threshold_window,
         ews_threshold_burnin,
-        threshold_percentile,
+        threshold_quantile,
         consecutive_thresholds = scenario
 
     ews_metric_symbol = Symbol(ews_metric)
@@ -66,7 +66,7 @@ function calculate_ews_classification_results(
             ews_vals,
             ews_metric_symbol,
             ews_threshold_window,
-            threshold_percentile,
+            threshold_quantile,
             ews_threshold_burnin,
         )
 
@@ -79,7 +79,7 @@ function calculate_ews_classification_results(
             null_ews_vals,
             ews_metric_symbol,
             ews_threshold_window,
-            threshold_percentile,
+            threshold_quantile,
             ews_threshold_burnin,
         )
 

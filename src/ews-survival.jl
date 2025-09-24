@@ -253,10 +253,10 @@ function simulate_ews_survival_data(
     vec_of_null_exceed_thresholds = Vector{Vector{Matrix{Bool}}}(
         undef, nrow(subset_optimal_ews_df)
     )
-    vec_of_threshold_percentiles = Vector{Vector{Matrix{Float64}}}(
+    vec_of_threshold_quantiles = Vector{Vector{Matrix{Float64}}}(
         undef, nrow(subset_optimal_ews_df)
     )
-    vec_of_null_threshold_percentiles = Vector{Vector{Matrix{Float64}}}(
+    vec_of_null_threshold_quantiles = Vector{Vector{Matrix{Float64}}}(
         undef, nrow(subset_optimal_ews_df)
     )
     vec_of_detection_index_vec = Vector{Vector{Union{Nothing, Int64}}}(
@@ -268,7 +268,7 @@ function simulate_ews_survival_data(
 
     for (i, df_row) in pairs(eachrow(subset_optimal_ews_df))
         test_specification = df_row[:test_specification]
-        ews_threshold_percentile = df_row[:ews_threshold_percentile]
+        ews_threshold_quantile = df_row[:ews_threshold_quantile]
         ews_consecutive_thresholds = df_row[:ews_consecutive_thresholds]
 
         testarr = create_testing_arrs(
@@ -303,10 +303,10 @@ function simulate_ews_survival_data(
         null_exceeds_threshold_vec = Vector{Matrix{Bool}}(
             undef, size(testarr, 3)
         )
-        threshold_percentiles_vec = Vector{Matrix{Float64}}(
+        threshold_quantiles_vec = Vector{Matrix{Float64}}(
             undef, size(testarr, 3)
         )
-        null_threshold_percentiles_vec = Vector{Matrix{Float64}}(
+        null_threshold_quantiles_vec = Vector{Matrix{Float64}}(
             undef, size(testarr, 3)
         )
 
@@ -336,15 +336,15 @@ function simulate_ews_survival_data(
                     ews_vals_vec[sim],
                     Symbol(ews_metric),
                     ews_threshold_window;
-                    percentiles = ews_threshold_percentile,
+                    quantiles = ews_threshold_quantile,
                     burn_in = ews_threshold_burnin,
                 )[2]
 
-                threshold_percentiles_vec[sim] = expanding_ews_thresholds(
+                threshold_quantiles_vec[sim] = expanding_ews_thresholds(
                     ews_vals_vec[sim],
                     Symbol(ews_metric),
                     ews_threshold_window;
-                    percentiles = ews_threshold_percentile,
+                    quantiles = ews_threshold_quantile,
                     burn_in = ews_threshold_burnin,
                 )[1]
 
@@ -357,15 +357,15 @@ function simulate_ews_survival_data(
                     null_ews_vals_vec[sim],
                     Symbol(ews_metric),
                     ews_threshold_window;
-                    percentiles = ews_threshold_percentile,
+                    quantiles = ews_threshold_quantile,
                     burn_in = ews_threshold_burnin,
                 )[2]
 
-                null_threshold_percentiles_vec[sim] = expanding_ews_thresholds(
+                null_threshold_quantiles_vec[sim] = expanding_ews_thresholds(
                     null_ews_vals_vec[sim],
                     Symbol(ews_metric),
                     ews_threshold_window;
-                    percentiles = ews_threshold_percentile,
+                    quantiles = ews_threshold_quantile,
                     burn_in = ews_threshold_burnin,
                 )[1]
 
@@ -388,8 +388,8 @@ function simulate_ews_survival_data(
         vec_of_null_ews_vals_vec[i] = null_ews_vals_vec
         vec_of_exceed_thresholds[i] = exceeds_threshold_vec
         vec_of_null_exceed_thresholds[i] = null_exceeds_threshold_vec
-        vec_of_threshold_percentiles[i] = threshold_percentiles_vec
-        vec_of_null_threshold_percentiles[i] = null_threshold_percentiles_vec
+        vec_of_threshold_quantiles[i] = threshold_quantiles_vec
+        vec_of_null_threshold_quantiles[i] = null_threshold_quantiles_vec
         vec_of_detection_index_vec[i] = detection_index_vec
         vec_of_null_detection_index_vec[i] = null_detection_index_vec
 
@@ -425,8 +425,8 @@ function simulate_ews_survival_data(
             vec_of_null_ews_vals_vec,
             vec_of_exceed_thresholds,
             vec_of_null_exceed_thresholds,
-            vec_of_threshold_percentiles,
-            vec_of_null_threshold_percentiles,
+            vec_of_threshold_quantiles,
+            vec_of_null_threshold_quantiles,
             vec_of_detection_index_vec,
             vec_of_null_detection_index_vec,
         ),

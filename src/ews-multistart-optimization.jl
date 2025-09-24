@@ -30,7 +30,7 @@ mutable struct OptimizationTracker
 end
 
 struct OptimizedValues
-    threshold_percentile::Float64
+    threshold_quantile::Float64
     consecutive_thresholds::Int64
     accuracy::Float64
     sensitivity::Float64
@@ -58,7 +58,7 @@ Alternative to grid search that scales better with parameter dimensionality.
 - `xtol_abs`: Absolute tolerance for parameter convergence (default: 1e-3)
 - `ftol_rel`: Relative tolerance for function convergence (default: 1e-4)
 - `executor`: Executor for loops (default: `FLoops.SequentialEx()`)
-- `percentile_bounds`: Bounds for threshold percentile (default: (0.5, 0.99))
+- `quantile_bounds`: Bounds for threshold quantile (default: (0.5, 0.99))
 - `consecutive_bounds`: Bounds for consecutive thresholds (default: (1.0, 10.0))
 - `force`: Force recomputation even if results exist (default: false)
 - `return_df`: Return DataFrame of results (default: true)
@@ -89,7 +89,7 @@ function ews_multistart_optimization(
         ftol_rel = 1.0e-4,
         executor = FLoops.SequentialEx(),
         # Parameter bounds
-        percentile_bounds = (0.5, 0.99),
+        quantile_bounds = (0.5, 0.99),
         consecutive_bounds = (1.0, 10.0),
         # Control options
         force = false,
@@ -152,10 +152,10 @@ function ews_multistart_optimization(
         return return_df ? DataFrame(existing_results) : existing_results
     end
 
-    # Define parameter bounds (only percentile and consecutive thresholds)
+    # Define parameter bounds (only quantile and consecutive thresholds)
     bounds = (
-        lowers = [percentile_bounds[1], consecutive_bounds[1]],
-        uppers = [percentile_bounds[2], consecutive_bounds[2]],
+        lowers = [quantile_bounds[1], consecutive_bounds[1]],
+        uppers = [quantile_bounds[2], consecutive_bounds[2]],
     )
 
     # Optimization configuration
@@ -273,7 +273,7 @@ function optimize_single_scenario(
         scenario.ews_threshold_burnin,
         scenario.ews_metric,
         # From optimized values
-        optimal_params.threshold_percentile,
+        optimal_params.threshold_quantile,
         optimal_params.consecutive_thresholds,
         tracker.best_accuracy,
         tracker.best_sensitivity,
@@ -312,7 +312,7 @@ function ews_objective_function_with_tracking(
 
     # Pre-compute values outside the loop for type stability
     ews_metric_symbol = Symbol(ews_metric)
-    threshold_percentile = ews_params.threshold_percentile
+    threshold_quantile = ews_params.threshold_quantile
 
     # Calculate accuracy
     n_emergent_sims = length(ews_metrics)
@@ -330,7 +330,7 @@ function ews_objective_function_with_tracking(
             ews_vals,
             ews_metric_symbol,
             ews_threshold_window,
-            threshold_percentile,
+            threshold_quantile,
             ews_threshold_burnin,
         )
 
@@ -343,7 +343,7 @@ function ews_objective_function_with_tracking(
             null_ews_vals,
             ews_metric_symbol,
             ews_threshold_window,
-            threshold_percentile,
+            threshold_quantile,
             ews_threshold_burnin,
         )
 
@@ -407,7 +407,7 @@ Map continuous optimization parameters to discrete EWS parameters.
 """
 function map_continuous_to_ews_parameters(params_vec::Vector{Float64})
     return (
-        threshold_percentile = params_vec[1],  # Already in correct range
+        threshold_quantile = params_vec[1],  # Already in correct range
         consecutive_thresholds = round(Int, params_vec[2]),
     )
 end
@@ -597,7 +597,7 @@ function df_to_structvector(df::DataFrame, ::Type{OptimizationResult})
                 row.ews_threshold_window,
                 row.ews_threshold_burnin,
                 row.ews_metric,
-                row.threshold_percentile,
+                row.threshold_quantile,
                 row.consecutive_thresholds,
                 row.accuracy,
                 row.sensitivity,
@@ -1268,7 +1268,7 @@ function validate_results_integrity(results_df::DataFrame)
         :ews_threshold_window,
         :ews_threshold_burnin,
         :ews_metric,
-        :ews_threshold_percentile,
+        :ews_threshold_quantile,
         :ews_consecutive_thresholds,
         :accuracy,
         :sensitivity,
@@ -1366,7 +1366,7 @@ function create_results_dataframe(
     #     ews_threshold_window = [s.ews_threshold_window for s in scenarios],
     #     ews_metric = [s.ews_metric for s in scenarios],
     #     # ews_threshold_burnin = [s.ews_threshold_burnin for s in scenarios], # NOTE: type instability as burnin <:Period
-    #     ews_threshold_percentile = [r.optimal_threshold_percentile for r in results],
+    #     ews_threshold_quantile = [r.optimal_threshold_quantile for r in results],
     #     ews_consecutive_thresholds = [r.optimal_consecutive_thresholds for r in results],
     #     accuracy = [r.accuracy for r in results],
     #     sensitivity = [r.sensitivity for r in results],
@@ -1527,7 +1527,7 @@ function create_empty_results_dataframe()
         ews_enddate_type = EWSEndDateType[],
         ews_threshold_window = Union{Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow}}[],
         ews_metric = String[],
-        ews_threshold_percentile = Float64[],
+        ews_threshold_quantile = Float64[],
         ews_consecutive_thresholds = Int[],
         ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
         accuracy = Float64[],

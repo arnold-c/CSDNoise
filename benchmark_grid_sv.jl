@@ -35,7 +35,7 @@ function create_gridsearch_test_specification_vectors()
     ews_metric_vec = ["autocovariance"]
     ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
     ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
-    ews_threshold_percentile_vec = collect(0.5:0.02:0.99)
+    ews_threshold_quantile_vec = collect(0.5:0.02:0.99)
     ews_consecutive_thresholds_vec = collect(2:2:30)
     ews_threshold_burnin_vec = [Year(5)]
 
@@ -49,7 +49,7 @@ function create_gridsearch_test_specification_vectors()
         ews_enddate_type_vec,
         ews_threshold_window_vec,
         ews_threshold_burnin_vec,
-        ews_threshold_percentile_vec,
+        ews_threshold_quantile_vec,
         ews_consecutive_thresholds_vec,
         ews_metric_vec,
     )
@@ -62,14 +62,14 @@ multivariate_optimization_vecs = specification_vecs[
     setdiff(
         propertynames(specification_vecs), (
             :ews_consecutive_thresholds_vec,
-            :ews_threshold_percentile_vec,
+            :ews_threshold_quantile_vec,
         )
     ),
 ]
 
 univariate_optimization_vecs = (
-    specification_vecs[setdiff(propertynames(specification_vecs), (:ews_threshold_percentile_vec,))]...,
-    ews_threshold_percentile_vec = [0.9],
+    specification_vecs[setdiff(propertynames(specification_vecs), (:ews_threshold_quantile_vec,))]...,
+    ews_threshold_quantile_vec = [0.9],
 )
 
 all_scenarios = create_gridsearch_scenarios_structvector(specification_vecs)
@@ -80,7 +80,7 @@ existing_results = StructVector(OptimizationResult[])
 missing_scenarios = find_missing_scenarios(all_scenarios, existing_results)
 univariate_optim_missing_scenarios = find_missing_scenarios(univariate_optim_scenarios, existing_results)
 
-@assert length(univariate_optim_missing_scenarios) == length(missing_scenarios) / length(specification_vecs.ews_threshold_percentile_vec)
+@assert length(univariate_optim_missing_scenarios) == length(missing_scenarios) / length(specification_vecs.ews_threshold_quantile_vec)
 
 ensemble_spec, null_spec, outbreak_spec = create_ensemble_specs(3)
 data_arrs = generate_ensemble_data(ensemble_spec, null_spec, outbreak_spec)
@@ -193,7 +193,7 @@ begin
         local a = @benchmark ews_multistart_optimization(
             $multivariate_optimization_vecs,
             $data_arrs;
-            percentile_bounds = (0.5, 0.99),
+            quantile_bounds = (0.5, 0.99),
             consecutive_bounds = (2.0, 30.0),
             n_sobol_points = $n,
             maxeval = 1000,
@@ -213,7 +213,7 @@ begin
         local a = @benchmark CSDNoise.evaluate_gridsearch_scenarios_multistart(
             $univariate_optim_missing_scenarios,
             $data_arrs;
-            percentile_bounds = (0.5, 0.99),
+            quantile_bounds = (0.5, 0.99),
             save_results = true,
             save_checkpoints = false,
             verbose = false,
@@ -303,7 +303,7 @@ df_results = ews_hyperparam_gridsearch(
 multistart_fast_results = ews_multistart_optimization(
     multistart_specification_vecs,
     data_arrs;
-    percentile_bounds = (0.5, 0.99),
+    quantile_bounds = (0.5, 0.99),
     consecutive_bounds = (2.0, 30.0),
     n_sobol_points = 20,
     maxeval = 100,
@@ -318,7 +318,7 @@ multistart_fast_results = ews_multistart_optimization(
 multistart_balanced_results = ews_multistart_optimization(
     multistart_specification_vecs,
     data_arrs;
-    percentile_bounds = (0.5, 0.99),
+    quantile_bounds = (0.5, 0.99),
     consecutive_bounds = (2.0, 30.0),
     n_sobol_points = 50,
     maxeval = 200,
@@ -333,7 +333,7 @@ multistart_balanced_results = ews_multistart_optimization(
 multistart_thorough_results = ews_multistart_optimization(
     multistart_specification_vecs,
     data_arrs;
-    percentile_bounds = (0.5, 0.99),
+    quantile_bounds = (0.5, 0.99),
     consecutive_bounds = (2.0, 30.0),
     n_sobol_points = 100,
     maxeval = 500,
@@ -360,7 +360,7 @@ function compare_all_results(df_results, sv_results)
 
     # Rename StructVector columns to match DataFrame if needed
     sv_df_renamed = rename(
-        sv_df, :threshold_percentile => :ews_threshold_percentile,
+        sv_df, :threshold_quantile => :ews_threshold_quantile,
         :consecutive_thresholds => :ews_consecutive_thresholds
     )
 
@@ -385,7 +385,7 @@ function compare_all_results(df_results, sv_results)
             row.ews_metric,
             string(row.ews_threshold_window),
             string(row.ews_threshold_burnin),
-            row.ews_threshold_percentile,
+            row.ews_threshold_quantile,
             row.ews_consecutive_thresholds,
         )
     end
@@ -475,7 +475,7 @@ function compare_all_results(df_results, sv_results)
         # Extract scenario information from key
         noise_spec_str, test_spec_str, percent_tested, ews_metric_spec_str,
             ews_enddate_type_str, ews_metric, ews_threshold_window_str,
-            ews_threshold_burnin_str, ews_threshold_percentile, ews_consecutive_thresholds = key
+            ews_threshold_burnin_str, ews_threshold_quantile, ews_consecutive_thresholds = key
 
         # Check if scenario exists in both datasets
         in_dataframe = haskey(df_dict, key)
@@ -518,7 +518,7 @@ function compare_all_results(df_results, sv_results)
                 ews_metric = ews_metric,
                 ews_threshold_window = ews_threshold_window_str,
                 ews_threshold_burnin = ews_threshold_burnin_str,
-                ews_threshold_percentile = ews_threshold_percentile,
+                ews_threshold_quantile = ews_threshold_quantile,
                 ews_consecutive_thresholds = ews_consecutive_thresholds,
 
                 # Presence indicators
@@ -584,16 +584,16 @@ println("Multistart Thorough: $(round(mean(multistart_thorough_results.accuracy)
 println("\nOptimal parameters found:")
 best_grid_idx = argmax(df_results.accuracy)
 best_grid_row = df_results[best_grid_idx, :]
-println("Grid Search - Percentile: $(round(best_grid_row.ews_threshold_percentile, digits = 3)), Consecutive: $(best_grid_row.ews_consecutive_thresholds)")
+println("Grid Search - Quantile: $(round(best_grid_row.ews_threshold_quantile, digits = 3)), Consecutive: $(best_grid_row.ews_consecutive_thresholds)")
 
 best_fast_idx = argmax(multistart_fast_results.accuracy)
 best_fast_row = multistart_fast_results[best_fast_idx, :]
-println("Multistart Fast - Percentile: $(round(best_fast_row.threshold_percentile, digits = 3)), Consecutive: $(best_fast_row.consecutive_thresholds)")
+println("Multistart Fast - Quantile: $(round(best_fast_row.threshold_quantile, digits = 3)), Consecutive: $(best_fast_row.consecutive_thresholds)")
 
 best_balanced_idx = argmax(multistart_balanced_results.accuracy)
 best_balanced_row = multistart_balanced_results[best_balanced_idx, :]
-println("Multistart Balanced - Percentile: $(round(best_balanced_row.threshold_percentile, digits = 3)), Consecutive: $(best_balanced_row.consecutive_thresholds)")
+println("Multistart Balanced - Quantile: $(round(best_balanced_row.threshold_quantile, digits = 3)), Consecutive: $(best_balanced_row.consecutive_thresholds)")
 
 best_thorough_idx = argmax(multistart_thorough_results.accuracy)
 best_thorough_row = multistart_thorough_results[best_thorough_idx, :]
-println("Multistart Thorough - Percentile: $(round(best_thorough_row.threshold_percentile, digits = 3)), Consecutive: $(best_thorough_row.consecutive_thresholds)")
+println("Multistart Thorough - Quantile: $(round(best_thorough_row.threshold_quantile, digits = 3)), Consecutive: $(best_thorough_row.consecutive_thresholds)")

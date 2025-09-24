@@ -59,7 +59,7 @@ function scenario_equals_optimization_result(
         scenario.ews_threshold_window == result.ews_threshold_window &&
         scenario.ews_threshold_burnin == result.ews_threshold_burnin &&
         scenario.ews_metric == result.ews_metric &&
-        scenario.threshold_percentile == result.threshold_percentile &&
+        scenario.threshold_quantile == result.threshold_quantile &&
         scenario.consecutive_thresholds == result.consecutive_thresholds
 end
 

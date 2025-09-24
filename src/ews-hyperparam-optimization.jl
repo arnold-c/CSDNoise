@@ -38,7 +38,7 @@ function ews_hyperparam_optimization(
             ews_enddate_type = EWSEndDateType[],
             ews_threshold_window = EWSThresholdWindowType[],
             ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
-            ews_threshold_percentile = Float64[],
+            ews_threshold_quantile = Float64[],
             ews_consecutive_thresholds = Int64[],
             ews_metric = String[],
         ),
@@ -161,7 +161,7 @@ function ews_hyperparam_gridsearch(
             ews_enddate_type = EWSEndDateType[],
             ews_threshold_window = EWSThresholdWindowType[],
             ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
-            ews_threshold_percentile = Float64[],
+            ews_threshold_quantile = Float64[],
             ews_consecutive_thresholds = Int[],
             ews_metric = String[],
         ),
@@ -333,7 +333,7 @@ function ews_hyperparam_gridsearch!(
             ews_enddate_type = EWSEndDateType[],
             ews_threshold_window = EWSThresholdWindowType[],
             ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
-            ews_threshold_percentile = Float64[],
+            ews_threshold_quantile = Float64[],
             ews_consecutive_thresholds = Int[],
             ews_metric = String[],
         ),
@@ -375,7 +375,7 @@ function ews_hyperparam_gridsearch!(
         missing_ews_enddate_type_vec,
         missing_ews_threshold_window_vec,
         missing_ews_threshold_burnin_vec,
-        missing_ews_threshold_percentile_vec,
+        missing_ews_threshold_quantile_vec,
         missing_ews_consecutive_thresholds_vec,
         missing_ews_metric_vec,
         missing_runs = Try.unwrap(missing_specification_vecs)
@@ -441,7 +441,7 @@ function ews_hyperparam_gridsearch!(
                     ews_enddate_type,
                     ews_threshold_window,
                     ews_threshold_burnin,
-                    ews_threshold_percentile,
+                    ews_threshold_quantile,
                     ews_consecutive_thresholds,
                 ) in
                 Iterators.product(
@@ -449,13 +449,13 @@ function ews_hyperparam_gridsearch!(
                     missing_ews_enddate_type_vec,
                     missing_ews_threshold_window_vec,
                     missing_ews_threshold_burnin_vec,
-                    missing_ews_threshold_percentile_vec,
+                    missing_ews_threshold_quantile_vec,
                     missing_ews_consecutive_thresholds_vec,
                 )
                 ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
                 if verbose
                     println(
-                        styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS window: $(ews_threshold_window), EWS burn-in: {yellow: $(ews_threshold_burnin)}, EWS percentile: {magenta,inverse: $(ews_threshold_percentile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
+                        styled"\t\tEWS hyperparameters\n\t\tEWS metric specification: {blue,inverse: $(ews_metric_specification.dirpath)}, End date type: {magenta: $(ews_enddate_type_str)}, EWS window: $(ews_threshold_window), EWS burn-in: {yellow: $(ews_threshold_burnin)}, EWS quantile: {magenta,inverse: $(ews_threshold_quantile)}, EWS consecutive thresholds: {yellow,inverse: $(ews_consecutive_thresholds)}"
                     )
                 end
 
@@ -511,7 +511,7 @@ function ews_hyperparam_gridsearch!(
                                 ews_vals_vec[sim],
                                 Symbol(ews_metric),
                                 ews_threshold_window,
-                                ews_threshold_percentile,
+                                ews_threshold_quantile,
                                 ews_threshold_burnin,
                             )
 
@@ -527,7 +527,7 @@ function ews_hyperparam_gridsearch!(
                                 null_ews_vals_vec[sim],
                                 Symbol(ews_metric),
                                 ews_threshold_window,
-                                ews_threshold_percentile,
+                                ews_threshold_quantile,
                                 ews_threshold_burnin,
                             )
 
@@ -582,7 +582,7 @@ function ews_hyperparam_gridsearch!(
                             ews_enddate_type,
                             ews_threshold_window,
                             ews_threshold_burnin,
-                            ews_threshold_percentile,
+                            ews_threshold_quantile,
                             ews_consecutive_thresholds,
                             ews_metric,
                             true_positives,
@@ -613,7 +613,7 @@ function check_missing_ews_hyperparameter_simulations(
             :ews_enddate_type,
             :ews_threshold_window,
             :ews_threshold_burnin,
-            :ews_threshold_percentile,
+            :ews_threshold_quantile,
             :ews_consecutive_thresholds,
             :ews_metric,
         ),
@@ -758,7 +758,7 @@ function optimal_ews_heatmap_plot(
 
         subtitle =
             "Noise: $(get_noise_magnitude_description(df[1, :noise_specification])), $(ews_enddate_type_str)" *
-            "\nP = Percentile Threshold, C = Consecutive Thresholds, S = Specificity"
+            "\nP = Quantile Threshold, C = Consecutive Thresholds, S = Specificity"
     else
         subtitle = kwargs_dict[:subtitle]
     end
@@ -794,9 +794,9 @@ function optimal_ews_heatmap_plot(
         colorrange[2] = ceil(maximum(mat); digits = 1)
     end
 
-    threshold_percentile_matrix = create_ews_heatmap_matrix(
+    threshold_quantile_matrix = create_ews_heatmap_matrix(
         df,
-        :ews_threshold_percentile,
+        :ews_threshold_quantile,
         default_test_metric_order,
     )
 
@@ -854,7 +854,7 @@ function optimal_ews_heatmap_plot(
             )
         end
         acc = @sprintf("%.2f", mat[i, j])
-        perc = @sprintf("%.2f", threshold_percentile_matrix[i, j])
+        perc = @sprintf("%.2f", threshold_quantile_matrix[i, j])
         spec = @sprintf("%.2f", specificity_df[i, j])
         consec = consecutive_thresholds_df[i, j]
         label = rich("accuracy")

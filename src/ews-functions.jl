@@ -33,14 +33,14 @@ function exceeds_ews_threshold(
         ewsmetrics::T1,
         metric::T2,
         window_type::EWSThresholdWindowType,
-        percentile::Float64 = 0.95,
+        quantile::Float64 = 0.95,
         burn_in::P = Dates.Day(10),
     ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
     return exceeds_ews_threshold(
         ewsmetrics,
         metric,
         variant(window_type),
-        percentile,
+        quantile,
         burn_in,
     )
 end
@@ -50,7 +50,7 @@ function exceeds_ews_threshold(
         ewsmetrics::T1,
         metric::T2,
         window_type::RollingThresholdWindow,
-        percentile::Float64 = 0.95,
+        quantile::Float64 = 0.95,
         burn_in::P = Dates.Day(10),
     ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
     return fill(false, 2)
@@ -60,7 +60,7 @@ function exceeds_ews_threshold(
         ewsmetrics::T1,
         metric::T2,
         window_type::ExpandingThresholdWindow,
-        percentile::Float64 = 0.95,
+        quantile::Float64 = 0.95,
         burn_in::P = Dates.Day(10),
     ) where {T1 <: EWSMetrics, T2 <: Symbol, P <: Dates.Period}
     ews_vec = get_ews_metric_vec(ewsmetrics, metric)
@@ -72,7 +72,7 @@ function exceeds_ews_threshold(
 
     return _expanding_ews_thresholds(
         ews_vec,
-        percentile,
+        quantile,
         burn_in_index,
     )
 end
@@ -99,7 +99,7 @@ end
 
 function _expanding_ews_thresholds(
         ews_vec::Vector{Float64},
-        percentile::Float64,
+        quantile::Float64,
         burn_in_index::Int64,
     )
     # ) where {T1 <: Integer, F <: AbstractFloat}
@@ -124,7 +124,7 @@ function _expanding_ews_thresholds(
         if i > burn_in_index
             ews_distributions[i] = StatsBase.quantile(
                 @view(ews_worker_vec[1:worker_ind]),
-                percentile
+                quantile
             )
 
             exceeds_thresholds[i] = ews_vec[i] >= ews_distributions[(i - 1)]
@@ -243,7 +243,7 @@ end
 #         ews_lag = 1,
 #         ews_metric = "variance",
 #         ews_threshold_window = Main.Expanding,
-#         ews_threshold_percentile = 0.95,
+#         ews_threshold_quantile = 0.95,
 #         consecutive_thresholds = 2,
 #         obsdate = cdc_week_to_date(1990, 3; weekday = 6),
 #         sim = 1,
@@ -503,21 +503,21 @@ end
 #         weekly_test_ewsmetrics[sim],
 #         ews_metric_sym,
 #         ews_threshold_window;
-#         percentiles = ews_threshold_percentile,
+#         quantiles = ews_threshold_quantile,
 #     )
 #
 #     biweekly_thresholds = expanding_ews_thresholds(
 #         biweekly_test_ewsmetrics[sim],
 #         ews_metric_sym,
 #         ews_threshold_window;
-#         percentiles = ews_threshold_percentile,
+#         quantiles = ews_threshold_quantile,
 #     )
 #
 #     monthly_thresholds = expanding_ews_thresholds(
 #         monthly_test_ewsmetrics[sim],
 #         ews_metric_sym,
 #         ews_threshold_window;
-#         percentiles = ews_threshold_percentile,
+#         quantiles = ews_threshold_quantile,
 #     )
 #
 #     weekly_detection_index = Try.@? calculate_ews_trigger_index(
@@ -535,7 +535,7 @@ end
 #          consecutive_thresholds,
 #     )
 #
-#     plotname = "$(ews_metric)_$(100 * ews_threshold_percentile)-percentile_thresholds_$(test_path_description)_$(noise_path_description).png"
+#     plotname = "$(ews_metric)_$(100 * ews_threshold_quantile)-quantile_thresholds_$(test_path_description)_$(noise_path_description).png"
 #     plotpath = joinpath(
 #         ewspath, plotname
 #     )
@@ -566,7 +566,7 @@ end
 #         plottitle = "Test Positives",
 #         subtitle = "$(test_plot_description), $(noise_magnitude_description): $(method_string(weekly_ewsmetric_specification.method)) EWS $(ews_metric) Epicurve",
 #         ews_ylabel = ews_metric,
-#         threshold_percentile = ews_threshold_percentile,
+#         threshold_quantile = ews_threshold_quantile,
 #         consecutive_thresholds = consecutive_thresholds,
 #     )
 #
@@ -834,11 +834,11 @@ end
 #         ews_lag = 1,
 #         ews_metric = "variance",
 #         ews_threshold_window = Main.Expanding,
-#         ews_threshold_percentile = 0.95,
+#         ews_threshold_quantile = 0.95,
 #         consecutive_thresholds = 2,
 #         obsdate = cdc_week_to_date(1990, 3; weekday = 6),
 #         lead_time_units = :days,
-#         lead_time_percentile = 0.95,
+#         lead_time_quantile = 0.95,
 #         return_objects = false,
 #     )
 #     test_arr = create_testing_arrs(
@@ -880,7 +880,7 @@ end
 #             test_ewsmetrics[sim],
 #             ews_metric_sym,
 #             ews_threshold_window;
-#             percentiles = ews_threshold_percentile,
+#             quantiles = ews_threshold_quantile,
 #         )[2]
 #
 #         lead_time = calculate_ews_lead_time(
@@ -896,15 +896,15 @@ end
 #
 #     filter!(!isnan, ews_lead_time)
 #
-#     percentile_tail = (1 - lead_time_percentile) / 2
+#     quantile_tail = (1 - lead_time_quantile) / 2
 #
 #     if !isempty(ews_lead_time)
 #         median_ews_lead_time = StatsBase.median(ews_lead_time)
 #         lower_ews_lead_time = StatsBase.quantile(
-#             ews_lead_time, percentile_tail
+#             ews_lead_time, quantile_tail
 #         )
 #         upper_ews_lead_time = StatsBase.quantile(
-#             ews_lead_time, 1.0 - percentile_tail
+#             ews_lead_time, 1.0 - quantile_tail
 #         )
 #     else
 #         median_ews_lead_time = NaN

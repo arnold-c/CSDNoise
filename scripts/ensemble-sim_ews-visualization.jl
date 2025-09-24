@@ -210,7 +210,7 @@ ews_metrics = [
 ]
 
 ews_threshold_window = Main.Expanding
-ews_threshold_percentile = 0.95
+ews_threshold_quantile = 0.95
 consecutive_thresholds = 2
 
 ews_df = DataFrame(
@@ -319,7 +319,7 @@ ews_df = DataFrame(
                             ews_vals_vec[sim],
                             Symbol(ews_metric),
                             ews_threshold_window;
-                            percentiles = ews_threshold_percentile,
+                            quantiles = ews_threshold_quantile,
                         )[2]
 
                         detection_index_arr[sim, j] = Try.@? calculate_ews_trigger_index(

@@ -215,7 +215,7 @@ ews_enddate_type_vec = [
     # Reff_end
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
-ews_threshold_percentile_vec = collect(0.5:0.01:0.99)
+ews_threshold_quantile_vec = collect(0.5:0.01:0.99)
 ews_consecutive_thresholds_vec = [collect(2:1:30)...]
 ews_threshold_burnin_vec = [
     # Day(50),
@@ -231,7 +231,7 @@ specification_vecs = (;
     ews_enddate_type_vec,
     ews_threshold_window_vec,
     ews_threshold_burnin_vec,
-    ews_threshold_percentile_vec,
+    ews_threshold_quantile_vec,
     ews_consecutive_thresholds_vec,
     ews_metric_vec,
 )
@@ -246,7 +246,7 @@ specification_vec_tuples = (
         Type{ExpandingThresholdWindow}, Type{RollingThresholdWindow},
     }[],
     ews_threshold_burnin = Union{Dates.Day, Dates.Year}[],
-    ews_threshold_percentile = Float64[],
+    ews_threshold_quantile = Float64[],
     ews_consecutive_thresholds = Int[],
     ews_metric = String[],
 )
@@ -353,8 +353,8 @@ if debug_Reff_plots
             vec_of_null_ews_vals_vec,
             vec_of_exceed_thresholds,
             vec_of_null_exceed_thresholds,
-            vec_of_threshold_percentiles,
-            vec_of_null_threshold_percentiles,
+            vec_of_threshold_quantiles,
+            vec_of_null_threshold_quantiles,
             vec_of_detection_index_vec,
             vec_of_null_detection_index_vec,
         ), noisearr = simulate_ews_survival_data(
@@ -408,8 +408,8 @@ if debug_Reff_plots
         vec_of_null_ews_vals_vec[test_ind][selected_sim],
         vec(vec_of_exceed_thresholds[test_ind][selected_sim, 1]),
         vec(vec_of_null_exceed_thresholds[test_ind][selected_sim, 1]),
-        vec(vec_of_threshold_percentiles[test_ind][selected_sim, 1]),
-        vec(vec_of_null_threshold_percentiles[test_ind][selected_sim, 1]),
+        vec(vec_of_threshold_quantiles[test_ind][selected_sim, 1]),
+        vec(vec_of_null_threshold_quantiles[test_ind][selected_sim, 1]),
         vec_of_detection_index_vec[test_ind][selected_sim],
         vec_of_null_detection_index_vec[test_ind][selected_sim],
         ensemble_time_specification;

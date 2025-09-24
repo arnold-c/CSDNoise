@@ -33,7 +33,7 @@ function create_gridsearch_test_specification_vectors()
     ews_metric_vec = ["autocovariance"]
     ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
     ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
-    ews_threshold_percentile_vec = collect(0.5:0.02:0.99)
+    ews_threshold_quantile_vec = collect(0.5:0.02:0.99)
     ews_consecutive_thresholds_vec = collect(2:2:30)
     ews_threshold_burnin_vec = [Year(5)]
 
@@ -47,7 +47,7 @@ function create_gridsearch_test_specification_vectors()
         ews_enddate_type_vec,
         ews_threshold_window_vec,
         ews_threshold_burnin_vec,
-        ews_threshold_percentile_vec,
+        ews_threshold_quantile_vec,
         ews_consecutive_thresholds_vec,
         ews_metric_vec,
     )
@@ -365,7 +365,7 @@ end
                             scenarios[1].ews_threshold_window,
                             scenarios[1].ews_threshold_burnin,
                             scenarios[1].ews_metric,
-                            dummy_results[1].threshold_percentile,
+                            dummy_results[1].threshold_quantile,
                             dummy_results[1].consecutive_thresholds,
                             dummy_results[1].accuracy,
                             dummy_results[1].sensitivity,
@@ -390,7 +390,7 @@ end
                             scenarios[1].ews_threshold_window,
                             scenarios[1].ews_threshold_burnin,
                             "mean",
-                            dummy_results[1].threshold_percentile,
+                            dummy_results[1].threshold_quantile,
                             dummy_results[1].consecutive_thresholds,
                             dummy_results[1].accuracy,
                             dummy_results[1].sensitivity,

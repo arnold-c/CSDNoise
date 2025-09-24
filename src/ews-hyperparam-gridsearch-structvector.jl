@@ -184,7 +184,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs)
         ews_threshold_window_vec,
         ews_threshold_burnin_vec,
         ews_metric_vec,
-        ews_threshold_percentile_vec,
+        ews_threshold_quantile_vec,
         ews_consecutive_thresholds_vec = specification_vecs
 
     combinations = Iterators.product(
@@ -198,7 +198,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs)
         ews_threshold_window_vec,
         ews_threshold_burnin_vec,
         ews_metric_vec,
-        ews_threshold_percentile_vec,
+        ews_threshold_quantile_vec,
         ews_consecutive_thresholds_vec
     )
     n_combinations = length(combinations)
@@ -234,7 +234,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs)
                 ews_window,
                 ews_burnin,
                 ews_metric,
-                threshold_percentile,
+                threshold_quantile,
                 consecutive_thresholds,
             ),
         ) in enumerate(combinations)
@@ -250,7 +250,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs)
             ews_window,
             ews_burnin,
             ews_metric,
-            threshold_percentile,
+            threshold_quantile,
             consecutive_thresholds,
         )
     end
@@ -485,10 +485,10 @@ function evaluate_gridsearch_scenarios(
                                                     burnin_specific_scenarios
                                                 )
 
-                                                unique_threshold_percentiles = unique(consecutive_thresh_specific_scenarios.threshold_percentile)
+                                                unique_threshold_quantiles = unique(consecutive_thresh_specific_scenarios.threshold_quantile)
 
-                                                optimization_results = Vector{OptimizationResult}(undef, length(unique_threshold_percentiles))
-                                                FLoops.@floop executor for (i, threshold_percentile) in pairs(unique_threshold_percentiles)
+                                                optimization_results = Vector{OptimizationResult}(undef, length(unique_threshold_quantiles))
+                                                FLoops.@floop executor for (i, threshold_quantile) in pairs(unique_threshold_quantiles)
                                                     local grid_scenario = GridSearchScenario(
                                                         ensemble_specification,
                                                         null_specification,
@@ -500,7 +500,7 @@ function evaluate_gridsearch_scenarios(
                                                         ews_threshold_window,
                                                         ews_threshold_burnin,
                                                         ews_metric,
-                                                        threshold_percentile,
+                                                        threshold_quantile,
                                                         consecutive_thresholds
                                                     )
 
@@ -585,7 +585,7 @@ function evaluate_gridsearch_scenarios2(
     unique_threshold_windows = unique(missing_scenarios.ews_threshold_window)
     unique_threshold_burnin = unique(missing_scenarios.ews_threshold_burnin)
     unique_consecutive_thresholds = unique(missing_scenarios.consecutive_thresholds)
-    unique_threshold_percentiles = unique(missing_scenarios.threshold_percentile)
+    unique_threshold_quantiles = unique(missing_scenarios.threshold_quantile)
 
     for ensemble_specification in unique_ensemble_specs
         for null_specification in unique_null_specs
@@ -636,8 +636,8 @@ function evaluate_gridsearch_scenarios2(
                                     for ews_threshold_window in unique_threshold_windows
                                         for ews_threshold_burnin in unique_threshold_burnin
                                             for consecutive_thresholds in unique_consecutive_thresholds
-                                                optimization_results = Vector{OptimizationResult}(undef, length(unique_threshold_percentiles))
-                                                FLoops.@floop executor for (i, threshold_percentile) in pairs(unique_threshold_percentiles)
+                                                optimization_results = Vector{OptimizationResult}(undef, length(unique_threshold_quantiles))
+                                                FLoops.@floop executor for (i, threshold_quantile) in pairs(unique_threshold_quantiles)
                                                     local grid_scenario = GridSearchScenario(
                                                         ensemble_specification,
                                                         null_specification,
@@ -649,7 +649,7 @@ function evaluate_gridsearch_scenarios2(
                                                         ews_threshold_window,
                                                         ews_threshold_burnin,
                                                         ews_metric,
-                                                        threshold_percentile,
+                                                        threshold_quantile,
                                                         consecutive_thresholds
                                                     )
 
@@ -765,10 +765,10 @@ function evaluate_gridsearch_scenarios_optimized(
                 scenario_groups = group_by_scenario_key(ews_scenarios)
 
                 for (scenario_key, final_scenarios) in scenario_groups
-                    unique_percentiles = unique(s.threshold_percentile for s in final_scenarios)
-                    group_results = Vector{OptimizationResult}(undef, length(unique_percentiles))
+                    unique_quantiles = unique(s.threshold_quantile for s in final_scenarios)
+                    group_results = Vector{OptimizationResult}(undef, length(unique_quantiles))
 
-                    FLoops.@floop executor for (i, threshold_percentile) in pairs(unique_percentiles)
+                    FLoops.@floop executor for (i, threshold_quantile) in pairs(unique_quantiles)
                         grid_scenario = GridSearchScenario(
                             scenario_key.ews_key.testing_key.noise_key.ensemble_specification,
                             scenario_key.ews_key.testing_key.noise_key.null_specification,
@@ -780,7 +780,7 @@ function evaluate_gridsearch_scenarios_optimized(
                             scenario_key.ews_threshold_window,
                             scenario_key.ews_threshold_burnin,
                             scenario_key.ews_metric,
-                            threshold_percentile,
+                            threshold_quantile,
                             scenario_key.consecutive_thresholds
                         )
 
@@ -832,11 +832,11 @@ end
         xtol_rel=1.0e-3,
         xtol_abs=1.0e-3,
         ftol_rel=1.0e-4,
-        percentile_bounds=(0.5, 0.99)
+        quantile_bounds=(0.5, 0.99)
     )
 
-Evaluate grid search scenarios with multistart optimization for percentile thresholds.
-Keeps the nested loop structure but replaces the inner loop over percentiles with optimization.
+Evaluate grid search scenarios with multistart optimization for quantile thresholds.
+Keeps the nested loop structure but replaces the inner loop over quantiles with optimization.
 Reuses multistart optimization code for the optimization logic.
 """
 function evaluate_gridsearch_scenarios_multistart(
@@ -854,7 +854,7 @@ function evaluate_gridsearch_scenarios_multistart(
         xtol_rel = 1.0e-3,
         xtol_abs = 1.0e-3,
         ftol_rel = 1.0e-4,
-        percentile_bounds = (0.5, 0.99)
+        quantile_bounds = (0.5, 0.99)
     ) where {T}
 
     n_missing = length(missing_scenarios)
@@ -991,8 +991,8 @@ function evaluate_gridsearch_scenarios_multistart(
                                                 )
 
                                                 # MULTISTART OPTIMIZATION REPLACES THE INNER LOOP
-                                                # Instead of looping over unique_threshold_percentiles, optimize them
-                                                optimization_result = optimize_percentile_threshold_multistart(
+                                                # Instead of looping over unique_threshold_quantiles, optimize them
+                                                optimization_result = optimize_quantile_threshold_multistart(
                                                     ensemble_specification,
                                                     null_specification,
                                                     noise_specification,
@@ -1012,7 +1012,7 @@ function evaluate_gridsearch_scenarios_multistart(
                                                     xtol_rel = xtol_rel,
                                                     xtol_abs = xtol_abs,
                                                     ftol_rel = ftol_rel,
-                                                    percentile_bounds = percentile_bounds
+                                                    quantile_bounds = quantile_bounds
                                                 )
 
                                                 push!(all_results, optimization_result)
@@ -1047,20 +1047,20 @@ function evaluate_gridsearch_scenarios_multistart(
 end
 
 """
-    optimize_percentile_threshold_multistart(
+    optimize_quantile_threshold_multistart(
         ensemble_specification, null_specification, noise_specification,
         test_specification, percent_tested, ews_metric_specification,
         ews_enddate_type, ews_threshold_window, ews_threshold_burnin,
         ews_metric, consecutive_thresholds, ews_metrics, null_ews_metrics;
         n_sobol_points=100, local_algorithm=NLopt.LN_BOBYQA, maxeval=1000,
         xtol_rel=1.0e-3, xtol_abs=1.0e-3, ftol_rel=1.0e-4,
-        percentile_bounds=(0.5, 0.99)
+        quantile_bounds=(0.5, 0.99)
     )
 
-Optimize the percentile threshold for a single scenario using multistart optimization.
+Optimize the quantile threshold for a single scenario using multistart optimization.
 Reuses the multistart optimization logic from ews-multistart-optimization.jl.
 """
-function optimize_percentile_threshold_multistart(
+function optimize_quantile_threshold_multistart(
         ensemble_specification,
         null_specification,
         noise_specification,
@@ -1080,7 +1080,7 @@ function optimize_percentile_threshold_multistart(
         xtol_rel = 1.0e-3,
         xtol_abs = 1.0e-3,
         ftol_rel = 1.0e-4,
-        percentile_bounds = (0.5, 0.99)
+        quantile_bounds = (0.5, 0.99)
     )
 
     # Create optimization scenario (similar to OptimizationScenario but for grid search)
@@ -1095,7 +1095,7 @@ function optimize_percentile_threshold_multistart(
         ews_threshold_window,
         ews_threshold_burnin,
         ews_metric,
-        0.5,  # placeholder percentile - will be optimized
+        0.5,  # placeholder quantile - will be optimized
         consecutive_thresholds
     )
 
@@ -1103,8 +1103,8 @@ function optimize_percentile_threshold_multistart(
     tracker = OptimizationTracker()
 
     # Create objective function closure that updates tracker
-    objective = percentile_vec -> percentile_only_objective_function_with_tracking(
-        percentile_vec,
+    objective = quantile_vec -> quantile_only_objective_function_with_tracking(
+        quantile_vec,
         scenario,
         consecutive_thresholds,
         ews_metrics,
@@ -1112,11 +1112,11 @@ function optimize_percentile_threshold_multistart(
         tracker
     )
 
-    # Setup multistart problem (only optimizing percentile, so 1D)
+    # Setup multistart problem (only optimizing quantile, so 1D)
     problem = MultistartOptimization.MinimizationProblem(
         objective,
-        [percentile_bounds[1]],  # lower bound
-        [percentile_bounds[2]]   # upper bound
+        [quantile_bounds[1]],  # lower bound
+        [quantile_bounds[2]]   # upper bound
     )
 
     # Configure local optimization method
@@ -1138,7 +1138,7 @@ function optimize_percentile_threshold_multistart(
     )
 
     # Extract optimal parameters from tracker (which has the best metrics)
-    optimal_percentile = tracker.best_params[1]
+    optimal_quantile = tracker.best_params[1]
 
     return OptimizationResult(
         # From scenario
@@ -1153,7 +1153,7 @@ function optimize_percentile_threshold_multistart(
         ews_threshold_burnin,
         ews_metric,
         # From optimized values
-        optimal_percentile,
+        optimal_quantile,
         consecutive_thresholds,
         tracker.best_accuracy,
         tracker.best_sensitivity,
@@ -1163,17 +1163,17 @@ end
 
 
 """
-    percentile_only_objective_function_with_tracking(
-        percentile_vec, scenario, consecutive_thresholds, ews_metrics, null_ews_metrics, tracker
+    quantile_only_objective_function_with_tracking(
+        quantile_vec, scenario, consecutive_thresholds, ews_metrics, null_ews_metrics, tracker
     )
 
-Objective function for percentile threshold optimization that tracks the best solution.
+Objective function for quantile threshold optimization that tracks the best solution.
 Returns 1 - accuracy for minimization and updates tracker with best metrics.
-Only optimizes the percentile threshold, keeping consecutive thresholds fixed.
+Only optimizes the quantile threshold, keeping consecutive thresholds fixed.
 Adapted from ews_objective_function_with_tracking in ews-multistart-optimization.jl.
 """
-function percentile_only_objective_function_with_tracking(
-        percentile_vec::Vector{Float64},
+function quantile_only_objective_function_with_tracking(
+        quantile_vec::Vector{Float64},
         scenario::GridSearchScenario,
         consecutive_thresholds::Int64,
         ews_metrics,
@@ -1181,8 +1181,8 @@ function percentile_only_objective_function_with_tracking(
         tracker::OptimizationTracker
     )
 
-    # Extract percentile from vector (1D optimization)
-    threshold_percentile = percentile_vec[1]
+    # Extract quantile from vector (1D optimization)
+    threshold_quantile = quantile_vec[1]
 
     # Pre-compute values outside the loop for type stability
     ews_metric_symbol = Symbol(scenario.ews_metric)
@@ -1203,7 +1203,7 @@ function percentile_only_objective_function_with_tracking(
             ews_vals,
             ews_metric_symbol,
             scenario.ews_threshold_window,
-            threshold_percentile,
+            threshold_quantile,
             scenario.ews_threshold_burnin,
         )
 
@@ -1216,7 +1216,7 @@ function percentile_only_objective_function_with_tracking(
             null_ews_vals,
             ews_metric_symbol,
             scenario.ews_threshold_window,
-            threshold_percentile,
+            threshold_quantile,
             scenario.ews_threshold_burnin,
         )
 
@@ -1246,7 +1246,7 @@ function percentile_only_objective_function_with_tracking(
         tracker.best_accuracy = accuracy
         tracker.best_sensitivity = sensitivity
         tracker.best_specificity = specificity
-        tracker.best_params = copy(percentile_vec)
+        tracker.best_params = copy(quantile_vec)
     end
 
     return loss  # Return scalar loss for optimizer
@@ -1293,7 +1293,7 @@ function evaluate_gridsearch_scenarios_bumper(
             string(s.ews_threshold_window),
             string(s.ews_threshold_burnin),
             s.consecutive_thresholds,
-            s.threshold_percentile,
+            s.threshold_quantile,
         )
     end
 
@@ -1425,7 +1425,7 @@ function evaluate_gridsearch_scenarios_bumper(
                         s.ews_threshold_window,
                         s.ews_threshold_burnin,
                         s.ews_metric,
-                        s.threshold_percentile,
+                        s.threshold_quantile,
                         s.consecutive_thresholds,
                     )
 
@@ -1526,7 +1526,7 @@ function gridsearch_optimization_function(
         scenario.ews_threshold_window,
         scenario.ews_threshold_burnin,
         scenario.ews_metric,
-        scenario.threshold_percentile,
+        scenario.threshold_quantile,
         scenario.consecutive_thresholds,
         # Calculated values
         balanced_accuracy,

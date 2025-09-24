@@ -228,7 +228,7 @@ ews_threshold_burnin_vec = [
 # Define parameter bounds for continuous optimization
 multistart_config = (
     # Parameter bounds (will be optimized continuously)
-    percentile_bounds = (0.5, 0.99),           # Threshold percentile range
+    quantile_bounds = (0.5, 0.99),           # Threshold quantile range
     consecutive_bounds = (1.0, 30.0),          # Consecutive thresholds range
 
     # Optimization settings
@@ -260,7 +260,7 @@ println(styled"Configuration:")
 println(styled"  Sobol points per scenario: {blue:$(multistart_config.n_sobol_points)}")
 println(styled"  Max evaluations per local opt: {yellow:$(multistart_config.maxeval)}")
 println(styled"  Parameter bounds:")
-println(styled"    Percentile: {cyan:$(multistart_config.percentile_bounds)}")
+println(styled"    Quantile: {cyan:$(multistart_config.quantile_bounds)}")
 println(styled"    Consecutive: {cyan:$(multistart_config.consecutive_bounds)}")
 println(styled"  Burnin (fixed): {cyan:$(ews_threshold_burnin_vec)}")
 println(styled"  Executor: {magenta:$(multistart_config.executor)}")
@@ -289,7 +289,7 @@ multistart_optimal_ews_df = ews_multistart_optimization(
     executor = multistart_config.executor,
 
     # Parameter bounds
-    percentile_bounds = multistart_config.percentile_bounds,
+    quantile_bounds = multistart_config.quantile_bounds,
     consecutive_bounds = multistart_config.consecutive_bounds,
 
     # Control options
@@ -307,7 +307,7 @@ println(styled"Mean accuracy: {cyan:$(round(mean(optimal_ews_df.accuracy), digit
 
 # Show parameter distribution summary
 println(styled"\n{green:Optimal Parameter Distributions}")
-println(styled"Percentile - Min: {cyan:$(round(minimum(optimal_ews_df.ews_threshold_percentile), digits=3))}, Max: {cyan:$(round(maximum(optimal_ews_df.ews_threshold_percentile), digits=3))}, Mean: {cyan:$(round(mean(optimal_ews_df.ews_threshold_percentile), digits=3))}")
+println(styled"Quantile - Min: {cyan:$(round(minimum(optimal_ews_df.ews_threshold_quantile), digits=3))}, Max: {cyan:$(round(maximum(optimal_ews_df.ews_threshold_quantile), digits=3))}, Mean: {cyan:$(round(mean(optimal_ews_df.ews_threshold_quantile), digits=3))}")
 println(styled"Consecutive - Min: {cyan:$(minimum(optimal_ews_df.ews_consecutive_thresholds))}, Max: {cyan:$(maximum(optimal_ews_df.ews_consecutive_thresholds))}, Mean: {cyan:$(round(mean(optimal_ews_df.ews_consecutive_thresholds), digits=1))}")
 
 burnin_days = Dates.days.(optimal_ews_df.ews_threshold_burnin)
@@ -389,7 +389,7 @@ println(styled"Sobol points per scenario: {cyan:$n_sobol_per_scenario}")
 println(styled"Total multistart evaluations: {yellow:$total_multistart_evaluations}")
 
 # Estimate equivalent grid search size
-# Grid search would need: n_percentiles × n_consecutive evaluations per scenario
+# Grid search would need: n_quantiles × n_consecutive evaluations per scenario
 # With the original bounds: (0.5:0.01:0.99) × (2:1:30) = 50 × 29 = 1450 per scenario
 equivalent_grid_evaluations = scenarios_count * 1450  # Conservative estimate
 efficiency_gain = equivalent_grid_evaluations / total_multistart_evaluations
@@ -413,7 +413,7 @@ if debug_multistart_plots
     println(styled"Test: {yellow:$(get_test_description(best_config.test_specification))}")
     println(styled"EWS metric: {magenta:$(best_config.ews_metric)}")
     println(styled"Optimal parameters:")
-    println(styled"  Percentile: {cyan:$(round(best_config.ews_threshold_percentile, digits=3))}")
+    println(styled"  Quantile: {cyan:$(round(best_config.ews_threshold_quantile, digits=3))}")
     println(styled"  Consecutive: {cyan:$(best_config.ews_consecutive_thresholds)}")
     println(styled"  Burnin (fixed): {cyan:$(best_config.ews_threshold_burnin)}")
 
@@ -425,7 +425,7 @@ if debug_multistart_plots
         subset = filter(r -> r.noise_specification == noise_spec, optimal_ews_df)
 
         println(styled"\n$(get_noise_description(noise_spec)):")
-        println(styled"  Mean percentile: {cyan:$(round(mean(subset.ews_threshold_percentile), digits=3))}")
+        println(styled"  Mean quantile: {cyan:$(round(mean(subset.ews_threshold_quantile), digits=3))}")
         println(styled"  Mean consecutive: {cyan:$(round(mean(subset.ews_consecutive_thresholds), digits=1))}")
         println(styled"  Burnin (fixed): {cyan:$(unique(subset.ews_threshold_burnin))}")
         println(styled"  Best accuracy: {blue:$(round(maximum(subset.accuracy), digits=4))}")

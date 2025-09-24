@@ -207,6 +207,11 @@ export create_noise_arr,
     add_poisson_noise_arr!
 # @reexport using .NoiseFunctions
 
+include("calculate-noise-vacc-level-functions.jl")
+export calculate_dynamic_vaccination_coverage,
+    calculate_mean_dynamical_noise,
+    calculate_dynamic_vaccination_coverage_multistart
+
 include("plotting-functions/helpers_plots.jl")
 export BASE_COLOR,
     OUTBREAK_COLOR,

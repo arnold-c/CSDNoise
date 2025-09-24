@@ -7,6 +7,8 @@
 using UnPack
 using LightSumTypes: variant
 using StaticArrays: SVector
+using MultistartOptimization
+using NLopt
 
 function create_noise_arr(
         noise_specification::NoiseSpecification,
@@ -18,7 +20,6 @@ end
 
 function create_noise_arr(
         noise_specification::DynamicalNoise,
-        incarr,
         ensemble_specification::EnsembleSpecification;
         seed = 1234,
         kwargs...,
@@ -63,7 +64,6 @@ function create_noise_arr(
     )
 
     noise_dynamics_parameter_specification = DynamicsParameterSpecification(
-        dynamics_parameter_specification.beta_mean,
         noise_beta_mean,
         # dynamics_parameter_specification.beta_mean,
         noise_beta_force,
@@ -182,5 +182,3 @@ function add_poisson_noise_arr!(
         )
     end
 end
-
-# end

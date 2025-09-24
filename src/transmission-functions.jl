@@ -13,20 +13,33 @@ struct SineSeasonality end
 # export calculate_beta, calculateR0, calculate_import_rate
 
 """
-    calculate_beta(R_0, gamma, mu, contact_mat, pop_matrix)
+    calculate_beta(
+    	R_0::AbstractFloat,
+    	gamma::AbstractFloat,
+    	mu::AbstractFloat,
+		contact_mat::Matrix{AbstractFloat},
+		pop_matrix::Vector{AbstractFloat}
+    )
 
-Calculate the value beta for a given set of parameters and contact matrix.
+Calculate the value beta for a given set of parameters, a contact matrix, and the population matrix, using the Next-Generation Matrix (K).
+The contact matrix represents the contact rates between an individual in group 𝒾 and an individual in group 𝒿.
+The population matrix is a vector that represents the number of individual in each group.
 
-```jldoctest
-julia> calculate_beta(2.0, 1 / 8, 0.0, ones(1, 1), [1_000])
-0.00025
-```
+Uses the property of eigenvalues that for any scalar c and matrix A, the spectral radius ρ(c⋅A)=∣c∣⋅ρ(A).
+Applying this to our equation for R_0:
 
+R_0 = ρ(K) where K = F⋅V⁻¹ = β⋅K′, K′ = K / β = Q⋅V⁻¹, Q = contact_mat * pop_matrix
+
+R_0 = ρ(β K′)
+
+R_0 = β ρ(K′)
+
+β = R_0 / ρ(Q⋅V⁻¹)
 """
-# TODO: Currently only works when the populations are the same size as each other, and doesn't account for an exposed state.
 function calculate_beta(
-        R_0::T, gamma::T, mu::T, contact_mat::Array{T}, pop_matrix::Array{T}
+        R_0::T, gamma::T, mu::T, contact_mat::Matrix{T}, pop_matrix::Vector{T}
     ) where {T <: AbstractFloat}
+    # TODO: Currently only works when the populations are the same size as each other, and doesn't account for an exposed state.
     if size(contact_mat, 1) == size(contact_mat, 2)
         nothing
     else
@@ -38,25 +51,34 @@ function calculate_beta(
         error("contact_mat and pop_matrix must have the same number of rows")
     end
 
-    F = contact_mat .* pop_matrix
+    Q = contact_mat .* pop_matrix
     V = Diagonal(repeat([gamma + mu], size(contact_mat, 1)))
 
-    FV⁻¹ = F * inv(V)
-    eigenvals = eigen(FV⁻¹).values
+    K_prime = Q * inv(V)
+    eigenvals = eigen(K_prime).values
+
     beta = R_0 / maximum(real(eigenvals))
 
     return beta
 end
 
-function calculate_beta(R_0, gamma, mu, contact_mat, pop_matrix)
+function calculate_beta(
+        R_0,
+        gamma,
+        mu,
+        contact_mat::T1,
+        pop_matrix::T2
+    ) where {T1 <: Union{<:AbstractFloat, <:Integer}, T2 <: Union{<:AbstractFloat, <:Integer}}
     return calculate_beta(
         convert(Float64, R_0),
         convert(Float64, gamma),
         convert(Float64, mu),
-        convert(Array{Float64}, [contact_mat]),
-        convert(Array{Float64}, [pop_matrix]),
+        fill(convert(Float64, contact_mat), 1, 1),
+        fill(convert(Float64, pop_matrix), 1)
     )
 end
+
+
 
 
 """

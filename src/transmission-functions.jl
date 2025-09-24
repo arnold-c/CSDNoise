@@ -78,7 +78,74 @@ function calculate_beta(
     )
 end
 
+"""
+    calculate_gamma(
+    	R_0::AbstractFloat,
+    	beta::AbstractFloat,
+    	mu::AbstractFloat,
+		contact_mat::Matrix{AbstractFloat},
+		pop_matrix::Vector{AbstractFloat}
+    )
 
+Calculate the value gamma for a given set of parameters, a contact matrix, and the population matrix, using the Next-Generation Matrix (K).
+The contact matrix represents the contact rates between an individual in group 𝒾 and an individual in group 𝒿.
+The population matrix is a vector that represents the number of individual in each group.
+
+Uses the inverse relationship from calculate_beta. Given that:
+R_0 = β ρ(Q⋅V⁻¹) where V = Diagonal([gamma + mu, ...])
+
+Since V is diagonal with identical entries, V⁻¹ = (1/(gamma + mu)) * I
+Therefore: R_0 = β * ρ(Q) / (gamma + mu)
+Solving for gamma: γ = (β * ρ(Q) / R_0) - μ
+"""
+function calculate_gamma(
+        R_0::T, beta::T, mu::T, contact_mat::Matrix{T}, pop_matrix::Vector{T}
+    ) where {T <: AbstractFloat}
+    # Validate input dimensions (same as calculate_beta)
+    if size(contact_mat, 1) != size(contact_mat, 2)
+        error("contact_mat must be square")
+    end
+    if size(contact_mat, 1) != size(pop_matrix, 1)
+        error("contact_mat and pop_matrix must have the same number of rows")
+    end
+
+    Q = contact_mat .* pop_matrix
+
+    # We need to solve for gamma such that:
+    # R_0 = beta * max_eigenvalue(Q * inv(V))
+    # where V = Diagonal([gamma + mu, gamma + mu, ...])
+
+    # This becomes: R_0 = beta * max_eigenvalue(Q) / (gamma + mu)
+    # Rearranging: gamma = (beta * max_eigenvalue(Q) / R_0) - mu
+
+    eigenvals_Q = eigen(Q).values
+    max_eigenval_Q = maximum(real(eigenvals_Q))
+
+    gamma = (beta * max_eigenval_Q / R_0) - mu
+
+    # Validate the result
+    if gamma <= 0
+        error("Calculated gamma is non-positive. Check parameter consistency.")
+    end
+
+    return gamma
+end
+
+function calculate_gamma(
+        R_0,
+        beta,
+        mu,
+        contact_mat::T1,
+        pop_matrix::T2
+    ) where {T1 <: Union{<:AbstractFloat, <:Integer}, T2 <: Union{<:AbstractFloat, <:Integer}}
+    return calculate_gamma(
+        convert(Float64, R_0),
+        convert(Float64, beta),
+        convert(Float64, mu),
+        fill(convert(Float64, contact_mat), 1, 1),
+        fill(convert(Float64, pop_matrix), 1)
+    )
+end
 
 
 """

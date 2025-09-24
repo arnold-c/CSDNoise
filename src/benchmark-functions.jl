@@ -7,7 +7,7 @@ export generate_ensemble_data, generate_single_ensemble,
     compare_optimization_results, display_benchmark_summary,
     compare_all_scenarios, display_accuracy_comparison_summary,
     generate_accuracy_verification_report, create_ensemble_specs,
-    save_benchmark_comparison_results
+    save_benchmark_comparison_results, EnsembleSpecsParameters
 
 """
     generate_ensemble_data(ensemble_specification, null_specification, ensemble_outbreak_specification)
@@ -465,32 +465,45 @@ end
 Create ensemble specifications for a given number of simulations.
 Returns ensemble_specification, null_specification, and outbreak_specification.
 """
-function create_ensemble_specs(nsims)
+function create_ensemble_specs(params::EnsembleSpecsParameters)
     # Base configuration
-    burnin_years = 5
-    nyears = 20
     ensemble_time_specification = SimTimeParameters(;
-        burnin = 365.0 * burnin_years, tmin = 0.0, tmax = 365.0 * nyears, tstep = 1.0
-    )
-
-    ensemble_state_specification = StateParameters(
-        500_000,
-        Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95)
+        burnin = 365.0 * params.burnin_years,
+        tmin = 0.0,
+        tmax = 365.0 * params.nyears,
+        tstep = 1.0
     )
 
     # Calculate dynamics parameters
-    mu = calculate_mu(27)
-    beta_mean = calculate_beta(R0, GAMMA, mu, 1, ensemble_state_specification.init_states.N)
-    epsilon = calculate_import_rate(mu, R0, ensemble_state_specification.init_states.N)
+    mu = calculate_mu(params.annual_births_per_k)
+    beta_mean = calculate_beta(params.R_0, params.gamma, mu, 1, params.ensemble_state_specification.init_states.N)
+    epsilon = calculate_import_rate(mu, params.R_0, params.ensemble_state_specification.init_states.N)
 
     min_burnin_vaccination_coverage = calculate_vaccination_rate_to_achieve_Reff(
-        0.9, burnin_years * 2, ensemble_state_specification.init_states.S,
-        ensemble_state_specification.init_states.N, R0, mu
+        params.target_Reff,
+        params.target_years,
+        params.ensemble_state_specification.init_states.S,
+        params.ensemble_state_specification.init_states.N,
+        params.R_0,
+        mu
     )
 
+    @assert params.max_vaccination_coverage < min_burnin_vaccination_coverage "Set the maximum vaccination coverage for the emergent time series to $(params.max_vaccination_coverage), but it should be less than $min_burnin_vaccination_coverage"
+
     ensemble_dynamics_specification = DynamicsParameterSpecification(
-        beta_mean, 0.0, SeasonalityFunction(CosineSeasonality()), SIGMA, GAMMA, mu, 27.0, epsilon, R0,
-        min_burnin_vaccination_coverage, 1.0, 0.6, 0.8
+        beta_mean,
+        0.0,
+        SeasonalityFunction(CosineSeasonality()),
+        params.sigma,
+        params.gamma,
+        mu,
+        27.0,
+        epsilon,
+        params.R_0,
+        min_burnin_vaccination_coverage,
+        1.0,
+        params.min_vaccination_coverage,
+        params.max_vaccination_coverage
     )
 
     null_dynamics_specification = DynamicsParameterSpecification(
@@ -506,17 +519,17 @@ function create_ensemble_specs(nsims)
 
     # Create specifications with specified number of simulations
     ensemble_specification = EnsembleSpecification(
-        ensemble_state_specification,
+        params.ensemble_state_specification,
         ensemble_dynamics_specification,
         ensemble_time_specification,
-        nsims
+        params.nsims
     )
 
     null_specification = EnsembleSpecification(
-        ensemble_state_specification,
+        params.ensemble_state_specification,
         null_dynamics_specification,
         ensemble_time_specification,
-        nsims
+        params.nsims
     )
 
     outbreak_specification = OutbreakSpecification(5, 30, 500)

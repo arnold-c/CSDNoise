@@ -870,5 +870,56 @@ struct OptimizationResult
     specificity::Float64
 end
 
+struct EnsembleSpecsParameters
+    burnin_years::Int64
+    nyears::Int64
+    annual_births_per_k::Int64
+    ensemble_state_specification::StateParameters
+    R_0::Float64
+    gamma::Float64
+    sigma::Float64
+    target_Reff::Float64
+    target_years::Int64
+    min_vaccination_coverage::Float64
+    max_vaccination_coverage::Float64
+    nsims::Int64
+end
+
+function EnsembleSpecsParameters(;
+        burnin_years::Int,
+        nyears::Int,
+        annual_births_per_k::Int64 = ANNUAL_BIRTHS_PER_K,
+        ensemble_state_specification::StateParameters = StateParameters(
+            500_000,
+            Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95)
+        ),
+        R_0::Float64 = R0,
+        gamma::Float64 = GAMMA,
+        sigma::Float64 = SIGMA,
+        target_Reff::Float64 = 0.9,
+        target_years::Int = 2 * burnin_years,
+        min_vaccination_coverage::Float64 = 0.6,
+        max_vaccination_coverage::Float64 = 0.8,
+        nsims::Int = 1000
+    )
+    @assert nyears >= target_years
+    @assert min_vaccination_coverage < max_vaccination_coverage
+
+    return EnsembleSpecsParameters(
+        burnin_years,
+        nyears,
+        annual_births_per_k,
+        ensemble_state_specification,
+        R_0,
+        gamma,
+        sigma,
+        target_Reff,
+        target_years,
+        min_vaccination_coverage,
+        max_vaccination_coverage,
+        nsims
+    )
+end
+
 
 # end

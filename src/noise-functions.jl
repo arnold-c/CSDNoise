@@ -51,12 +51,25 @@ function create_noise_arr(
 
     noise_dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
 
+    noise_gamma = 1 / noise_specification.duration_infection
+    noise_sigma = 1 / noise_specification.latent_period
+
+    noise_beta_mean = calculate_beta(
+        noise_specification.R_0,
+        noise_gamma,
+        dynamics_parameter_specification.mu,
+        1,
+        state_parameters.init_states.N,
+    )
+
     noise_dynamics_parameter_specification = DynamicsParameterSpecification(
         dynamics_parameter_specification.beta_mean,
+        noise_beta_mean,
+        # dynamics_parameter_specification.beta_mean,
         noise_beta_force,
         noise_seasonality,
-        1 / noise_specification.latent_period,
-        1 / noise_specification.duration_infection,
+        noise_sigma,
+        noise_gamma,
         dynamics_parameter_specification.mu,
         dynamics_parameter_specification.annual_births_per_k,
         calculate_import_rate(

@@ -82,7 +82,7 @@ function seir_mod!(
     end
 
     @inbounds for i in 2:(time_params.tlength)
-        if i < Int(time_params.burnin)
+        if i < Int64(time_params.burnin)
             vaccination_coverage = dynamics_params.burnin_vaccination_coverage
         else
             vaccination_coverage = dynamics_params.vaccination_coverage

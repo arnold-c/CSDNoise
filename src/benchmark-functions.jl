@@ -54,14 +54,16 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims = ensemble_spec
     @unpack tstep, tlength, trange = time_parameters
 
+    init_states_sv = SVector(state_parameters.init_states)
+
     # Get concrete type to avoid abstract element types
-    init_state_type = typeof(state_parameters.init_states)
+    init_state_type = typeof(init_states_sv)
     ensemble_seir_vecs = Array{init_state_type, 2}(
         undef, tlength, nsims
     )
 
     # Use concrete SVector type instead of typeof(SVector(0))
-    ensemble_inc_vecs = Array{SVector{1, Int64}, 2}(
+    ensemble_inc_vecs = Array{Int64, 2}(
         undef, tlength, nsims
     )
 
@@ -70,6 +72,7 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     ensemble_Reff_thresholds_vec = Vector{Array{Int64, 2}}(
         undef, size(ensemble_inc_vecs, 2)
     )
+
 
     dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
 
@@ -85,14 +88,13 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
             @view(ensemble_seir_vecs[:, sim]),
             @view(ensemble_inc_vecs[:, sim]),
             ensemble_beta_arr,
-            SVector(state_parameters.init_states),
-            dynamics_parameters[sim],
+            init_states_sv,
+            dynp,
             time_parameters,
             run_seed,
         )
     end
 
-    ensemble_seir_arr = convert_svec_to_array(ensemble_seir_vecs)
 
     for sim in axes(ensemble_inc_vecs, 2)
         calculateReffective_t!(
@@ -100,7 +102,7 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
             ensemble_beta_arr,
             dynamics_parameters[sim],
             1,
-            @view(ensemble_seir_arr[:, :, sim]),
+            @view(ensemble_seir_vecs[:, sim])
         )
 
         ensemble_Reff_thresholds_vec[sim] = Reff_ge_than_one(
@@ -109,7 +111,7 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     end
 
     return (
-        ensemble_seir_arr = ensemble_seir_arr,
+        ensemble_seir_vecs = ensemble_seir_vecs,
         ensemble_spec = ensemble_spec,
         dynamics_parameters = dynamics_parameters,
         ensemble_Reff_arr = ensemble_Reff_arr,

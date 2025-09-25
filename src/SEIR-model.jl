@@ -27,7 +27,7 @@ function seir_mod(
     )
     state_vec = Vector{typeof(states)}(undef, time_params.tlength)
     beta_vec = Vector{Float64}(undef, time_params.tlength)
-    inc_vec = Vector{SVector{1, Int64}}(undef, time_params.tlength)
+    inc_vec = Vector{Int64}(undef, time_params.tlength)
 
     seir_mod!(
         state_vec,
@@ -48,14 +48,17 @@ end
 The in-place function to run the SEIR model and produce the transmission rate array.
 """
 function seir_mod!(
-        state_vec::AbstractVector,
-        inc_vec::AbstractVector{SVector{1, Int64}},
+        state_vec::ASV,
+        inc_vec::AI,
         beta_vec::Vector{Float64},
         states::SVector{5, Int64},
         dynamics_params::DynamicsParameters,
         time_params::SimTimeParameters,
         seed::Int64,
-    )
+    ) where {
+        ASV <: AbstractArray{SVector{5, Int64}},
+        AI <: AbstractArray{Int64},
+    }
     Random.seed!(seed)
 
     @inbounds begin
@@ -68,10 +71,11 @@ function seir_mod!(
         beta_mean = dynamics_params.beta_mean
         beta_force = dynamics_params.beta_force
         trange = time_params.trange
-        burnin = time_params.burnin
+        tlength = time_params.tlength
+        burnin_days = time_params.burnin
 
         state_vec[1] = states
-        inc_vec[1] = SVector(0)
+        inc_vec[1] = 0
     end
 
     # Use explicit loop instead of broadcasting to avoid runtime dispatch
@@ -81,16 +85,16 @@ function seir_mod!(
         )
     end
 
-    @inbounds for i in 2:(time_params.tlength)
-        if i < Int64(time_params.burnin)
+    @inbounds for i in 2:(tlength)
+        if i < burnin_days
             vaccination_coverage = dynamics_params.burnin_vaccination_coverage
         else
             vaccination_coverage = dynamics_params.vaccination_coverage
         end
 
-        new_state, new_inc = seir_mod_loop!(
-            SVector(state_vec[i - 1]),
-            beta_vec[i],
+        state_vec[i], inc_vec[i] = seir_mod_loop(
+            state_vec[i - 1],
+            beta_vec[i - 1],
             mu,
             epsilon,
             sigma,
@@ -99,8 +103,6 @@ function seir_mod!(
             vaccination_coverage,
             timestep,
         )
-        state_vec[i] = SLVector(S = new_state[1], E = new_state[2], I = new_state[3], R = new_state[4], N = new_state[5])
-        inc_vec[i] = new_inc
     end
 
     return nothing
@@ -111,7 +113,7 @@ end
 
 The inner loop that is called by `seir_mod!()` function.
 """
-function seir_mod_loop!(
+function seir_mod_loop(
         state_vec::SVector{5, Int64},
         beta_t::Float64,
         mu::Float64,
@@ -121,12 +123,8 @@ function seir_mod_loop!(
         R_0::Float64,
         vaccination_coverage::Float64,
         timestep::Float64,
-    )
+    )::Tuple{SVector{5, Int64}, Int64}
 
-    # TODO: Benchmak StaticArrays implementation as potentially much faster.
-    # Would need to use permutedims(reshape(reinterperate(Float64, SVector), (...), (...))
-    # to get it into an array that could be used later on.
-    # Create views of the state variables for easier use
     @inbounds begin
         S = state_vec[1]
         E = state_vec[2]
@@ -153,7 +151,8 @@ function seir_mod_loop!(
     end
 
     return (
-        SVector(S + dS, E + dE, I + dI, R + dR, N + dN), SVector(contact_inf),
+        SVector(S + dS, E + dE, I + dI, R + dR, N + dN),
+        contact_inf,
     )
 end
 

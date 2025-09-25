@@ -67,14 +67,23 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
         undef, tlength, nsims
     )
 
-    ensemble_beta_arr = zeros(Float64, tlength)
+    beta_vec = zeros(Float64, tlength)
     ensemble_Reff_arr = zeros(Float64, tlength, nsims)
     ensemble_Reff_thresholds_vec = Vector{Array{Int64, 2}}(
         undef, size(ensemble_inc_vecs, 2)
     )
 
-
     dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
+
+    # Use explicit loop instead of broadcasting to avoid runtime dispatch
+    for i in eachindex(beta_vec)
+        beta_vec[i] = calculate_beta_amp(
+            dynamics_parameter_specification.beta_mean,
+            dynamics_parameter_specification.beta_force,
+            trange[i];
+            seasonality = dynamics_parameter_specification.seasonality
+        )
+    end
 
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
@@ -87,18 +96,16 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
         seir_mod!(
             @view(ensemble_seir_vecs[:, sim]),
             @view(ensemble_inc_vecs[:, sim]),
-            ensemble_beta_arr,
+            beta_vec,
             init_states_sv,
             dynp,
             time_parameters,
             run_seed,
         )
-    end
 
-    for sim in axes(ensemble_inc_vecs, 2)
         calculateReffective_t!(
             @view(ensemble_Reff_arr[:, sim]),
-            ensemble_beta_arr,
+            beta_vec,
             dynamics_parameters[sim],
             1,
             @view(ensemble_seir_vecs[:, sim])

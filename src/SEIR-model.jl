@@ -78,12 +78,6 @@ function seir_mod!(
         inc_vec[1] = 0
     end
 
-    # Use explicit loop instead of broadcasting to avoid runtime dispatch
-    for i in eachindex(beta_vec, trange)
-        beta_vec[i] = calculate_beta_amp(
-            beta_mean, beta_force, trange[i]; seasonality = dynamics_params.seasonality
-        )
-    end
 
     @inbounds for i in 2:(tlength)
         if i < burnin_days

@@ -125,7 +125,7 @@ function create_cached_simulation_data(
     @assert size(testarr, 3) == size(null_testarr, 3)
 
     # Select appropriate thresholds
-    thresholds = get_enddate_thresholds(ews_enddate_type, data_arrs)
+    thresholds = get_enddate_thresholds(data_arrs, ews_enddate_type)
 
     # Pre-compute EWS metrics for all simulations
     ensemble_nsims = size(ensemble_single_incarr, 3)
@@ -176,7 +176,7 @@ function generate_ensemble_ews_metrics(
         ews_metric_specification,
         ews_enddate_type,
     ) where {T}
-    thresholds = get_enddate_thresholds(ews_enddate_type, data_arrs)
+    thresholds = get_enddate_thresholds(data_arrs, ews_enddate_type)
 
     ensemble_nsims = size(testarr, 3)
     ews_metrics = Vector{EWSMetrics}()

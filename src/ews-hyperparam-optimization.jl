@@ -459,7 +459,7 @@ function ews_hyperparam_gridsearch!(
                     )
                 end
 
-                thresholds = get_enddate_thresholds(ews_enddate_type, data_arrs)
+                thresholds = get_enddate_thresholds(data_arrs, ews_enddate_type)
 
                 enddate_vec = zeros(Int64, size(testarr, 3))
                 failed_sims = zeros(Int64, size(testarr, 3))
@@ -711,13 +711,13 @@ function optimal_ews_heatmap_df(
         x -> vcat(DataFrame.(x)...; cols = :union)
 end
 
-get_enddate_thresholds(enddate_type::EWSEndDateType, data_arrs) = get_enddate_thresholds(variant(enddate_type), data_arrs)
+get_enddate_thresholds(data_arrs, enddate_type::EWSEndDateType) = get_enddate_thresholds(data_arrs, variant(enddate_type))
 
-function get_enddate_thresholds(enddate_type::Union{Reff_start, Reff_end}, data_arrs)
+function get_enddate_thresholds(data_arrs, enddate_type::Union{Reff_start, Reff_end})
     return data_arrs.ensemble_single_Reff_thresholds_vec
 end
 
-function get_enddate_thresholds(enddate_type::Union{Outbreak_start, Outbreak_middle, Outbreak_end}, data_arrs)
+function get_enddate_thresholds(data_arrs, enddate_type::Union{Outbreak_start, Outbreak_middle, Outbreak_end})
     return data_arrs.ensemble_single_periodsum_vecs
 end
 

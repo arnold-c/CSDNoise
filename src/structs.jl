@@ -52,85 +52,47 @@ struct DynamicsParameterSpecification
     max_vaccination_coverage::Float64
 end
 
-function DynamicsParameterSpecification(
-        beta_mean,
-        beta_force,
-        seasonality,
-        sigma,
-        gamma,
-        mu,
-        annual_births_per_k,
-        epsilon,
-        R_0,
-        burnin_vaccination_params::Tuple{Nothing, Float64},
-        vaccination_params::Tuple{Float64, Float64},
-    )
-    return DynamicsParameterSpecification(
-        beta_mean,
-        beta_force,
-        seasonality,
-        sigma,
-        gamma,
-        mu,
-        annual_births_per_k,
-        epsilon,
-        R_0,
-        calculate_min_burnin_vaccination_coverage(R_0),
-        burnin_vaccination_params[2],
-        vaccination_params[1],
-        vaccination_params[2],
-    )
-end
-
-function calculate_min_burnin_vaccination_coverage(R_0; adjustment = 0.0)
-    return min(calculate_min_burnin_vaccination_coverage(R_0) + adjustment, 1.0)
-end
-
-function calculate_herd_immunity_threshold(R_0)
-    return (1 - 1 / R_0)
-end
-
-function DynamicsParameterSpecification(
-        beta_mean,
-        beta_force,
-        seasonality,
-        sigma,
-        gamma,
-        mu,
-        annual_births_per_k,
-        epsilon,
-        R_0,
-        burnin_vaccination_params::Tuple{
-            Nothing, Float64, Float64, Int64,
-        },
-        vaccination_params::Union{
-            Tuple{Float64, Float64}, Tuple{Nothing, Nothing},
-        },
-        initial_states,
-    )
-    return DynamicsParameterSpecification(
-        beta_mean,
-        beta_force,
-        seasonality,
-        sigma,
-        gamma,
-        mu,
-        annual_births_per_k,
-        epsilon,
-        R_0,
-        calculate_vaccination_rate_to_achieve_Reff(
-            burnin_vaccination_params[3],
-            burnin_vaccination_params[4],
-            initial_states.S,
-            initial_states.N,
-            R_0,
-            mu,
-        ),
-        burnin_vaccination_params[2],
-        vaccination_params[1],
-        vaccination_params[2],
-    )
-end
+# function DynamicsParameterSpecification(
+#         beta_mean,
+#         beta_force,
+#         seasonality,
+#         sigma,
+#         gamma,
+#         mu,
+#         annual_births_per_k,
+#         epsilon,
+#         R_0,
+#         burnin_vaccination_params::Tuple{
+#             Nothing, Float64, Float64, Int64,
+#         },
+#         vaccination_params::Union{
+#             Tuple{Float64, Float64}, Tuple{Nothing, Nothing},
+#         },
+#         initial_states,
+#     )
+#     return DynamicsParameterSpecification(
+#         beta_mean,
+#         beta_force,
+#         seasonality,
+#         sigma,
+#         gamma,
+#         mu,
+#         annual_births_per_k,
+#         epsilon,
+#         R_0,
+#         calculate_vaccination_rate_to_achieve_Reff(
+#             burnin_vaccination_params[3],
+#             burnin_vaccination_params[4],
+#             initial_states.S,
+#             initial_states.N,
+#             R_0,
+#             mu,
+#         ),
+#         burnin_vaccination_params[2],
+#         vaccination_params[1],
+#         vaccination_params[2],
+#     )
+# end
 
 function DynamicsParameterSpecification(
         beta_mean,

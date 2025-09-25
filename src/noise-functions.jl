@@ -50,8 +50,6 @@ function create_noise_arr(
         dynamics_parameter_specification.seasonality
     end
 
-    noise_dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
-
     noise_gamma = 1 / noise_specification.duration_infection
     noise_sigma = 1 / noise_specification.latent_period
 
@@ -101,7 +99,7 @@ function create_noise_arr(
     for sim in axes(ensemble_inc_vecs, 2)
         run_seed = seed + (sim - 1)
 
-        noise_dynamics_parameters[sim] = DynamicsParameters(
+        local noise_dynamics_parameters = DynamicsParameters(
             noise_dynamics_parameter_specification; seed = run_seed
         )
 
@@ -110,7 +108,7 @@ function create_noise_arr(
             @view(ensemble_inc_vecs[:, sim]),
             ensemble_beta_arr,
             SVector(state_parameters.init_states),
-            noise_dynamics_parameters[sim],
+            noise_dynamics_parameters,
             time_parameters,
             run_seed,
         )

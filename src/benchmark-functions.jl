@@ -95,7 +95,6 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
         )
     end
 
-
     for sim in axes(ensemble_inc_vecs, 2)
         calculateReffective_t!(
             @view(ensemble_Reff_arr[:, sim]),

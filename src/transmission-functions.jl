@@ -176,15 +176,15 @@ function calculateReffective_t!(
         beta_vec::Vector{Float64},
         dynamics_params,
         contact_mat::Int64,
-        seir_arr::AbstractMatrix{Int64}
+        seir_arr
     )::Nothing
     for i in eachindex(Reff_vec)
         Reff_vec[i] = calculateReffective(
             beta_vec[i],
             dynamics_params,
             contact_mat,
-            seir_arr[i, 1],
-            seir_arr[i, 5],
+            seir_arr[i][1],
+            seir_arr[i][5],
         )
     end
 

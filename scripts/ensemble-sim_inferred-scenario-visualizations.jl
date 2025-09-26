@@ -50,7 +50,7 @@ ensemble_single_scenario_inc_file = get_ensemble_file(
 )
 
 emergent_incidence_arr = ensemble_single_scenario_inc_file["emergent_incidence_arr"]
-emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+emergent_outbreak_threshold_vecs = ensemble_single_scenario_inc_file["emergent_outbreak_threshold_vecs"]
 
 ensemble_single_inc_ews_1d = get_ensemble_file(
     ensemble_specification,
@@ -70,7 +70,7 @@ mkpath(plotsdir("ensemble/single-scenario"))
 ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     emergent_incidence_arr,
     ensemble_single_seir_arr,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
@@ -88,7 +88,7 @@ for sim_num in [10, 20, 55]
         emergent_incidence_arr,
         ensemble_single_Reff_arr,
         ensemble_single_Reff_thresholds_vec,
-        emergent_outbreak_threshold_vec,
+        emergent_outbreak_threshold_vecs,
         ensemble_time_specification;
         sim = sim_num,
         threshold = ensemble_outbreak_specification.outbreak_threshold,
@@ -330,7 +330,7 @@ Reff_ews_plot(
     backward_ews_1d,
     spaero_ews_backward_1d,
     :autocorrelation,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification
 )
 
@@ -342,7 +342,7 @@ autocov_backward_1d = Reff_ews_plot(
     backward_ews_1d,
     spaero_ews_backward_1d,
     :autocovariance,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     plottitle = "Backward 1d Autocovariance",
     ylims_metric = (0, 0.5),
@@ -363,7 +363,7 @@ autocov_centered_1d = Reff_ews_plot(
     centered_ews_1d,
     spaero_ews_centered_1d,
     :autocovariance,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     plottitle = "centered 1d Autocovariance",
     ylims_metric = (0, 0.5),
@@ -384,7 +384,7 @@ Reff_ews_plot(
     backward_ews_30d,
     spaero_ews_backward_30d,
     :autocorrelation,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -397,7 +397,7 @@ Reff_ews_plot(
     backward_ews_30d,
     spaero_ews_backward_30d,
     :autocovariance,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -410,7 +410,7 @@ var_backward_30d = Reff_ews_plot(
     backward_ews_30d,
     spaero_ews_backward_30d,
     :autocovariance,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     aggregation = 30,
     plottitle = "Backward 30d Autocovariance",
@@ -432,7 +432,7 @@ var_centered_30d = Reff_ews_plot(
     centered_ews_30d,
     spaero_ews_centered_30d,
     :autocovariance,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     aggregation = 30,
     plottitle = "Centered 30d Autocovariance",
@@ -453,7 +453,7 @@ Reff_ews_plot(
     centered_ews_30d,
     spaero_ews_centered_30d,
     :autocovariance,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -466,7 +466,7 @@ Reff_ews_plot(
     centered_ews_30d,
     spaero_ews_centered_30d,
     :coefficient_of_variation,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -479,7 +479,7 @@ Reff_ews_plot(
     backward_ews_1d,
     spaero_ews_backward_1d,
     :autocorrelation,
-    emergent_outbreak_threshold_vec,
+    emergent_outbreak_threshold_vecs,
     ensemble_time_specification
 )
 
@@ -505,7 +505,7 @@ for ewsmetric in ewsmetrics
             ensemble_single_Reff_thresholds_vec,
             inc_ews,
             ewsmetric,
-            emergent_outbreak_threshold_vec,
+            emergent_outbreak_threshold_vecs,
             ensemble_time_specification;
             sim = sim_num,
             threshold = ensemble_outbreak_specification.outbreak_threshold,
@@ -537,7 +537,7 @@ for ewsmetric in ewsmetrics
             ensemble_single_Reff_thresholds_vec,
             ewsmetric_sa,
             ewsmetric,
-            emergent_outbreak_threshold_vec,
+            emergent_outbreak_threshold_vecs,
             ensemble_time_specification;
             sim = sim_num,
             threshold = ensemble_outbreak_specification.outbreak_threshold,

@@ -259,11 +259,11 @@ end
 #         ensemble_inc_vecs,
 #         outbreak_spec = incidence_param_dict
 #
-#     emergent_incidence_arr, ensemble_thresholds_vec = create_inc_infec_arr(
+#     emergent_incidence_arr, emergent_outbreak_threshold_vecs = create_inc_infec_arr(
 #         ensemble_inc_vecs, outbreak_spec
 #     )
 #
-#     return @strdict emergent_incidence_arr ensemble_thresholds_vec
+#     return @strdict emergent_incidence_arr emergent_outbreak_threshold_vecs
 # end
 #
 # function get_ensemble_file() end

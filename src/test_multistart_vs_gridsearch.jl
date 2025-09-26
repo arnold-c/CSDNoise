@@ -197,14 +197,14 @@ function create_test_data_arrays(ensemble_specification)
 
     # Generate threshold vectors (simplified)
     ensemble_single_Reff_thresholds_vec = [rand(200:300) for _ in 1:nsims]
-    emergent_outbreak_threshold_vec = [rand(150:250) for _ in 1:nsims]
+    emergent_outbreak_threshold_vecs = [rand(150:250) for _ in 1:nsims]
 
     return (
         ensemble_specification = ensemble_specification,
         emergent_incidence_arr = emergent_incidence_arr,
         null_incidence_arr = null_incidence_arr,
         ensemble_single_Reff_thresholds_vec = ensemble_single_Reff_thresholds_vec,
-        emergent_outbreak_threshold_vec = emergent_outbreak_threshold_vec,
+        emergent_outbreak_threshold_vecs = emergent_outbreak_threshold_vecs,
     )
 end
 

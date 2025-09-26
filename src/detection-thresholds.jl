@@ -14,24 +14,24 @@ function create_inc_infec_arr(
         Int64, size(ensemble_inc_vecs, 1), 3, size(ensemble_inc_vecs, 2)
     )
 
-    ensemble_thresholds_vec = Vector{Array{Int64, 2}}(
+    emergent_outbreak_threshold_vecs = Vector{Array{Int64, 2}}(
         undef, size(ensemble_inc_vecs, 2)
     )
 
     create_inc_infec_arr!(
         emergent_incidence_arr,
-        ensemble_thresholds_vec,
+        emergent_outbreak_threshold_vecs,
         ensemble_inc_vecs,
         outbreak_specification.outbreak_threshold,
         outbreak_specification.minimum_outbreak_duration,
         outbreak_specification.minimum_outbreak_size,
     )
 
-    return emergent_incidence_arr, ensemble_thresholds_vec
+    return emergent_incidence_arr, emergent_outbreak_threshold_vecs
 end
 
 function create_inc_infec_arr!(
-        emergent_incidence_arr, ensemble_thresholds_vec, ensemble_inc_vecs,
+        emergent_incidence_arr, emergent_outbreak_threshold_vecs, ensemble_inc_vecs,
         outbreakthreshold, minoutbreakdur,
         minoutbreaksize,
     )
@@ -50,7 +50,7 @@ function create_inc_infec_arr!(
             abovethresholdrle; ncols = 4
         )
 
-        ensemble_thresholds_vec[sim] = classify_all_outbreaks!(
+        emergent_outbreak_threshold_vecs[sim] = classify_all_outbreaks!(
             @view(emergent_incidence_arr[:, 1, sim]),
             @view(emergent_incidence_arr[:, 3, sim]),
             outbreak_thresholds,

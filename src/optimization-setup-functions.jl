@@ -94,7 +94,7 @@ function create_cached_simulation_data(
 
     @unpack emergent_incidence_arr, null_incidence_arr,
         ensemble_specification, ensemble_single_Reff_thresholds_vec,
-        emergent_outbreak_threshold_vec = data_arrs
+        emergent_outbreak_threshold_vecs = data_arrs
 
     # Create noise array once per scenario (expensive operation)
     noisearr = create_noise_arr(

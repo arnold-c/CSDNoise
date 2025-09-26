@@ -130,11 +130,11 @@ null_single_scenario_inc_file = get_ensemble_file(
 )
 
 emergent_incidence_arr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
-ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+emergent_outbreak_threshold_vecs = ensemble_single_scenario_inc_file["emergent_outbreak_threshold_vecs"]
 
 null_incidence_arr = null_single_scenario_inc_file["ensemble_inc_arr"]
 null_incidence_arr = null_single_scenario_inc_file["emergent_incidence_arr"]
-null_outbreak_threshold_vecs = null_single_scenario_inc_file["ensemble_thresholds_vec"]
+null_outbreak_threshold_vecs = null_single_scenario_inc_file["emergent_outbreak_threshold_vecs"]
 
 ensemble_single_Reff_arr = get_ensemble_file(
     ensemble_specification
@@ -260,7 +260,7 @@ optimal_ews_df = ews_hyperparam_optimization(
         emergent_incidence_arr,
         null_incidence_arr,
         ensemble_single_Reff_thresholds_vec,
-        emergent_outbreak_threshold_vec,
+        emergent_outbreak_threshold_vecs,
     );
     filedir = outdir("ensemble", "ews-hyperparam-optimization"),
     gridsearch_filename_base = "ews-hyperparam-gridsearch.jld2",
@@ -399,7 +399,7 @@ if debug_Reff_plots
         null_single_Reff_arr[:, selected_sim],
         ensemble_single_Reff_thresholds_vec[selected_sim],
         null_single_Reff_thresholds_vec[selected_sim],
-        emergent_outbreak_threshold_vec[selected_sim],
+        emergent_outbreak_threshold_vecs[selected_sim],
         null_outbreak_threshold_vecs[selected_sim],
         Symbol(test_ews_metric),
         vec_of_testarr[test_ind][:, 5, selected_sim],
@@ -450,9 +450,9 @@ aggregated_null_Reff_thresholds =
     null_single_Reff_thresholds_vec[selected_sim] .÷ aggregation_int
 
 aggregated_outbreak_bounds =
-    emergent_outbreak_threshold_vec[selected_sim][
+    emergent_outbreak_threshold_vecs[selected_sim][
     (
-        emergent_outbreak_threshold_vec[selected_sim][:, 4] .== 1
+        emergent_outbreak_threshold_vecs[selected_sim][:, 4] .== 1
     ), [1, 2],
 ] .÷
     aggregation_int

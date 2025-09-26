@@ -133,10 +133,10 @@ null_single_scenario_inc_file = get_ensemble_file(
 )
 
 emergent_incidence_arr = ensemble_single_scenario_inc_file["emergent_incidence_arr"]
-emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+emergent_outbreak_threshold_vecs = ensemble_single_scenario_inc_file["emergent_outbreak_threshold_vecs"]
 
 null_incidence_arr = null_single_scenario_inc_file["emergent_incidence_arr"]
-null_outbreak_threshold_vecs = null_single_scenario_inc_file["ensemble_thresholds_vec"]
+null_outbreak_threshold_vecs = null_single_scenario_inc_file["emergent_outbreak_threshold_vecs"]
 
 ensemble_single_Reff_arr = get_ensemble_file(
     ensemble_specification
@@ -273,7 +273,7 @@ multistart_optimal_ews_df = ews_multistart_optimization(
         emergent_incidence_arr,
         null_incidence_arr,
         ensemble_single_Reff_thresholds_vec,
-        ensemble_single_periodsum_vecs,
+        emergent_outbreak_threshold_vecs,
     );
     # File management
     filedir = outdir("ensemble", "ews-multistart-optimization"),

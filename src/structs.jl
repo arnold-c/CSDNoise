@@ -569,6 +569,13 @@ struct SEIRRun{L}
     Reff::SizedVector{L, Float64}
 end
 
+struct NoiseRun{L}
+    incidence::Vector{SizedVector{L, Int64}}
+    mean_noise::Float64
+    mean_poisson_noise::Float64
+    mean_rubella_noise::Float64
+end
+
 abstract type AbstractThresholds end
 
 struct Thresholds{L} <: AbstractThresholds

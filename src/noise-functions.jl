@@ -91,12 +91,14 @@ function create_noise_arr(
         time_parameters
     )
 
+    # Initialize vectors
     poisson_noise_worker = SizedVector{tlength, Int64}(undef)
     mean_poisson_noise_vec = SizedVector{nsims, Float64}(undef)
     mean_dynamical_noise_vec = SizedVector{nsims, Float64}(undef)
 
     # Create vector of sized vectors for incidence data and apply Poisson noise in-place
     incidence_vecs = Vector{SizedVector{tlength, Int64}}(undef, nsims)
+    incidence_worker_vec = similar(poisson_noise_worker)
 
     for sim in eachindex(incidence_vecs)
         run_seed = seed + (sim - 1)
@@ -107,7 +109,7 @@ function create_noise_arr(
 
         seir_mod!(
             seir_vec,
-            @view(incidence_vecs[sim]),
+            incidence_worker_vec,
             Reff_vec,
             beta_vec,
             SVector(state_parameters.init_states),
@@ -116,16 +118,19 @@ function create_noise_arr(
             run_seed,
         )
 
+        local mean_dynamical_noise_incidence = mean(incidence_worker_vec)
+
+        mean_dynamical_noise_vec[sim] = mean_dynamical_noise_incidence
+
         add_poisson_noise!(
             poisson_noise_worker,
-            incidence_vecs[sim],
+            mean_dynamical_noise_incidence,
             noise_specification.noise_mean_scaling,
             run_seed
         )
 
-        mean_dynamical_noise_vec[i] = mean(incidence_vecs[sim])
-        mean_poisson_noise_vec[i] = NaNMath.mean(poisson_noise_worker)
-        incidence_vecs[sim] .+= poisson_noise_worker
+        mean_poisson_noise_vec[sim] = mean(poisson_noise_worker)
+        incidence_vecs[sim] = incidence_worker_vec .+ poisson_noise_worker
     end
 
     mean_dynamical_noise = mean(mean_dynamical_noise_vec)
@@ -138,6 +143,21 @@ function create_noise_arr(
         mean_poisson_noise,
         mean_dynamical_noise
     )
+end
+
+function add_poisson_noise!(
+        noise_vec::AIV,
+        mean_dynamical_noise_incidence::Float64,
+        noise_mean_scaling::Float64,
+        seed = 1234
+    ) where {AIV <: AbstractVector{<:Integer}}
+
+    noise_vec .= rand(
+        Poisson(noise_mean_scaling * mean_dynamical_noise_incidence),
+        length(noise_vec)
+    )
+
+    return nothing
 end
 
 function create_noise_arr(
@@ -163,22 +183,6 @@ function add_poisson_noise_arr!(
     Random.seed!(seed)
 
     @assert size(incarr, 3) == size(noise_arr, 2)
-    return @inbounds for sim in axes(incarr, 3)
-        @views noise_arr[:, sim] += rand(
-            Poisson(noise_mean_scaling * mean(incarr[:, 1, sim])),
-            size(incarr, 1),
-        )
-    end
-end
-
-function add_poisson_noise!(
-        noise_vec::AFV,
-        incidence_vec::AFV,
-        noise_mean_scaling::Float64,
-        seed = 1234
-    ) where {AFV <: SizedVector{<:AbstractFloat}}
-    Random.seed!(seed)
-
     return @inbounds for sim in axes(incarr, 3)
         @views noise_arr[:, sim] += rand(
             Poisson(noise_mean_scaling * mean(incarr[:, 1, sim])),

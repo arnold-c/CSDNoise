@@ -189,6 +189,26 @@ emergent_incidence_arr = JLD2.load("/Users/cfa5228/Documents/Repos/CSDNoise/out/
 size(measles_emergent_incidence_arr) == size(emergent_incidence_arr)
 
 #%%
+test_noise_spec = NoiseSpecification(
+    DynamicalNoise(
+        5.0,
+        7,
+        14,
+        "in-phase",
+        0.15,
+        0.8,
+        0.9
+    )
+)
+
+#%%
+@benchmark create_noise_arr(
+    $test_noise_spec,
+    $measles_spec[1];
+    seed = 1234,
+)
+
+#%%
 measles_dynamical_noise_coverages = map(
     ((scale, coverage_range),) -> calculate_dynamic_vaccination_coverage(
         scale,

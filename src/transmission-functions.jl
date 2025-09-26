@@ -1,14 +1,6 @@
 # module TransmissionFunctions
 
 using LinearAlgebra
-using LightSumTypes: @sumtype, variant
-
-# Define seasonality function variants
-struct CosineSeasonality end
-struct SineSeasonality end
-
-# Create sum type for seasonality functions
-@sumtype SeasonalityFunction(CosineSeasonality, SineSeasonality)
 
 # export calculate_beta, calculateR0, calculate_import_rate
 

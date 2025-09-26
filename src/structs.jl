@@ -11,7 +11,7 @@ using Distributions: Distributions
 using Random: Random
 using UnPack: @unpack
 using Dates: Dates
-using LightSumTypes: variant
+using LightSumTypes: @sumtype, variant
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -35,6 +35,13 @@ function SimTimeParameters(;
         length(tmin:tstep:tmax),
     )
 end
+
+# Define seasonality function variants
+abstract type AbstractSeasonalityFunction end
+struct CosineSeasonality end
+struct SineSeasonality end
+@sumtype SeasonalityFunction(CosineSeasonality, SineSeasonality) <: AbstractSeasonalityFunction
+
 
 struct DynamicsParameterSpecification
     contact_matrix::Matrix{Int64}

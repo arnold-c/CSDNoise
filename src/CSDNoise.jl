@@ -10,21 +10,6 @@ using DispatchDoctor
 include("helpers.jl")
 export outdir, sentencecase
 
-include("transmission-functions.jl")
-export calculate_beta,
-    calculate_beta_amp!,
-    calculate_beta_amp,
-    calculate_gamma,
-    calculateReffective,
-    calculateReffective_t!,
-    calculateR0,
-    calculate_import_rate,
-    calculate_mu,
-    SeasonalityFunction,
-    CosineSeasonality,
-    SineSeasonality
-# @reexport using .TransmissionFunctions
-
 include("dynamics-constants.jl")
 export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
     LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K,
@@ -76,6 +61,25 @@ export SimTimeParameters,
     OptimizationResult,
     EWSMetrics
 # @reexport using .ODStructs
+
+include("transmission-functions.jl")
+export calculate_beta,
+    calculate_beta_amp!,
+    calculate_beta_amp,
+    calculate_gamma,
+    calculateReffective,
+    calculateReffective_t!,
+    calculateR0,
+    calculate_import_rate,
+    calculate_mu,
+    SeasonalityFunction,
+    CosineSeasonality,
+    SineSeasonality
+
+const BETA_MEAN = calculate_beta(R0, GAMMA, MU, 1, POPULATION_N)
+const EPSILON = calculate_import_rate(MU, R0, POPULATION_N)
+
+# @reexport using .TransmissionFunctions
 
 include("ews-metrics.jl")
 export aggregate_Reff_vec,

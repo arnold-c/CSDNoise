@@ -12,6 +12,7 @@ export outdir, sentencecase
 
 include("transmission-functions.jl")
 export calculate_beta,
+    calculate_beta_amp!,
     calculate_beta_amp,
     calculate_gamma,
     calculateReffective,

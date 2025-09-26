@@ -28,6 +28,7 @@ function seir_mod(
     state_vec = SizedVector{time_params.tlength, typeof(states)}(undef)
     beta_vec = Vector{Float64}(undef, time_params.tlength)
     inc_vec = SizedVector{time_params.tlength, Int64}(undef)
+    Reff_vec = SizedVector{time_params.tlength, Float64}(undef)
 
     for i in eachindex(beta_vec)
         beta_vec[i] = calculate_beta_amp(
@@ -41,6 +42,7 @@ function seir_mod(
     seir_mod!(
         state_vec,
         inc_vec,
+        Reff_vec,
         beta_vec,
         states,
         dynamics_params,
@@ -48,7 +50,11 @@ function seir_mod(
         seed,
     )
 
-    return SEIRRun(state_vec, inc_vec)
+    return SEIRRun(
+        state_vec,
+        inc_vec,
+        Reff_vec,
+    )
 end
 
 function seir_mod(
@@ -60,10 +66,12 @@ function seir_mod(
     )
     state_vec = SizedVector{time_params.tlength, typeof(states)}(undef)
     inc_vec = SizedVector{time_params.tlength, Int64}(undef)
+    Reff_vec = SizedVector{time_params.tlength, Float64}(undef)
 
     seir_mod!(
         state_vec,
         inc_vec,
+        Reff_vec,
         beta_vec,
         states,
         dynamics_params,
@@ -71,7 +79,11 @@ function seir_mod(
         seed,
     )
 
-    return SEIRRun(state_vec, inc_vec)
+    return SEIRRun(
+        state_vec,
+        inc_vec,
+        Reff_vec,
+    )
 end
 
 
@@ -83,6 +95,7 @@ The in-place function to run the SEIR model and produce the transmission rate ar
 function seir_mod!(
         state_vec::ASV,
         inc_vec::AI,
+        Reff_vec::AF,
         beta_vec::Vector{Float64},
         states::SVector{5, Int64},
         dynamics_params::DynamicsParameters,
@@ -91,6 +104,7 @@ function seir_mod!(
     ) where {
         ASV <: AbstractVector{SVector{5, Int64}},
         AI <: AbstractVector{Int64},
+        AF <: AbstractVector{Float64},
     }
     Random.seed!(seed)
 
@@ -109,6 +123,12 @@ function seir_mod!(
 
         state_vec[1] = states
         inc_vec[1] = 0
+        Reff_vec[1] = calculateReffective(
+            beta_vec[1],
+            dynamics_params,
+            states[1],
+            states[5],
+        )
     end
 
 
@@ -129,6 +149,12 @@ function seir_mod!(
             R_0,
             vaccination_coverage,
             timestep,
+        )
+        Reff_vec[i] = calculateReffective(
+            beta_vec[i],
+            dynamics_params,
+            state_vec[i][1],
+            state_vec[i][5],
         )
     end
 

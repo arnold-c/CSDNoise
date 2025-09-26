@@ -76,7 +76,7 @@ function calculate_outbreak_thresholds(outbreakrle)
         upper_bounds,
         upperbound_indices,
     )
-    duration .= upper_thresholds .- lower_bounds .+ 1
+    duration .= upper_bounds .- lower_bounds .+ 1
 
     return Thresholds(lower_bounds, upper_bounds, duration)
 end

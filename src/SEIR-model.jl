@@ -26,9 +26,9 @@ function seir_mod(
         seed::Int64 = 1234
     )
     state_vec = SizedVector{time_params.tlength, typeof(states)}(undef)
-    beta_vec = Vector{Float64}(undef, time_params.tlength)
     inc_vec = SizedVector{time_params.tlength, Int64}(undef)
     Reff_vec = SizedVector{time_params.tlength, Float64}(undef)
+    beta_vec = Vector{Float64}(undef, time_params.tlength)
 
     for i in eachindex(beta_vec)
         beta_vec[i] = calculate_beta_amp(
@@ -115,9 +115,6 @@ function seir_mod!(
         gamma = dynamics_params.gamma
         R_0 = dynamics_params.R_0
         timestep = time_params.tstep
-        beta_mean = dynamics_params.beta_mean
-        beta_force = dynamics_params.beta_force
-        trange = time_params.trange
         tlength = time_params.tlength
         burnin_days = time_params.burnin
 
@@ -130,7 +127,6 @@ function seir_mod!(
             states[5],
         )
     end
-
 
     @inbounds for i in 2:(tlength)
         if i < burnin_days

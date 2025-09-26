@@ -56,25 +56,17 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     init_states_sv = SVector(state_parameters.init_states)
 
     # Get concrete type to avoid abstract element types
-    seir_results = Vector{SEIRRun}(
-        undef, nsims
-    )
+    seir_results = Vector{SEIRRun}(undef, nsims)
+    Reff_thresholds = Vector{Thresholds}(undef, nsims)
 
     beta_vec = zeros(Float64, tlength)
-    ensemble_Reff_arr = zeros(Float64, tlength, nsims)
-    ensemble_Reff_thresholds_vec = Vector{Array{Int64, 2}}(undef, nsims)
+    calculate_beta_amp!(
+        beta_vec,
+        dynamics_parameter_specification,
+        time_parameters
+    )
 
     dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
-
-    # Use explicit loop instead of broadcasting to avoid runtime dispatch
-    for i in eachindex(beta_vec)
-        beta_vec[i] = calculate_beta_amp(
-            dynamics_parameter_specification.beta_mean,
-            dynamics_parameter_specification.beta_force,
-            trange[i];
-            seasonality = dynamics_parameter_specification.seasonality
-        )
-    end
 
     for sim in eachindex(seir_results)
         run_seed = seed + (sim - 1)
@@ -92,26 +84,14 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
             seed = run_seed,
         )
         seir_results[sim] = seir_res
-
-        calculateReffective_t!(
-            @view(ensemble_Reff_arr[:, sim]),
-            beta_vec,
-            dynp,
-            1,
-            seir_res.states
-        )
-
-        ensemble_Reff_thresholds_vec[sim] = Reff_ge_than_one(
-            @view(ensemble_Reff_arr[:, sim])
-        )
+        Reff_thresholds[sim] = Reff_ge_than_one(seir_res.Reff)
     end
 
-    return (
-        ensemble_spec = ensemble_spec,
-        dynamics_parameters = dynamics_parameters,
+    return (;
+        ensemble_spec,
+        dynamics_parameters,
         seir_results,
-        ensemble_Reff_arr = ensemble_Reff_arr,
-        ensemble_Reff_thresholds_vec = ensemble_Reff_thresholds_vec,
+        Reff_thresholds,
     )
 end
 
@@ -472,9 +452,20 @@ function create_ensemble_specs(params::EnsembleSpecsParameters)
     )
 
     # Calculate dynamics parameters
+    contact_matrix = [1;;]
     mu = calculate_mu(params.annual_births_per_k)
-    beta_mean = calculate_beta(params.R_0, params.gamma, mu, 1, params.ensemble_state_specification.init_states.N)
-    epsilon = calculate_import_rate(mu, params.R_0, params.ensemble_state_specification.init_states.N)
+    beta_mean = calculate_beta(
+        params.R_0,
+        params.gamma,
+        mu,
+        contact_matrix,
+        Int64[params.ensemble_state_specification.init_states.N;]
+    )
+    epsilon = calculate_import_rate(
+        mu,
+        params.R_0,
+        params.ensemble_state_specification.init_states.N
+    )
 
     min_burnin_vaccination_coverage = calculate_vaccination_rate_to_achieve_Reff(
         params.target_Reff,
@@ -488,6 +479,7 @@ function create_ensemble_specs(params::EnsembleSpecsParameters)
     @assert params.max_vaccination_coverage < min_burnin_vaccination_coverage "Set the maximum vaccination coverage for the emergent time series to $(params.max_vaccination_coverage), but it should be less than $min_burnin_vaccination_coverage"
 
     ensemble_dynamics_specification = DynamicsParameterSpecification(
+        contact_matrix,
         beta_mean,
         0.0,
         SeasonalityFunction(CosineSeasonality()),

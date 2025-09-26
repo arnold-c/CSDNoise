@@ -37,6 +37,7 @@ function SimTimeParameters(;
 end
 
 struct DynamicsParameterSpecification
+    contact_matrix::Matrix{Int64}
     beta_mean::Float64
     beta_force::Float64
     seasonality::SeasonalityFunction
@@ -95,6 +96,7 @@ end
 # end
 
 function DynamicsParameterSpecification(
+        contact_matrix,
         beta_mean,
         beta_force,
         seasonality,
@@ -110,6 +112,7 @@ function DynamicsParameterSpecification(
         max_vaccination_coverage::Nothing,
     )
     return DynamicsParameterSpecification(
+        contact_matrix,
         beta_mean,
         beta_force,
         seasonality,
@@ -165,6 +168,7 @@ function calculate_vaccination_rate_to_achieve_Reff(
 end
 
 struct DynamicsParameters
+    contact_matrix::Matrix{Int64}
     beta_mean::Float64
     beta_force::Float64
     seasonality::SeasonalityFunction
@@ -192,13 +196,9 @@ function DynamicsParameters(
             dynamic_parameter_specification.max_burnin_vaccination_coverage
         dynamic_parameter_specification.min_burnin_vaccination_coverage
     else
-        round(
-            rand(
-                Distributions.Uniform(
-                    dynamic_parameter_specification.min_burnin_vaccination_coverage,
-                    dynamic_parameter_specification.max_burnin_vaccination_coverage,
-                ),
-            ); digits = 4
+        sample_vaccination_coverage(
+            dynamic_parameter_specification.min_burnin_vaccination_coverage,
+            dynamic_parameter_specification.max_burnin_vaccination_coverage,
         )
     end
 
@@ -209,17 +209,14 @@ function DynamicsParameters(
             dynamic_parameter_specification.max_vaccination_coverage
         burnin_vaccination_coverage
     else
-        round(
-            rand(
-                Distributions.Uniform(
-                    dynamic_parameter_specification.min_vaccination_coverage,
-                    dynamic_parameter_specification.max_vaccination_coverage,
-                ),
-            ); digits = 4
+        sample_vaccination_coverage(
+            dynamic_parameter_specification.min_vaccination_coverage,
+            dynamic_parameter_specification.max_vaccination_coverage,
         )
     end
 
     dynamics_parameters = DynamicsParameters(
+        dynamic_parameter_specification.contact_matrix,
         dynamic_parameter_specification.beta_mean,
         dynamic_parameter_specification.beta_force,
         dynamic_parameter_specification.seasonality,
@@ -238,6 +235,23 @@ function DynamicsParameters(
     )
     return dynamics_parameters
 end
+
+function sample_vaccination_coverage(
+        min_coverage,
+        max_coverage,
+        digits = 4
+    )
+    return round(
+        rand(
+            Distributions.Uniform(
+                min_coverage,
+                max_coverage
+            )
+        );
+        digits = digits
+    )
+end
+
 
 struct StateParameters
     init_states::SLArray{Tuple{5}, Int64, 1, 5, (:S, :E, :I, :R, :N)}
@@ -542,9 +556,10 @@ function getdirpath(spec::Union{PoissonNoise, DynamicalNoise})
     )
 end
 
-struct SEIRRun
-    states::Vector{SVector{5, Int64}}
-    incidence::Vector{Int64}
+struct SEIRRun{L}
+    states::SizedVector{L, SVector{5, Int64}}
+    incidence::SizedVector{L, Int64}
+    Reff::SizedVector{L, Float64}
 end
 
 abstract type AbstractThresholds end

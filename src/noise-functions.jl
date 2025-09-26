@@ -114,34 +114,34 @@ function create_noise_arr(
         )
     end
 
-    ensemble_inc_arr = zeros(
+    emergent_incidence_arr = zeros(
         Int64, size(ensemble_inc_vecs, 1), size(ensemble_inc_vecs, 2)
     )
 
     for sim in axes(ensemble_inc_vecs, 2)
         convert_svec_to_matrix!(
-            @view(ensemble_inc_arr[:, sim]),
+            @view(emergent_incidence_arr[:, sim]),
             @view(ensemble_inc_vecs[:, sim])
         )
     end
 
     poisson_noise = zeros(
-        Float64, size(ensemble_inc_arr, 1), size(ensemble_inc_arr, 3)
+        Float64, size(emergent_incidence_arr, 1), size(emergent_incidence_arr, 3)
     )
 
     add_poisson_noise_arr!(
-        poisson_noise, ensemble_inc_arr, noise_specification.noise_mean_scaling;
+        poisson_noise, emergent_incidence_arr, noise_specification.noise_mean_scaling;
         seed = seed,
     )
 
     mean_poisson_noise = NaNMath.mean(poisson_noise)
-    mean_rubella_noise = StatsBase.mean(ensemble_inc_arr)
+    mean_rubella_noise = StatsBase.mean(emergent_incidence_arr)
 
     poisson_noise_prop = mean_poisson_noise / mean_rubella_noise
 
-    ensemble_inc_arr .+= poisson_noise
+    emergent_incidence_arr .+= poisson_noise
 
-    return ensemble_inc_arr,
+    return emergent_incidence_arr,
         (;
             mean_noise = mean_rubella_noise + mean_poisson_noise,
             mean_poisson_noise = mean_poisson_noise,

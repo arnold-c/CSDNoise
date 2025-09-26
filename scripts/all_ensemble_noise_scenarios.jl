@@ -143,25 +143,25 @@ end
 
 #%%
 # Generate incidence arrays for the outbreak specification using the incidence vectors
-measles_ensemble_inc_arr = create_inc_infec_arr(
+measles_emergent_incidence_arr = create_inc_infec_arr(
     measles_ensemble_data[:ensemble_inc_vecs], ensemble_outbreak_specification
 )[1]
 
 
-mean_measles = StatsBase.mean(measles_ensemble_inc_arr[:, 1, :])
-mean_measles = StatsBase.mean(measles_ensemble_inc_arr[1:3651, 1, :])
-mean_measles2 = StatsBase.mean(ensemble_inc_arr[:, 1, :])
+mean_measles = StatsBase.mean(measles_emergent_incidence_arr[:, 1, :])
+mean_measles = StatsBase.mean(measles_emergent_incidence_arr[1:3651, 1, :])
+mean_measles2 = StatsBase.mean(emergent_incidence_arr[:, 1, :])
 
 #%%
 covid_ensemble_data = generate_single_ensemble(covid_spec[1]; seed = 1234)
 
 # Generate incidence arrays for the outbreak specification using the incidence vectors
-covid_ensemble_inc_arr = create_inc_infec_arr(
+covid_emergent_incidence_arr = create_inc_infec_arr(
     covid_ensemble_data[:ensemble_inc_vecs], ensemble_outbreak_specification
 )[1]
 
 
-mean_covid = StatsBase.mean(covid_ensemble_inc_arr[:, 1, :])
+mean_covid = StatsBase.mean(covid_emergent_incidence_arr[:, 1, :])
 
 #%%
 measles_dynamical_noise_spec = (;
@@ -183,10 +183,10 @@ covid_dynamical_noise_spec = (;
 
 #%%
 using JLD2
-ensemble_inc_arr = JLD2.load("/Users/cfa5228/Documents/Repos/CSDNoise/out/ensemble/seasonal-infectivity-import/tau-leaping/N_500000/r_0.95/nsims_100/R0_16.0/latent_period_10.0/infectious_period_8.0/min_burnin_vaccination_coverage_0.9269/max_burnin_vaccination_coverage_1.0/min_vaccination_coverage_0.6/max_vaccination_coverage_0.8/births_per_k_27/beta_force_0.0/burnin_1825.0/tmax_7300.0/tstep_1.0/min_outbreak_dur_30/min_outbreak_size_500/outbreak_threshold_5/ensemble-incidence-array.jld2")["ensemble_inc_arr"]
+emergent_incidence_arr = JLD2.load("/Users/cfa5228/Documents/Repos/CSDNoise/out/ensemble/seasonal-infectivity-import/tau-leaping/N_500000/r_0.95/nsims_100/R0_16.0/latent_period_10.0/infectious_period_8.0/min_burnin_vaccination_coverage_0.9269/max_burnin_vaccination_coverage_1.0/min_vaccination_coverage_0.6/max_vaccination_coverage_0.8/births_per_k_27/beta_force_0.0/burnin_1825.0/tmax_7300.0/tstep_1.0/min_outbreak_dur_30/min_outbreak_size_500/outbreak_threshold_5/ensemble-incidence-array.jld2")["emergent_incidence_arr"]
 
 #%%
-size(measles_ensemble_inc_arr) == size(ensemble_inc_arr)
+size(measles_emergent_incidence_arr) == size(emergent_incidence_arr)
 
 #%%
 measles_dynamical_noise_coverages = map(
@@ -280,13 +280,13 @@ measles_noise_arr = create_noise_arr(
 #%%
 fig = Figure()
 ax = Axis(fig[1, 1])
-for k in axes(measles_ensemble_inc_arr, 3)
-    lines!(measles_ensemble_inc_arr[:, 1, k]; color = (:blue, 0.01))
+for k in axes(measles_emergent_incidence_arr, 3)
+    lines!(measles_emergent_incidence_arr[:, 1, k]; color = (:blue, 0.01))
     lines!(measles_noise_arr[:, k]; color = (:red, 0.01))
 end
 mean_measles_vec = map(
-    i -> StatsBase.median(@view(measles_ensemble_inc_arr[i, 1, :])),
-    axes(measles_ensemble_inc_arr, 1)
+    i -> StatsBase.median(@view(measles_emergent_incidence_arr[i, 1, :])),
+    axes(measles_emergent_incidence_arr, 1)
 )
 mean_noise_vec = map(
     i -> StatsBase.median(@view(measles_noise_arr[i, :])),
@@ -295,13 +295,13 @@ mean_noise_vec = map(
 lines!(mean_measles_vec; color = :black)
 lines!(mean_noise_vec; color = :black)
 ax2 = Axis(fig[2, 1])
-for k in axes(ensemble_inc_arr, 3)
-    lines!(ensemble_inc_arr[:, 1, k]; color = (:blue, 0.01))
+for k in axes(emergent_incidence_arr, 3)
+    lines!(emergent_incidence_arr[:, 1, k]; color = (:blue, 0.01))
     lines!(measles_noise_arr[:, k]; color = (:red, 0.01))
 end
 mean_measles_vec2 = map(
-    i -> StatsBase.median(@view(ensemble_inc_arr[i, 1, :])),
-    axes(ensemble_inc_arr, 1)
+    i -> StatsBase.median(@view(emergent_incidence_arr[i, 1, :])),
+    axes(emergent_incidence_arr, 1)
 )
 lines!(mean_measles_vec2; color = :black)
 lines!(mean_noise_vec; color = :black)
@@ -310,13 +310,13 @@ display(fig)
 #%%
 fig = Figure()
 ax = Axis(fig[1, 1])
-for k in axes(measles_ensemble_inc_arr, 3)
-    lines!(measles_ensemble_inc_arr[:, 1, k]; color = (:blue, 0.01))
+for k in axes(measles_emergent_incidence_arr, 3)
+    lines!(measles_emergent_incidence_arr[:, 1, k]; color = (:blue, 0.01))
     # lines!(measles_noise_arr[:, k]; color = (:red, 0.01))
 end
 mean_measles_vec = map(
-    i -> StatsBase.median(@view(measles_ensemble_inc_arr[i, 1, :])),
-    axes(measles_ensemble_inc_arr, 1)
+    i -> StatsBase.median(@view(measles_emergent_incidence_arr[i, 1, :])),
+    axes(measles_emergent_incidence_arr, 1)
 )
 # mean_noise_vec = map(
 #     i -> StatsBase.median(@view(measles_noise_arr[i, :])),
@@ -337,6 +337,6 @@ display(fig)
 #%%
 for i in eachindex(measles_incs)
     local enddate = measles_enddates[i]
-    @assert measles_incs[i] == measles_ensemble_inc_arr[1:enddate, 1, i] "failed $i: $(measles_incs[i]) != $(measles_ensemble_inc_arr[1:enddate, 1, i])"
-    println("i = $i: $(round(mean(measles_incs[i]); digits = 2)), $(round(mean(measles_ensemble_inc_arr[1:enddate, 1, i]); digits = 2))")
+    @assert measles_incs[i] == measles_emergent_incidence_arr[1:enddate, 1, i] "failed $i: $(measles_incs[i]) != $(measles_emergent_incidence_arr[1:enddate, 1, i])"
+    println("i = $i: $(round(mean(measles_incs[i]); digits = 2)), $(round(mean(measles_emergent_incidence_arr[1:enddate, 1, i]); digits = 2))")
 end

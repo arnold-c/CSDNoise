@@ -371,8 +371,8 @@ function evaluate_gridsearch_scenarios(
 
     checkpoint_num = 0
 
-    @unpack ensemble_single_incarr,
-        null_single_incarr = data_arrs
+    @unpack emergent_incidence_arr,
+        null_incidence_arr = data_arrs
     # Creating the incidence, noise, testing arrays and EWS metrics is expensive
     # Loop through all unique combinations in a nested loop to allow re-use within
     # the optimization and grid search steps
@@ -398,7 +398,7 @@ function evaluate_gridsearch_scenarios(
 
                 noisearr = create_noise_arr(
                     noise_specification,
-                    ensemble_single_incarr,
+                    emergent_incidence_arr,
                     ensemble_specification;
                     seed = 1234,
                 )[1]
@@ -418,14 +418,14 @@ function evaluate_gridsearch_scenarios(
                         )
 
                         testarr = create_testing_arrs(
-                            ensemble_single_incarr,
+                            emergent_incidence_arr,
                             noisearr,
                             percent_tested,
                             test_specification,
                         )
 
                         null_testarr = create_testing_arrs(
-                            null_single_incarr,
+                            null_incidence_arr,
                             noisearr,
                             percent_tested,
                             test_specification,
@@ -569,8 +569,8 @@ function evaluate_gridsearch_scenarios2(
 
     checkpoint_num = 0
 
-    @unpack ensemble_single_incarr,
-        null_single_incarr = data_arrs
+    @unpack emergent_incidence_arr,
+        null_incidence_arr = data_arrs
     # Creating the incidence, noise, testing arrays and EWS metrics is expensive
     # Loop through all unique combinations in a nested loop to allow re-use within
     # the optimization and grid search steps
@@ -593,7 +593,7 @@ function evaluate_gridsearch_scenarios2(
 
                 noisearr = create_noise_arr(
                     noise_specification,
-                    ensemble_single_incarr,
+                    emergent_incidence_arr,
                     ensemble_specification;
                     seed = 1234,
                 )[1]
@@ -602,14 +602,14 @@ function evaluate_gridsearch_scenarios2(
                     for test_specification in unique_test_specs
 
                         testarr = create_testing_arrs(
-                            ensemble_single_incarr,
+                            emergent_incidence_arr,
                             noisearr,
                             percent_tested,
                             test_specification,
                         )
 
                         null_testarr = create_testing_arrs(
-                            null_single_incarr,
+                            null_incidence_arr,
                             noisearr,
                             percent_tested,
                             test_specification,
@@ -719,14 +719,14 @@ function evaluate_gridsearch_scenarios_optimized(
     checkpoint_num = 0
     processed_scenarios = 0
 
-    @unpack ensemble_single_incarr, null_single_incarr = data_arrs
+    @unpack emergent_incidence_arr, null_incidence_arr = data_arrs
 
     noise_groups = group_by_noise_key(missing_scenarios)
 
     for (noise_key, noise_scenarios) in noise_groups
         noisearr = create_noise_arr(
             noise_key.noise_specification,
-            ensemble_single_incarr,
+            emergent_incidence_arr,
             noise_key.ensemble_specification;
             seed = 1234,
         )[1]
@@ -735,14 +735,14 @@ function evaluate_gridsearch_scenarios_optimized(
 
         for (testing_key, testing_scenarios) in testing_groups
             testarr = create_testing_arrs(
-                ensemble_single_incarr,
+                emergent_incidence_arr,
                 noisearr,
                 testing_key.percent_tested,
                 testing_key.test_specification,
             )
 
             null_testarr = create_testing_arrs(
-                null_single_incarr,
+                null_incidence_arr,
                 noisearr,
                 testing_key.percent_tested,
                 testing_key.test_specification,
@@ -872,8 +872,8 @@ function evaluate_gridsearch_scenarios_multistart(
 
     checkpoint_num = 0
 
-    @unpack ensemble_single_incarr,
-        null_single_incarr = data_arrs
+    @unpack emergent_incidence_arr,
+        null_incidence_arr = data_arrs
 
     # Creating the incidence, noise, testing arrays and EWS metrics is expensive
     # Loop through all unique combinations in a nested loop to allow re-use within
@@ -900,7 +900,7 @@ function evaluate_gridsearch_scenarios_multistart(
 
                 noisearr = create_noise_arr(
                     noise_specification,
-                    ensemble_single_incarr,
+                    emergent_incidence_arr,
                     ensemble_specification;
                     seed = 1234,
                 )[1]
@@ -920,14 +920,14 @@ function evaluate_gridsearch_scenarios_multistart(
                         )
 
                         testarr = create_testing_arrs(
-                            ensemble_single_incarr,
+                            emergent_incidence_arr,
                             noisearr,
                             percent_tested,
                             test_specification,
                         )
 
                         null_testarr = create_testing_arrs(
-                            null_single_incarr,
+                            null_incidence_arr,
                             noisearr,
                             percent_tested,
                             test_specification,
@@ -1301,7 +1301,7 @@ function evaluate_gridsearch_scenarios_bumper(
     sort!(indexed_scenarios, by = x -> x[2])
     sorted_indices = [i for (i, _) in indexed_scenarios]
 
-    @unpack ensemble_single_incarr, null_single_incarr = data_arrs
+    @unpack emergent_incidence_arr, null_incidence_arr = data_arrs
 
     # Track current computation state to avoid redundant work
     current_noise_key = nothing
@@ -1328,7 +1328,7 @@ function evaluate_gridsearch_scenarios_bumper(
         if noise_key != current_noise_key
             current_noisearr = create_noise_arr(
                 scenario.noise_specification,
-                ensemble_single_incarr,
+                emergent_incidence_arr,
                 scenario.ensemble_specification;
                 seed = 1234,
             )[1]
@@ -1340,13 +1340,13 @@ function evaluate_gridsearch_scenarios_bumper(
         testing_key = (noise_key..., scenario.percent_tested, scenario.test_specification)
         if testing_key != current_testing_key
             current_testarr = create_testing_arrs(
-                ensemble_single_incarr,
+                emergent_incidence_arr,
                 current_noisearr,
                 scenario.percent_tested,
                 scenario.test_specification,
             )
             current_null_testarr = create_testing_arrs(
-                null_single_incarr,
+                null_incidence_arr,
                 current_noisearr,
                 scenario.percent_tested,
                 scenario.test_specification,

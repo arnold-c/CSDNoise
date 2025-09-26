@@ -120,13 +120,13 @@ mkpath(ensemble_vax_plotpath)
 nsims_plot = 10
 Random.seed!(1234)
 selected_sims = StatsBase.sample(
-    collect(1:size(ensemble_single_incarr, 3)),
+    collect(1:size(emergent_incidence_arr, 3)),
     nsims_plot;
     replace = false,
 )
 
 ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
-    ensemble_single_incarr[:, :, selected_sims],
+    emergent_incidence_arr[:, :, selected_sims],
     ensemble_single_Reff_arr[:, selected_sims],
     ensemble_single_Reff_thresholds_vec[selected_sims],
     emergent_outbreak_threshold_vec[selected_sims], ;
@@ -147,7 +147,7 @@ save(
 
 #%%
 ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_seir_arr,
     emergent_outbreak_threshold_vec,
     ensemble_time_specification;
@@ -239,7 +239,7 @@ ews_df = DataFrame(
 
     noisearr = create_noise_arr(
         noise_specification,
-        ensemble_single_incarr;
+        emergent_incidence_arr;
         ensemble_specification = ensemble_specification,
         seed = 1234,
     )[1]
@@ -269,7 +269,7 @@ ews_df = DataFrame(
             )
 
             testarr = create_testing_arrs(
-                ensemble_single_incarr,
+                emergent_incidence_arr,
                 noisearr,
                 percent_tested,
                 test_specification,
@@ -305,7 +305,7 @@ ews_df = DataFrame(
                     inc_ews_vals_vec[sim] = EWSMetrics(
                         ews_metric_specification,
                         @view(
-                            ensemble_single_incarr[1:enddate_vec[sim], 1, sim]
+                            emergent_incidence_arr[1:enddate_vec[sim], 1, sim]
                         )
                     )
 
@@ -424,11 +424,11 @@ ews_df = DataFrame(
                 )
 
                 aggregated_inc_vec = aggregate_timeseries(
-                    @view(ensemble_single_incarr[:, 1, sim]),
+                    @view(emergent_incidence_arr[:, 1, sim]),
                     ews_metric_specification.aggregation,
                 )
                 aggregated_outbreak_status_vec = aggregate_thresholds_vec(
-                    @view(ensemble_single_incarr[:, 3, sim]),
+                    @view(emergent_incidence_arr[:, 3, sim]),
                     ews_metric_specification.aggregation,
                 )
 

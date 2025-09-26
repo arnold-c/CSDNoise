@@ -4,8 +4,8 @@ using ProgressMeter
 function create_optimal_ews_plots(
         optimal_ews_df,
         ensemble_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec,
         tiebreaker_preference_vec;
         optimal_grouping_parameters = [
@@ -179,8 +179,8 @@ function create_optimal_ews_plots(
                         ews_threshold_burnin,
                         ensemble_specification,
                         test_specification,
-                        ensemble_single_incarr,
-                        null_single_incarr,
+                        emergent_incidence_arr,
+                        null_incidence_arr,
                         ensemble_single_Reff_thresholds_vec;
                         ews_metric = ews_metric,
                         plottitle = survival_plottitle,

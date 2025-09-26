@@ -174,8 +174,8 @@ function create_test_data_arrays(ensemble_specification)
     @unpack tstep, tlength, trange = time_parameters
 
     # Initialize arrays
-    ensemble_single_incarr = zeros(Float64, tlength, 5, nsims)  # [time, variables, sims]
-    null_single_incarr = zeros(Float64, tlength, 5, nsims)
+    emergent_incidence_arr = zeros(Float64, tlength, 5, nsims)  # [time, variables, sims]
+    null_incidence_arr = zeros(Float64, tlength, 5, nsims)
 
     # Generate simple test data (placeholder - replace with actual simulation)
     Random.seed!(42)
@@ -187,11 +187,11 @@ function create_test_data_arrays(ensemble_specification)
         for t in 1:tlength
             # Simple synthetic data with trend and noise
             incidence = max(0.0, base_incidence + trend * t + 0.5 * randn())
-            ensemble_single_incarr[t, 5, sim] = incidence  # Column 5 is incidence
+            emergent_incidence_arr[t, 5, sim] = incidence  # Column 5 is incidence
 
             # Null data (no trend)
             null_incidence = max(0.0, base_incidence + 0.3 * randn())
-            null_single_incarr[t, 5, sim] = null_incidence
+            null_incidence_arr[t, 5, sim] = null_incidence
         end
     end
 
@@ -201,8 +201,8 @@ function create_test_data_arrays(ensemble_specification)
 
     return (
         ensemble_specification = ensemble_specification,
-        ensemble_single_incarr = ensemble_single_incarr,
-        null_single_incarr = null_single_incarr,
+        emergent_incidence_arr = emergent_incidence_arr,
+        null_incidence_arr = null_incidence_arr,
         ensemble_single_Reff_thresholds_vec = ensemble_single_Reff_thresholds_vec,
         emergent_outbreak_threshold_vec = emergent_outbreak_threshold_vec,
     )

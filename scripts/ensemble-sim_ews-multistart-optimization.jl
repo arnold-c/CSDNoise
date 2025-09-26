@@ -132,10 +132,10 @@ null_single_scenario_inc_file = get_ensemble_file(
     null_specification, ensemble_outbreak_specification
 )
 
-emergent_incidence_arr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
+emergent_incidence_arr = ensemble_single_scenario_inc_file["emergent_incidence_arr"]
 emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
 
-null_incidence_arr = null_single_scenario_inc_file["ensemble_inc_arr"]
+null_incidence_arr = null_single_scenario_inc_file["emergent_incidence_arr"]
 null_outbreak_threshold_vecs = null_single_scenario_inc_file["ensemble_thresholds_vec"]
 
 ensemble_single_Reff_arr = get_ensemble_file(

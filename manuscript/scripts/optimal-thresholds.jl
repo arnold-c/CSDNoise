@@ -107,8 +107,8 @@ null_single_scenario_inc_file = get_ensemble_file(
     null_specification, ensemble_outbreak_specification
 )
 
-ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
-null_single_incarr = null_single_scenario_inc_file["ensemble_inc_arr"]
+emergent_incidence_arr = ensemble_single_scenario_inc_file["emergent_incidence_arr"]
+null_incidence_arr = null_single_scenario_inc_file["emergent_incidence_arr"]
 ensemble_single_Reff_thresholds_vec = get_ensemble_file(
     ensemble_specification
 )["ensemble_Reff_thresholds_vec"]
@@ -305,8 +305,8 @@ for (noise_num, gdf) in enumerate(gdfs)
             ), noisearr = simulate_ews_survival_data(
             test_df,
             ensemble_specification,
-            ensemble_single_incarr,
-            null_single_incarr,
+            emergent_incidence_arr,
+            null_incidence_arr,
             ensemble_single_Reff_thresholds_vec;
             ews_metric = survival_ews_metric,
             logfiledir = projectdir("manuscript", "manuscript_files")

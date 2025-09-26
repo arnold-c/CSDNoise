@@ -88,11 +88,11 @@ calculate_mean_dynamical_noise(
 )
 
 #%%
-ensemble_inc_arr = get_ensemble_file(
+emergent_incidence_arr = get_ensemble_file(
     ensemble_specification, OutbreakSpecification(5, 30, 500)
-)["ensemble_inc_arr"]
+)["emergent_incidence_arr"]
 
-mean_measles = StatsBase.mean(ensemble_inc_arr[:, 1, :])
+mean_measles = StatsBase.mean(emergent_incidence_arr[:, 1, :])
 
 #%%
 calculate_dynamic_vaccination_coverage(

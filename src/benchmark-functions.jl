@@ -28,18 +28,17 @@ function generate_ensemble_data(ensemble_specification, null_specification, ense
     println(styled"  Processing outbreak data...")
 
     # Generate incidence arrays for the outbreak specification using the incidence vectors
-    ensemble_inc_arr, ensemble_thresholds_vec = create_inc_infec_arr(
+    emergent_incidence_arr, ensemble_thresholds_vec = create_inc_infec_arr(
         ensemble_data[:ensemble_inc_vecs], ensemble_outbreak_specification
     )
 
-    null_inc_arr, null_thresholds_vec = create_inc_infec_arr(
+    null_incidence_arr, null_thresholds_vec = create_inc_infec_arr(
         null_data[:ensemble_inc_vecs], ensemble_outbreak_specification
     )
 
     return (
-        ensemble_specification = ensemble_specification,
-        ensemble_single_incarr = ensemble_inc_arr,
-        null_single_incarr = null_inc_arr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec = ensemble_data[:ensemble_Reff_thresholds_vec],
         emergent_outbreak_threshold_vec = ensemble_thresholds_vec,
     )

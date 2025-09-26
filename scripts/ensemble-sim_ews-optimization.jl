@@ -129,10 +129,11 @@ null_single_scenario_inc_file = get_ensemble_file(
     null_specification, ensemble_outbreak_specification
 )
 
-ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
-emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+emergent_incidence_arr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
+ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
 
-null_single_incarr = null_single_scenario_inc_file["ensemble_inc_arr"]
+null_incidence_arr = null_single_scenario_inc_file["ensemble_inc_arr"]
+null_incidence_arr = null_single_scenario_inc_file["emergent_incidence_arr"]
 null_outbreak_threshold_vecs = null_single_scenario_inc_file["ensemble_thresholds_vec"]
 
 ensemble_single_Reff_arr = get_ensemble_file(
@@ -256,8 +257,8 @@ optimal_ews_df = ews_hyperparam_optimization(
     specification_vecs,
     (;
         ensemble_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec,
         emergent_outbreak_threshold_vec,
     );
@@ -285,8 +286,8 @@ optimal_ews_df = ews_hyperparam_optimization(
 create_optimal_ews_plots(
     optimal_ews_df,
     ensemble_specification,
-    ensemble_single_incarr,
-    null_single_incarr,
+    emergent_incidence_arr,
+    null_incidence_arr,
     ensemble_single_Reff_thresholds_vec,
     ["specificity", "speed"];
     optimal_grouping_parameters = [
@@ -360,8 +361,8 @@ if debug_Reff_plots
         ), noisearr = simulate_ews_survival_data(
         test_df,
         ensemble_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec;
         ews_metric = test_ews_metric,
     )
@@ -392,8 +393,8 @@ if debug_Reff_plots
         "\nEWS calculated for shaded region"
 
     hyperparam_debugging_Reff_plot(
-        ensemble_single_incarr[:, 1, selected_sim],
-        null_single_incarr[:, 1, selected_sim],
+        emergent_incidence_arr[:, 1, selected_sim],
+        null_incidence_arr[:, 1, selected_sim],
         ensemble_single_Reff_arr[:, selected_sim],
         null_single_Reff_arr[:, selected_sim],
         ensemble_single_Reff_thresholds_vec[selected_sim],
@@ -428,7 +429,7 @@ ews_specification =
 aggregation_int = Dates.days(aggregation)
 
 aggregated_inc_vec = aggregate_timeseries(
-    ensemble_single_incarr[:, 1, selected_sim],
+    emergent_incidence_arr[:, 1, selected_sim],
     aggregation,
 )
 
@@ -590,7 +591,7 @@ test_enddate = Try.unwrap(
 
 inc_ews = EWSMetrics(
     test_ews_metric_specification,
-    @view(ensemble_single_incarr[1:test_enddate, 1, selected_sim])
+    @view(emergent_incidence_arr[1:test_enddate, 1, selected_sim])
 )
 
 inc_ews_no_exceedance_schematic = Reff_ews_plot(

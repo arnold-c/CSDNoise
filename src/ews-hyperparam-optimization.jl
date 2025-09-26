@@ -381,13 +381,13 @@ function ews_hyperparam_gridsearch!(
         missing_runs = Try.unwrap(missing_specification_vecs)
 
     @unpack ensemble_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec,
         emergent_outbreak_threshold_vec =
         data_arrs
 
-    ensemble_nsims = size(ensemble_single_incarr, 3)
+    ensemble_nsims = size(emergent_incidence_arr, 3)
 
     logfile = open(logfilepath, "a")
 
@@ -407,7 +407,7 @@ function ews_hyperparam_gridsearch!(
 
         noisearr = create_noise_arr(
             noise_specification,
-            ensemble_single_incarr,
+            emergent_incidence_arr,
             ensemble_specification;
             seed = 1234,
         )[1]
@@ -423,14 +423,14 @@ function ews_hyperparam_gridsearch!(
             end
 
             testarr = create_testing_arrs(
-                ensemble_single_incarr,
+                emergent_incidence_arr,
                 noisearr,
                 percent_tested,
                 test_specification,
             )
 
             null_testarr = create_testing_arrs(
-                null_single_incarr,
+                null_incidence_arr,
                 noisearr,
                 percent_tested,
                 test_specification,

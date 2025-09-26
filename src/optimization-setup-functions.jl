@@ -92,28 +92,28 @@ function create_cached_simulation_data(
     @unpack noise_specification, test_specification, percent_tested,
         ews_enddate_type, ews_metric_specification = scenario
 
-    @unpack ensemble_single_incarr, null_single_incarr,
+    @unpack emergent_incidence_arr, null_incidence_arr,
         ensemble_specification, ensemble_single_Reff_thresholds_vec,
         emergent_outbreak_threshold_vec = data_arrs
 
     # Create noise array once per scenario (expensive operation)
     noisearr = create_noise_arr(
         noise_specification,
-        ensemble_single_incarr,
+        emergent_incidence_arr,
         ensemble_specification;
         seed = 1234,
     )[1]
 
     # Create test arrays once per scenario (expensive operation)
     testarr = create_testing_arrs(
-        ensemble_single_incarr,
+        emergent_incidence_arr,
         noisearr,
         percent_tested,
         test_specification,
     )
 
     null_testarr = create_testing_arrs(
-        null_single_incarr,
+        null_incidence_arr,
         noisearr,
         percent_tested,
         test_specification,
@@ -128,7 +128,7 @@ function create_cached_simulation_data(
     thresholds = get_enddate_thresholds(data_arrs, ews_enddate_type)
 
     # Pre-compute EWS metrics for all simulations
-    ensemble_nsims = size(ensemble_single_incarr, 3)
+    ensemble_nsims = size(emergent_incidence_arr, 3)
     ews_metrics = Vector{EWSMetrics}()
     null_ews_metrics = Vector{EWSMetrics}()
 

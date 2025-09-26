@@ -7,8 +7,8 @@ function simulate_and_plot_ews_survival(
         noise_specification,
         ensemble_specification,
         individual_test_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec;
         ews_metric = "mean",
         plottitle = "Survival",
@@ -29,8 +29,8 @@ function simulate_and_plot_ews_survival(
         ews_threshold_burnin,
         ensemble_specification,
         individual_test_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec;
         ews_metric = ews_metric,
         plottitle = plottitle,
@@ -44,8 +44,8 @@ function simulate_and_plot_ews_survival(
         ews_threshold_burnin,
         ensemble_specification,
         individual_test_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec;
         ews_metric = "mean",
         plottitle = "Survival",
@@ -59,8 +59,8 @@ function simulate_and_plot_ews_survival(
     survival_df = simulate_ews_survival_data(
         test_subset_df,
         ensemble_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec;
         ews_metric = ews_metric,
     )[1]
@@ -161,8 +161,8 @@ end
 function simulate_ews_survival_data(
         optimal_ews_df,
         ensemble_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         thresholds;
         ews_metric = "mean",
         logfilename = "ensemble-sim_ews-optimization.log.txt",
@@ -218,16 +218,16 @@ function simulate_ews_survival_data(
 
     noisearr = create_noise_arr(
         noise_specification,
-        ensemble_single_incarr;
+        emergent_incidence_arr;
         ensemble_specification = ensemble_specification,
         seed = 1234,
     )[1]
 
     enddate_vec = Vector{Union{Try.Ok, Try.Err}}(
-        undef, size(ensemble_single_incarr, 3)
+        undef, size(emergent_incidence_arr, 3)
     )
 
-    for sim in axes(ensemble_single_incarr, 3)
+    for sim in axes(emergent_incidence_arr, 3)
         enddate_vec[sim] = calculate_ews_enddate(
             thresholds[sim],
             ews_enddate_type,
@@ -272,7 +272,7 @@ function simulate_ews_survival_data(
         ews_consecutive_thresholds = df_row[:ews_consecutive_thresholds]
 
         testarr = create_testing_arrs(
-            ensemble_single_incarr,
+            emergent_incidence_arr,
             noisearr,
             percent_tested,
             test_specification,
@@ -281,7 +281,7 @@ function simulate_ews_survival_data(
         vec_of_testarr[i] = testarr
 
         null_testarr = create_testing_arrs(
-            null_single_incarr,
+            null_incidence_arr,
             noisearr,
             percent_tested,
             test_specification,

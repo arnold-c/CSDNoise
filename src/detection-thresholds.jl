@@ -8,18 +8,18 @@ using StatsBase: rle
 using UnPack
 
 function create_inc_infec_arr(
-    ensemble_inc_vecs, outbreak_specification::OutbreakSpecification
-)
-    ensemble_inc_arr = zeros(
+        ensemble_inc_vecs, outbreak_specification::OutbreakSpecification
+    )
+    emergent_incidence_arr = zeros(
         Int64, size(ensemble_inc_vecs, 1), 3, size(ensemble_inc_vecs, 2)
     )
 
-    ensemble_thresholds_vec = Vector{Array{Int64,2}}(
+    ensemble_thresholds_vec = Vector{Array{Int64, 2}}(
         undef, size(ensemble_inc_vecs, 2)
     )
 
     create_inc_infec_arr!(
-        ensemble_inc_arr,
+        emergent_incidence_arr,
         ensemble_thresholds_vec,
         ensemble_inc_vecs,
         outbreak_specification.outbreak_threshold,
@@ -27,32 +27,32 @@ function create_inc_infec_arr(
         outbreak_specification.minimum_outbreak_size,
     )
 
-    return ensemble_inc_arr, ensemble_thresholds_vec
+    return emergent_incidence_arr, ensemble_thresholds_vec
 end
 
 function create_inc_infec_arr!(
-    ensemble_inc_arr, ensemble_thresholds_vec, ensemble_inc_vecs,
-    outbreakthreshold, minoutbreakdur,
-    minoutbreaksize,
-)
+        emergent_incidence_arr, ensemble_thresholds_vec, ensemble_inc_vecs,
+        outbreakthreshold, minoutbreakdur,
+        minoutbreaksize,
+    )
     @inbounds for sim in axes(ensemble_inc_vecs, 2)
         convert_svec_to_matrix!(
-            @view(ensemble_inc_arr[:, 1, sim]),
+            @view(emergent_incidence_arr[:, 1, sim]),
             @view(ensemble_inc_vecs[:, sim])
         )
 
-        ensemble_inc_arr[:, 2, sim] .=
-            @view(ensemble_inc_arr[:, 1, sim]) .>= outbreakthreshold
+        emergent_incidence_arr[:, 2, sim] .=
+            @view(emergent_incidence_arr[:, 1, sim]) .>= outbreakthreshold
 
-        abovethresholdrle = rle(@view(ensemble_inc_arr[:, 2, sim]))
+        abovethresholdrle = rle(@view(emergent_incidence_arr[:, 2, sim]))
 
         outbreak_thresholds = calculate_outbreak_thresholds(
             abovethresholdrle; ncols = 4
         )
 
         ensemble_thresholds_vec[sim] = classify_all_outbreaks!(
-            @view(ensemble_inc_arr[:, 1, sim]),
-            @view(ensemble_inc_arr[:, 3, sim]),
+            @view(emergent_incidence_arr[:, 1, sim]),
+            @view(emergent_incidence_arr[:, 3, sim]),
             outbreak_thresholds,
             minoutbreakdur,
             minoutbreaksize,
@@ -81,12 +81,12 @@ function calculate_outbreak_thresholds(outbreakrle; ncols = 4)
 end
 
 function classify_all_outbreaks!(
-    incidence_vec,
-    alertstatus_vec,
-    all_thresholds_arr,
-    minoutbreakdur,
-    minoutbreaksize,
-)
+        incidence_vec,
+        alertstatus_vec,
+        all_thresholds_arr,
+        minoutbreakdur,
+        minoutbreaksize,
+    )
     for (row, (lower, upper)) in pairs(eachrow(all_thresholds_arr[:, 1:2]))
         all_thresholds_arr[row, 3] = sum(
             @view(incidence_vec[lower:upper])
@@ -115,14 +115,14 @@ function calculate_period_sum(incvec)
 end
 
 function classify_outbreak(
-    periodsumvec,
-    upper_time,
-    lower_time,
-    minoutbreakdur,
-    minoutbreaksize
-)
+        periodsumvec,
+        upper_time,
+        lower_time,
+        minoutbreakdur,
+        minoutbreaksize
+    )
     if upper_time - lower_time >= minoutbreakdur &&
-        periodsumvec >= minoutbreaksize
+            periodsumvec >= minoutbreaksize
         return 1
     end
     return 0

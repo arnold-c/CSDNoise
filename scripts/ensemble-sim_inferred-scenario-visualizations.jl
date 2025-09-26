@@ -49,7 +49,7 @@ ensemble_single_scenario_inc_file = get_ensemble_file(
     ensemble_specification, ensemble_outbreak_specification
 )
 
-ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
+emergent_incidence_arr = ensemble_single_scenario_inc_file["emergent_incidence_arr"]
 emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
 
 ensemble_single_inc_ews_1d = get_ensemble_file(
@@ -68,7 +68,7 @@ ensemble_single_inc_ews_30d = get_ensemble_file(
 mkpath(plotsdir("ensemble/single-scenario"))
 
 ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_seir_arr,
     emergent_outbreak_threshold_vec,
     ensemble_time_specification;
@@ -85,7 +85,7 @@ save(
 #%%
 for sim_num in [10, 20, 55]
     ensemble_single_scenario_Reffective_plot = Reff_plot(
-        ensemble_single_incarr,
+        emergent_incidence_arr,
         ensemble_single_Reff_arr,
         ensemble_single_Reff_thresholds_vec,
         emergent_outbreak_threshold_vec,
@@ -134,14 +134,14 @@ ewsmetrics_no_lag = ensemble_solution_dict_no_lag["test_ewsmetrics"]
 
 noisearr, poisson_noise_prop = create_noise_arr(
     noise_specification,
-    ensemble_single_incarr;
+    emergent_incidence_arr;
     ensemble_specification = ensemble_specification,
     seed = 1234,
 )
 noisedir = getdirpath(noise_specification)
 
 testarr_no_lag, test_movingvg_arr_no_lag, inferred_positives_arr_no_lag = create_testing_arrs(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     noisearr,
     ensemble_single_outbreak_detection_spec,
     ensemble_single_individual_test_spec_no_lag,
@@ -150,7 +150,7 @@ testarr_no_lag, test_movingvg_arr_no_lag, inferred_positives_arr_no_lag = create
 )[[1, 3, 4]]
 
 # testarr_lag, test_movingvg_arr_lag, inferred_positives_arr_lag = create_testing_arrs(
-#     ensemble_single_incarr,
+#     emergent_incidence_arr,
 #     noisearr,
 #     ensemble_single_outbreak_detection_spec,
 #     ensemble_single_individual_test_spec_lag,
@@ -161,7 +161,7 @@ testarr_no_lag, test_movingvg_arr_no_lag, inferred_positives_arr_no_lag = create
 #%%
 inferred_positive_no_lag_plot = lines(
     ensemble_time_specification.trange,
-    ensemble_single_incarr[:, 1, 1];
+    emergent_incidence_arr[:, 1, 1];
     color = :orange,
 )
 lines!(
@@ -180,7 +180,7 @@ save(
 #%%
 # inferred_positive_lag_plot = lines(
 #     ensemble_time_specification.trange,
-#     ensemble_single_incarr[:, 1, 1];
+#     emergent_incidence_arr[:, 1, 1];
 #     color = :orange,
 # )
 # lines!(
@@ -227,7 +227,7 @@ DelimitedFiles.writedlm(
         "tests",
         "incidence-array_1d_sim-$(sim_num).csv",
     ),
-    ensemble_single_incarr[:, 1, sim_num],
+    emergent_incidence_arr[:, 1, sim_num],
     ',',
 )
 
@@ -237,7 +237,7 @@ DelimitedFiles.writedlm(
         "tests",
         "incidence-array_30d_sim-$(sim_num).csv",
     ),
-    CSDNoise.aggregate_timeseries(ensemble_single_incarr[:, 1, sim_num], 30),
+    CSDNoise.aggregate_timeseries(emergent_incidence_arr[:, 1, sim_num], 30),
     ',',
 )
 
@@ -253,8 +253,8 @@ backward_ews_1d = StructArray(
     EWSMetrics[
         EWSMetrics(
                 EWSMetricSpecification(Backward, 1, 35, 1),
-                ensemble_single_incarr[:, 1, sim],
-            ) for sim in axes(ensemble_single_incarr, 3)
+                emergent_incidence_arr[:, 1, sim],
+            ) for sim in axes(emergent_incidence_arr, 3)
     ],
 )
 
@@ -262,8 +262,8 @@ backward_ews_30d = StructArray(
     EWSMetrics[
         EWSMetrics(
                 EWSMetricSpecification(Backward, 30, 35, 1),
-                ensemble_single_incarr[:, 1, sim],
-            ) for sim in axes(ensemble_single_incarr, 3)
+                emergent_incidence_arr[:, 1, sim],
+            ) for sim in axes(emergent_incidence_arr, 3)
     ],
 )
 
@@ -271,8 +271,8 @@ centered_ews_1d = StructArray(
     EWSMetrics[
         EWSMetrics(
                 EWSMetricSpecification(Centered, 1, 35, 1),
-                ensemble_single_incarr[:, 1, sim],
-            ) for sim in axes(ensemble_single_incarr, 3)
+                emergent_incidence_arr[:, 1, sim],
+            ) for sim in axes(emergent_incidence_arr, 3)
     ],
 )
 
@@ -280,8 +280,8 @@ centered_ews_30d = StructArray(
     EWSMetrics[
         EWSMetrics(
                 EWSMetricSpecification(Centered, 30, 35, 1),
-                ensemble_single_incarr[:, 1, sim],
-            ) for sim in axes(ensemble_single_incarr, 3)
+                emergent_incidence_arr[:, 1, sim],
+            ) for sim in axes(emergent_incidence_arr, 3)
     ],
 )
 
@@ -324,7 +324,7 @@ compare_against_spaero(
 
 #%%
 Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     backward_ews_1d,
@@ -336,7 +336,7 @@ Reff_ews_plot(
 
 #%%
 autocov_backward_1d = Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     backward_ews_1d,
@@ -357,7 +357,7 @@ save(
 #%%
 
 autocov_centered_1d = Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     centered_ews_1d,
@@ -378,7 +378,7 @@ save(
 
 #%%
 Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     backward_ews_30d,
@@ -391,7 +391,7 @@ Reff_ews_plot(
 
 #%%
 Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     backward_ews_30d,
@@ -404,7 +404,7 @@ Reff_ews_plot(
 
 #%%
 var_backward_30d = Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     backward_ews_30d,
@@ -426,7 +426,7 @@ save(
 
 #%%
 var_centered_30d = Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     centered_ews_30d,
@@ -447,7 +447,7 @@ save(
 
 #%%
 Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     centered_ews_30d,
@@ -460,7 +460,7 @@ Reff_ews_plot(
 
 #%%
 Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     centered_ews_30d,
@@ -473,7 +473,7 @@ Reff_ews_plot(
 
 #%%
 Reff_ews_plot(
-    ensemble_single_incarr,
+    emergent_incidence_arr,
     ensemble_single_Reff_arr,
     ensemble_single_Reff_thresholds_vec,
     backward_ews_1d,
@@ -500,7 +500,7 @@ for ewsmetric in ewsmetrics
         mkpath(spaero_comparison_dir)
 
         inc_ews_metric_plot = Reff_ews_plot(
-            ensemble_single_incarr,
+            emergent_incidence_arr,
             ensemble_single_Reff_arr,
             ensemble_single_Reff_thresholds_vec,
             inc_ews,
@@ -532,7 +532,7 @@ for ewsmetric in ewsmetrics
             )
         )
         test_ews_metric_plot = Reff_ews_plot(
-            ensemble_single_incarr,
+            emergent_incidence_arr,
             ensemble_single_Reff_arr,
             ensemble_single_Reff_thresholds_vec,
             ewsmetric_sa,
@@ -559,7 +559,7 @@ end
 #     poisson_noise_prop,
 #     noisedir,
 #     OT_chars,
-#     ensemble_single_incarr,
+#     emergent_incidence_arr,
 #     testarr,
 #     test_movingvg_arr,
 #     ensemble_single_individual_test_spec_no_lag,

@@ -547,6 +547,22 @@ struct SEIRRun
     incidence::Vector{Int64}
 end
 
+abstract type AbstractThresholds end
+
+struct Thresholds{L} <: AbstractThresholds
+    lower_bounds::SizedVector{L, Int64}
+    upper_bounds::SizedVector{L, Int64}
+    duration::SizedVector{L, Int64}
+end
+
+struct OutbreakThresholds{L} <: AbstractThresholds
+    lower_bounds::SizedVector{L, Int64}
+    upper_bounds::SizedVector{L, Int64}
+    duration::SizedVector{L, Int64}
+    num_infections_during_bounds::SizedVector{L, Int64}
+end
+
+
 abstract type AbstractEWSMethod end
 struct Backward end
 struct Centered end

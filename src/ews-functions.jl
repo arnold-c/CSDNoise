@@ -223,7 +223,7 @@ end
 # end
 
 function filter_outbreak_thresholds(
-        thresholds::T; thresholds_col = 4
+        thresholds::T
     ) where {T <: AbstractArray{<:Int}}
 
     return thresholds[(thresholds[:, thresholds_col] .== 1), :]

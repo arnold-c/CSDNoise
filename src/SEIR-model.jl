@@ -25,9 +25,9 @@ function seir_mod(
         time_params::SimTimeParameters;
         seed::Int64 = 1234
     )
-    state_vec = Vector{typeof(states)}(undef, time_params.tlength)
+    state_vec = SizedVector{time_params.tlength, typeof(states)}(undef)
     beta_vec = Vector{Float64}(undef, time_params.tlength)
-    inc_vec = Vector{Int64}(undef, time_params.tlength)
+    inc_vec = SizedVector{time_params.tlength, Int64}(undef)
 
     for i in eachindex(beta_vec)
         beta_vec[i] = calculate_beta_amp(
@@ -58,8 +58,8 @@ function seir_mod(
         time_params::SimTimeParameters;
         seed::Int64 = 1234
     )
-    state_vec = Vector{typeof(states)}(undef, time_params.tlength)
-    inc_vec = Vector{Int64}(undef, time_params.tlength)
+    state_vec = SizedVector{time_params.tlength, typeof(states)}(undef)
+    inc_vec = SizedVector{time_params.tlength, Int64}(undef)
 
     seir_mod!(
         state_vec,
@@ -89,8 +89,8 @@ function seir_mod!(
         time_params::SimTimeParameters,
         seed::Int64,
     ) where {
-        ASV <: AbstractArray{SVector{5, Int64}},
-        AI <: AbstractArray{Int64},
+        ASV <: AbstractVector{SVector{5, Int64}},
+        AI <: AbstractVector{Int64},
     }
     Random.seed!(seed)
 

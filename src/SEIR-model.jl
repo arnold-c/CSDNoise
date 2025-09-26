@@ -29,6 +29,15 @@ function seir_mod(
     beta_vec = Vector{Float64}(undef, time_params.tlength)
     inc_vec = Vector{Int64}(undef, time_params.tlength)
 
+    for i in eachindex(beta_vec)
+        beta_vec[i] = calculate_beta_amp(
+            dynamics_params.beta_mean,
+            dynamics_params.beta_force,
+            time_params.trange[i];
+            seasonality = dynamics_params.seasonality
+        )
+    end
+
     seir_mod!(
         state_vec,
         inc_vec,
@@ -39,8 +48,32 @@ function seir_mod(
         seed,
     )
 
-    return state_vec, inc_vec, beta_vec
+    return SEIRRun(state_vec, inc_vec)
 end
+
+function seir_mod(
+        states::SVector{5, Int64},
+        dynamics_params::DynamicsParameters,
+        beta_vec::Vector{Float64},
+        time_params::SimTimeParameters;
+        seed::Int64 = 1234
+    )
+    state_vec = Vector{typeof(states)}(undef, time_params.tlength)
+    inc_vec = Vector{Int64}(undef, time_params.tlength)
+
+    seir_mod!(
+        state_vec,
+        inc_vec,
+        beta_vec,
+        states,
+        dynamics_params,
+        time_params,
+        seed,
+    )
+
+    return SEIRRun(state_vec, inc_vec)
+end
+
 
 """
     seir_mod!(state_arr, change_arr, jump_arr, beta_arr, states, dynamics_params, trange; tstep, type = "stoch")

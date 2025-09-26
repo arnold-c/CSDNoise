@@ -542,6 +542,11 @@ function getdirpath(spec::Union{PoissonNoise, DynamicalNoise})
     )
 end
 
+struct SEIRRun
+    states::Vector{SVector{5, Int64}}
+    incidence::Vector{Int64}
+end
+
 abstract type AbstractEWSMethod end
 struct Backward end
 struct Centered end

@@ -49,28 +49,20 @@ end
 
 Generate a single ensemble simulation with the given specification and seed.
 """
-function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::Int64)
+function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::Int64 = 1234)
     @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims = ensemble_spec
     @unpack tstep, tlength, trange = time_parameters
 
     init_states_sv = SVector(state_parameters.init_states)
 
     # Get concrete type to avoid abstract element types
-    init_state_type = typeof(init_states_sv)
-    ensemble_seir_vecs = Array{init_state_type, 2}(
-        undef, tlength, nsims
-    )
-
-    # Use concrete SVector type instead of typeof(SVector(0))
-    ensemble_inc_vecs = Array{Int64, 2}(
-        undef, tlength, nsims
+    seir_results = Vector{SEIRRun}(
+        undef, nsims
     )
 
     beta_vec = zeros(Float64, tlength)
     ensemble_Reff_arr = zeros(Float64, tlength, nsims)
-    ensemble_Reff_thresholds_vec = Vector{Array{Int64, 2}}(
-        undef, size(ensemble_inc_vecs, 2)
-    )
+    ensemble_Reff_thresholds_vec = Vector{Array{Int64, 2}}(undef, nsims)
 
     dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
 
@@ -84,7 +76,7 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
         )
     end
 
-    for sim in axes(ensemble_inc_vecs, 2)
+    for sim in eachindex(seir_results)
         run_seed = seed + (sim - 1)
 
         local dynp = DynamicsParameters(
@@ -92,22 +84,21 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
         )
         dynamics_parameters[sim] = dynp
 
-        seir_mod!(
-            @view(ensemble_seir_vecs[:, sim]),
-            @view(ensemble_inc_vecs[:, sim]),
-            beta_vec,
+        local seir_res = seir_mod(
             init_states_sv,
             dynp,
-            time_parameters,
-            run_seed,
+            beta_vec,
+            time_parameters;
+            seed = run_seed,
         )
+        seir_results[sim] = seir_res
 
         calculateReffective_t!(
             @view(ensemble_Reff_arr[:, sim]),
             beta_vec,
-            dynamics_parameters[sim],
+            dynp,
             1,
-            @view(ensemble_seir_vecs[:, sim])
+            seir_res.states
         )
 
         ensemble_Reff_thresholds_vec[sim] = Reff_ge_than_one(
@@ -116,12 +107,11 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     end
 
     return (
-        ensemble_seir_vecs = ensemble_seir_vecs,
         ensemble_spec = ensemble_spec,
         dynamics_parameters = dynamics_parameters,
+        seir_results,
         ensemble_Reff_arr = ensemble_Reff_arr,
         ensemble_Reff_thresholds_vec = ensemble_Reff_thresholds_vec,
-        ensemble_inc_vecs = ensemble_inc_vecs,
     )
 end
 

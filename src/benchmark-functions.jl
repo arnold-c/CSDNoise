@@ -41,7 +41,7 @@ function generate_ensemble_data(ensemble_specification, null_specification, ense
         ensemble_single_incarr = ensemble_inc_arr,
         null_single_incarr = null_inc_arr,
         ensemble_single_Reff_thresholds_vec = ensemble_data[:ensemble_Reff_thresholds_vec],
-        ensemble_single_periodsum_vecs = ensemble_thresholds_vec,
+        emergent_outbreak_threshold_vec = ensemble_thresholds_vec,
     )
 end
 

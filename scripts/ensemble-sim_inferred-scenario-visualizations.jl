@@ -50,7 +50,7 @@ ensemble_single_scenario_inc_file = get_ensemble_file(
 )
 
 ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
-ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
 
 ensemble_single_inc_ews_1d = get_ensemble_file(
     ensemble_specification,
@@ -70,7 +70,7 @@ mkpath(plotsdir("ensemble/single-scenario"))
 ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     ensemble_single_incarr,
     ensemble_single_seir_arr,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     threshold = ensemble_outbreak_specification.outbreak_threshold,
 )
@@ -88,7 +88,7 @@ for sim_num in [10, 20, 55]
         ensemble_single_incarr,
         ensemble_single_Reff_arr,
         ensemble_single_Reff_thresholds_vec,
-        ensemble_single_periodsum_vecs,
+        emergent_outbreak_threshold_vec,
         ensemble_time_specification;
         sim = sim_num,
         threshold = ensemble_outbreak_specification.outbreak_threshold,
@@ -252,36 +252,36 @@ source(here::here("scripts", "spaero-ews.R"))
 backward_ews_1d = StructArray(
     EWSMetrics[
         EWSMetrics(
-            EWSMetricSpecification(Backward, 1, 35, 1),
-            ensemble_single_incarr[:, 1, sim],
-        ) for sim in axes(ensemble_single_incarr, 3)
+                EWSMetricSpecification(Backward, 1, 35, 1),
+                ensemble_single_incarr[:, 1, sim],
+            ) for sim in axes(ensemble_single_incarr, 3)
     ],
 )
 
 backward_ews_30d = StructArray(
     EWSMetrics[
         EWSMetrics(
-            EWSMetricSpecification(Backward, 30, 35, 1),
-            ensemble_single_incarr[:, 1, sim],
-        ) for sim in axes(ensemble_single_incarr, 3)
+                EWSMetricSpecification(Backward, 30, 35, 1),
+                ensemble_single_incarr[:, 1, sim],
+            ) for sim in axes(ensemble_single_incarr, 3)
     ],
 )
 
 centered_ews_1d = StructArray(
     EWSMetrics[
         EWSMetrics(
-            EWSMetricSpecification(Centered, 1, 35, 1),
-            ensemble_single_incarr[:, 1, sim],
-        ) for sim in axes(ensemble_single_incarr, 3)
+                EWSMetricSpecification(Centered, 1, 35, 1),
+                ensemble_single_incarr[:, 1, sim],
+            ) for sim in axes(ensemble_single_incarr, 3)
     ],
 )
 
 centered_ews_30d = StructArray(
     EWSMetrics[
         EWSMetrics(
-            EWSMetricSpecification(Centered, 30, 35, 1),
-            ensemble_single_incarr[:, 1, sim],
-        ) for sim in axes(ensemble_single_incarr, 3)
+                EWSMetricSpecification(Centered, 30, 35, 1),
+                ensemble_single_incarr[:, 1, sim],
+            ) for sim in axes(ensemble_single_incarr, 3)
     ],
 )
 
@@ -301,7 +301,7 @@ ewsmetrics = [
 compare_against_spaero(
     spaero_ews_centered_1d,
     ensemble_single_inc_ews_1d[sim_num];
-    tolerance = 1e-10,
+    tolerance = 1.0e-10,
     showwarnings = false,
     ews = [:mean],
 )
@@ -309,7 +309,7 @@ compare_against_spaero(
 compare_against_spaero(
     spaero_ews_backward_1d,
     backward_ews_1d[sim_num];
-    tolerance = 1e-10,
+    tolerance = 1.0e-10,
     showdiffs = true,
     ews = ewsmetrics,
 )
@@ -317,7 +317,7 @@ compare_against_spaero(
 compare_against_spaero(
     spaero_ews_backward_30d,
     backward_ews_30d[sim_num];
-    tolerance = 1e-10,
+    tolerance = 1.0e-10,
     showdiffs = true,
     ews = ewsmetrics,
 )
@@ -330,8 +330,8 @@ Reff_ews_plot(
     backward_ews_1d,
     spaero_ews_backward_1d,
     :autocorrelation,
-    ensemble_single_periodsum_vecs,
-    ensemble_time_specification;
+    emergent_outbreak_threshold_vec,
+    ensemble_time_specification
 )
 
 #%%
@@ -342,7 +342,7 @@ autocov_backward_1d = Reff_ews_plot(
     backward_ews_1d,
     spaero_ews_backward_1d,
     :autocovariance,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     plottitle = "Backward 1d Autocovariance",
     ylims_metric = (0, 0.5),
@@ -363,7 +363,7 @@ autocov_centered_1d = Reff_ews_plot(
     centered_ews_1d,
     spaero_ews_centered_1d,
     :autocovariance,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     plottitle = "centered 1d Autocovariance",
     ylims_metric = (0, 0.5),
@@ -384,7 +384,7 @@ Reff_ews_plot(
     backward_ews_30d,
     spaero_ews_backward_30d,
     :autocorrelation,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -397,7 +397,7 @@ Reff_ews_plot(
     backward_ews_30d,
     spaero_ews_backward_30d,
     :autocovariance,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -410,7 +410,7 @@ var_backward_30d = Reff_ews_plot(
     backward_ews_30d,
     spaero_ews_backward_30d,
     :autocovariance,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     aggregation = 30,
     plottitle = "Backward 30d Autocovariance",
@@ -432,7 +432,7 @@ var_centered_30d = Reff_ews_plot(
     centered_ews_30d,
     spaero_ews_centered_30d,
     :autocovariance,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     aggregation = 30,
     plottitle = "Centered 30d Autocovariance",
@@ -453,7 +453,7 @@ Reff_ews_plot(
     centered_ews_30d,
     spaero_ews_centered_30d,
     :autocovariance,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -466,7 +466,7 @@ Reff_ews_plot(
     centered_ews_30d,
     spaero_ews_centered_30d,
     :coefficient_of_variation,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     aggregation = 30,
 )
@@ -479,16 +479,16 @@ Reff_ews_plot(
     backward_ews_1d,
     spaero_ews_backward_1d,
     :autocorrelation,
-    ensemble_single_periodsum_vecs,
-    ensemble_time_specification;
+    emergent_outbreak_threshold_vec,
+    ensemble_time_specification
 )
 
 #%%
 for ewsmetric in ewsmetrics
     for (ews_metric_specification, inc_ews) in zip(
-        [ews_metric_specification_1d, ews_metric_specification_30d],
-        [ensemble_single_inc_ews_1d, ensemble_single_inc_ews_30d],
-    )
+            [ews_metric_specification_1d, ews_metric_specification_30d],
+            [ensemble_single_inc_ews_1d, ensemble_single_inc_ews_30d],
+        )
         basedir = plotsdir(
             "ensemble/single-scenario/ewsmetrics/$(ews_metric_specification.dirpath)"
         )
@@ -505,7 +505,7 @@ for ewsmetric in ewsmetrics
             ensemble_single_Reff_thresholds_vec,
             inc_ews,
             ewsmetric,
-            ensemble_single_periodsum_vecs,
+            emergent_outbreak_threshold_vec,
             ensemble_time_specification;
             sim = sim_num,
             threshold = ensemble_outbreak_specification.outbreak_threshold,
@@ -522,20 +522,22 @@ for ewsmetric in ewsmetrics
     end
 
     for (ewsmetric_sa, lag_label) in
-        zip((
-        # ewsmetrics_lag,
-        [ewsmetrics_no_lag]
-    ), (
-        # "lag",
-        ["no_lag"]
-    ))
+        zip(
+            (
+                # ewsmetrics_lag,
+                [ewsmetrics_no_lag]
+            ), (
+                # "lag",
+                ["no_lag"]
+            )
+        )
         test_ews_metric_plot = Reff_ews_plot(
             ensemble_single_incarr,
             ensemble_single_Reff_arr,
             ensemble_single_Reff_thresholds_vec,
             ewsmetric_sa,
             ewsmetric,
-            ensemble_single_periodsum_vecs,
+            emergent_outbreak_threshold_vec,
             ensemble_time_specification;
             sim = sim_num,
             threshold = ensemble_outbreak_specification.outbreak_threshold,

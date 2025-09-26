@@ -384,7 +384,7 @@ function ews_hyperparam_gridsearch!(
         ensemble_single_incarr,
         null_single_incarr,
         ensemble_single_Reff_thresholds_vec,
-        ensemble_single_periodsum_vecs =
+        emergent_outbreak_threshold_vec =
         data_arrs
 
     ensemble_nsims = size(ensemble_single_incarr, 3)
@@ -718,7 +718,7 @@ function get_enddate_thresholds(data_arrs, enddate_type::Union{Reff_start, Reff_
 end
 
 function get_enddate_thresholds(data_arrs, enddate_type::Union{Outbreak_start, Outbreak_middle, Outbreak_end})
-    return data_arrs.ensemble_single_periodsum_vecs
+    return data_arrs.emergent_outbreak_threshold_vec
 end
 
 function optimal_ews_heatmap_plot(

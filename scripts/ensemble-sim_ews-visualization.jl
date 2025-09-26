@@ -93,8 +93,8 @@ ensemble_single_scenario_inc_file = get_ensemble_file(
     ensemble_specification, ensemble_outbreak_specification
 )
 
-ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
-ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+emergent_incidence_arr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
+emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
 
 ensemble_single_Reff_arr = get_ensemble_file(
     ensemble_specification
@@ -129,7 +129,7 @@ ensemble_single_scenario_incidence_Reff_plot = ensemble_incarr_Reff_plot(
     ensemble_single_incarr[:, :, selected_sims],
     ensemble_single_Reff_arr[:, selected_sims],
     ensemble_single_Reff_thresholds_vec[selected_sims],
-    ensemble_single_periodsum_vecs[selected_sims], ;
+    emergent_outbreak_threshold_vec[selected_sims], ;
     outbreak_alpha = 0.1,
     Reff_alpha = 1,
 )
@@ -149,7 +149,7 @@ save(
 ensemble_single_scenario_incidence_prevalence_plot = incidence_prevalence_plot(
     ensemble_single_incarr,
     ensemble_single_seir_arr,
-    ensemble_single_periodsum_vecs,
+    emergent_outbreak_threshold_vec,
     ensemble_time_specification;
     sim = 1,
     threshold = ensemble_outbreak_specification.outbreak_threshold,
@@ -260,7 +260,7 @@ ews_df = DataFrame(
             [Reff_start, Reff_end] =>
                 ensemble_single_Reff_thresholds_vec
             [Outbreak_start, Outbreak_end, Outbreak_middle] =>
-                ensemble_single_periodsum_vecs
+                emergent_outbreak_threshold_vec
         end
 
         for test_specification in test_specification_vec
@@ -457,8 +457,8 @@ ews_df = DataFrame(
                     ews_metric_specification.aggregation
 
                 aggregated_outbreak_thresholds_arr =
-                    ensemble_single_periodsum_vecs[sim][
-                    (ensemble_single_periodsum_vecs[sim][:, 4] .== 1),
+                    emergent_outbreak_threshold_vec[sim][
+                    (emergent_outbreak_threshold_vec[sim][:, 4] .== 1),
                     [1, 2],
                 ] .÷ ews_metric_specification.aggregation
 

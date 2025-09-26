@@ -132,11 +132,11 @@ null_single_scenario_inc_file = get_ensemble_file(
     null_specification, ensemble_outbreak_specification
 )
 
-ensemble_single_incarr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
-ensemble_single_periodsum_vecs = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
+emergent_incidence_arr = ensemble_single_scenario_inc_file["ensemble_inc_arr"]
+emergent_outbreak_threshold_vec = ensemble_single_scenario_inc_file["ensemble_thresholds_vec"]
 
-null_single_incarr = null_single_scenario_inc_file["ensemble_inc_arr"]
-null_single_periodsum_vecs = null_single_scenario_inc_file["ensemble_thresholds_vec"]
+null_incidence_arr = null_single_scenario_inc_file["ensemble_inc_arr"]
+null_outbreak_threshold_vecs = null_single_scenario_inc_file["ensemble_thresholds_vec"]
 
 ensemble_single_Reff_arr = get_ensemble_file(
     ensemble_specification
@@ -270,8 +270,8 @@ multistart_optimal_ews_df = ews_multistart_optimization(
     specification_vecs,
     (;
         ensemble_specification,
-        ensemble_single_incarr,
-        null_single_incarr,
+        emergent_incidence_arr,
+        null_incidence_arr,
         ensemble_single_Reff_thresholds_vec,
         ensemble_single_periodsum_vecs,
     );
@@ -317,8 +317,8 @@ println(styled"Burnin (fixed) - Values: {cyan:$(unique(burnin_days))} days")
 create_optimal_ews_plots(
     optimal_multistart_results,
     ensemble_specification,
-    ensemble_single_incarr,
-    null_single_incarr,
+    emergent_incidence_arr,
+    null_incidence_arr,
     ensemble_single_Reff_thresholds_vec,
     ["specificity", "speed"];
     optimal_grouping_parameters = [

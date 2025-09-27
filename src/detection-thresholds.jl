@@ -9,6 +9,16 @@ using StaticArrays: SizedVector
 using StructArrays: StructVector
 
 function calculate_outbreak_thresholds(
+        seir_results::StructVector{SEIRRun},
+        outbreak_specification::OutbreakSpecification
+    )
+    return calculate_outbreak_thresholds(
+        seir_results.incidence,
+        outbreak_specification
+    )
+end
+
+function calculate_outbreak_thresholds(
         incidence_vecs::VSV,
         outbreak_specification::OutbreakSpecification
     ) where {VSV <: AbstractVector{<:SizedVector}}

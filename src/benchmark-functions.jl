@@ -15,33 +15,38 @@ export generate_ensemble_data, generate_single_ensemble,
 
 Generate ensemble and null data arrays for benchmarking optimization methods.
 """
-function generate_ensemble_data(ensemble_specification, null_specification, ensemble_outbreak_specification)
+function generate_ensemble_data(
+        ensemble_specification,
+        null_specification,
+        ensemble_outbreak_specification;
+        seed = 1234
+    )
     println(styled"  Generating ensemble dynamics...")
 
     # Generate ensemble data by calling the core simulation function directly
-    ensemble_data = generate_single_ensemble(ensemble_specification; seed = 42)
+    emergent_seir_results = generate_single_ensemble(ensemble_specification; seed = seed)
 
     println(styled"  Generating null dynamics...")
 
     # Generate null data
-    null_data = generate_single_ensemble(null_specification; seed = 42)
+    null_seir_results = generate_single_ensemble(null_specification; seed = seed)
 
     println(styled"  Processing outbreak data...")
 
     # Generate incidence arrays for the outbreak specification using the incidence vectors
-    emergent_incidence_arr, emergent_outbreak_threshold_vecs = calculate_outbreak_thresholds(
-        ensemble_data[:ensemble_inc_vecs], ensemble_outbreak_specification
+    emergent_outbreak_thresholds = calculate_outbreak_thresholds(
+        emergent_seir_results, ensemble_outbreak_specification
     )
 
-    null_incidence_arr, null_outbreak_threshold_vecs = calculate_outbreak_thresholds(
-        null_data[:ensemble_inc_vecs], ensemble_outbreak_specification
+    null_outbreak_thresholds = calculate_outbreak_thresholds(
+        null_seir_results, ensemble_outbreak_specification
     )
 
     return (
-        emergent_incidence_arr,
-        null_incidence_arr,
-        ensemble_single_Reff_thresholds_vec = ensemble_data[:ensemble_Reff_thresholds_vec],
-        emergent_outbreak_threshold_vecs = emergent_outbreak_threshold_vecs,
+        emergent_seir_results,
+        emergent_outbreak_thresholds,
+        null_seir_results,
+        null_outbreak_thresholds,
     )
 end
 

@@ -96,72 +96,18 @@ covid_spec = create_ensemble_specs(
     )
 )
 
-# Is this the max vaccination rate for the emergent time series??
-calculate_vaccination_rate_to_achieve_Reff(
-    0.9,
-    10,
-    500_000 * 0.05,
-    500_000,
-    3.3,
-    MU
+
+#%%
+measles_ensemble_data = generate_single_ensemble(
+    measles_spec[1];
+    seed = 1234
 )
 
-#%%
-measles_spec[1].dynamics_parameter_specification.min_burnin_vaccination_coverage
-measles_spec[1].dynamics_parameter_specification.min_vaccination_coverage
-measles_spec[1].dynamics_parameter_specification.max_vaccination_coverage
-
-covid_spec[1].dynamics_parameter_specification.min_burnin_vaccination_coverage
-covid_spec[1].dynamics_parameter_specification.min_burnin_vaccination_coverage
-
-measles_spec[3] == covid_spec[3]
-ensemble_outbreak_specification = measles_spec[3]
-
-#%%
-measles_ensemble_data = generate_single_ensemble(measles_spec[1]; seed = 1234)
-
-#%%
-measles_inc_arr = getindex.(measles_ensemble_data.ensemble_inc_vecs, 1)
-measles_enddates = Vector{Int64}(undef, length(measles_ensemble_data.ensemble_Reff_thresholds_vec));
-measles_incs = Vector{Vector{Int64}}(undef, length(measles_enddates))
-
-for i in eachindex(measles_enddates)
-    local enddate = Try.@? calculate_ews_enddate(measles_ensemble_data.ensemble_Reff_thresholds_vec[i], EWSEndDateType(Reff_start()))
-    measles_enddates[i] = enddate
-    measles_incs[i] = measles_inc_arr[1:enddate, i]
-end
-
-#%%
-mean_measles_incs = Vector{Float64}(undef, maximum(measles_enddates))
-for i in eachindex(mean_measles_incs)
-    # Only include vectors that have data at position i
-    local values_at_i = Int64[
-        measles_incs[j][i] for j in eachindex(measles_incs) if i <= length(measles_incs[j])
-    ]
-    mean_measles_incs[i] = mean(values_at_i)
-end
-
-#%%
-# Generate incidence arrays for the outbreak specification using the incidence vectors
-measles_emergent_incidence_arr = create_inc_infec_arr(
-    measles_ensemble_data[:ensemble_inc_vecs], ensemble_outbreak_specification
-)[1]
-
-
-mean_measles = StatsBase.mean(measles_emergent_incidence_arr[:, 1, :])
-mean_measles = StatsBase.mean(measles_emergent_incidence_arr[1:3651, 1, :])
-mean_measles2 = StatsBase.mean(emergent_incidence_arr[:, 1, :])
-
-#%%
-covid_ensemble_data = generate_single_ensemble(covid_spec[1]; seed = 1234)
-
-# Generate incidence arrays for the outbreak specification using the incidence vectors
-covid_emergent_incidence_arr = create_inc_infec_arr(
-    covid_ensemble_data[:ensemble_inc_vecs], ensemble_outbreak_specification
-)[1]
-
-
-mean_covid = StatsBase.mean(covid_emergent_incidence_arr[:, 1, :])
+measles_mean_vec = map(
+    res -> mean(res.incidence),
+    measles_ensemble_data.seir_results
+)
+measles_mean = mean(measles_mean_vec)
 
 #%%
 measles_dynamical_noise_spec = (;
@@ -172,106 +118,27 @@ measles_dynamical_noise_spec = (;
     poisson_component = 0.15,
 )
 
-covid_dynamical_noise_spec = (;
-    R0 = 1.28,
-    latent_period = 1,
-    duration_infection = 4.8,
-    correlation = "in-phase",
-    poisson_component = 0.15,
-)
-
-
-#%%
-using JLD2
-emergent_incidence_arr = JLD2.load("/Users/cfa5228/Documents/Repos/CSDNoise/out/ensemble/seasonal-infectivity-import/tau-leaping/N_500000/r_0.95/nsims_100/R0_16.0/latent_period_10.0/infectious_period_8.0/min_burnin_vaccination_coverage_0.9269/max_burnin_vaccination_coverage_1.0/min_vaccination_coverage_0.6/max_vaccination_coverage_0.8/births_per_k_27/beta_force_0.0/burnin_1825.0/tmax_7300.0/tstep_1.0/min_outbreak_dur_30/min_outbreak_size_500/outbreak_threshold_5/ensemble-incidence-array.jld2")["emergent_incidence_arr"]
-
-#%%
-size(measles_emergent_incidence_arr) == size(emergent_incidence_arr)
-
-#%%
-test_noise_spec = NoiseSpecification(
-    DynamicalNoise(
-        5.0,
-        7,
-        14,
-        "in-phase",
-        0.15,
-        0.8,
-        0.9
-    )
-)
-
-#%%
-@benchmark create_noise_arr(
-    $test_noise_spec,
-    $measles_spec[1];
-    seed = 1234,
-)
-
-#%%
-measles_dynamical_noise_coverages = map(
-    ((scale, coverage_range),) -> calculate_dynamic_vaccination_coverage(
-        scale,
-        mean_measles,
-        measles_dynamical_noise_spec,
-        measles_spec[1];
-        maxiters = 20,
-        vaccination_mean_range = coverage_range,
-        max_vaccination_range = 0.2,
-        atol = 0.02,
-        showprogress = false,
-    ),
-    zip(
-        [1, 7],
-        [[0.1, 0.9], [0.05, 0.15]],
-    ),
-)
-
-#%%
-measles_dynamical_noise_coverages2 = map(
-    ((scale, coverage_range),) -> calculate_dynamic_vaccination_coverage(
-        scale,
-        mean_measles2,
-        measles_dynamical_noise_spec,
-        measles_spec[1];
-        maxiters = 20,
-        vaccination_mean_range = coverage_range,
-        max_vaccination_range = 0.2,
-        atol = 0.02,
-        showprogress = false,
-    ),
-    zip(
-        [1, 7],
-        [[0.1, 0.9], [0.05, 0.15]],
-    ),
-)
-
-# #%%
-# map(
-#     ((t, c),) -> t[2] - c * mean_measles,
-#     zip(measles_dynamical_noise_coverages, [1, 7]),
-# )
 
 #%%
 for scaling in (1.0, 2.0, 4.0, 6.0)
     measles_res = calculate_dynamic_vaccination_coverage_multistart(
         scaling,  # target_scaling
-        mean_measles,
+        measles_mean,
         measles_dynamical_noise_spec,
         measles_spec[1]
     )
-    covid_res = calculate_dynamic_vaccination_coverage_multistart(
-        scaling,  # target_scaling
-        mean_covid,
-        covid_dynamical_noise_spec,
-        covid_spec[1]
-    )
+    # covid_res = calculate_dynamic_vaccination_coverage_multistart(
+    #     scaling,  # target_scaling
+    #     mean_covid,
+    #     covid_dynamical_noise_spec,
+    #     covid_spec[1]
+    # )
     println("\nScaling: $scaling\n")
     println("-"^20)
     println("Measles")
     println(measles_res)
-    println("COVID")
-    println(covid_res)
+    # println("COVID")
+    # println(covid_res)
     println()
     println("="^60)
 end
@@ -295,7 +162,7 @@ measles_noise_arr = create_noise_arr(
     measles_noise_spec_4x,
     measles_spec[1];
     seed = 1234,
-)[1]
+)
 
 #%%
 fig = Figure()

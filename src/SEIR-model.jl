@@ -128,21 +128,26 @@ function seir_mod!(
         )
     end
 
+    # Pre-compute constant values to avoid repeated calculations
+    mu_timestep = mu * timestep
+    sigma_timestep = sigma * timestep
+    gamma_timestep = gamma * timestep
+    epsilon_over_R0_timestep = (epsilon / R_0) * timestep
+
     @inbounds for i in 2:(tlength)
-        if i < burnin_days
-            vaccination_coverage = dynamics_params.burnin_vaccination_coverage
+        vaccination_coverage = if i < burnin_days
+            dynamics_params.burnin_vaccination_coverage
         else
-            vaccination_coverage = dynamics_params.vaccination_coverage
+            dynamics_params.vaccination_coverage
         end
 
         state_vec[i], inc_vec[i] = seir_mod_loop(
             state_vec[i - 1],
             beta_vec[i - 1],
-            mu,
-            epsilon,
-            sigma,
-            gamma,
-            R_0,
+            mu_timestep,
+            epsilon_over_R0_timestep,
+            sigma_timestep,
+            gamma_timestep,
             vaccination_coverage,
             timestep,
         )
@@ -162,14 +167,13 @@ end
 
 The inner loop that is called by `seir_mod!()` function.
 """
-function seir_mod_loop(
+@inline function seir_mod_loop(
         state_vec::SVector{5, Int64},
         beta_t::Float64,
-        mu::Float64,
-        epsilon::Float64,
-        sigma::Float64,
-        gamma::Float64,
-        R_0::Float64,
+        mu_timestep::Float64,
+        epsilon_over_R0_timestep::Float64,
+        sigma_timestep::Float64,
+        gamma_timestep::Float64,
         vaccination_coverage::Float64,
         timestep::Float64,
     )::Tuple{SVector{5, Int64}, Int64}
@@ -181,16 +185,20 @@ function seir_mod_loop(
         R = state_vec[4]
         N = state_vec[5]
 
-        contact_inf = rand(Poisson(beta_t * S * I * timestep)) # Contact: S -> E
-        S_births = rand(Poisson(mu * (1 - vaccination_coverage) * N * timestep)) # Birth -> S
-        S_death = rand(Poisson(mu * S * timestep)) # S -> death
-        R_death = rand(Poisson(mu * R * timestep)) # R -> death
-        import_inf = rand(Poisson((epsilon * N / R_0) * timestep)) # Import: S -> E
-        R_births = rand(Poisson(mu * vaccination_coverage * N * timestep)) # Birth -> R
-        latent = rand(Binomial(E, sigma * timestep)) # E -> I
-        E_death = rand(Binomial(E - latent, mu * timestep)) # E -> death
-        recovery = rand(Binomial(I, gamma * timestep)) # I -> R
-        I_death = rand(Binomial(I - recovery, mu * timestep)) # I -> death
+        # Pre-compute common terms
+        beta_S_I_timestep = beta_t * S * I * timestep
+        mu_N_timestep = mu_timestep * N
+
+        contact_inf = rand(Poisson(beta_S_I_timestep)) # Contact: S -> E
+        S_births = rand(Poisson(mu_N_timestep * (1 - vaccination_coverage))) # Birth -> S
+        S_death = rand(Poisson(mu_timestep * S)) # S -> death
+        R_death = rand(Poisson(mu_timestep * R)) # R -> death
+        import_inf = rand(Poisson(epsilon_over_R0_timestep * N)) # Import: S -> E
+        R_births = rand(Poisson(mu_N_timestep * vaccination_coverage)) # Birth -> R
+        latent = rand(Binomial(E, sigma_timestep)) # E -> I
+        E_death = rand(Binomial(E - latent, mu_timestep)) # E -> death
+        recovery = rand(Binomial(I, gamma_timestep)) # I -> R
+        I_death = rand(Binomial(I - recovery, mu_timestep)) # I -> death
 
         dS = S_births - (contact_inf + import_inf + S_death)
         dE = (contact_inf + import_inf) - (latent + E_death)

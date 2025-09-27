@@ -1,6 +1,7 @@
 # Common benchmarking functions that can be reused across scripts
 
 using CSV: CSV
+using StructArrays: StructVector
 
 export generate_ensemble_data, generate_single_ensemble,
     calculate_scenarios, calculate_grid_points,
@@ -28,11 +29,11 @@ function generate_ensemble_data(ensemble_specification, null_specification, ense
     println(styled"  Processing outbreak data...")
 
     # Generate incidence arrays for the outbreak specification using the incidence vectors
-    emergent_incidence_arr, emergent_outbreak_threshold_vecs = create_inc_infec_arr(
+    emergent_incidence_arr, emergent_outbreak_threshold_vecs = calculate_outbreak_thresholds(
         ensemble_data[:ensemble_inc_vecs], ensemble_outbreak_specification
     )
 
-    null_incidence_arr, null_outbreak_threshold_vecs = create_inc_infec_arr(
+    null_incidence_arr, null_outbreak_threshold_vecs = calculate_outbreak_thresholds(
         null_data[:ensemble_inc_vecs], ensemble_outbreak_specification
     )
 
@@ -90,7 +91,7 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     return (;
         ensemble_spec,
         dynamics_parameters,
-        seir_results,
+        seir_results = StructVector(seir_results),
         Reff_thresholds,
     )
 end

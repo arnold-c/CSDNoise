@@ -178,9 +178,9 @@ export seir_mod,
 # @reexport using .SEIRModel
 
 include("detection-thresholds.jl")
-export create_inc_infec_arr,
-    create_inc_infec_arr!,
-    calculate_outbreak_thresholds,
+export calculate_outbreak_thresholds,
+    calculate_outbreak_thresholds!,
+    calculate_above_threshold_bounds,
     Reff_ge_than_one
 # @reexport using .DetectionThresholds
 

@@ -3,63 +3,58 @@
 # export create_inc_infec_arr, create_inc_infec_arr!, calculate_outbreak_thresholds
 
 using ProgressMeter
-using FLoops
 using StatsBase: rle
 using UnPack
+using StaticArrays: SizedVector
+using StructArrays: StructVector
 
-function create_inc_infec_arr(
-        ensemble_inc_vecs, outbreak_specification::OutbreakSpecification
-    )
-    emergent_incidence_arr = zeros(
-        Int64, size(ensemble_inc_vecs, 1), 3, size(ensemble_inc_vecs, 2)
+function calculate_outbreak_thresholds(
+        incidence_vecs::VSV,
+        outbreak_specification::OutbreakSpecification
+    ) where {VSV <: AbstractVector{<:SizedVector}}
+
+    emergent_outbreak_threshold_vecs = Vector{OutbreakThresholds}(
+        undef, length(incidence_vecs)
     )
 
-    emergent_outbreak_threshold_vecs = Vector{Array{Int64, 2}}(
-        undef, size(ensemble_inc_vecs, 2)
-    )
-
-    create_inc_infec_arr!(
-        emergent_incidence_arr,
+    calculate_outbreak_thresholds!(
         emergent_outbreak_threshold_vecs,
-        ensemble_inc_vecs,
+        incidence_vecs,
         outbreak_specification.outbreak_threshold,
         outbreak_specification.minimum_outbreak_duration,
         outbreak_specification.minimum_outbreak_size,
     )
 
-    return emergent_incidence_arr, emergent_outbreak_threshold_vecs
+    return StructVector(emergent_outbreak_threshold_vecs)
 end
 
-function create_inc_infec_arr!(
-        emergent_incidence_arr, emergent_outbreak_threshold_vecs, ensemble_inc_vecs,
-        outbreakthreshold, minoutbreakdur,
+function calculate_outbreak_thresholds!(
+        emergent_outbreak_threshold_vecs,
+        incidence_vecs,
+        outbreakthreshold,
+        minoutbreakdur,
         minoutbreaksize,
     )
-    @inbounds for sim in axes(ensemble_inc_vecs, 2)
-        convert_svec_to_matrix!(
-            @view(emergent_incidence_arr[:, 1, sim]),
-            @view(ensemble_inc_vecs[:, sim])
-        )
+    above_threshold_worker_vec = SizedVector{length(incidence_vecs[1]), Bool}(undef)
+    @inbounds for (sim, incidence_vec) in pairs(incidence_vecs)
+        above_threshold_worker_vec .= incidence_vec .>= outbreakthreshold
 
-        emergent_incidence_arr[:, 2, sim] .=
-            @view(emergent_incidence_arr[:, 1, sim]) .>= outbreakthreshold
+        abovethresholdrle = rle(above_threshold_worker_vec)
 
-        abovethresholdrle = rle(@view(emergent_incidence_arr[:, 2, sim]))
+        threshold_bounds = calculate_above_threshold_bounds(abovethresholdrle)
 
-        outbreak_thresholds = calculate_outbreak_thresholds(abovethresholdrle)
-
-        emergent_outbreak_threshold_vecs[sim] = classify_all_outbreaks(
-            @view(emergent_incidence_arr[:, 1, sim]),
-            @view(emergent_incidence_arr[:, 3, sim]),
-            outbreak_thresholds,
+        local outbreak_thresholds = classify_all_outbreaks(
+            incidence_vec,
+            threshold_bounds,
             minoutbreakdur,
             minoutbreaksize,
         )
+        emergent_outbreak_threshold_vecs[sim] = outbreak_thresholds
     end
     return nothing
 end
 
-function calculate_outbreak_thresholds(outbreakrle)
+function calculate_above_threshold_bounds(outbreakrle)
     # Calculate upper and lower indices of consecutive days of infection
     outbreakaccum = accumulate(+, outbreakrle[2])
     upperbound_indices = findall(isequal(1), outbreakrle[1])
@@ -73,7 +68,7 @@ function calculate_outbreak_thresholds(outbreakrle)
     )
     map!(
         x -> x - 1 == 0 ? 1 : outbreakaccum[x - 1] + 1,
-        upper_bounds,
+        lower_bounds,
         upperbound_indices,
     )
     duration .= upper_bounds .- lower_bounds .+ 1
@@ -83,7 +78,6 @@ end
 
 function classify_all_outbreaks(
         incidence_vec,
-        alertstatus_vec,
         incidence_thresholds::Thresholds,
         minoutbreakdur,
         minoutbreaksize,
@@ -97,11 +91,11 @@ function classify_all_outbreaks(
             local upper_bound = incidence_thresholds.upper_bounds[i]
             local duration = incidence_thresholds.duration[i]
             local ninf_during_bounds = sum(
-                @view(incidence_vec[lower:upper])
+                @view(incidence_vec[lower_bound:upper_bound])
             )
         end
 
-        local oubreak_status = classify_outbreak(
+        local outbreak_status = classify_outbreak(
             ninf_during_bounds,
             duration,
             minoutbreakdur,
@@ -111,16 +105,16 @@ function classify_all_outbreaks(
         outbreak_status_vec[i] = outbreak_status
         ninf_during_bounds_vec[i] = ninf_during_bounds
 
-        @view(alertstatus_vec[lower:upper]) .= outbreak_status
     end
 
-    outbreak_idx = findall(==(1), outbreak_status_vec)
+    outbreak_idx = findall(isequal(1), outbreak_status_vec)
+    num_outbreaks = length(outbreak_idx)
 
     return OutbreakThresholds(
-        incidence_thresholds.lower_bounds[outbreak_idx],
-        incidence_thresholds.upper_bounds[outbreak_idx],
-        incidence_thresholds.duration[outbreak_idx],
-        ninf_during_bounds_vec[outbreak_idx]
+        SizedVector{num_outbreaks, Int64}(incidence_thresholds.lower_bounds[outbreak_idx]),
+        SizedVector{num_outbreaks, Int64}(incidence_thresholds.upper_bounds[outbreak_idx]),
+        SizedVector{num_outbreaks, Int64}(incidence_thresholds.duration[outbreak_idx]),
+        SizedVector{num_outbreaks, Int64}(ninf_during_bounds_vec[outbreak_idx])
     )
 end
 
@@ -139,6 +133,6 @@ end
 function Reff_ge_than_one(Reff_vec)
 
     Reff_rle = rle(Reff_vec .>= 1)
-    return calculate_outbreak_thresholds(Reff_rle)
+    return calculate_above_threshold_bounds(Reff_rle)
 end
 # end

@@ -83,9 +83,9 @@ function create_noise_arr(
         noise_specification.max_vaccination_coverage,
     )
 
-    seir_vec = SizedVector{tlength, SVector{5, Int64}}(undef)
-    Reff_vec = SizedVector{tlength, Float64}(undef)
-    beta_vec = zeros(Float64, tlength)
+    seir_vec = FixedSizeVector{SVector{5, Int64}}(undef, tlength)
+    Reff_vec = FixedSizeVector{Float64}(undef, tlength)
+    beta_vec = FixedSizeVector{Float64}(undef, tlength)
     calculate_beta_amp!(
         beta_vec,
         dynamics_parameter_specification,
@@ -93,12 +93,12 @@ function create_noise_arr(
     )
 
     # Initialize vectors
-    poisson_noise_worker = SizedVector{tlength, Int64}(undef)
-    mean_poisson_noise_vec = SizedVector{nsims, Float64}(undef)
-    mean_dynamical_noise_vec = SizedVector{nsims, Float64}(undef)
+    poisson_noise_worker = FixedSizedVector{Int64}(undef, tlength)
+    mean_poisson_noise_vec = FixedSizedVector{Float64}(undef, nsims)
+    mean_dynamical_noise_vec = FixedSizedVector{Float64}(undef, nsims)
 
     # Create vector of sized vectors for incidence data and apply Poisson noise in-place
-    incidence_vecs = Vector{SizedVector{tlength, Int64}}(undef, nsims)
+    incidence_vecs = FixedSizeVector{FixedSizedVector{Int64}}(undef, nsims)
     incidence_worker_vec = similar(poisson_noise_worker)
 
     for sim in eachindex(incidence_vecs)
@@ -138,7 +138,7 @@ function create_noise_arr(
     mean_poisson_noise = mean(mean_poisson_noise_vec)
     mean_noise = mean_dynamical_noise + mean_poisson_noise
 
-    return NoiseRun{tlength}(
+    return NoiseRun(
         incidence_vecs,
         mean_noise,
         mean_poisson_noise,
@@ -156,9 +156,9 @@ function create_noise_arr(
     # Create vector of sized vectors for incidence data and apply Poisson noise in-place
     tlength = ensemble_specification.time_parameters.tlength
     nsims = ensemble_specification.nsims
-    noise_vecs = Vector{SizedVector{tlength, Int64}}(undef, nsims)
-    noise_worker_vec = SizedVector{tlength, Int64}(undef)
-    mean_noise_vec = SizedVector{nsims, Float64}(undef)
+    noise_vecs = FixedSizeVector{FixedSizedVector{Int64}}(undef, nsims)
+    noise_worker_vec = FixedSizeVector{Int64}(undef, tlength)
+    mean_noise_vec = FixedSizeVector{Float64}(undef, nsims)
     for sim in eachindex(noise_vecs)
         run_seed = seed + (sim - 1)
         mean_dynamical_noise_incidence = mean(seir_results[sim].incidence)
@@ -175,7 +175,7 @@ function create_noise_arr(
     end
     mean_noise = mean(mean_noise_vec)
 
-    return NoiseRun{tlength}(
+    return NoiseRun(
         noise_vecs,
         mean_noise,
         mean_noise,

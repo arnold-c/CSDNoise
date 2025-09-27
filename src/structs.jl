@@ -5,6 +5,7 @@
 #     OutbreakSpecification, IndividualTestSpecification, NoiseSpecification
 
 using StaticArrays
+using FixedSizeArrays
 using LabelledArrays
 using StructArrays
 using Distributions: Distributions
@@ -563,14 +564,14 @@ function getdirpath(spec::Union{PoissonNoise, DynamicalNoise})
     )
 end
 
-struct SEIRRun{L}
-    states::SizedVector{L, SVector{5, Int64}}
-    incidence::SizedVector{L, Int64}
-    Reff::SizedVector{L, Float64}
+struct SEIRRun
+    states::FixedSizeVector{SVector{5, Int64}}
+    incidence::FixedSizeVector{Int64}
+    Reff::FixedSizeVector{Float64}
 end
 
-struct NoiseRun{L}
-    incidence::Vector{SizedVector{L, Int64}}
+struct NoiseRun
+    incidence::Vector{FixedSizeVector{Int64}}
     mean_noise::Float64
     mean_poisson_noise::Float64
     mean_rubella_noise::Float64
@@ -578,17 +579,17 @@ end
 
 abstract type AbstractThresholds end
 
-struct Thresholds{L} <: AbstractThresholds
-    lower_bounds::SizedVector{L, Int64}
-    upper_bounds::SizedVector{L, Int64}
-    duration::SizedVector{L, Int64}
+struct Thresholds <: AbstractThresholds
+    lower_bounds::FixedSizeVector{Int64}
+    upper_bounds::FixedSizeVector{Int64}
+    duration::FixedSizeVector{Int64}
 end
 
-struct OutbreakThresholds{L} <: AbstractThresholds
-    lower_bounds::SizedVector{L, Int64}
-    upper_bounds::SizedVector{L, Int64}
-    duration::SizedVector{L, Int64}
-    num_infections_during_bounds::SizedVector{L, Int64}
+struct OutbreakThresholds <: AbstractThresholds
+    lower_bounds::FixedSizeVector{Int64}
+    upper_bounds::FixedSizeVector{Int64}
+    duration::FixedSizeVector{Int64}
+    num_infections_during_bounds::FixedSizeVector{Int64}
 end
 
 

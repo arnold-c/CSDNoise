@@ -110,6 +110,12 @@ measles_mean_vec = map(
 measles_mean = mean(measles_mean_vec)
 
 #%%
+@benchmark generate_single_ensemble(
+    $measles_spec[1];
+    seed = 1234
+)
+
+#%%
 measles_dynamical_noise_spec = (;
     R0 = 5.0,
     latent_period = 7,

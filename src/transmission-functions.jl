@@ -1,6 +1,7 @@
 # module TransmissionFunctions
 
 using LinearAlgebra
+using Bumper
 
 # export calculate_beta, calculateR0, calculate_import_rate
 
@@ -43,15 +44,29 @@ function calculate_beta(
         error("contact_mat and population_sizes must have the same number of rows")
     end
 
-    Q = contact_mat .* population_sizes
-    V = Diagonal(repeat([gamma + mu], size(contact_mat, 1)))
+    # Use Bumper.jl to reduce allocations
+    return @no_escape begin
+        n = size(contact_mat, 1)
 
-    K_prime = Q * inv(V)
-    eigenvals = eigen(K_prime).values
+        # Allocate temporary arrays on the bump allocator
+        Q = @alloc(Float64, n, n)
+        K_prime = @alloc(Float64, n, n)
 
-    beta = R_0 / maximum(real(eigenvals))
+        # Q = contact_mat .* population_sizes (in-place)
+        @inbounds for j in 1:n, i in 1:n
+            Q[i, j] = contact_mat[i, j] * population_sizes[i]
+        end
 
-    return beta
+        # K_prime = Q * inv(V) = Q ./ (gamma + mu) (since V is diagonal)
+        gamma_plus_mu = gamma + mu
+        @inbounds for j in 1:n, i in 1:n
+            K_prime[i, j] = Q[i, j] / gamma_plus_mu
+        end
+
+        # For eigenvalues, we still need to allocate, but this is unavoidable
+        eigenvals = eigen(K_prime).values
+        R_0 / maximum(real(eigenvals))
+    end
 end
 
 function calculate_beta(
@@ -101,19 +116,30 @@ function calculate_gamma(
         error("contact_mat and population_sizes must have the same number of rows")
     end
 
-    Q = contact_mat .* population_sizes
+    # Use Bumper.jl to reduce allocations
+    @no_escape begin
+        n = size(contact_mat, 1)
 
-    # We need to solve for gamma such that:
-    # R_0 = beta * max_eigenvalue(Q * inv(V))
-    # where V = Diagonal([gamma + mu, gamma + mu, ...])
+        # Allocate temporary array on the bump allocator
+        Q = @alloc(Float64, n, n)
 
-    # This becomes: R_0 = beta * max_eigenvalue(Q) / (gamma + mu)
-    # Rearranging: gamma = (beta * max_eigenvalue(Q) / R_0) - mu
+        # Q = contact_mat .* population_sizes (in-place)
+        @inbounds for j in 1:n, i in 1:n
+            Q[i, j] = contact_mat[i, j] * population_sizes[i]
+        end
 
-    eigenvals_Q = eigen(Q).values
-    max_eigenval_Q = maximum(real(eigenvals_Q))
+        # We need to solve for gamma such that:
+        # R_0 = beta * max_eigenvalue(Q * inv(V))
+        # where V = Diagonal([gamma + mu, gamma + mu, ...])
 
-    gamma = (beta * max_eigenval_Q / R_0) - mu
+        # This becomes: R_0 = beta * max_eigenvalue(Q) / (gamma + mu)
+        # Rearranging: gamma = (beta * max_eigenvalue(Q) / R_0) - mu
+
+        eigenvals_Q = eigen(Q).values
+        max_eigenval_Q = maximum(real(eigenvals_Q))
+
+        gamma = (beta * max_eigenval_Q / R_0) - mu
+    end
 
     # Validate the result
     if gamma <= 0
@@ -216,13 +242,11 @@ function calculateReffective(
     )::Float64
     s_prop = S / N
 
-    Reff = calculateR0(
-        beta_t,
-        dynamics_params.gamma,
-        dynamics_params.mu,
-        dynamics_params.contact_matrix,
-        [N;]
-    ) * s_prop
+    # Optimized version for single population case to avoid allocations
+    @assert size(dynamics_params.contact_matrix) == (1, 1)
+    contact_val = dynamics_params.contact_matrix[1, 1]
+    R_0 = (beta_t * contact_val) / (dynamics_params.gamma + dynamics_params.mu)
+    Reff = R_0 * s_prop
 
     return Reff
 end
@@ -257,17 +281,41 @@ function calculateR0(
         error("contact_mat and population_sizes must have the same number of rows")
     end
 
-    B = beta * contact_mat
+    # Use Bumper.jl to reduce allocations
+    return @no_escape begin
+        n = size(contact_mat, 1)
 
-    F = B .* population_sizes
-    V = Diagonal(repeat([gamma + mu], size(contact_mat, 1)))
+        # Allocate temporary arrays on the bump allocator
+        B = @alloc(Float64, n, n)
+        F = @alloc(Float64, n, n)
+        V_diag = @alloc(Float64, n)
+        FV⁻¹ = @alloc(Float64, n, n)
 
-    FV⁻¹ = F * inv(V)
-    eigenvals = eigen(FV⁻¹).values
+        # B = beta * contact_mat (in-place)
+        @inbounds for j in 1:n, i in 1:n
+            B[i, j] = beta * contact_mat[i, j]
+        end
 
-    R_0 = maximum(real(eigenvals))
+        # F = B .* population_sizes (in-place)
+        @inbounds for j in 1:n, i in 1:n
+            F[i, j] = B[i, j] * population_sizes[i]
+        end
 
-    return R_0
+        # V diagonal values
+        gamma_plus_mu = gamma + mu
+        @inbounds for i in 1:n
+            V_diag[i] = gamma_plus_mu
+        end
+
+        # FV⁻¹ = F * inv(V) = F ./ V_diag (since V is diagonal)
+        @inbounds for j in 1:n, i in 1:n
+            FV⁻¹[i, j] = F[i, j] / V_diag[i]
+        end
+
+        # For eigenvalues, we still need to allocate, but this is unavoidable
+        eigenvals = eigen(FV⁻¹).values
+        maximum(real(eigenvals))
+    end
 end
 
 function calculateR0(beta::Float64, gamma::Float64, mu::Float64, contact_mat::Int64, population_sizes::Int64)::Float64

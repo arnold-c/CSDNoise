@@ -20,7 +20,8 @@ end
 
 function create_noise_arr(
         noise_specification::DynamicalNoise,
-        ensemble_specification::EnsembleSpecification;
+        ensemble_specification::EnsembleSpecification,
+        args...;
         seed = 1234,
         kwargs...,
     )
@@ -145,6 +146,43 @@ function create_noise_arr(
     )
 end
 
+function create_noise_arr(
+        noise_specification::PoissonNoise,
+        ensemble_specification::EnsembleSpecification,
+        seir_results::Vector{SEIRRun};
+        seed = 1234,
+        kwargs...,
+    )
+    # Create vector of sized vectors for incidence data and apply Poisson noise in-place
+    tlength = ensemble_specification.time_parameters.tlength
+    nsims = ensemble_specification.nsims
+    noise_vecs = Vector{SizedVector{tlength, Int64}}(undef, nsims)
+    noise_worker_vec = SizedVector{tlength, Int64}(undef)
+    mean_noise_vec = SizedVector{nsims, Float64}(undef)
+    for sim in eachindex(noise_vecs)
+        run_seed = seed + (sim - 1)
+        mean_dynamical_noise_incidence = mean(seir_results[sim].incidence)
+        mean_noise_vec[sim] = mean_dynamical_noise_incidence
+
+        add_poisson_noise!(
+            noise_worker_vec,
+            mean_dynamical_noise_incidence,
+            noise_specification.noise_mean_scaling,
+            run_seed
+        )
+
+        noise_vecs[sim] = noise_worker_vec
+    end
+    mean_noise = mean(mean_noise_vec)
+
+    return NoiseRun{tlength}(
+        noise_vecs,
+        mean_noise,
+        mean_noise,
+        0.0
+    )
+end
+
 function add_poisson_noise!(
         noise_vec::AIV,
         mean_dynamical_noise_incidence::Float64,
@@ -158,35 +196,4 @@ function add_poisson_noise!(
     )
 
     return nothing
-end
-
-function create_noise_arr(
-        noise_specification::PoissonNoise,
-        incarr,
-        ensemble_specification::EnsembleSpecification;
-        seed = 1234,
-        kwargs...,
-    )
-    noise_arr = zeros(Int64, size(incarr, 1), size(incarr, 3))
-
-    add_poisson_noise_arr!(
-        noise_arr, incarr, noise_specification.noise_mean_scaling; seed = seed
-    )
-
-    noise_rubella_prop = ones(Float64, size(incarr, 1), size(incarr, 3))
-    return noise_arr, noise_rubella_prop
-end
-
-function add_poisson_noise_arr!(
-        noise_arr, incarr, noise_mean_scaling; seed = 1234
-    )
-    Random.seed!(seed)
-
-    @assert size(incarr, 3) == size(noise_arr, 2)
-    return @inbounds for sim in axes(incarr, 3)
-        @views noise_arr[:, sim] += rand(
-            Poisson(noise_mean_scaling * mean(incarr[:, 1, sim])),
-            size(incarr, 1),
-        )
-    end
 end

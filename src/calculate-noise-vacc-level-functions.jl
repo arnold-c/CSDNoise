@@ -5,11 +5,79 @@ using StatsBase: mean
 using StructArrays: StructVector
 
 """
+    calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+        target_scaling,
+        seir_results::StructVector{SEIRRun},
+        thresholds::Vector{T},
+        ews_enddate_type::EWSEndDateType,
+        dynamical_noise_specification_parameters,
+        ensemble_specification;
+        kwargs...
+    ) where {T<:AbstractThresholds}
+
+Wrapper function that calculates vaccination coverage using SEIR results and EWS endpoints.
+
+This function prepares data by calculating endpoints and mean incidence, then calls the
+original optimization function with the computed mean incidence value.
+
+# Arguments
+- `target_scaling`: Multiplicative factor for target noise level
+- `seir_results`: StructVector of SEIR simulation results
+- `thresholds`: Vector of threshold objects for endpoint calculation
+- `ews_enddate_type`: Type of endpoint to calculate
+- `dynamical_noise_specification_parameters`: Parameters for dynamical noise model
+- `ensemble_specification`: Ensemble simulation parameters
+- `kwargs...`: Additional keyword arguments passed to the original function
+
+# Returns
+- Same as `calculate_dynamic_vaccination_coverage_multistart`
+
+# Example
+```julia
+result = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+    7.0,  # target_scaling
+    seir_results,
+    thresholds,
+    EWSEndDateType(Reff_start()),
+    dynamical_noise_params,
+    ensemble_spec
+)
+```
+"""
+function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+        target_scaling,
+        seir_results::StructVector{SEIRRun},
+        thresholds::StructVector{T},
+        ews_enddate_type::EWSEndDateType,
+        dynamical_noise_specification_parameters,
+        ensemble_specification;
+        kwargs...
+    ) where {T <: AbstractThresholds}
+
+    # Calculate endpoints for all simulations
+    enddates_vec = calculate_all_ews_enddates(thresholds, ews_enddate_type)
+
+    # Calculate filtered mean incidence up to endpoints
+    overall_mean = calculate_filtered_mean_incidence(seir_results, enddates_vec)
+
+    # Call the original optimization function with the computed mean
+    return calculate_dynamic_vaccination_coverage(
+        target_scaling,
+        overall_mean,  # Use the computed overall mean instead of fixed value
+        dynamical_noise_specification_parameters,
+        ensemble_specification,
+        enddates_vec;
+        kwargs...
+    )
+end
+
+"""
     calculate_dynamic_vaccination_coverage_multistart(
         target_scaling,
         measles_daily_incidence,
         dynamical_noise_specification_parameters,
-        ensemble_specification;
+        ensemble_specification,
+        enddates_vec;
         vaccination_bounds = [0.0, 1.0],
         max_vaccination_range = 0.2,
         n_sobol_points = 50,
@@ -31,6 +99,7 @@ that produces mean noise equal to `target_scaling * measles_daily_incidence`.
 - `measles_daily_incidence`: Daily measles incidence to scale
 - `dynamical_noise_specification_parameters`: Parameters for dynamical noise model
 - `ensemble_specification`: Ensemble simulation parameters
+- `enddates_vec`: A vector of all simulation enddates
 - `vaccination_bounds`: [min, max] bounds for vaccination coverage search
 - `max_vaccination_range`: Maximum range around mean vaccination coverage
 - `n_sobol_points`: Number of Sobol sequence starting points for multistart
@@ -44,7 +113,7 @@ that produces mean noise equal to `target_scaling * measles_daily_incidence`.
 
 # Example
 ```julia
-optimal_vaccination, achieved_noise = calculate_dynamic_vaccination_coverage_multistart(
+optimal_vaccination, achieved_noise = calculate_dynamic_vaccination_coverage(
     7.0,  # target_scaling
     3.0,  # measles_daily_incidence (target noise = 21.0)
     dynamical_noise_params,
@@ -52,11 +121,12 @@ optimal_vaccination, achieved_noise = calculate_dynamic_vaccination_coverage_mul
 )
 ```
 """
-function calculate_dynamic_vaccination_coverage_multistart(
+function calculate_dynamic_vaccination_coverage(
         target_scaling,
         measles_daily_incidence,
         dynamical_noise_specification_parameters,
-        ensemble_specification;
+        ensemble_specification,
+        enddates_vec;
         vaccination_bounds = [0.0, 1.0],
         max_vaccination_range = 0.2,
         n_sobol_points = 100,
@@ -98,6 +168,7 @@ function calculate_dynamic_vaccination_coverage_multistart(
             vaccination_coverage,
             max_vaccination_range,
             ensemble_specification,
+            enddates_vec,
         )
 
         # Return squared error from target
@@ -146,6 +217,7 @@ function calculate_dynamic_vaccination_coverage_multistart(
         optimal_vaccination,
         max_vaccination_range,
         ensemble_specification,
+        enddates_vec
     )
 
     if verbose
@@ -218,6 +290,7 @@ function calculate_mean_dynamical_noise(
         mean_vaccination_coverage,
         max_vaccination_range,
         ensemble_specification,
+        enddates_vec,
     )
     min_vaccination_coverage,
         max_vaccination_coverage = calculate_min_max_vaccination_range(
@@ -237,14 +310,14 @@ function calculate_mean_dynamical_noise(
         )
     )
 
-    noise_result = create_noise_arr(
+    noise_result = create_noise_vecs(
         dynamical_noise_spec,
-        ensemble_specification
+        ensemble_specification,
+        enddates_vec,
     )
 
     return noise_result.mean_noise
 end
-
 
 """
     calculate_filtered_mean_incidence(
@@ -289,152 +362,7 @@ function calculate_filtered_mean_incidence(
     # Calculate overall mean across all simulations
     overall_mean = mean(incidence_means)
 
-    return (incidence_means, overall_mean)
-end
-
-"""
-    calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
-        target_scaling,
-        seir_results::StructVector{SEIRRun},
-        thresholds::Vector{T},
-        ews_enddate_type::EWSEndDateType,
-        dynamical_noise_specification_parameters,
-        ensemble_specification;
-        kwargs...
-    ) where {T<:AbstractThresholds}
-
-Wrapper function that calculates vaccination coverage using SEIR results and EWS endpoints.
-
-This function prepares data by calculating endpoints and mean incidence, then calls the 
-original optimization function with the computed mean incidence value.
-
-# Arguments
-- `target_scaling`: Multiplicative factor for target noise level
-- `seir_results`: StructVector of SEIR simulation results
-- `thresholds`: Vector of threshold objects for endpoint calculation
-- `ews_enddate_type`: Type of endpoint to calculate
-- `dynamical_noise_specification_parameters`: Parameters for dynamical noise model
-- `ensemble_specification`: Ensemble simulation parameters
-- `kwargs...`: Additional keyword arguments passed to the original function
-
-# Returns
-- Same as `calculate_dynamic_vaccination_coverage_multistart`
-
-# Example
-```julia
-result = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
-    7.0,  # target_scaling
-    seir_results,
-    thresholds,
-    EWSEndDateType(Reff_start()),
-    dynamical_noise_params,
-    ensemble_spec
-)
-```
-"""
-function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
-        target_scaling,
-        seir_results::StructVector{SEIRRun},
-        thresholds::StructVector{T},
-        ews_enddate_type::EWSEndDateType,
-        dynamical_noise_specification_parameters,
-        ensemble_specification;
-        kwargs...
-    ) where {T <: AbstractThresholds}
-
-    # Calculate endpoints for all simulations
-    enddates = calculate_all_ews_enddates(thresholds, ews_enddate_type)
-
-    # Calculate filtered mean incidence up to endpoints
-    incidence_means, overall_mean = calculate_filtered_mean_incidence(seir_results, enddates)
-
-    # Call the original optimization function with the computed mean
-    return calculate_dynamic_vaccination_coverage_multistart(
-        target_scaling,
-        overall_mean,  # Use the computed overall mean instead of fixed value
-        dynamical_noise_specification_parameters,
-        ensemble_specification;
-        kwargs...
-    )
-end
-
-"""
-    calculate_mean_dynamical_noise_variable_length(
-        R0,
-        latent_period,
-        duration_infection,
-        correlation,
-        poisson_component,
-        mean_vaccination_coverage,
-        max_vaccination_range,
-        ensemble_specification,
-        endpoints::FixedSizeVector{Int64}
-    )
-
-Calculate the mean dynamical noise level for given vaccination coverage parameters
-with variable-length simulations based on endpoints.
-
-Similar to `calculate_mean_dynamical_noise` but generates noise arrays that match
-the variable endpoint lengths for each simulation.
-
-# Arguments
-- Same as `calculate_mean_dynamical_noise` plus:
-- `endpoints`: Vector of endpoints, one per simulation
-
-# Returns
-- `Float64`: Mean noise level from the ensemble simulation
-
-# Example
-```julia
-mean_noise = calculate_mean_dynamical_noise_variable_length(
-    12.0,     # R0
-    8.0,      # latent_period
-    7.0,      # duration_infection
-    0.9,      # correlation
-    1.0,      # poisson_component
-    0.85,     # mean_vaccination_coverage
-    0.2,      # max_vaccination_range
-    ensemble_spec,
-    endpoints
-)
-```
-"""
-function calculate_mean_dynamical_noise_variable_length(
-        R0,
-        latent_period,
-        duration_infection,
-        correlation,
-        poisson_component,
-        mean_vaccination_coverage,
-        max_vaccination_range,
-        ensemble_specification,
-        enddates::FixedSizeVector{Int64}
-    )
-    min_vaccination_coverage,
-        max_vaccination_coverage = calculate_min_max_vaccination_range(
-        mean_vaccination_coverage,
-        max_vaccination_range,
-    )
-
-    dynamical_noise_spec = NoiseSpecification(
-        DynamicalNoise(
-            R0,
-            latent_period,
-            duration_infection,
-            correlation,
-            poisson_component,
-            min_vaccination_coverage,
-            max_vaccination_coverage,
-        )
-    )
-
-    noise_result = create_noise_vecs(
-        dynamical_noise_spec,
-        ensemble_specification,
-        enddates
-    )
-
-    return noise_result.mean_noise
+    return overall_mean
 end
 
 # end

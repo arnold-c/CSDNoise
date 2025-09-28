@@ -157,7 +157,7 @@ function create_noise_vecs(
 
         local beta_worker_vec = @view(beta_vec[1:enddate])
 
-        calculate_dynamic_noise_values!(
+        _calculate_dynamic_noise_values!(
             incidence_vecs,
             mean_dynamical_noise_vec,
             mean_poisson_noise_vec,
@@ -209,7 +209,7 @@ function create_noise_vecs(
 
         mean_dynamical_noise_incidence = mean(seir_results.incidence[sim])
 
-        calculate_poisson_noise_values!(
+        _calculate_poisson_noise_values!(
             incidence_vecs,
             mean_poisson_noise_vec,
             mean_dynamical_noise_incidence,
@@ -230,7 +230,7 @@ function create_noise_vecs(
     )
 end
 
-function calculate_dynamic_noise_values!(
+function _calculate_dynamic_noise_values!(
         incidence_vecs,
         mean_dynamical_noise_vec,
         mean_poisson_noise_vec,
@@ -261,7 +261,7 @@ function calculate_dynamic_noise_values!(
 
         poisson_noise_worker_vec = @alloc(Int64, enddate)
 
-        add_poisson_noise!(
+        _add_poisson_noise!(
             poisson_noise_worker_vec,
             mean_dynamical_noise_incidence,
             noise_mean_scaling,
@@ -281,7 +281,7 @@ function calculate_dynamic_noise_values!(
     return nothing
 end
 
-function calculate_poisson_noise_values!(
+function _calculate_poisson_noise_values!(
         incidence_vecs,
         mean_poisson_noise_vec,
         mean_dynamical_noise_incidence,
@@ -291,7 +291,7 @@ function calculate_poisson_noise_values!(
     )
     poisson_noise_vec = FixedSizeVector{Int64}(undef, enddate)
 
-    add_poisson_noise!(
+    _add_poisson_noise!(
         poisson_noise_vec,
         mean_dynamical_noise_incidence,
         noise_mean_scaling,
@@ -304,7 +304,7 @@ function calculate_poisson_noise_values!(
     return nothing
 end
 
-function add_poisson_noise!(
+function _add_poisson_noise!(
         noise_vec::AIV,
         mean_dynamical_noise_incidence::Float64,
         noise_mean_scaling::Float64,

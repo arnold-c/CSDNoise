@@ -38,6 +38,8 @@ export SimTimeParameters,
     noise_table_description,
     getdirpath,
     SEIRRun,
+    Thresholds,
+    OutbreakThresholds,
     EWSMethod,
     Backward,
     Centered,
@@ -210,15 +212,17 @@ export create_combinations_vec,
 # @reexport using .EnsembleFunctions
 
 include("noise-functions.jl")
-export create_noise_arr,
-    add_poisson_noise_arr!,
-    create_noise_vecs
+export create_noise_vecs
 # @reexport using .NoiseFunctions
 
 include("calculate-noise-vacc-level-functions.jl")
 export calculate_dynamic_vaccination_coverage,
     calculate_mean_dynamical_noise,
-    calculate_dynamic_vaccination_coverage_multistart
+    calculate_dynamic_vaccination_coverage,
+    calculate_ews_endpoints,
+    calculate_filtered_mean_incidence,
+    calculate_dynamic_vaccination_coverage_multistart_with_endpoints,
+    calculate_mean_dynamical_noise_variable_length
 
 include("plotting-functions/helpers_plots.jl")
 export BASE_COLOR,

@@ -162,12 +162,46 @@ measles_noise_arr = create_noise_arr(
 )
 
 #%%
+calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+    1.0,
+    measles_ensemble_data.seir_results,
+    measles_ensemble_data.Reff_thresholds,
+    EWSEndDateType(Reff_start()),
+    measles_dynamical_noise_spec,
+    measles_spec[1]
+)
+
+#%%
+noise_res = create_noise_vecs(
+    NoiseSpecification(
+        DynamicalNoise(
+            measles_dynamical_noise_spec.R0,
+            measles_dynamical_noise_spec.latent_period,
+            measles_dynamical_noise_spec.duration_infection,
+            measles_dynamical_noise_spec.correlation,
+            measles_dynamical_noise_spec.poisson_component,
+            calculate_min_max_vaccination_range(
+                1.0, # mean vaccination for 4x
+                1.0
+            )...
+        )
+    ),
+    measles_spec[1],
+    enddates,
+)
+
+noise_res.mean_noise
+noise_res.mean_poisson_noise
+noise_res.mean_dynamic_noise
+
+#%%
 for scaling in (1.0, 2.0, 4.0, 6.0)
-    measles_res = calculate_dynamic_vaccination_coverage_multistart(
+    measles_res = calculate_dynamic_vaccination_coverage(
         scaling,  # target_scaling
         measles_mean,
         measles_dynamical_noise_spec,
-        measles_spec[1]
+        measles_spec[1],
+        enddates
     )
     # covid_res = calculate_dynamic_vaccination_coverage_multistart(
     #     scaling,  # target_scaling

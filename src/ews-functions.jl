@@ -138,7 +138,7 @@ end
 
 """
     calculate_ews_endpoints(
-        thresholds::Vector{T}, 
+        thresholds::Vector{T},
         ews_enddate_type::EWSEndDateType
     ) where {T<:AbstractThresholds}
 

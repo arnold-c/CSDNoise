@@ -133,7 +133,7 @@ function seir_mod!(
     mu_timestep = mu * timestep
     sigma_timestep = sigma * timestep
     gamma_timestep = gamma * timestep
-    epsilon_over_R0_timestep = (epsilon / R_0) * timestep
+    epsilon_timestep = epsilon * timestep
 
     @inbounds for i in 2:(tlength)
         vaccination_coverage = if i < burnin_days
@@ -146,7 +146,7 @@ function seir_mod!(
             state_vec[i - 1],
             beta_vec[i - 1],
             mu_timestep,
-            epsilon_over_R0_timestep,
+            epsilon_timestep,
             sigma_timestep,
             gamma_timestep,
             vaccination_coverage,
@@ -172,7 +172,7 @@ The inner loop that is called by `seir_mod!()` function.
         state_vec::SVector{5, Int64},
         beta_t::Float64,
         mu_timestep::Float64,
-        epsilon_over_R0_timestep::Float64,
+        epsilon_timestep::Float64,
         sigma_timestep::Float64,
         gamma_timestep::Float64,
         vaccination_coverage::Float64,
@@ -194,7 +194,7 @@ The inner loop that is called by `seir_mod!()` function.
         S_births = rand(Poisson(mu_N_timestep * (1 - vaccination_coverage))) # Birth -> S
         S_death = rand(Poisson(mu_timestep * S)) # S -> death
         R_death = rand(Poisson(mu_timestep * R)) # R -> death
-        import_inf = rand(Poisson(epsilon_over_R0_timestep * N)) # Import: S -> E
+        import_inf = rand(Poisson(epsilon_timestep * S)) # Import: S -> E
         R_births = rand(Poisson(mu_N_timestep * vaccination_coverage)) # Birth -> R
         latent = rand(Binomial(E, sigma_timestep)) # E -> I
         E_death = rand(Binomial(E - latent, mu_timestep)) # E -> death

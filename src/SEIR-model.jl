@@ -186,21 +186,64 @@ The inner loop that is called by `seir_mod!()` function.
         R = state_vec[4]
         N = state_vec[5]
 
-        # Pre-compute common terms
-        beta_S_I_timestep = beta_t * S * I * timestep
+        # Pre-compute common terms and probabilities (reuse these!)
         mu_N_timestep = mu_timestep * N
 
-        contact_inf = rand(Poisson(beta_S_I_timestep)) # Contact: S -> E
-        S_births = rand(Poisson(mu_N_timestep * (1 - vaccination_coverage))) # Birth -> S
-        S_death = rand(Poisson(mu_timestep * S)) # S -> death
-        R_death = rand(Poisson(mu_timestep * R)) # R -> death
-        import_inf = rand(Poisson(epsilon_timestep * S)) # Import: S -> E
-        R_births = rand(Poisson(mu_N_timestep * vaccination_coverage)) # Birth -> R
-        latent = rand(Binomial(E, sigma_timestep)) # E -> I
-        E_death = rand(Binomial(E - latent, mu_timestep)) # E -> death
-        recovery = rand(Binomial(I, gamma_timestep)) # I -> R
-        I_death = rand(Binomial(I - recovery, mu_timestep)) # I -> death
+        # Pre-compute all probabilities once
+        contact_prob = convert_rate_to_prob(beta_t * I * timestep)
+        import_prob = convert_rate_to_prob(epsilon_timestep)
+        death_prob = convert_rate_to_prob(mu_timestep)  # Reuse for all death processes
+        latent_prob = convert_rate_to_prob(sigma_timestep)
+        recovery_prob = convert_rate_to_prob(gamma_timestep)
 
+        # Births (Poisson since external arrivals)
+        S_births = rand(Poisson(mu_N_timestep * (1 - vaccination_coverage)))
+        R_births = rand(Poisson(mu_N_timestep * vaccination_coverage))
+
+        # For S compartment: handle competing outflows sequentially
+        remaining_S = S
+
+        # Contact infections: S -> E (use smart transition)
+        contact_rate = remaining_S * contact_prob
+        contact_inf = remaining_S > 0 ?
+            smart_transition(remaining_S, contact_prob, contact_rate) :
+            0
+        remaining_S = max(0, remaining_S - contact_inf)
+
+        # Import infections: S -> E (use smart transition)
+        import_rate = remaining_S * import_prob
+        import_inf = remaining_S > 0 ?
+            smart_transition(remaining_S, import_prob, import_rate) :
+            0
+        remaining_S = max(0, remaining_S - import_inf)
+
+        # S deaths (use smart transition with pre-computed death_prob)
+        S_death_rate = remaining_S * death_prob
+        S_death = remaining_S > 0 ?
+            smart_transition(remaining_S, death_prob, S_death_rate) :
+            0
+
+        # E compartment transitions
+        latent_rate = E * latent_prob
+        latent = smart_transition(E, latent_prob, latent_rate)
+
+        remaining_E = E - latent
+        E_death_rate = remaining_E * death_prob  # Reuse death_prob
+        E_death = smart_transition(remaining_E, death_prob, E_death_rate)
+
+        # I compartment transitions
+        recovery_rate = I * recovery_prob
+        recovery = smart_transition(I, recovery_prob, recovery_rate)
+
+        remaining_I = I - recovery
+        I_death_rate = remaining_I * death_prob  # Reuse death_prob
+        I_death = smart_transition(remaining_I, death_prob, I_death_rate)
+
+        # R deaths (use smart transition with pre-computed death_prob)
+        R_death_rate = R * death_prob  # Reuse death_prob
+        R_death = smart_transition(R, death_prob, R_death_rate)
+
+        # Calculate changes
         dS = S_births - (contact_inf + import_inf + S_death)
         dE = (contact_inf + import_inf) - (latent + E_death)
         dI = latent - (recovery + I_death)
@@ -213,6 +256,36 @@ The inner loop that is called by `seir_mod!()` function.
         contact_inf,
     )
 end
+
+@inline function convert_rate_to_prob(rate)
+    return min(rate, 1.0)
+end
+
+@inline function smart_transition(n::Int64, prob::Float64)
+    rate = n * prob
+    return smart_transition(n, prob, rate)
+end
+
+# Smart transition function that chooses between Poisson and Binomial
+@inline function smart_transition(n::Int64, prob::Float64, rate::Float64)
+    # Use Poisson when:
+    # - Population is large (n > 30)
+    # - Expected value is small (rate < 10)
+    # This gives good approximation with better performance
+
+    if n == 0
+        return 0
+    end
+
+    if n > 30 && rate < 10.0
+        # Use Poisson approximation for large n, small rate
+        return min(rand(Poisson(rate)), n)  # Cap at population size
+    else
+        # Use exact Binomial for small n or large rate
+        return rand(Binomial(n, prob))
+    end
+end
+
 
 function convert_svec_to_matrix(svec)
     arr = Matrix{Int64}(undef, size(svec, 1), length(svec[1]))

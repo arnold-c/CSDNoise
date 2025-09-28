@@ -136,10 +136,49 @@ function _expanding_ews_thresholds(
     return exceeds_thresholds
 end
 
+"""
+    calculate_ews_endpoints(
+        thresholds::Vector{T}, 
+        ews_enddate_type::EWSEndDateType
+    ) where {T<:AbstractThresholds}
+
+Calculate EWS endpoints for all simulations based on enddate type.
+
+# Arguments
+- `thresholds`: Vector of threshold objects (one per simulation)
+- `ews_enddate_type`: Type of endpoint to calculate (Reff_start, Reff_end, Outbreak_start, etc.)
+
+# Returns
+- `FixedSizeVector{Int64}`: Vector of endpoints, one per simulation
+
+# Example
+```julia
+endpoints = calculate_ews_endpoints(thresholds, EWSEndDateType(Reff_start()))
+```
+"""
+function calculate_all_ews_enddates(
+        vec_of_thresholds::Vector{T},
+        ews_enddate_type::EWSEndDateType
+    ) where {T <: AbstractThresholds}
+
+    nsims = length(vec_of_thresholds)
+    enddates = FixedSizeVector{Int64}(undef, nsims)
+
+    for (sim, thresholds) in eachindex(vec_of_thresholds)
+        # Convert threshold to matrix format for compatibility with existing functions
+
+        ews_enddate = calculate_ews_enddate(thresholds, ews_enddate_type)
+        enddates[sim] = Try.@? ews_enddate
+    end
+
+    return enddates
+end
+
+
 function calculate_ews_enddate(
         thresholds::T,
         enddate_type::EWSEndDateType,
-    ) where {T <: AbstractArray{<:Int}}
+    ) where {T <: AbstractThresholds}
 
     enddate = _calculate_ews_enddate(thresholds, enddate_type)
 
@@ -152,36 +191,28 @@ function calculate_ews_enddate(
     )
 end
 
-_calculate_ews_enddate(thresholds::T, enddate_type::EWSEndDateType) where {T <: AbstractArray{<:Int}} = _calculate_ews_enddate(thresholds, variant(enddate_type))
+_calculate_ews_enddate(
+    thresholds::T,
+    enddate_type::EWSEndDateType
+) where {T <: AbstractThresholds} = _calculate_ews_enddate(thresholds, variant(enddate_type))
 
-_calculate_ews_enddate(thresholds, enddate_type::Reff_start) = trygetindex(thresholds, 1, 1)
-_calculate_ews_enddate(thresholds, enddate_type::Reff_end) = trygetindex(thresholds, 1, 2)
+_calculate_ews_enddate(thresholds::Thresholds, enddate_type::Reff_start) = trygetindex(thresholds.lower_bounds, 1)
+_calculate_ews_enddate(thresholds::Thresholds, enddate_type::Reff_end) = trygetindex(thresholds.upper_bounds, 1)
 
-function _calculate_ews_enddate(thresholds, enddate_type::Outbreak_start)
-    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
-    return trygetindex(filtered_outbreak_thresholds, 1, 1)
-end
+_calculate_ews_enddate(
+    thresholds::OutbreakThresholds,
+    enddate_type::Outbreak_start
+) = trygetindex(thresholds.lower_bounds, 1)
 
-function _calculate_ews_enddate(thresholds, enddate_type::Outbreak_end)
-    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
+_calculate_ews_enddate(
+    thresholds::OutbreakThresholds,
+    enddate_type::Outbreak_end
+) = trygetindex(thresholds.upper_bounds, 1)
 
-    return trygetindex(filtered_outbreak_thresholds, 1, 2)
-end
-
-function _calculate_ews_enddate(thresholds, enddate_type::Outbreak_middle)
-    filtered_outbreak_thresholds = filter_outbreak_thresholds(thresholds)
-
-    if size(filtered_outbreak_thresholds, 1) == 0
-        return Try.Err(BoundsError(thresholds, (1, 1)))
-    end
-
+function _calculate_ews_enddate(thresholds::OutbreakThresholds, enddate_type::Outbreak_middle)
     return Try.Ok(
-        filtered_outbreak_thresholds[1, 1] +
-            (
-            filtered_outbreak_thresholds[1, 2] -
-                filtered_outbreak_thresholds[1, 1] +
-                1
-        ) ÷ 2,
+        trygetindex(thresholds.lower_bounds, 1) +
+            (trygetindex(thresholds.duration, 1) ÷ 2)
     )
 end
 
@@ -221,13 +252,6 @@ end
 #         ) ÷ 2,
 #     )
 # end
-
-function filter_outbreak_thresholds(
-        thresholds::T
-    ) where {T <: AbstractArray{<:Int}}
-
-    return thresholds[(thresholds[:, thresholds_col] .== 1), :]
-end
 
 # function tycho_testing_plots(
 #         noise_arr_tuple,

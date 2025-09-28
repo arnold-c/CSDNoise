@@ -1,4 +1,6 @@
 using UnPack: @unpack
+using FixedSizeArrays: FixedSizeVector
+using Try: Try
 
 """
     calculate_dynamic_vaccination_coverage_multistart(
@@ -240,5 +242,6 @@ function calculate_mean_dynamical_noise(
 
     return noise_result.mean_noise
 end
+
 
 # end

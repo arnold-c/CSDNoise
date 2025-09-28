@@ -79,6 +79,7 @@ end
         ensemble_specification,
         enddates_vec;
         vaccination_bounds = [0.0, 1.0],
+        susceptible_bounds = [0.01, 0.99],
         max_vaccination_range = 0.2,
         n_sobol_points = 50,
         local_algorithm = NLopt.LN_BOBYQA,
@@ -89,10 +90,10 @@ end
         verbose = false
     )
 
-Optimize vaccination coverage using multistart optimization to achieve target noise scaling.
+Optimize vaccination coverage and initial susceptible proportion using multistart optimization to achieve target noise scaling.
 
 Uses Sobol sequences for initial points and local optimization to find the vaccination level
-that produces mean noise equal to `target_scaling * measles_daily_incidence`.
+and initial susceptible proportion that produces mean noise equal to `target_scaling * measles_daily_incidence`.
 
 # Arguments
 - `target_scaling`: Multiplicative factor for target noise level
@@ -101,6 +102,7 @@ that produces mean noise equal to `target_scaling * measles_daily_incidence`.
 - `ensemble_specification`: Ensemble simulation parameters
 - `enddates_vec`: A vector of all simulation enddates
 - `vaccination_bounds`: [min, max] bounds for vaccination coverage search
+- `susceptible_bounds`: [min, max] bounds for initial susceptible proportion search
 - `max_vaccination_range`: Maximum range around mean vaccination coverage
 - `n_sobol_points`: Number of Sobol sequence starting points for multistart
 - `local_algorithm`: NLopt algorithm for local optimization
@@ -109,11 +111,11 @@ that produces mean noise equal to `target_scaling * measles_daily_incidence`.
 - `verbose`: Print optimization progress
 
 # Returns
-- `(optimal_vaccination, achieved_noise)`: Tuple of optimal vaccination coverage and resulting noise level
+- Named tuple with `optimal_vaccination`, `optimal_susceptible_proportion`, `mean_noise`, `target_noise`, and `difference`
 
 # Example
 ```julia
-optimal_vaccination, achieved_noise = calculate_dynamic_vaccination_coverage(
+result = calculate_dynamic_vaccination_coverage(
     7.0,  # target_scaling
     3.0,  # measles_daily_incidence (target noise = 21.0)
     dynamical_noise_params,
@@ -128,6 +130,7 @@ function calculate_dynamic_vaccination_coverage(
         ensemble_specification,
         enddates_vec;
         vaccination_bounds = [0.0, 1.0],
+        susceptible_bounds = [0.01, 0.99],
         max_vaccination_range = 0.2,
         n_sobol_points = 100,
         local_algorithm = NLopt.LN_BOBYQA,
@@ -145,20 +148,53 @@ function calculate_dynamic_vaccination_coverage(
 
     @assert length(vaccination_bounds) == 2
     @assert vaccination_bounds[1] < vaccination_bounds[2]
+    @assert length(susceptible_bounds) == 2
+    @assert susceptible_bounds[1] < susceptible_bounds[2]
 
     target_noise = target_scaling * measles_daily_incidence
 
     if verbose
         println("Target noise level: $target_noise")
         println("Vaccination bounds: $vaccination_bounds")
+        println("Susceptible proportion bounds: $susceptible_bounds")
         println("Starting multistart optimization with $n_sobol_points points...")
     end
+
+    # Pre-extract ensemble specification components to avoid repeated unpacking
+    @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims, dirpath = ensemble_specification
+    @unpack init_states = state_parameters
+    @unpack N = init_states
 
     # Define objective function: minimize squared difference from target
     function objective(params)
         vaccination_coverage = params[1]
+        susceptible_proportion = params[2]
 
-        # Ensure vaccination coverage is within bounds
+        # Ensure susceptible proportion is valid and will result in positive compartments
+        # Use stricter bounds to prevent numerical issues with very small populations
+        min_safe_prop = max(1.0 / N, 0.001)  # At least 1 person or 0.1%, whichever is larger
+        max_safe_prop = min(1.0 - 1.0 / N, 0.999)  # At most N-1 people or 99.9%, whichever is smaller
+
+        if susceptible_proportion <= min_safe_prop || susceptible_proportion >= max_safe_prop
+            return 1.0e10  # Large penalty for unsafe proportions
+        end
+
+        # Create new state parameters with updated proportions
+        new_state_parameters = StateParameters(;
+            N = N,
+            s_prop = susceptible_proportion,
+            e_prop = 0.0,  # Keep E and I at 0 for initial conditions
+            i_prop = 0.0,
+        )
+
+        new_ensemble_specification = EnsembleSpecification(
+            new_state_parameters,
+            dynamics_parameter_specification,
+            time_parameters,
+            nsims,
+            dirpath
+        )
+
         noise_level = calculate_mean_dynamical_noise(
             R0,
             latent_period,
@@ -167,7 +203,7 @@ function calculate_dynamic_vaccination_coverage(
             poisson_component,
             vaccination_coverage,
             max_vaccination_range,
-            ensemble_specification,
+            new_ensemble_specification,
             enddates_vec,
         )
 
@@ -178,8 +214,8 @@ function calculate_dynamic_vaccination_coverage(
     # Setup multistart optimization problem
     problem = MultistartOptimization.MinimizationProblem(
         objective,
-        [vaccination_bounds[1]],  # lower bounds
-        [vaccination_bounds[2]]   # upper bounds
+        [vaccination_bounds[1], susceptible_bounds[1]],  # lower bounds
+        [vaccination_bounds[2], susceptible_bounds[2]]   # upper bounds
     )
 
     # Configure local optimization method
@@ -197,7 +233,7 @@ function calculate_dynamic_vaccination_coverage(
         println("Running multistart optimization...")
     end
 
-    # Run optimization
+    # Run optimization with threading disabled to avoid potential race conditions
     result = MultistartOptimization.multistart_minimization(
         multistart_method,
         local_method,
@@ -205,7 +241,28 @@ function calculate_dynamic_vaccination_coverage(
     )
 
     optimal_vaccination = result.location[1]
+    optimal_susceptible_proportion = result.location[2]
     optimal_objective = result.value
+
+    # Create final EnsembleSpecification with optimal parameters for verification
+    @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims, dirpath = ensemble_specification
+    @unpack init_states = state_parameters
+    @unpack N = init_states
+
+    final_state_parameters = StateParameters(;
+        N = N,
+        s_prop = optimal_susceptible_proportion,
+        e_prop = 0.0,
+        i_prop = 0.0,
+    )
+
+    final_ensemble_specification = EnsembleSpecification(
+        final_state_parameters,
+        dynamics_parameter_specification,
+        time_parameters,
+        nsims,
+        dirpath
+    )
 
     # Calculate the actual noise level achieved
     achieved_noise = calculate_mean_dynamical_noise(
@@ -216,13 +273,14 @@ function calculate_dynamic_vaccination_coverage(
         poisson_component,
         optimal_vaccination,
         max_vaccination_range,
-        ensemble_specification,
+        final_ensemble_specification,
         enddates_vec
     )
 
     if verbose
         println("Optimization complete!")
         println("Optimal vaccination coverage: $optimal_vaccination")
+        println("Optimal susceptible proportion: $optimal_susceptible_proportion")
         println("Achieved noise level: $achieved_noise")
         println("Target noise level: $target_noise")
         println("Final objective value (squared error): $optimal_objective")
@@ -231,6 +289,7 @@ function calculate_dynamic_vaccination_coverage(
 
     return (;
         optimal_vaccination = round(optimal_vaccination; digits = 4),
+        optimal_susceptible_proportion = round(optimal_susceptible_proportion; digits = 4),
         mean_noise = round(achieved_noise; digits = 4),
         target_noise = round(target_noise; digits = 4),
         difference = round(achieved_noise - target_noise; digits = 4),

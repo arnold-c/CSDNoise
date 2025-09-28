@@ -292,4 +292,70 @@ function calculate_filtered_mean_incidence(
     return (incidence_means, overall_mean)
 end
 
+"""
+    calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+        target_scaling,
+        seir_results::StructVector{SEIRRun},
+        thresholds::Vector{T},
+        ews_enddate_type::EWSEndDateType,
+        dynamical_noise_specification_parameters,
+        ensemble_specification;
+        kwargs...
+    ) where {T<:AbstractThresholds}
+
+Wrapper function that calculates vaccination coverage using SEIR results and EWS endpoints.
+
+This function prepares data by calculating endpoints and mean incidence, then calls the 
+original optimization function with the computed mean incidence value.
+
+# Arguments
+- `target_scaling`: Multiplicative factor for target noise level
+- `seir_results`: StructVector of SEIR simulation results
+- `thresholds`: Vector of threshold objects for endpoint calculation
+- `ews_enddate_type`: Type of endpoint to calculate
+- `dynamical_noise_specification_parameters`: Parameters for dynamical noise model
+- `ensemble_specification`: Ensemble simulation parameters
+- `kwargs...`: Additional keyword arguments passed to the original function
+
+# Returns
+- Same as `calculate_dynamic_vaccination_coverage_multistart`
+
+# Example
+```julia
+result = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+    7.0,  # target_scaling
+    seir_results,
+    thresholds,
+    EWSEndDateType(Reff_start()),
+    dynamical_noise_params,
+    ensemble_spec
+)
+```
+"""
+function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+        target_scaling,
+        seir_results::StructVector{SEIRRun},
+        thresholds::Vector{T},
+        ews_enddate_type::EWSEndDateType,
+        dynamical_noise_specification_parameters,
+        ensemble_specification;
+        kwargs...
+    ) where {T <: AbstractThresholds}
+
+    # Calculate endpoints for all simulations
+    enddates = calculate_all_ews_enddates(thresholds, ews_enddate_type)
+
+    # Calculate filtered mean incidence up to endpoints
+    incidence_means, overall_mean = calculate_filtered_mean_incidence(seir_results, enddates)
+
+    # Call the original optimization function with the computed mean
+    return calculate_dynamic_vaccination_coverage_multistart(
+        target_scaling,
+        overall_mean,  # Use the computed overall mean instead of fixed value
+        dynamical_noise_specification_parameters,
+        ensemble_specification;
+        kwargs...
+    )
+end
+
 # end

@@ -212,7 +212,7 @@ Calculate the effective reproduction number, R_eff, at each time step for a give
 function calculateReffective_t!(
         Reff_vec::AbstractVector{Float64},
         beta_vec::Vector{Float64},
-        dynamics_params,
+        dynamics_params::DynamicsParameters,
         contact_mat::Int64,
         seir_arr
     )::Nothing
@@ -236,19 +236,29 @@ Calculate the effective reproduction number, R_eff, for a given set of parameter
 """
 function calculateReffective(
         beta_t::Float64,
-        dynamics_params,
+        dynamics_params::DynamicsParameters,
         S::Int64,
         N::Int64
     )::Float64
     s_prop = S / N
 
-    # Optimized version for single population case to avoid allocations
-    @assert size(dynamics_params.contact_matrix) == (1, 1)
-    contact_val = dynamics_params.contact_matrix[1, 1]
-    R_0 = (beta_t * contact_val) / (dynamics_params.gamma + dynamics_params.mu)
+    R_0 = calculateR0(beta_t, dynamics_params, S, N)
     Reff = R_0 * s_prop
 
     return Reff
+end
+
+@inline function calculateR0(
+        beta_t::Float64,
+        dynamics_params::DynamicsParameters,
+        S::Int64,
+        N::Int64
+    )
+    # Optimized version for single population case to avoid allocations
+    @assert size(dynamics_params.contact_matrix) == (1, 1)
+    contact_val = dynamics_params.contact_matrix[1, 1] * N
+    R_0 = (beta_t * contact_val) / (dynamics_params.gamma + dynamics_params.mu)
+    return R_0
 end
 
 """

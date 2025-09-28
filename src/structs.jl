@@ -574,7 +574,7 @@ struct NoiseRun
     incidence::Vector{FixedSizeVector{Int64}}
     mean_noise::Float64
     mean_poisson_noise::Float64
-    mean_rubella_noise::Float64
+    mean_dynamic_noise::Float64
 end
 
 abstract type AbstractThresholds end

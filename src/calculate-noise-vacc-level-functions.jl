@@ -335,7 +335,7 @@ result = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
 function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
         target_scaling,
         seir_results::StructVector{SEIRRun},
-        thresholds::Vector{T},
+        thresholds::StructVector{T},
         ews_enddate_type::EWSEndDateType,
         dynamical_noise_specification_parameters,
         ensemble_specification;
@@ -356,6 +356,85 @@ function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
         ensemble_specification;
         kwargs...
     )
+end
+
+"""
+    calculate_mean_dynamical_noise_variable_length(
+        R0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        mean_vaccination_coverage,
+        max_vaccination_range,
+        ensemble_specification,
+        endpoints::FixedSizeVector{Int64}
+    )
+
+Calculate the mean dynamical noise level for given vaccination coverage parameters
+with variable-length simulations based on endpoints.
+
+Similar to `calculate_mean_dynamical_noise` but generates noise arrays that match
+the variable endpoint lengths for each simulation.
+
+# Arguments
+- Same as `calculate_mean_dynamical_noise` plus:
+- `endpoints`: Vector of endpoints, one per simulation
+
+# Returns
+- `Float64`: Mean noise level from the ensemble simulation
+
+# Example
+```julia
+mean_noise = calculate_mean_dynamical_noise_variable_length(
+    12.0,     # R0
+    8.0,      # latent_period
+    7.0,      # duration_infection
+    0.9,      # correlation
+    1.0,      # poisson_component
+    0.85,     # mean_vaccination_coverage
+    0.2,      # max_vaccination_range
+    ensemble_spec,
+    endpoints
+)
+```
+"""
+function calculate_mean_dynamical_noise_variable_length(
+        R0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        mean_vaccination_coverage,
+        max_vaccination_range,
+        ensemble_specification,
+        enddates::FixedSizeVector{Int64}
+    )
+    min_vaccination_coverage,
+        max_vaccination_coverage = calculate_min_max_vaccination_range(
+        mean_vaccination_coverage,
+        max_vaccination_range,
+    )
+
+    dynamical_noise_spec = NoiseSpecification(
+        DynamicalNoise(
+            R0,
+            latent_period,
+            duration_infection,
+            correlation,
+            poisson_component,
+            min_vaccination_coverage,
+            max_vaccination_coverage,
+        )
+    )
+
+    noise_result = create_noise_vecs(
+        dynamical_noise_spec,
+        ensemble_specification,
+        enddates
+    )
+
+    return noise_result.mean_noise
 end
 
 # end

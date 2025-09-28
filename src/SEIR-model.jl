@@ -8,11 +8,9 @@ imports. All jumps are manually defined.
 """
 
 using StatsBase
+using Random: Random
 using Distributions: Poisson, Binomial
-using Random
-using UnPack
 using StaticArrays
-using LabelledArrays: SLVector
 
 """
     seir_mod(states, dynamics_params, trange; tstep, type = "stoch")
@@ -25,6 +23,8 @@ function seir_mod(
         time_params::SimTimeParameters;
         seed::Int64 = 1234
     )
+    Random.seed!(seed)
+
     tlength = time_params.tlength
     state_vec = FixedSizeVector{typeof(states)}(undef, tlength)
     inc_vec = FixedSizeVector{Int64}(undef, tlength)
@@ -48,7 +48,6 @@ function seir_mod(
         states,
         dynamics_params,
         time_params,
-        seed,
     )
 
     return SEIRRun(
@@ -65,6 +64,8 @@ function seir_mod(
         time_params::SimTimeParameters;
         seed::Int64 = 1234
     )
+    Random.seed!(seed)
+
     tlength = time_params.tlength
     state_vec = FixedSizeVector{typeof(states)}(undef, tlength)
     inc_vec = FixedSizeVector{Int64}(undef, tlength)
@@ -78,7 +79,6 @@ function seir_mod(
         states,
         dynamics_params,
         time_params,
-        seed,
     )
 
     return SEIRRun(
@@ -97,18 +97,17 @@ The in-place function to run the SEIR model and produce the transmission rate ar
 function seir_mod!(
         state_vec::ASV,
         inc_vec::AI,
-        Reff_vec::AF,
-        beta_vec::Vector{Float64},
+        Reff_vec::AF1,
+        beta_vec::AF2,
         states::SVector{5, Int64},
         dynamics_params::DynamicsParameters,
         time_params::SimTimeParameters,
-        seed::Int64,
     ) where {
         ASV <: AbstractVector{SVector{5, Int64}},
         AI <: AbstractVector{Int64},
-        AF <: AbstractVector{Float64},
+        AF1 <: AbstractVector{Float64},
+        AF2 <: AbstractVector{Float64},
     }
-    Random.seed!(seed)
 
     @inbounds begin
         mu = dynamics_params.mu
@@ -117,7 +116,7 @@ function seir_mod!(
         gamma = dynamics_params.gamma
         R_0 = dynamics_params.R_0
         timestep = time_params.tstep
-        tlength = time_params.tlength
+        tlength = length(inc_vec)
         burnin_days = time_params.burnin
 
         state_vec[1] = states
@@ -169,7 +168,7 @@ end
 
 The inner loop that is called by `seir_mod!()` function.
 """
-@inline function seir_mod_loop(
+@noinline function seir_mod_loop(
         state_vec::SVector{5, Int64},
         beta_t::Float64,
         mu_timestep::Float64,

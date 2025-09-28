@@ -157,16 +157,14 @@ endpoints = calculate_ews_endpoints(thresholds, EWSEndDateType(Reff_start()))
 ```
 """
 function calculate_all_ews_enddates(
-        vec_of_thresholds::Vector{T},
+        vec_of_thresholds::StructVector{T},
         ews_enddate_type::EWSEndDateType
     ) where {T <: AbstractThresholds}
 
     nsims = length(vec_of_thresholds)
     enddates = FixedSizeVector{Int64}(undef, nsims)
 
-    for (sim, thresholds) in eachindex(vec_of_thresholds)
-        # Convert threshold to matrix format for compatibility with existing functions
-
+    for (sim, thresholds) in pairs(vec_of_thresholds)
         ews_enddate = calculate_ews_enddate(thresholds, ews_enddate_type)
         enddates[sim] = Try.@? ews_enddate
     end

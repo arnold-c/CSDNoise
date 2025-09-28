@@ -9,19 +9,60 @@ using LightSumTypes: variant
 using StaticArrays: SVector
 using MultistartOptimization
 using NLopt
+using FixedSizeArrays: FixedSizeVector
+using StatsBase: mean
+using StructArrays: StructVector
+using Bumper: @no_escape, @alloc
+using Random: Random
+using Distributions: Poisson
 
-function create_noise_arr(
+"""
+    create_noise_vecs(
         noise_specification::NoiseSpecification,
-        args...;
+        ensemble_specification::EnsembleSpecification,
+        endpoints::FixedSizeVector{Int64};
         kwargs...
     )
-    return create_noise_arr(variant(noise_specification), args...; kwargs...)
+
+Create a NoiseRun struct that contains a vector of noise vectors with variable lengths matching the provided endpoints, and the summary statistics.
+
+This function generates noise for each simulation up to its specific endpoint,
+allowing for variable-length noise generation based on EWS endpoint calculations.
+
+# Arguments
+- `noise_specification`: Specification for noise generation
+- `ensemble_specification`: Ensemble simulation parameters
+- `endpoints`: Vector of endpoints, one per simulation
+- `kwargs...`: Additional keyword arguments
+
+# Returns
+- `NoiseRun`: Noise run with variable-length incidence vectors
+
+# Example
+```julia
+noise_result = create_noise_vecs(
+    noise_spec,
+    ensemble_spec,
+	enddates
+)
+```
+"""
+function create_noise_vecs(
+        noise_specification::NoiseSpecification,
+        varargs...;
+        kwargs...
+    )
+    return create_noise_vecs(
+        variant(noise_specification),
+        varargs...;
+        kwargs...
+    )
 end
 
-function create_noise_arr(
+function create_noise_vecs(
         noise_specification::DynamicalNoise,
         ensemble_specification::EnsembleSpecification,
-        args...;
+        enddates::FixedSizeVector{Int64};
         seed = 1234,
         kwargs...,
     )
@@ -32,6 +73,14 @@ function create_noise_arr(
         nsims =
         ensemble_specification
     @unpack tlength = time_parameters
+
+    @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
+
+    @unpack init_states = state_parameters
+    @unpack N = init_states
+    @unpack noise_mean_scaling = noise_specification
+
+    init_states_sv = SVector(init_states)
 
     noise_beta_force = if noise_specification.correlation == "none"
         0.0
@@ -59,7 +108,7 @@ function create_noise_arr(
         noise_gamma,
         dynamics_parameter_specification.mu,
         1,
-        state_parameters.init_states.N,
+        N
     )
 
     noise_dynamics_parameter_specification = DynamicsParameterSpecification(
@@ -74,7 +123,7 @@ function create_noise_arr(
         calculate_import_rate(
             dynamics_parameter_specification.mu,
             noise_specification.R_0,
-            state_parameters.init_states.N,
+            N
         ),
         noise_specification.R_0,
         noise_specification.min_vaccination_coverage,
@@ -83,8 +132,6 @@ function create_noise_arr(
         noise_specification.max_vaccination_coverage,
     )
 
-    seir_vec = FixedSizeVector{SVector{5, Int64}}(undef, tlength)
-    Reff_vec = FixedSizeVector{Float64}(undef, tlength)
     beta_vec = FixedSizeVector{Float64}(undef, tlength)
     calculate_beta_amp!(
         beta_vec,
@@ -92,46 +139,37 @@ function create_noise_arr(
         time_parameters
     )
 
-    # Initialize vectors
-    poisson_noise_worker = FixedSizedVector{Int64}(undef, tlength)
-    mean_poisson_noise_vec = FixedSizedVector{Float64}(undef, nsims)
-    mean_dynamical_noise_vec = FixedSizedVector{Float64}(undef, nsims)
+    # Initialize vectors for variable lengths
+    mean_poisson_noise_vec = FixedSizeVector{Float64}(undef, nsims)
+    mean_dynamical_noise_vec = FixedSizeVector{Float64}(undef, nsims)
 
-    # Create vector of sized vectors for incidence data and apply Poisson noise in-place
-    incidence_vecs = FixedSizeVector{FixedSizedVector{Int64}}(undef, nsims)
-    incidence_worker_vec = similar(poisson_noise_worker)
+    # Create vector of variable-sized vectors for incidence data
+    incidence_vecs = Vector{FixedSizeVector{Int64}}(undef, nsims)
 
     for sim in eachindex(incidence_vecs)
         run_seed = seed + (sim - 1)
+        enddate = enddates[sim]
+        Random.seed!(run_seed)
 
         local noise_dynamics_parameters = DynamicsParameters(
             noise_dynamics_parameter_specification; seed = run_seed
         )
 
-        seir_mod!(
-            seir_vec,
-            incidence_worker_vec,
-            Reff_vec,
-            beta_vec,
-            SVector(state_parameters.init_states),
+        local beta_worker_vec = @view(beta_vec[1:enddate])
+
+        calculate_dynamic_noise_values!(
+            incidence_vecs,
+            mean_dynamical_noise_vec,
+            mean_poisson_noise_vec,
+            beta_worker_vec,
+            init_states_sv,
             noise_dynamics_parameters,
+            noise_mean_scaling,
             time_parameters,
-            run_seed,
+            enddate,
+            sim,
         )
 
-        local mean_dynamical_noise_incidence = mean(incidence_worker_vec)
-
-        mean_dynamical_noise_vec[sim] = mean_dynamical_noise_incidence
-
-        add_poisson_noise!(
-            poisson_noise_worker,
-            mean_dynamical_noise_incidence,
-            noise_specification.noise_mean_scaling,
-            run_seed
-        )
-
-        mean_poisson_noise_vec[sim] = mean(poisson_noise_worker)
-        incidence_vecs[sim] = incidence_worker_vec .+ poisson_noise_worker
     end
 
     mean_dynamical_noise = mean(mean_dynamical_noise_vec)
@@ -146,54 +184,135 @@ function create_noise_arr(
     )
 end
 
-function create_noise_arr(
+function create_noise_vecs(
         noise_specification::PoissonNoise,
         ensemble_specification::EnsembleSpecification,
-        seir_results::Vector{SEIRRun};
+        enddates::FixedSizeVector{Int64},
+        seir_results::StructVector{SEIRRun};
         seed = 1234,
         kwargs...,
     )
-    # Create vector of sized vectors for incidence data and apply Poisson noise in-place
-    tlength = ensemble_specification.time_parameters.tlength
-    nsims = ensemble_specification.nsims
-    noise_vecs = FixedSizeVector{FixedSizedVector{Int64}}(undef, nsims)
-    noise_worker_vec = FixedSizeVector{Int64}(undef, tlength)
-    mean_noise_vec = FixedSizeVector{Float64}(undef, nsims)
-    for sim in eachindex(noise_vecs)
-        run_seed = seed + (sim - 1)
-        mean_dynamical_noise_incidence = mean(seir_results[sim].incidence)
-        mean_noise_vec[sim] = mean_dynamical_noise_incidence
+    @unpack nsims = ensemble_specification
+    @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
+    @assert nsims == length(seir_results) "Number of simulations must match SEIR results"
 
-        add_poisson_noise!(
-            noise_worker_vec,
+    @unpack noise_mean_scaling = noise_specification
+
+    # Initialize vectors for variable lengths
+    incidence_vecs = Vector{FixedSizeVector{Int64}}(undef, nsims)
+    mean_poisson_noise_vec = FixedSizeVector{Float64}(undef, nsims)
+
+    for sim in eachindex(mean_poisson_noise_vec)
+        run_seed = seed + (sim - 1)
+        enddate = enddates[sim]
+        Random.seed!(run_seed)
+
+        mean_dynamical_noise_incidence = mean(seir_results.incidence[sim])
+
+        calculate_poisson_noise_values!(
+            incidence_vecs,
+            mean_poisson_noise_vec,
             mean_dynamical_noise_incidence,
-            noise_specification.noise_mean_scaling,
-            run_seed
+            noise_mean_scaling,
+            enddate,
+            sim,
         )
 
-        noise_vecs[sim] = noise_worker_vec
     end
-    mean_noise = mean(mean_noise_vec)
+
+    mean_noise = mean(mean_poisson_noise_vec)
 
     return NoiseRun(
-        noise_vecs,
+        incidence_vecs,
         mean_noise,
         mean_noise,
         0.0
     )
 end
 
+function calculate_dynamic_noise_values!(
+        incidence_vecs,
+        mean_dynamical_noise_vec,
+        mean_poisson_noise_vec,
+        beta_worker_vec,
+        init_states_sv,
+        noise_dynamics_parameters,
+        noise_mean_scaling,
+        time_parameters,
+        enddate,
+        sim,
+    )
+    @no_escape begin
+        seir_worker_vec = @alloc(SVector{5, Int64}, enddate)
+        incidence_worker_vec = @alloc(Int64, enddate)
+        Reff_worker_vec = @alloc(Float64, enddate)
+
+        seir_mod!(
+            seir_worker_vec,
+            incidence_worker_vec,
+            Reff_worker_vec,
+            beta_worker_vec,
+            init_states_sv,
+            noise_dynamics_parameters,
+            time_parameters,
+        )
+
+        mean_dynamical_noise_incidence = mean(incidence_worker_vec)
+
+        poisson_noise_worker_vec = @alloc(Int64, enddate)
+
+        add_poisson_noise!(
+            poisson_noise_worker_vec,
+            mean_dynamical_noise_incidence,
+            noise_mean_scaling,
+        )
+
+        mean_poisson_noise = mean(poisson_noise_worker_vec)
+
+        combined_noise_vec = FixedSizeVector{Int64}(undef, enddate)
+        @inbounds for i in eachindex(combined_noise_vec)
+            combined_noise_vec[i] = incidence_worker_vec[i] + poisson_noise_worker_vec[i]
+        end
+
+        incidence_vecs[sim] = combined_noise_vec
+        mean_dynamical_noise_vec[sim] = mean_dynamical_noise_incidence
+        mean_poisson_noise_vec[sim] = mean_poisson_noise
+    end
+    return nothing
+end
+
+function calculate_poisson_noise_values!(
+        incidence_vecs,
+        mean_poisson_noise_vec,
+        mean_dynamical_noise_incidence,
+        noise_mean_scaling,
+        enddate,
+        sim,
+    )
+    poisson_noise_vec = FixedSizeVector{Int64}(undef, enddate)
+
+    add_poisson_noise!(
+        poisson_noise_vec,
+        mean_dynamical_noise_incidence,
+        noise_mean_scaling,
+    )
+
+    mean_poisson_noise = mean(poisson_noise_vec)
+
+    incidence_vecs[sim] = poisson_noise_vec
+    mean_poisson_noise_vec[sim] = mean_poisson_noise
+    return nothing
+end
+
 function add_poisson_noise!(
         noise_vec::AIV,
         mean_dynamical_noise_incidence::Float64,
         noise_mean_scaling::Float64,
-        seed = 1234
     ) where {AIV <: AbstractVector{<:Integer}}
-
-    noise_vec .= rand(
-        Poisson(noise_mean_scaling * mean_dynamical_noise_incidence),
-        length(noise_vec)
-    )
+    poisson_rate = noise_mean_scaling * mean_dynamical_noise_incidence
+    @inbounds @simd for i in eachindex(noise_vec)
+        noise_vec[i] = rand(Poisson(poisson_rate))
+    end
 
     return nothing
 end

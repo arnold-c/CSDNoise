@@ -103,6 +103,7 @@ include("ews-functions.jl")
 export calculate_bandwidth,
     calculate_bandwidth_and_return_ews_metric_spec,
     exceeds_ews_threshold,
+    calculate_all_ews_enddates,
     calculate_ews_enddate,
     simulation_tau_heatmap_df!,
     calculate_ews_lead_time,
@@ -210,7 +211,8 @@ export create_combinations_vec,
 
 include("noise-functions.jl")
 export create_noise_arr,
-    add_poisson_noise_arr!
+    add_poisson_noise_arr!,
+    create_noise_vecs
 # @reexport using .NoiseFunctions
 
 include("calculate-noise-vacc-level-functions.jl")

@@ -19,34 +19,34 @@ function generate_ensemble_data(
         ensemble_specification,
         null_specification,
         ensemble_outbreak_specification;
-        seed = 1234
+        seed = 1234,
+        verbose = false
     )
-    println(styled"  Generating ensemble dynamics...")
+    verbose && println(styled"  Generating ensemble dynamics...")
 
     # Generate ensemble data by calling the core simulation function directly
-    emergent_seir_results = generate_single_ensemble(ensemble_specification; seed = seed)
+    emergent_dynamic_parameters,
+        emergent_seir_results,
+        emergent_Reff_thresholds = generate_single_ensemble(ensemble_specification; seed = seed)
 
-    println(styled"  Generating null dynamics...")
+    verbose && println(styled"  Generating null dynamics...")
 
     # Generate null data
-    null_seir_results = generate_single_ensemble(null_specification; seed = seed)
+    null_seir_results = generate_single_ensemble(null_specification; seed = seed)[2]
 
-    println(styled"  Processing outbreak data...")
+    verbose && println(styled"  Processing outbreak data...")
 
     # Generate incidence arrays for the outbreak specification using the incidence vectors
     emergent_outbreak_thresholds = calculate_outbreak_thresholds(
         emergent_seir_results, ensemble_outbreak_specification
     )
 
-    null_outbreak_thresholds = calculate_outbreak_thresholds(
-        null_seir_results, ensemble_outbreak_specification
-    )
-
-    return (
+    return (;
+        emergent_dynamic_parameters,
         emergent_seir_results,
+        emergent_Reff_thresholds,
         emergent_outbreak_thresholds,
         null_seir_results,
-        null_outbreak_thresholds,
     )
 end
 
@@ -94,10 +94,9 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     end
 
     return (;
-        ensemble_spec,
         dynamics_parameters,
         seir_results = StructVector(seir_results),
-        Reff_thresholds,
+        Reff_thresholds = StructVector(Reff_thresholds),
     )
 end
 

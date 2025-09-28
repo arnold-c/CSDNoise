@@ -1,6 +1,8 @@
 using UnPack: @unpack
 using FixedSizeArrays: FixedSizeVector
 using Try: Try
+using StatsBase: mean
+using StructArrays: StructVector
 
 """
     calculate_dynamic_vaccination_coverage_multistart(
@@ -243,5 +245,51 @@ function calculate_mean_dynamical_noise(
     return noise_result.mean_noise
 end
 
+
+"""
+    calculate_filtered_mean_incidence(
+        seir_results::StructVector{SEIRRun},
+        endpoints::FixedSizeVector{Int64}
+    )
+
+Calculate mean incidence for each simulation up to its endpoint.
+
+# Arguments
+- `seir_results`: StructVector of SEIR simulation results
+- `endpoints`: Vector of endpoints, one per simulation
+
+# Returns
+- `(incidence_means, overall_mean)`: Tuple of per-simulation means and overall mean
+
+# Example
+```julia
+incidence_means, overall_mean = calculate_filtered_mean_incidence(seir_results, endpoints)
+```
+"""
+function calculate_filtered_mean_incidence(
+        seir_results::StructVector{SEIRRun},
+        enddates::FixedSizeVector{Int64}
+    )
+
+    nsims = length(seir_results)
+    @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
+
+    incidence_means = FixedSizeVector{Float64}(undef, nsims)
+
+    for (sim, enddate) in pairs(enddates)
+
+        if enddate > 0 && enddate <= length(seir_results[sim].incidence)
+            # Calculate mean up to the endpoint
+            incidence_means[sim] = mean(@view(seir_results[sim].incidence[1:enddate]))
+        else
+            error("Sim $sim has and enddate ($enddate) outside of the incidence vectors size ($(length(seir_results[sim].incidence)))")
+        end
+    end
+
+    # Calculate overall mean across all simulations
+    overall_mean = mean(incidence_means)
+
+    return (incidence_means, overall_mean)
+end
 
 # end

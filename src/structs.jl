@@ -13,6 +13,7 @@ using Random: Random
 using UnPack: @unpack
 using Dates: Dates
 using LightSumTypes: @sumtype, variant
+using NLopt: NLopt
 
 # include("transmission-functions.jl")
 # using .TransmissionFunctions
@@ -487,6 +488,96 @@ function calculate_min_max_vaccination_range(
         mean_vaccination_coverage + min_vaccination_range; digits = 4
     )
     return min_vaccination_coverage, max_vaccination_coverage
+end
+
+struct DynamicalNoiseSpecification
+    R0::Float64
+    latent_period::Int64
+    duration_infection::Int64
+    correlation::String
+    poisson_component::Float64
+    vaccination_bounds::Vector{Float64}
+    susceptible_bounds::Vector{Float64}
+    max_vaccination_range::Float64
+    function DynamicalNoiseSpecification(
+            R0::Float64,
+            latent_period::Int64,
+            duration_infection::Int64,
+            correlation::String,
+            poisson_component::Float64,
+            vaccination_bounds::Vector{Float64},
+            susceptible_bounds::Vector{Float64},
+            max_vaccination_range::Float64,
+        )
+
+        @assert length(vaccination_bounds) == 2
+        @assert vaccination_bounds[1] < vaccination_bounds[2]
+        @assert length(susceptible_bounds) == 2
+        @assert susceptible_bounds[1] < susceptible_bounds[2]
+        return new(
+            R0,
+            latent_period,
+            duration_infection,
+            correlation,
+            poisson_component,
+            vaccination_bounds,
+            susceptible_bounds,
+            max_vaccination_range
+
+        )
+    end
+end
+
+function DynamicalNoiseSpecification(;
+        R0::Float64,
+        latent_period::Int64,
+        duration_infection::Int64,
+        correlation::String,
+        poisson_component::Float64,
+        vaccination_bounds::Vector{Float64} = [0.0, 1.0],
+        susceptible_bounds::Vector{Float64} = [0.01, 0.99],
+        max_vaccination_range::Float64 = 0.2
+    )
+    return DynamicalNoiseSpecification(
+        R0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        vaccination_bounds,
+        susceptible_bounds,
+        max_vaccination_range
+    )
+end
+
+struct OptimizationParameters
+    n_sobol_points::Int64
+    local_algorithm
+    maxeval::Int64
+    xtol_rel::Float64
+    xtol_abs::Float64
+    ftol_rel::Float64
+    verbose::Bool
+end
+
+function OptimizationParameters(;
+        n_sobol_points::Int64 = 100,
+        local_algorithm = NLopt.LN_BOBYQA,
+        maxeval::Int64 = 1000,
+        xtol_rel::Float64 = 1.0e-3,
+        xtol_abs::Float64 = 1.0e-3,
+        ftol_rel::Float64 = 1.0e-4,
+        verbose::Bool = false
+    )
+    return OptimizationParameters(
+        n_sobol_points,
+        local_algorithm,
+        maxeval,
+        xtol_rel,
+        xtol_abs,
+        ftol_rel,
+        verbose
+    )
 end
 
 get_noise_description(noise_specification::NoiseSpecification) = get_noise_description(variant(noise_specification))

@@ -67,7 +67,7 @@ ensemble_specification = EnsembleSpecification(
 )
 
 #%%
-dynamical_noise_spec = (;
+dynamical_noise_spec = DynamicalNoiseSpecification(
     R0 = 5.0,
     latent_period = 7,
     duration_infection = 14,
@@ -76,16 +76,15 @@ dynamical_noise_spec = (;
 )
 
 #%%
-calculate_mean_dynamical_noise(
-    5.0,
-    7,
-    14,
-    "in-phase",
-    0.15,
-    0.8734,
-    0.2,
-    ensemble_specification,
-)
+# Note: calculate_mean_dynamical_noise now requires enddates_vec parameter
+# This call needs to be updated with appropriate enddates_vec
+# calculate_mean_dynamical_noise(
+#     dynamical_noise_spec,
+#     0.8734,  # mean_vaccination_coverage
+#     0.7,     # susceptible_proportion (example value)
+#     ensemble_specification,
+#     enddates_vec,  # needs to be defined
+# )
 
 #%%
 emergent_incidence_arr = get_ensemble_file(
@@ -95,40 +94,57 @@ emergent_incidence_arr = get_ensemble_file(
 mean_measles = StatsBase.mean(emergent_incidence_arr[:, 1, :])
 
 #%%
-calculate_dynamic_vaccination_coverage(
-    7,
-    mean_measles,
-    dynamical_noise_spec,
-    ensemble_specification;
-    maxiters = 20,
-    vaccination_mean_range = [0.0, 1.0],
-    max_vaccination_range = 0.2,
-    atol = 0.01,
-    showprogress = true,
-)
+# Note: This call needs enddates_vec to be defined first
+# Example usage (uncomment and adjust as needed):
+# enddates_vec = calculate_all_ews_enddates(thresholds, EWSEndDateType(Reff_start()))
+#
+# opt_params = OptimizationParameters(
+#     n_sobol_points = 100,
+#     maxeval = 1000,
+#     verbose = true
+# )
+#
+# calculate_dynamic_vaccination_coverage(
+#     7,
+#     mean_measles,
+#     dynamical_noise_spec,
+#     ensemble_specification,
+#     enddates_vec,
+#     opt_params
+# )
 
 calculate_min_max_vaccination_range(
     0.8734, 0.2
 )
 
 #%%
-dynamical_noise_coverages = map(
-    ((scale, coverage_range),) -> calculate_dynamic_vaccination_coverage(
-        scale,
-        mean_measles,
-        dynamical_noise_spec,
-        ensemble_specification;
-        maxiters = 20,
-        vaccination_mean_range = coverage_range,
-        max_vaccination_range = 0.2,
-        atol = 0.01,
-        showprogress = true,
-    ),
-    zip(
-        [1, 7],
-        [[0.8, 0.9], [0.05, 0.15]],
-    ),
-)
+# Note: This needs to be updated with proper enddates_vec and struct parameters
+# dynamical_noise_coverages = map(
+#     ((scale, coverage_bounds),) -> begin
+#         noise_spec = DynamicalNoiseSpecification(
+#             R0 = 5.0,
+#             latent_period = 7,
+#             duration_infection = 14,
+#             correlation = "in-phase",
+#             poisson_component = 0.15,
+#             vaccination_bounds = coverage_bounds,
+#             susceptible_bounds = [0.01, 0.99],
+#             max_vaccination_range = 0.2
+#         )
+#         calculate_dynamic_vaccination_coverage(
+#             scale,
+#             mean_measles,
+#             noise_spec,
+#             ensemble_specification,
+#             enddates_vec,
+#             OptimizationParameters(verbose = true)
+#         )
+#     end,
+#     zip(
+#         [1, 7],
+#         [[0.8, 0.9], [0.05, 0.15]],
+#     ),
+# )
 
 #%%
 map(

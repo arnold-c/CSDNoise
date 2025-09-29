@@ -81,7 +81,7 @@ measles_ensemble_data = generate_single_ensemble(
 )
 
 #%%
-measles_dynamical_noise_spec = (;
+measles_dynamical_noise_spec = DynamicalNoiseSpecification(
     R0 = 5.0,
     latent_period = 7,
     duration_infection = 14,

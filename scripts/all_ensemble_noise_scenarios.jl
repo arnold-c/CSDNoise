@@ -92,7 +92,7 @@ measles_dynamical_noise_spec = (;
 
 #%%
 calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
-    1.0,
+    8.0,
     measles_ensemble_data.seir_results,
     measles_ensemble_data.Reff_thresholds,
     EWSEndDateType(Reff_start()),
@@ -101,7 +101,7 @@ calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
 )
 
 #%%
-measles_noise_spec_4x = NoiseSpecification(
+measles_noise_spec_8x = NoiseSpecification(
     DynamicalNoise(
         measles_dynamical_noise_spec.R0,
         measles_dynamical_noise_spec.latent_period,
@@ -109,139 +109,61 @@ measles_noise_spec_4x = NoiseSpecification(
         measles_dynamical_noise_spec.correlation,
         measles_dynamical_noise_spec.poisson_component,
         calculate_min_max_vaccination_range(
-            0.0154, # mean vaccination for 4x
+            0.8796, # mean vaccination for 4x
             0.2
         )...
     )
 )
 
+measles_noise_8x_ensemble_spec = EnsembleSpecification(
+    StateParameters(;
+        N = measles_spec[1].state_parameters.init_states.N,
+        s_prop = 0.022,
+        e_prop = measles_spec[1].state_parameters.init_state_props.e_prop,
+        i_prop = measles_spec[1].state_parameters.init_state_props.i_prop,
+    ),
+    measles_spec[1].dynamics_parameter_specification,
+    measles_spec[1].time_parameters,
+    measles_spec[1].nsims,
+    measles_spec[1].dirpath
+)
+
 #%%
-enddates = calculate_all_ews_enddates(
+enddates_vec = calculate_all_ews_enddates(
     measles_ensemble_data.Reff_thresholds,
     EWSEndDateType(Reff_start())
 )
 
 #%%
-@benchmark create_noise_vecs(
-    $measles_noise_spec_4x,
-    $measles_spec[1],
-    $enddates
+measles_noise_8x_vecs = create_noise_vecs(
+    measles_noise_spec_8x,
+    measles_noise_8x_ensemble_spec,
+    enddates_vec
 )
+
+inc = filter_seir_results(
+    generate_single_ensemble(measles_spec[1]).seir_results,
+    enddates_vec,
+)
+
+using GLMakie
 
 #%%
-a = create_noise_vecs(
-    measles_noise_spec_4x,
-    measles_spec[1],
-    enddates
-)
-b = create_noise_vecs(
-    measles_noise_spec_4x,
-    measles_spec[1],
-    enddates
-)
-
-map(
-    n -> (
-        getproperty(a, n) == getproperty(b, n),
-        getproperty(a, n) === getproperty(b, n),
-    ),
-    propertynames(a)
-)
-
-#%%
-create_noise_vecs(
-    NoiseSpecification(PoissonNoise(1.0)),
-    measles_spec[1],
-    enddates,
-    measles_ensemble_data.seir_results,
-)
-
-#%%
-measles_noise_arr = create_noise_arr(
-    measles_noise_spec_4x,
-    measles_spec[1];
-    seed = 1234,
-)
-
-#%%
-noise_res = create_noise_vecs(
-    NoiseSpecification(
-        DynamicalNoise(
-            measles_dynamical_noise_spec.R0,
-            measles_dynamical_noise_spec.latent_period,
-            measles_dynamical_noise_spec.duration_infection,
-            measles_dynamical_noise_spec.correlation,
-            measles_dynamical_noise_spec.poisson_component,
-            calculate_min_max_vaccination_range(
-                1.0, # mean vaccination for 4x
-                1.0
-            )...
-        )
-    ),
-    measles_spec[1],
-    enddates,
-)
-
-noise_res.mean_noise
-noise_res.mean_poisson_noise
-noise_res.mean_dynamic_noise
-
-#%%
-spec = create_ensemble_specs(
-    EnsembleSpecsParameters(
-        burnin_years = 5,
-        nyears = 20,
-        annual_births_per_k = ANNUAL_BIRTHS_PER_K,
-        ensemble_state_specification = StateParameters(
-            500_000,
-            Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95)
-            # Dict(:s_prop => 0.0, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 1.0)
-        ),
-        R_0 = R0,
-        gamma = GAMMA,
-        sigma = SIGMA,
-        target_Reff = 0.9,
-        target_years = 10,
-        min_vaccination_coverage = 0.6,
-        max_vaccination_coverage = 0.7,
-        nsims = 100
-    )
-)[1]
-
-noise_res = create_noise_vecs(
-    NoiseSpecification(
-        DynamicalNoise(
-            R0,
-            LATENT_PER_DAYS,
-            DUR_INF_DAYS,
-            "in-phase",
-            0.15,
-            # measles_dynamical_noise_spec.R0,
-            # measles_dynamical_noise_spec.latent_period,
-            # measles_dynamical_noise_spec.duration_infection,
-            # measles_dynamical_noise_spec.correlation,
-            # measles_dynamical_noise_spec.poisson_component,
-            calculate_min_max_vaccination_range(
-                0.8, # mean vaccination for 4x
-                0.8
-            )...
-        )
-    ),
-    spec,
-    enddates,
-)
-inc = generate_single_ensemble(spec).seir_results
-
 fig = Figure()
-ax = Axis(fig[1, 1])
-for res in noise_res.incidence
+ax = Axis(fig[1, 1]; title = "Rubella Noise Incidence (8x)")
+for res in measles_noise_8x_vecs.incidence
     lines!(ax, res)
 end
-ax2 = Axis(fig[2, 1])
+ax2 = Axis(fig[2, 1]; title = "Measles Incidence")
 for res in inc.incidence
     lines!(ax2, res)
 end
-linkaxes!(ax, ax2)
+ax3 = Axis(fig[3, 1]; title = "Measles Reff")
+for res in inc.Reff
+    lines!(ax3, res)
+end
+linkxaxes!(ax, ax2, ax3)
+linkyaxes!(ax, ax2)
 display(fig)
 
 #%%

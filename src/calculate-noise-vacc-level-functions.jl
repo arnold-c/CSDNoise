@@ -74,22 +74,13 @@ function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
 end
 
 """
-    calculate_dynamic_vaccination_coverage_multistart(
+    calculate_dynamic_vaccination_coverage(
         target_scaling,
         measles_daily_incidence,
-        dynamical_noise_specification_parameters,
-        ensemble_specification,
-        enddates_vec;
-        vaccination_bounds = [0.0, 1.0],
-        susceptible_bounds = [0.01, 0.99],
-        max_vaccination_range = 0.2,
-        n_sobol_points = 50,
-        local_algorithm = NLopt.LN_BOBYQA,
-        maxeval = 1000,
-        xtol_rel = 1.0e-3,
-        xtol_abs = 1.0e-3,
-        ftol_rel = 1.0e-4,
-        verbose = false
+        dynamical_noise_spec::DynamicalNoiseSpecification,
+        ensemble_specification::EnsembleSpecification,
+        enddates_vec,
+        optimization_params::OptimizationParameters = OptimizationParameters()
     )
 
 Optimize vaccination coverage and initial susceptible proportion using multistart optimization to achieve target noise scaling.
@@ -100,58 +91,56 @@ and initial susceptible proportion that produces mean noise equal to `target_sca
 # Arguments
 - `target_scaling`: Multiplicative factor for target noise level
 - `measles_daily_incidence`: Daily measles incidence to scale
-- `dynamical_noise_specification_parameters`: Parameters for dynamical noise model
+- `dynamical_noise_spec`: DynamicalNoiseSpecification containing noise model parameters and search bounds
 - `ensemble_specification`: Ensemble simulation parameters
 - `enddates_vec`: A vector of all simulation enddates
-- `vaccination_bounds`: [min, max] bounds for vaccination coverage search
-- `susceptible_bounds`: [min, max] bounds for initial susceptible proportion search
-- `max_vaccination_range`: Maximum range around mean vaccination coverage
-- `n_sobol_points`: Number of Sobol sequence starting points for multistart
-- `local_algorithm`: NLopt algorithm for local optimization
-- `maxeval`: Maximum function evaluations per local optimization
-- `xtol_rel`, `xtol_abs`, `ftol_rel`: Convergence tolerances
-- `verbose`: Print optimization progress
+- `optimization_params`: OptimizationParameters containing algorithm settings (optional, uses defaults if not provided)
 
 # Returns
 - Named tuple with `optimal_vaccination`, `optimal_susceptible_proportion`, `mean_noise`, `target_noise`, and `difference`
 
 # Example
 ```julia
+noise_spec = DynamicalNoiseSpecification(
+    R0 = 5.0,
+    latent_period = 7,
+    duration_infection = 14,
+    correlation = "in-phase",
+    poisson_component = 1.0
+)
 result = calculate_dynamic_vaccination_coverage(
     7.0,  # target_scaling
     3.0,  # measles_daily_incidence (target noise = 21.0)
-    dynamical_noise_params,
-    ensemble_spec
+    noise_spec,
+    ensemble_spec,
+    enddates_vec
 )
 ```
 """
 function calculate_dynamic_vaccination_coverage(
         target_scaling,
         measles_daily_incidence,
-        dynamical_noise_specification_parameters,
-        ensemble_specification,
-        enddates_vec;
-        vaccination_bounds = [0.0, 1.0],
-        susceptible_bounds = [0.01, 0.99],
-        max_vaccination_range = 0.2,
-        n_sobol_points = 100,
-        local_algorithm = NLopt.LN_BOBYQA,
-        maxeval = 1000,
-        xtol_rel = 1.0e-3,
-        xtol_abs = 1.0e-3,
-        ftol_rel = 1.0e-4,
-        verbose = false
+        dynamical_noise_spec::DynamicalNoiseSpecification,
+        ensemble_specification::EnsembleSpecification,
+        enddates_vec,
+        optimization_params::OptimizationParameters = OptimizationParameters()
     )
     @unpack R0,
         latent_period,
         duration_infection,
         correlation,
-        poisson_component = dynamical_noise_specification_parameters
+        poisson_component,
+        vaccination_bounds,
+        susceptible_bounds,
+        max_vaccination_range = dynamical_noise_spec
 
-    @assert length(vaccination_bounds) == 2
-    @assert vaccination_bounds[1] < vaccination_bounds[2]
-    @assert length(susceptible_bounds) == 2
-    @assert susceptible_bounds[1] < susceptible_bounds[2]
+    @unpack n_sobol_points,
+        local_algorithm,
+        maxeval,
+        xtol_rel,
+        xtol_abs,
+        ftol_rel,
+        verbose = optimization_params
 
     target_noise = target_scaling * measles_daily_incidence
 
@@ -189,7 +178,7 @@ function calculate_dynamic_vaccination_coverage(
             poisson_component,
             vaccination_coverage,
             susceptible_proportion,
-            new_ensemble_specification,
+            ensemble_specification,
             enddates_vec,
             max_vaccination_range,
         )

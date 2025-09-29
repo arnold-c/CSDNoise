@@ -38,6 +38,7 @@ export SimTimeParameters,
     noise_table_description,
     getdirpath,
     SEIRRun,
+    NoiseRun,
     Thresholds,
     OutbreakThresholds,
     EWSMethod,
@@ -200,6 +201,11 @@ export create_testing_arrs,
     calculate_movingavg!,
     calculate_test_positivity
 # @reexport using .DiagTestingFunctions
+
+include("diag-testing-structvector-functions.jl")
+export create_testing_vecs,
+    calculate_tested_vec!,
+    calculate_positives_vec!
 
 include(
     "ensemble-functions.jl"

@@ -8,11 +8,11 @@ using StructArrays: StructVector
     calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
         target_scaling,
         seir_results::StructVector{SEIRRun},
-        thresholds::Vector{T},
+        thresholds::StructVector{T},
         ews_enddate_type::EWSEndDateType,
-        dynamical_noise_specification_parameters,
-        ensemble_specification;
-        kwargs...
+        dynamical_noise_spec::DynamicalNoiseSpecification,
+        ensemble_specification::EnsembleSpecification,
+        optimization_params::OptimizationParameters = OptimizationParameters()
     ) where {T<:AbstractThresholds}
 
 Wrapper function that calculates vaccination coverage using SEIR results and EWS endpoints.
@@ -23,23 +23,30 @@ original optimization function with the computed mean incidence value.
 # Arguments
 - `target_scaling`: Multiplicative factor for target noise level
 - `seir_results`: StructVector of SEIR simulation results
-- `thresholds`: Vector of threshold objects for endpoint calculation
+- `thresholds`: StructVector of threshold objects for endpoint calculation
 - `ews_enddate_type`: Type of endpoint to calculate
-- `dynamical_noise_specification_parameters`: Parameters for dynamical noise model
+- `dynamical_noise_spec`: DynamicalNoiseSpecification containing noise model parameters
 - `ensemble_specification`: Ensemble simulation parameters
-- `kwargs...`: Additional keyword arguments passed to the original function
+- `optimization_params`: OptimizationParameters containing algorithm settings (optional)
 
 # Returns
-- Same as `calculate_dynamic_vaccination_coverage_multistart`
+- Same as `calculate_dynamic_vaccination_coverage`
 
 # Example
 ```julia
+noise_spec = DynamicalNoiseSpecification(
+    R0 = 5.0,
+    latent_period = 7,
+    duration_infection = 14,
+    correlation = "in-phase",
+    poisson_component = 1.0
+)
 result = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
     7.0,  # target_scaling
     seir_results,
     thresholds,
     EWSEndDateType(Reff_start()),
-    dynamical_noise_params,
+    noise_spec,
     ensemble_spec
 )
 ```
@@ -49,9 +56,9 @@ function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
         seir_results::StructVector{SEIRRun},
         thresholds::StructVector{T},
         ews_enddate_type::EWSEndDateType,
-        dynamical_noise_specification_parameters,
-        ensemble_specification;
-        kwargs...
+        dynamical_noise_spec::DynamicalNoiseSpecification,
+        ensemble_specification::EnsembleSpecification,
+        optimization_params::OptimizationParameters = OptimizationParameters()
     ) where {T <: AbstractThresholds}
 
     # Calculate endpoints for all simulations
@@ -65,11 +72,11 @@ function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
     # Call the original optimization function with the computed mean
     return calculate_dynamic_vaccination_coverage(
         target_scaling,
-        overall_mean,  # Use the computed overall mean instead of fixed value
-        dynamical_noise_specification_parameters,
+        overall_mean,
+        dynamical_noise_spec,
         ensemble_specification,
-        enddates_vec;
-        kwargs...
+        enddates_vec,
+        optimization_params
     )
 end
 

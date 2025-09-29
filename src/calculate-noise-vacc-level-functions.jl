@@ -181,22 +181,6 @@ function calculate_dynamic_vaccination_coverage(
             return 1.0e10  # Large penalty for unsafe proportions
         end
 
-        # Create new state parameters with updated proportions
-        new_state_parameters = StateParameters(;
-            N = N,
-            s_prop = susceptible_proportion,
-            e_prop = 0.0,  # Keep E and I at 0 for initial conditions
-            i_prop = 0.0,
-        )
-
-        new_ensemble_specification = EnsembleSpecification(
-            new_state_parameters,
-            dynamics_parameter_specification,
-            time_parameters,
-            nsims,
-            dirpath
-        )
-
         noise_level = calculate_mean_dynamical_noise(
             R0,
             latent_period,
@@ -204,9 +188,10 @@ function calculate_dynamic_vaccination_coverage(
             correlation,
             poisson_component,
             vaccination_coverage,
-            max_vaccination_range,
+            susceptible_proportion,
             new_ensemble_specification,
             enddates_vec,
+            max_vaccination_range,
         )
 
         # Return squared error from target
@@ -242,60 +227,7 @@ function calculate_dynamic_vaccination_coverage(
         problem
     )
 
-    optimal_vaccination = result.location[1]
-    optimal_susceptible_proportion = result.location[2]
-    optimal_objective = result.value
-
-    # Create final EnsembleSpecification with optimal parameters for verification
-    @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims, dirpath = ensemble_specification
-    @unpack init_states = state_parameters
-    @unpack N = init_states
-
-    final_state_parameters = StateParameters(;
-        N = N,
-        s_prop = optimal_susceptible_proportion,
-        e_prop = 0.0,
-        i_prop = 0.0,
-    )
-
-    final_ensemble_specification = EnsembleSpecification(
-        final_state_parameters,
-        dynamics_parameter_specification,
-        time_parameters,
-        nsims,
-        dirpath
-    )
-
-    # Calculate the actual noise level achieved
-    achieved_noise = calculate_mean_dynamical_noise(
-        R0,
-        latent_period,
-        duration_infection,
-        correlation,
-        poisson_component,
-        optimal_vaccination,
-        max_vaccination_range,
-        final_ensemble_specification,
-        enddates_vec
-    )
-
-    if verbose
-        println("Optimization complete!")
-        println("Optimal vaccination coverage: $optimal_vaccination")
-        println("Optimal susceptible proportion: $optimal_susceptible_proportion")
-        println("Achieved noise level: $achieved_noise")
-        println("Target noise level: $target_noise")
-        println("Final objective value (squared error): $optimal_objective")
-        println("Absolute error: $(abs(achieved_noise - target_noise))")
-    end
-
-    return (;
-        optimal_vaccination = round(optimal_vaccination; digits = 4),
-        optimal_susceptible_proportion = round(optimal_susceptible_proportion; digits = 4),
-        mean_noise = round(achieved_noise; digits = 4),
-        target_noise = round(target_noise; digits = 4),
-        difference = round(achieved_noise - target_noise; digits = 4),
-    )
+    return result
 end
 
 """
@@ -334,7 +266,7 @@ mean_noise = calculate_mean_dynamical_noise(
     12.0,     # R0
     8.0,      # latent_period
     7.0,      # duration_infection
-    0.9,      # correlation
+    "in-phase", # correlation
     1.0,      # poisson_component
     0.85,     # mean_vaccination_coverage
     0.2,      # max_vaccination_range
@@ -349,12 +281,112 @@ function calculate_mean_dynamical_noise(
         correlation,
         poisson_component,
         mean_vaccination_coverage,
-        max_vaccination_range,
+        susceptible_proportion,
         ensemble_specification,
         enddates_vec,
+        max_vaccination_range = 0.2,
     )
-    min_vaccination_coverage,
-        max_vaccination_coverage = calculate_min_max_vaccination_range(
+
+    noise_result = recreate_noise_vecs(
+        R0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        mean_vaccination_coverage,
+        susceptible_proportion,
+        ensemble_specification,
+        enddates_vec,
+        max_vaccination_range,
+    )
+
+    return noise_result.mean_noise
+end
+
+"""
+    recreate_noise_vecs(
+        R0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        mean_vaccination_coverage,
+        susceptible_proportion,
+        ensemble_specification,
+        enddates_vec,
+        max_vaccination_range = 0.2
+    )
+
+Recreate noise vectors with updated vaccination coverage and susceptible proportion parameters.
+
+Takes updated susceptible proportion and vaccination coverage values (either during or after
+optimization), recreates the state parameters, ensemble specification, and dynamics
+specifications, then generates new noise vectors using the updated parameters.
+
+# Arguments
+- `R0`: Basic reproduction number of the noise disease
+- `latent_period`: Duration of latent period of the noise in the SEIR model
+- `duration_infection`: Duration of infectious period of the noise
+- `correlation`: Temporal correlation parameter for noise relative to the target disease ("in-phase", "out-of-phase")
+- `poisson_component`: The amount of additional Poisson noise to add (relative to the mean dynamical noise generated in a simulation)
+- `mean_vaccination_coverage`: Mean vaccination coverage level (0-1)
+- `susceptible_proportion`: Initial proportion of population that is susceptible (0-1)
+- `ensemble_specification`: Parameters for ensemble simulation
+- `enddates_vec`: Vector of simulation end dates
+- `max_vaccination_range`: Maximum range around mean coverage for bounds to (uniformly) sample within
+
+# Returns
+- `NoiseRun`: StructVector containing the generated noise simulation results
+
+# Example
+```julia
+noise_result = recreate_noise_vecs(
+    12.0,     # R0
+    8.0,      # latent_period
+    7.0,      # duration_infection
+    "in-phase", # correlation
+    1.0,      # poisson_component
+    0.85,     # mean_vaccination_coverage
+    0.7,      # susceptible_proportion
+    ensemble_spec,
+    enddates_vec,
+    0.2       # max_vaccination_range
+)
+```
+"""
+function recreate_noise_vecs(
+        R0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        mean_vaccination_coverage,
+        susceptible_proportion,
+        ensemble_specification,
+        enddates_vec,
+        max_vaccination_range = 0.2,
+    )
+    # Create final EnsembleSpecification with optimal parameters for verification
+    @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims, dirpath = ensemble_specification
+    @unpack init_states = state_parameters
+    @unpack N = init_states
+
+    final_state_parameters = StateParameters(;
+        N = N,
+        s_prop = susceptible_proportion,
+        e_prop = 0.0,
+        i_prop = 0.0,
+    )
+
+    final_ensemble_specification = EnsembleSpecification(
+        final_state_parameters,
+        dynamics_parameter_specification,
+        time_parameters,
+        nsims,
+        dirpath
+    )
+
+    min_vaccination_coverage, max_vaccination_coverage = calculate_min_max_vaccination_range(
         mean_vaccination_coverage,
         max_vaccination_range,
     )
@@ -377,8 +409,9 @@ function calculate_mean_dynamical_noise(
         enddates_vec,
     )
 
-    return noise_result.mean_noise
+    return noise_result
 end
+
 
 """
     calculate_mean_incidence(seir_results::StructVector{SEIRRun})

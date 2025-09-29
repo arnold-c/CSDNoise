@@ -132,6 +132,8 @@ function create_noise_vecs(
         noise_specification.max_vaccination_coverage,
     )
 
+    # Generate a single long vec of beta values that will be trimmed
+    # for each simulation as beta doesn't have any stochasticity itself
     beta_vec = FixedSizeVector{Float64}(undef, tlength)
     calculate_beta_amp!(
         beta_vec,

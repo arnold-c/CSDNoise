@@ -215,12 +215,14 @@ include("noise-functions.jl")
 export create_noise_vecs
 # @reexport using .NoiseFunctions
 
+include("filter-seir-results.jl")
+
 include("calculate-noise-vacc-level-functions.jl")
 export calculate_dynamic_vaccination_coverage,
     calculate_mean_dynamical_noise,
     calculate_dynamic_vaccination_coverage,
     calculate_ews_endpoints,
-    calculate_filtered_mean_incidence,
+    calculate_mean_incidence,
     calculate_dynamic_vaccination_coverage_multistart_with_endpoints,
     calculate_mean_dynamical_noise_variable_length
 

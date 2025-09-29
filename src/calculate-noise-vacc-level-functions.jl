@@ -57,8 +57,10 @@ function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
     # Calculate endpoints for all simulations
     enddates_vec = calculate_all_ews_enddates(thresholds, ews_enddate_type)
 
+    filtered_seir_results = filter_seir_results(seir_results, enddates_vec)
+
     # Calculate filtered mean incidence up to endpoints
-    overall_mean = calculate_filtered_mean_incidence(seir_results, enddates_vec)
+    overall_mean = calculate_mean_incidence(filtered_seir_results)
 
     # Call the original optimization function with the computed mean
     return calculate_dynamic_vaccination_coverage(
@@ -379,47 +381,36 @@ function calculate_mean_dynamical_noise(
 end
 
 """
-    calculate_filtered_mean_incidence(
-        seir_results::StructVector{SEIRRun},
-        endpoints::FixedSizeVector{Int64}
-    )
+    calculate_mean_incidence(seir_results::StructVector{SEIRRun})
 
-Calculate mean incidence for each simulation up to its endpoint.
+Calculate mean incidence for each simulation up to its enddate.
 
 # Arguments
-- `seir_results`: StructVector of SEIR simulation results
-- `endpoints`: Vector of endpoints, one per simulation
+- `seir_results`: StructVector of SEIR simulation results (either the full-length simulations, or pre-filtered to the enddate)
 
 # Returns
-- `(incidence_means, overall_mean)`: Tuple of per-simulation means and overall mean
+- `overall_mean`: The overall mean
 
 # Example
 ```julia
-incidence_means, overall_mean = calculate_filtered_mean_incidence(seir_results, endpoints)
+overall_mean = calculate_mean_incidence(seir_results)
 ```
 """
-function calculate_filtered_mean_incidence(
-        seir_results::StructVector{SEIRRun},
-        enddates::FixedSizeVector{Int64}
-    )
+function calculate_mean_incidence(seir_results::StructVector{SEIRRun})
 
     nsims = length(seir_results)
-    @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
 
-    incidence_means = FixedSizeVector{Float64}(undef, nsims)
+    @no_escape begin
+        incidence_means = @alloc(Float64, nsims)
 
-    for (sim, enddate) in pairs(enddates)
-
-        if enddate > 0 && enddate <= length(seir_results[sim].incidence)
+        for sim in eachindex(seir_results.incidence)
             # Calculate mean up to the endpoint
-            incidence_means[sim] = mean(@view(seir_results[sim].incidence[1:enddate]))
-        else
-            error("Sim $sim has and enddate ($enddate) outside of the incidence vectors size ($(length(seir_results[sim].incidence)))")
+            incidence_means[sim] = mean(seir_results[sim].incidence)
         end
-    end
 
-    # Calculate overall mean across all simulations
-    overall_mean = mean(incidence_means)
+        # Calculate overall mean across all simulations
+        overall_mean = mean(incidence_means)
+    end
 
     return overall_mean
 end

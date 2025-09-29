@@ -13,6 +13,7 @@ using JET
     @testset "Code linting (JET.jl)" begin
         JET.test_package(CSDNoise; target_defined_modules = true)
     end
+    include("structs.jl")
     include("ews-functions.jl")
     include("ews-metrics.jl")
     include("ews-multistart-optimization.jl")

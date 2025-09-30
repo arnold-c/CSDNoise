@@ -164,29 +164,35 @@ function calculate_dynamic_vaccination_coverage(
     @unpack N = init_states
 
     # Define objective function: minimize squared difference from target
-    function objective(params)
-        vaccination_coverage = params[1]
-        susceptible_proportion = params[2]
+    objective = let target_noise = target_noise,
+            dynamical_noise_spec = dynamical_noise_spec,
+            ensemble_specification = ensemble_specification,
+            enddates_vec = enddates_vec,
+            N = N
+        function (params)
+            vaccination_coverage = params[1]
+            susceptible_proportion = params[2]
 
-        # Ensure susceptible proportion is valid and will result in positive compartments
-        # Use stricter bounds to prevent numerical issues with very small populations
-        min_safe_prop = max(1.0 / N, 0.001)  # At least 1 person or 0.1%, whichever is larger
-        max_safe_prop = min(1.0 - 1.0 / N, 0.999)  # At most N-1 people or 99.9%, whichever is smaller
+            # Ensure susceptible proportion is valid and will result in positive compartments
+            # Use stricter bounds to prevent numerical issues with very small populations
+            min_safe_prop = max(1.0 / N, 0.001)  # At least 1 person or 0.1%, whichever is larger
+            max_safe_prop = min(1.0 - 1.0 / N, 0.999)  # At most N-1 people or 99.9%, whichever is smaller
 
-        if susceptible_proportion <= min_safe_prop || susceptible_proportion >= max_safe_prop
-            return 1.0e10  # Large penalty for unsafe proportions
+            if susceptible_proportion <= min_safe_prop || susceptible_proportion >= max_safe_prop
+                return 1.0e10  # Large penalty for unsafe proportions
+            end
+
+            noise_level = calculate_mean_dynamical_noise(
+                dynamical_noise_spec,
+                vaccination_coverage,
+                susceptible_proportion,
+                ensemble_specification,
+                enddates_vec
+            )
+
+            # Return squared error from target
+            return (noise_level - target_noise)^2
         end
-
-        noise_level = calculate_mean_dynamical_noise(
-            dynamical_noise_spec,
-            vaccination_coverage,
-            susceptible_proportion,
-            ensemble_specification,
-            enddates_vec
-        )
-
-        # Return squared error from target
-        return (noise_level - target_noise)^2
     end
 
     # Setup multistart optimization problem

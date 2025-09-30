@@ -6,7 +6,6 @@ module CSDNoise
 using DispatchDoctor
 # @stable default_mode = "warn" default_union_limit = 2 begin
 
-# using Reexport
 include("helpers.jl")
 export outdir, sentencecase
 
@@ -14,8 +13,6 @@ include("dynamics-constants.jl")
 export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
     LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K,
     MU, BETA_MEAN, BETA_FORCE, EPSILON
-
-# @reexport using .EWSMetrics
 
 include("structs.jl")
 export SimTimeParameters,
@@ -65,7 +62,6 @@ export SimTimeParameters,
     GridSearchScenario,
     OptimizationResult,
     EWSMetrics
-# @reexport using .ODStructs
 
 include("transmission-functions.jl")
 export calculate_beta,
@@ -84,7 +80,6 @@ export calculate_beta,
 const BETA_MEAN = calculate_beta(R0, GAMMA, MU, 1, POPULATION_N)
 const EPSILON = calculate_import_rate(MU, R0, POPULATION_N)
 
-# @reexport using .TransmissionFunctions
 
 # EWS Metric functions
 include("./ews-metrics/ews-alerts.jl")
@@ -141,11 +136,6 @@ export simulate_and_plot_ews_survival,
     simulate_ews_survival_data,
     create_ews_survival_data
 
-include("tycho-cleaning.jl")
-export cdc_week_to_date,
-    calculate_aggregation_cases, fill_aggregation_values,
-    calculate_ews_enddate
-
 include("test-constants.jl")
 export CLINICAL_CASE_TEST_SPEC,
     EPI_LINKED_CASE_TEST_SPEC,
@@ -158,14 +148,12 @@ export seir_mod,
     convert_svec_to_matrix,
     convert_svec_to_matrix!,
     convert_svec_to_array
-# @reexport using .SEIRModel
 
 include("detection-thresholds.jl")
 export calculate_outbreak_thresholds,
     calculate_outbreak_thresholds!,
     calculate_above_threshold_bounds,
     Reff_ge_than_one
-# @reexport using .DetectionThresholds
 
 include("diag-testing-functions.jl")
 export create_testing_arrs,
@@ -179,7 +167,6 @@ export create_testing_arrs,
     calculate_movingavg,
     calculate_movingavg!,
     calculate_test_positivity
-# @reexport using .DiagTestingFunctions
 
 include("diag-testing-structvector-functions.jl")
 export create_testing_vecs,
@@ -192,11 +179,9 @@ export create_combinations_vec,
     run_ensemble_jump_prob,
     run_jump_prob,
     get_ensemble_file
-# @reexport using .EnsembleFunctions
 
 include("noise-functions.jl")
 export create_noise_vecs
-# @reexport using .NoiseFunctions
 
 include("filter-seir-results.jl")
 
@@ -209,25 +194,17 @@ export calculate_dynamic_vaccination_coverage,
     calculate_dynamic_vaccination_coverage_multistart_with_endpoints,
     calculate_mean_dynamical_noise_variable_length
 
-include("plotting-functions/helpers_plots.jl")
-export BASE_COLOR,
-    OUTBREAK_COLOR,
-    REFF_GT_ONE_COLOR,
-    line_and_hline!
+# Plotting Functions
+include("./plotting-functions/helpers_plots.jl")
+include("./plotting-functions/tau-heatmap_plots.jl")
+include("./plotting-functions/lead-time_plots.jl")
+
 
 include("plotting-functions/single-simulation_plots.jl")
 export incidence_prevalence_plot,
     Reff_plot,
     incidence_testing_plot,
     ensemble_incarr_Reff_plot
-
-include("plotting-functions/tycho_plots.jl")
-export tycho_epicurve,
-    tycho_noise_components_epicurve,
-    tycho_test_positive_components_epicurve,
-    tycho_tau_distribution,
-    tycho_tau_heatmap_plot,
-    ews_lead_time_plot
 
 include("plotting-functions/simulation-ews_plots.jl")
 export Reff_ews_plot,
@@ -252,11 +229,6 @@ export prepare_line_plot_df!,
     line_plot
 
 include("plotting-functions/ews-heatmap_plots.jl")
-
-include("plotting-functions/auc-heatmap_plots.jl")
-export tau_auc_heatmap,
-    clean_ews_metric_names,
-    test_axis_label
 
 include("plotting-functions/survival_plots.jl")
 export ews_survival_plot,

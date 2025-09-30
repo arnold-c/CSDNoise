@@ -123,8 +123,7 @@ include("ews-hyperparam-optimization.jl")
 export
     load_most_recent_hyperparam_file,
     get_most_recent_hyperparam_filepath,
-    optimal_ews_heatmap_df,
-    optimal_ews_heatmap_plot
+    optimal_ews_heatmap_df
 
 include("ews-multistart-optimization.jl")
 export ews_multistart_optimization,
@@ -276,6 +275,8 @@ export hyperparam_debugging_Reff_plot
 include("plotting-functions/accuracy-lines_plots.jl")
 export prepare_line_plot_df!,
     line_plot
+
+include("plotting-functions/ews-heatmap_plots.jl")
 
 include("plotting-functions/auc-heatmap_plots.jl")
 export tau_auc_heatmap,

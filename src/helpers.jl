@@ -1,5 +1,7 @@
-using DrWatson
-@quickactivate "CSDNoise"
+using DrWatson: projectdir
+
+export outdir,
+    sentencecase
 
 outdir(args...) = projectdir("out", args...)
 

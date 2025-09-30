@@ -8,61 +8,30 @@ using DispatchDoctor
 
 include("helpers.jl")
 
+# Constants
 include("./constants/dynamics-constants.jl")
 
-include("./types/structs.jl")
-export SimTimeParameters,
-    EnsembleSpecification,
-    DynamicsParameterSpecification,
-    DynamicsParameters,
-    calculate_vaccination_rate_to_achieve_Reff,
-    StateParameters,
-    OutbreakDetectionSpecification,
-    OutbreakSpecification,
-    IndividualTestSpecification,
-    get_test_description,
-    NoiseSpecification,
-    PoissonNoise,
-    DynamicalNoise,
-    DynamicalNoiseSpecification,
-    NoiseVaccinationOptimizationParameters,
-    calculate_min_max_vaccination_range,
-    get_noise_description,
-    get_noise_magnitude,
-    get_noise_magnitude_description,
-    noise_table_description,
-    getdirpath,
-    SEIRRun,
-    NoiseRun,
-    Thresholds,
-    OutbreakThresholds,
-    EWSMethod,
-    Backward,
-    Centered,
-    method_string,
-    EWSMetricSpecification,
-    get_ews_metric_specification_description,
-    AbstractEWSThresholdWindowType,
-    EWSThresholdWindowType,
-    ExpandingThresholdWindow,
-    RollingThresholdWindow,
-    ScenarioSpecification,
-    EWSEndDateType,
-    Reff_start,
-    Reff_end,
-    Outbreak_start,
-    Outbreak_end,
-    Outbreak_middle,
-    CachedSimulationData,
-    OptimizationScenario,
-    GridSearchScenario,
-    OptimizationResult,
-    EWSMetrics
+# Types
+include("./types/time-parameters.jl")
+include("./types/dynamics-parameters.jl")
+include("./types/state-parameters.jl")
+include("./types/ensemble-specifications.jl")
+include("./types/test-specifications.jl")
+include("./types/outbreak-specifications.jl")
+include("./types/noise-specifications.jl")
+include("./types/ews-specifications.jl")
+include("./types/scenario-specifications.jl")
+include("./types/simulation-results.jl")
+include("./types/optimization-specifications.jl")
 
-include("transmission-functions.jl")
+# Type descriptions
+include("./vaccination-rate-calculations.jl")
+include("./test-description.jl")
+include("./noise-description.jl")
 
-# Need to calculate after creating transmission functions, but some struct
-# outer constructors rely on certain dynamics constants defined in above file
+include("./transmission-functions.jl")
+
+# Constants that rely on transmisison function definitions
 include("./constants/dynamics-constants_calculated.jl")
 
 

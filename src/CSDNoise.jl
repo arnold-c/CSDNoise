@@ -120,10 +120,7 @@ include("optimization-checkpointing-functions.jl")
 include("optimization-functions.jl")
 
 include("ews-hyperparam-optimization.jl")
-export ews_hyperparam_optimization,
-    ews_hyperparam_gridsearch,
-    ews_hyperparam_gridsearch!,
-    check_missing_ews_hyperparameter_simulations,
+export
     load_most_recent_hyperparam_file,
     get_most_recent_hyperparam_filepath,
     optimal_ews_heatmap_df,

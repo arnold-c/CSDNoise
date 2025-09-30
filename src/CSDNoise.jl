@@ -7,14 +7,10 @@ using DispatchDoctor
 # @stable default_mode = "warn" default_union_limit = 2 begin
 
 include("helpers.jl")
-export outdir, sentencecase
 
-include("dynamics-constants.jl")
-export POPULATION_N, LATENT_PER_DAYS, DUR_INF_DAYS, R0, SIGMA, GAMMA,
-    LIFE_EXPECTANCY_YEARS, ANNUAL_BIRTHS_PER_K,
-    MU, BETA_MEAN, BETA_FORCE, EPSILON
+include("./constants/dynamics-constants.jl")
 
-include("structs.jl")
+include("./types/structs.jl")
 export SimTimeParameters,
     EnsembleSpecification,
     DynamicsParameterSpecification,
@@ -68,9 +64,6 @@ include("transmission-functions.jl")
 # Need to calculate after creating transmission functions, but some struct
 # outer constructors rely on certain dynamics constants defined in above file
 include("./constants/dynamics-constants_calculated.jl")
-
-const BETA_MEAN = calculate_beta(R0, GAMMA, MU, 1, POPULATION_N)
-const EPSILON = calculate_import_rate(MU, R0, POPULATION_N)
 
 
 # EWS Metric functions

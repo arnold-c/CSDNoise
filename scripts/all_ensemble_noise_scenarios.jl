@@ -91,13 +91,46 @@ measles_dynamical_noise_spec = DynamicalNoiseSpecification(
 
 
 #%%
-calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+# @report_opt target_modules = (CSDNoise,)
+optim_res = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
     8.0,
     measles_ensemble_data.seir_results,
     measles_ensemble_data.Reff_thresholds,
     EWSEndDateType(Reff_start()),
     measles_dynamical_noise_spec,
     measles_spec[1]
+)
+
+
+#%%
+enddates_vec = calculate_all_ews_enddates(
+    measles_ensemble_data.Reff_thresholds,
+    EWSEndDateType(Reff_start())
+)
+
+#%%
+optim_noise_run = CSDNoise.recreate_noise_vecs(
+    measles_dynamical_noise_spec,
+    optim_res.location[1],
+    optim_res.location[2],
+    measles_spec[1],
+    enddates_vec
+)
+
+filtered_seir_results = filter_seir_results(
+    measles_ensemble_data.seir_results,
+    enddates_vec
+)
+
+# Calculate filtered mean incidence up to endpoints
+mean_measles = calculate_mean_incidence(filtered_seir_results)
+
+mean_measles * 8.0 - optim_noise_run.mean_noise
+
+#%%
+@report_opt target_modules = (CSDNoise,) filter_seir_results(
+    measles_ensemble_data.seir_results,
+    enddates_vec
 )
 
 #%%
@@ -126,12 +159,6 @@ measles_noise_8x_ensemble_spec = EnsembleSpecification(
     measles_spec[1].time_parameters,
     measles_spec[1].nsims,
     measles_spec[1].dirpath
-)
-
-#%%
-enddates_vec = calculate_all_ews_enddates(
-    measles_ensemble_data.Reff_thresholds,
-    EWSEndDateType(Reff_start())
 )
 
 #%%

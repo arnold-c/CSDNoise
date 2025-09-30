@@ -86,34 +86,17 @@ const EPSILON = calculate_import_rate(MU, R0, POPULATION_N)
 
 # @reexport using .TransmissionFunctions
 
-include("ews-metrics.jl")
-export aggregate_Reff_vec,
-    aggregate_thresholds_vec,
-    aggregate_timeseries,
-    spaero_mean,
-    spaero_mean!,
-    spaero_var,
-    spaero_cov,
-    spaero_iod,
-    spaero_skew,
-    spaero_kurtosis,
-    spaero_autocov,
-    spaero_autocor,
-    spaero_corkendall,
-    compare_against_spaero,
-    filter_spaero_comparison,
-    ews_as_df
+# EWS Metric functions
+include("./ews-metrics/ews-alerts.jl")
+include("./ews-metrics/ews-bandwidths.jl")
+include("./ews-metrics/ews-enddates.jl")
+include("./ews-metrics/ews-lead-time.jl")
+include("./ews-metrics/ews-metrics.jl")
+include("./ews-metrics/ews-summaries.jl")
+include("./ews-metrics/ews-thresholds.jl")
+include("./ews-metrics/ews-timeseries-aggregation.jl")
+include("./ews-metrics/ews-to-df.jl")
 
-include("ews-functions.jl")
-export calculate_bandwidth,
-    calculate_bandwidth_and_return_ews_metric_spec,
-    exceeds_ews_threshold,
-    calculate_all_ews_enddates,
-    calculate_ews_enddate,
-    simulation_tau_heatmap_df!,
-    calculate_ews_lead_time,
-    calculate_ews_trigger_index,
-    calculate_auc
 
 include("optimization-setup-functions.jl")
 include("optimization-checkpointing-functions.jl")
@@ -158,9 +141,7 @@ export simulate_and_plot_ews_survival,
     simulate_ews_survival_data,
     create_ews_survival_data
 
-include(
-    "tycho-cleaning.jl"
-)
+include("tycho-cleaning.jl")
 export cdc_week_to_date,
     calculate_aggregation_cases, fill_aggregation_values,
     calculate_ews_enddate
@@ -205,9 +186,7 @@ export create_testing_vecs,
     calculate_tested_vec!,
     calculate_positives_vec!
 
-include(
-    "ensemble-functions.jl"
-)
+include("ensemble-functions.jl")
 export create_combinations_vec,
     create_ensemble_spec_combinations,
     run_ensemble_jump_prob,
@@ -242,9 +221,7 @@ export incidence_prevalence_plot,
     incidence_testing_plot,
     ensemble_incarr_Reff_plot
 
-include(
-    "plotting-functions/tycho_plots.jl"
-)
+include("plotting-functions/tycho_plots.jl")
 export tycho_epicurve,
     tycho_noise_components_epicurve,
     tycho_test_positive_components_epicurve,
@@ -252,9 +229,7 @@ export tycho_epicurve,
     tycho_tau_heatmap_plot,
     ews_lead_time_plot
 
-include(
-    "plotting-functions/simulation-ews_plots.jl"
-)
+include("plotting-functions/simulation-ews_plots.jl")
 export Reff_ews_plot,
     simulation_tau_distribution,
     Reff_plot,

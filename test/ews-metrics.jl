@@ -30,13 +30,13 @@
         # Test Centered method branch coverage
         # Branch 1: i < bandwidth && i + bandwidth <= tlength (normal case)
         short_vec = [1.0, 2.0, 3.0, 4.0, 5.0]
-        centered_short = spaero_mean(EWSMethod(Centered()), short_vec, 3)
+        centered_short = ews_mean(EWSMethod(Centered()), short_vec, 3)
         @test centered_short[1] ≈ 2.0  # mean([1,2,3]) - i=1, bandwidth=3, i+bandwidth=4 <= 5
         @test centered_short[2] ≈ 2.5  # mean([1,2,3,4]) - i=2, bandwidth=3, i+bandwidth=5 <= 5
 
         # Branch 2: i < bandwidth but i + bandwidth > tlength (short series)
         very_short_vec = [1.0, 2.0, 3.0, 4.0]
-        centered_very_short = spaero_mean(EWSMethod(Centered()), very_short_vec, 3)
+        centered_very_short = ews_mean(EWSMethod(Centered()), very_short_vec, 3)
         @test centered_very_short[1] ≈ 2.0  # mean([1,2,3]) - i=1, bandwidth=3, i+bandwidth=4 <= 4
         @test centered_very_short[2] ≈ 2.5  # mean([1,2,3,4]) - i=2, bandwidth=3, i+bandwidth=5 > 4, uses entire series
 
@@ -47,7 +47,7 @@
 
         # Branch 4: else case (full centered window) - need longer series to trigger this
         longer_vec = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
-        centered_long = spaero_mean(EWSMethod(Centered()), longer_vec, 3)
+        centered_long = ews_mean(EWSMethod(Centered()), longer_vec, 3)
         @test centered_long[4] ≈ 4.0  # mean([2,3,4,5,6]) - i=4, bandwidth=3, full centered window from (4-3+1)=2 to (4+3-1)=6
 
         # Test that EWSMethod wrapper works correctly
@@ -55,7 +55,7 @@
 
         # Test Backward method branch coverage
         # Branch 1: i < bandwidth (partial window)
-        backward_partial = spaero_mean(EWSMethod(Backward()), longer_vec, 4)
+        backward_partial = ews_mean(EWSMethod(Backward()), longer_vec, 4)
         @test backward_partial[1] ≈ 1.0  # mean([1])
         @test backward_partial[2] ≈ 1.5  # mean([1,2])
         @test backward_partial[3] ≈ 2.0  # mean([1,2,3])
@@ -66,31 +66,31 @@
         @test backward_partial[6] ≈ 4.5  # mean([3,4,5,6])
 
         # Test edge case: bandwidth = 1
-        mean_vec_bw1 = spaero_mean(EWSMethod(Backward()), longer_vec, 1)
+        mean_vec_bw1 = ews_mean(EWSMethod(Backward()), longer_vec, 1)
         @test mean_vec_bw1 ≈ Float64.(longer_vec)  # Should equal original values
 
         # Test in-place version
         result_vec = zeros(Float64, length(longer_vec))
-        spaero_mean!(result_vec, EWSMethod(Backward()), longer_vec, 2)
-        mean_vec_backward = spaero_mean(EWSMethod(Backward()), longer_vec, 2)
+        ews_mean!(result_vec, EWSMethod(Backward()), longer_vec, 2)
+        mean_vec_backward = ews_mean(EWSMethod(Backward()), longer_vec, 2)
         @test result_vec ≈ mean_vec_backward
 
         # Additional edge cases
         # Test with bandwidth equal to series length
         single_elem = [5.0]
-        mean_single_backward = spaero_mean(EWSMethod(Backward()), single_elem, 1)
+        mean_single_backward = ews_mean(EWSMethod(Backward()), single_elem, 1)
         @test mean_single_backward[1] ≈ 5.0
 
-        mean_single_centered = spaero_mean(EWSMethod(Centered()), single_elem, 1)
+        mean_single_centered = ews_mean(EWSMethod(Centered()), single_elem, 1)
         @test mean_single_centered[1] ≈ 5.0
 
         # Test with bandwidth larger than series length
         two_elem = [1.0, 3.0]
-        mean_two_backward = spaero_mean(EWSMethod(Backward()), two_elem, 5)
+        mean_two_backward = ews_mean(EWSMethod(Backward()), two_elem, 5)
         @test mean_two_backward[1] ≈ 1.0  # mean([1])
         @test mean_two_backward[2] ≈ 2.0  # mean([1,3])
 
-        mean_two_centered = spaero_mean(EWSMethod(Centered()), two_elem, 5)
+        mean_two_centered = ews_mean(EWSMethod(Centered()), two_elem, 5)
         @test mean_two_centered[1] ≈ 2.0  # mean([1,3]) - uses entire series
         @test mean_two_centered[2] ≈ 2.0  # mean([1,3]) - uses entire series
 
@@ -105,8 +105,8 @@
         long_vec = collect(1.0:20.0)
         bandwidth = 5
 
-        backward_result = spaero_mean(EWSMethod(Backward()), long_vec, bandwidth)
-        centered_result = spaero_mean(EWSMethod(Centered()), long_vec, bandwidth)
+        backward_result = ews_mean(EWSMethod(Backward()), long_vec, bandwidth)
+        centered_result = ews_mean(EWSMethod(Centered()), long_vec, bandwidth)
 
         # The key insight: backward[bandwidth] uses window [1:bandwidth]
         # and centered[1] also uses window [1:bandwidth] (when 1 < bandwidth and 1+bandwidth <= length)
@@ -120,8 +120,8 @@
         simple_vec = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
         simple_bandwidth = 3
 
-        simple_backward = spaero_mean(EWSMethod(Backward()), simple_vec, simple_bandwidth)
-        simple_centered = spaero_mean(EWSMethod(Centered()), simple_vec, simple_bandwidth)
+        simple_backward = ews_mean(EWSMethod(Backward()), simple_vec, simple_bandwidth)
+        simple_centered = ews_mean(EWSMethod(Centered()), simple_vec, simple_bandwidth)
 
         # backward[3] uses [1,2,3], centered[1] uses [1,2,3] -> should be equal
         @test simple_backward[simple_bandwidth] ≈ simple_centered[1] atol = 1.0e-10
@@ -136,8 +136,8 @@
         very_long_vec = collect(1.0:50.0)
         large_bandwidth = 10
 
-        very_long_backward = spaero_mean(EWSMethod(Backward()), very_long_vec, large_bandwidth + 1)
-        very_long_centered = spaero_mean(EWSMethod(Centered()), very_long_vec, large_bandwidth ÷ 2)
+        very_long_backward = ews_mean(EWSMethod(Backward()), very_long_vec, large_bandwidth + 1)
+        very_long_centered = ews_mean(EWSMethod(Centered()), very_long_vec, large_bandwidth ÷ 2)
 
         stable_backward = very_long_backward[(large_bandwidth + 1):(end)]
         stable_centered = very_long_centered[(large_bandwidth ÷ 2 + 1):(end - large_bandwidth ÷ 2)]
@@ -150,18 +150,18 @@
         testvec = collect(1:10)
 
         # Test variance calculation with pre-computed mean
-        mean_vec = spaero_mean(EWSMethod(Backward()), testvec, 3)
-        var_vec = spaero_var(EWSMethod(Backward()), mean_vec, testvec, 3)
+        mean_vec = ews_mean(EWSMethod(Backward()), testvec, 3)
+        var_vec = ews_var(EWSMethod(Backward()), mean_vec, testvec, 3)
         @test length(var_vec) == length(testvec)
         @test all(var_vec .>= 0)  # Variance should be non-negative
 
         # Test variance calculation without pre-computed mean
-        var_vec2 = spaero_var(EWSMethod(Backward()), testvec, 3)
+        var_vec2 = ews_var(EWSMethod(Backward()), testvec, 3)
         @test var_vec ≈ var_vec2
 
         # Test with constant vector (variance should be 0)
         const_vec = fill(5.0, 10)
-        var_const = spaero_var(EWSMethod(Backward()), const_vec, 3)
+        var_const = ews_var(EWSMethod(Backward()), const_vec, 3)
         @test all(var_const .≈ 0.0)
     end
 
@@ -169,22 +169,22 @@
         testvec = collect(1:10)
 
         # Test skewness
-        skew_vec = spaero_skew(EWSMethod(Backward()), testvec, 3)
+        skew_vec = ews_skew(EWSMethod(Backward()), testvec, 3)
         @test length(skew_vec) == length(testvec)
 
         # Test kurtosis
-        kurt_vec = spaero_kurtosis(EWSMethod(Backward()), testvec, 3)
+        kurt_vec = ews_kurtosis(EWSMethod(Backward()), testvec, 3)
         @test length(kurt_vec) == length(testvec)
 
         # Test helper functions with known values
         m3_vec = fill(8.0, 5)  # Third moment
         sd3_vec = fill(2.0, 5)  # Standard deviation cubed
-        skew_result = spaero_skew(m3_vec, sd3_vec)
+        skew_result = ews_skew(m3_vec, sd3_vec)
         @test all(skew_result .≈ 4.0)  # 8/2 = 4
 
         m4_vec = fill(16.0, 5)  # Fourth moment
         var2_vec = fill(4.0, 5)  # Variance squared
-        kurt_result = spaero_kurtosis(m4_vec, var2_vec)
+        kurt_result = ews_kurtosis(m4_vec, var2_vec)
         @test all(kurt_result .≈ 4.0)  # 16/4 = 4
     end
 
@@ -192,20 +192,20 @@
         # Test coefficient of variation
         sd_vec = [1.0, 2.0, 3.0]
         mean_vec = [2.0, 4.0, 6.0]
-        cov_result = spaero_cov(sd_vec, mean_vec)
+        cov_result = ews_cov(sd_vec, mean_vec)
         @test cov_result ≈ [0.5, 0.5, 0.5]  # sd/mean
 
         # Test index of dispersion
         var_vec = [1.0, 4.0, 9.0]
-        iod_result = spaero_iod(var_vec, mean_vec)
+        iod_result = ews_iod(var_vec, mean_vec)
         @test iod_result ≈ [0.5, 1.0, 1.5]  # var/mean
 
         # Test full calculation
         testvec = [1.0, 2.0, 3.0, 4.0, 5.0]
-        cov_full = spaero_cov(EWSMethod(Backward()), testvec, 2)
+        cov_full = ews_cov(EWSMethod(Backward()), testvec, 2)
         @test length(cov_full) == length(testvec)
 
-        iod_full = spaero_iod(EWSMethod(Backward()), testvec, 2)
+        iod_full = ews_iod(EWSMethod(Backward()), testvec, 2)
         @test length(iod_full) == length(testvec)
     end
 
@@ -213,31 +213,31 @@
         testvec = collect(1:10)
 
         # Test autocovariance with lag 1
-        autocov_vec = spaero_autocov(EWSMethod(Backward()), testvec, 3; lag = 1)
+        autocov_vec = ews_autocov(EWSMethod(Backward()), testvec, 3; lag = 1)
         @test length(autocov_vec) == length(testvec)
         @test isnan(autocov_vec[1])  # First lag should be NaN
 
         # Test with pre-computed mean
-        mean_vec = spaero_mean(EWSMethod(Backward()), testvec, 3)
-        autocov_vec2 = spaero_autocov(EWSMethod(Backward()), mean_vec, testvec, 3; lag = 1)
+        mean_vec = ews_mean(EWSMethod(Backward()), testvec, 3)
+        autocov_vec2 = ews_autocov(EWSMethod(Backward()), mean_vec, testvec, 3; lag = 1)
         # Compare non-NaN values since NaN ≈ NaN is false
         @test autocov_vec[2:end] ≈ autocov_vec2[2:end]
         @test isnan(autocov_vec[1]) && isnan(autocov_vec2[1])
 
         # Test autocorrelation
-        autocor_vec = spaero_autocor(EWSMethod(Backward()), testvec, 3; lag = 1)
+        autocor_vec = ews_autocor(EWSMethod(Backward()), testvec, 3; lag = 1)
         @test length(autocor_vec) == length(testvec)
         @test isnan(autocor_vec[1])  # First lag should be NaN
 
         # Test autocorrelation with pre-computed values
-        sd_vec = sqrt.(spaero_var(EWSMethod(Backward()), testvec, 3))
-        autocor_vec2 = spaero_autocor(autocov_vec, sd_vec; lag = 1)
+        sd_vec = sqrt.(ews_var(EWSMethod(Backward()), testvec, 3))
+        autocor_vec2 = ews_autocor(autocov_vec, sd_vec; lag = 1)
         # Test precomputed and wrapper functions produce the same values
         # First two are NaN so ignore
         @test autocor_vec[3:end] ≈ autocor_vec2[3:end]
 
         # Test with different lags
-        autocov_lag2 = spaero_autocov(EWSMethod(Backward()), testvec, 3; lag = 2)
+        autocov_lag2 = ews_autocov(EWSMethod(Backward()), testvec, 3; lag = 2)
         @test isnan(autocov_lag2[1]) && isnan(autocov_lag2[2])  # First two should be NaN
     end
 

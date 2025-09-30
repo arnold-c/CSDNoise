@@ -64,18 +64,10 @@ export SimTimeParameters,
     EWSMetrics
 
 include("transmission-functions.jl")
-export calculate_beta,
-    calculate_beta_amp!,
-    calculate_beta_amp,
-    calculate_gamma,
-    calculateReffective,
-    calculateReffective_t!,
-    calculateR0,
-    calculate_import_rate,
-    calculate_mu,
-    SeasonalityFunction,
-    CosineSeasonality,
-    SineSeasonality
+
+# Need to calculate after creating transmission functions, but some struct
+# outer constructors rely on certain dynamics constants defined in above file
+include("./constants/dynamics-constants_calculated.jl")
 
 const BETA_MEAN = calculate_beta(R0, GAMMA, MU, 1, POPULATION_N)
 const EPSILON = calculate_import_rate(MU, R0, POPULATION_N)

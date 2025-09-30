@@ -1,9 +1,13 @@
-# module TransmissionFunctions
+using LinearAlgebra: LinearAlgebra
+using Bumper: @no_escape, @alloc
+using LightSumTypes: variant
 
-using LinearAlgebra
-using Bumper
-
-# export calculate_beta, calculateR0, calculate_import_rate
+export calculate_beta,
+    calculate_gamma,
+    calculateReffective,
+    calculateR0,
+    calculate_mu,
+    calculate_import_rate
 
 """
     calculate_beta(
@@ -30,7 +34,11 @@ R_0 = β ρ(K′)
 β = R_0 / ρ(Q⋅V⁻¹)
 """
 function calculate_beta(
-        R_0::T, gamma::T, mu::T, contact_mat::Matrix{Int64}, population_sizes::Vector{Int64}
+        R_0::T,
+        gamma::T,
+        mu::T,
+        contact_mat::Matrix{Int64},
+        population_sizes::Vector{Int64}
     ) where {T <: AbstractFloat}
     # TODO: Currently only works when the populations are the same size as each other, and doesn't account for an exposed state.
     if size(contact_mat, 1) == size(contact_mat, 2)
@@ -64,8 +72,8 @@ function calculate_beta(
         end
 
         # For eigenvalues, we still need to allocate, but this is unavoidable
-        eigenvals = eigen(K_prime).values
-        R_0 / maximum(real(eigenvals))
+        eigenvals = LinearAlgebra.eigen(K_prime).values
+        R_0 / maximum(LinearAlgebra.real(eigenvals))
     end
 end
 
@@ -106,7 +114,11 @@ Therefore: R_0 = β * ρ(Q) / (gamma + mu)
 Solving for gamma: γ = (β * ρ(Q) / R_0) - μ
 """
 function calculate_gamma(
-        R_0::T, beta::T, mu::T, contact_mat::Matrix{T}, population_sizes::Vector{T}
+        R_0::T,
+        beta::T,
+        mu::T,
+        contact_mat::Matrix{T},
+        population_sizes::Vector{T}
     ) where {T <: AbstractFloat}
     # Validate input dimensions (same as calculate_beta)
     if size(contact_mat, 1) != size(contact_mat, 2)
@@ -135,8 +147,8 @@ function calculate_gamma(
         # This becomes: R_0 = beta * max_eigenvalue(Q) / (gamma + mu)
         # Rearranging: gamma = (beta * max_eigenvalue(Q) / R_0) - mu
 
-        eigenvals_Q = eigen(Q).values
-        max_eigenval_Q = maximum(real(eigenvals_Q))
+        eigenvals_Q = LinearAlgebra.eigen(Q).values
+        max_eigenval_Q = maximum(LinearAlgebra.real(eigenvals_Q))
 
         gamma = (beta * max_eigenval_Q / R_0) - mu
     end
@@ -278,7 +290,11 @@ julia> calculateR0(0.00025, 1 / 8, 0.0, ones(1, 1), [1_000])
 * * *
 """
 function calculateR0(
-        beta::T, gamma::T, mu::T, contact_mat::Matrix{Int64}, population_sizes::Vector{Int64}
+        beta::T,
+        gamma::T,
+        mu::T,
+        contact_mat::Matrix{Int64},
+        population_sizes::Vector{Int64}
     )::Float64 where {T <: AbstractFloat}
     if size(contact_mat, 1) == size(contact_mat, 2)
         nothing
@@ -323,8 +339,8 @@ function calculateR0(
         end
 
         # For eigenvalues, we still need to allocate, but this is unavoidable
-        eigenvals = eigen(FV⁻¹).values
-        maximum(real(eigenvals))
+        eigenvals = LinearAlgebra.eigen(FV⁻¹).values
+        maximum(LinearAlgebra.real(eigenvals))
     end
 end
 
@@ -351,5 +367,3 @@ Calulate the rate of new infectious individuals imported into the simulation usi
 function calculate_import_rate(mu, R_0, N)
     return (1.06 * mu * (R_0 - 1)) / sqrt(N)
 end
-
-# end

@@ -2,7 +2,7 @@
 
 julia_version = "1.11.7"
 manifest_format = "2.0"
-project_hash = "c7f4f0256d4248bfc4330e4e381b8cc0067e41a4"
+project_hash = "e89ef4e9def0d3db59003f10b131af43bc349cef"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -256,11 +256,6 @@ deps = ["TranscodingStreams", "Zlib_jll"]
 git-tree-sha1 = "962834c22b66e32aa10f7611c08c8ca4e20749a9"
 uuid = "944b1d66-785c-5afd-91f1-9de20f533193"
 version = "0.7.8"
-
-[[deps.Collects]]
-git-tree-sha1 = "6c973f8071ca1f39ce0ed20840f908a44575fa5e"
-uuid = "08986516-18db-4a8b-8eaa-f5ef1828d8f1"
-version = "1.0.0"
 
 [[deps.ColorBrewer]]
 deps = ["Colors", "JSON"]
@@ -600,17 +595,6 @@ deps = ["Statistics"]
 git-tree-sha1 = "05882d6995ae5c12bb5f36dd2ed3f61c98cbb172"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.8.5"
-
-[[deps.FixedSizeArrays]]
-deps = ["Collects"]
-git-tree-sha1 = "c17496e474024e0c2330b20447dc536c86930510"
-uuid = "3821ddf9-e5b5-40d5-8e25-6813ab96b5e2"
-version = "1.2.0"
-weakdeps = ["Adapt", "Random"]
-
-    [deps.FixedSizeArrays.extensions]
-    AdaptExt = "Adapt"
-    RandomExt = "Random"
 
 [[deps.Fontconfig_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Expat_jll", "FreeType2_jll", "JLLWrappers", "Libdl", "Libuuid_jll", "Zlib_jll"]

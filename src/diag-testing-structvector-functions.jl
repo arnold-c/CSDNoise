@@ -1,5 +1,4 @@
 using StructArrays: StructVector
-using FixedSizeArrays: FixedSizeVector
 using StatsBase: mean
 using Bumper: @no_escape, @alloc
 using Random: Random
@@ -10,7 +9,7 @@ using Random: Random
         noise_results::NoiseRun,
         perc_tested::Float64,
         individual_test_spec::IndividualTestSpecification,
-    ) -> Vector{FixedSizeVector{Int64}}
+    ) -> Vector{Vector{Int64}}
 
 Create diagnostic testing vectors from StructVector SEIR results and NoiseRun data.
 
@@ -25,7 +24,7 @@ from infected individuals and false positives from noise.
 - `individual_test_spec`: Test specifications including sensitivity, specificity, and lag
 
 # Returns
-- `Vector{FixedSizeVector{Int64}}`: Vector of test-positive counts, one per simulation
+- `Vector{Vector{Int64}}`: Vector of test-positive counts, one per simulation
 
 # Details
 The function:
@@ -59,7 +58,7 @@ function create_testing_vecs(
     @assert 0.0 <= perc_tested <= 1.0 "perc_tested must be between 0.0 and 1.0"
 
     # Pre-allocate result vector
-    test_results = Vector{FixedSizeVector{Int64}}(undef, nsims)
+    test_results = Vector{Vector{Int64}}(undef, nsims)
 
     # Extract test parameters
     test_lag = individual_test_spec.test_result_lag
@@ -97,7 +96,7 @@ function create_testing_vecs(
             calculate_positives_vec!(false_positives, noise_tested, sim_length, test_lag, 1.0 - specificity)
 
             # Create result vector with total positives
-            total_positives = FixedSizeVector{Int64}(undef, sim_length)
+            total_positives = Vector{Int64}(undef, sim_length)
             @inbounds for i in 1:sim_length
                 total_positives[i] = true_positives[i] + false_positives[i]
             end
@@ -112,7 +111,7 @@ end
 """
     calculate_tested_vec!(
         outvec::AbstractVector{Int64},
-        invec::FixedSizeVector{Int64},
+        invec::Vector{Int64},
         perc_tested::Float64
     )
 
@@ -127,7 +126,7 @@ Applies the testing percentage to each day's incidence, rounding to nearest inte
 """
 function calculate_tested_vec!(
         outvec::AbstractVector{Int64},
-        invec::FixedSizeVector{Int64},
+        invec::Vector{Int64},
         perc_tested::Float64
     )
     @inbounds for i in eachindex(invec)

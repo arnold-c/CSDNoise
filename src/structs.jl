@@ -5,7 +5,6 @@
 #     OutbreakSpecification, IndividualTestSpecification, NoiseSpecification
 
 using StaticArrays
-using FixedSizeArrays
 using LabelledArrays
 using StructArrays
 using Distributions: Distributions
@@ -656,13 +655,13 @@ function getdirpath(spec::Union{PoissonNoise, DynamicalNoise})
 end
 
 struct SEIRRun
-    states::FixedSizeVector{SVector{5, Int64}}
-    incidence::FixedSizeVector{Int64}
-    Reff::FixedSizeVector{Float64}
+    states::Vector{SVector{5, Int64}}
+    incidence::Vector{Int64}
+    Reff::Vector{Float64}
 end
 
 struct NoiseRun
-    incidence::Vector{FixedSizeVector{Int64}}
+    incidence::Vector{Vector{Int64}}
     mean_noise::Float64
     mean_poisson_noise::Float64
     mean_dynamic_noise::Float64
@@ -671,16 +670,16 @@ end
 abstract type AbstractThresholds end
 
 struct Thresholds <: AbstractThresholds
-    lower_bounds::FixedSizeVector{Int64}
-    upper_bounds::FixedSizeVector{Int64}
-    duration::FixedSizeVector{Int64}
+    lower_bounds::Vector{Int64}
+    upper_bounds::Vector{Int64}
+    duration::Vector{Int64}
 end
 
 struct OutbreakThresholds <: AbstractThresholds
-    lower_bounds::FixedSizeVector{Int64}
-    upper_bounds::FixedSizeVector{Int64}
-    duration::FixedSizeVector{Int64}
-    num_infections_during_bounds::FixedSizeVector{Int64}
+    lower_bounds::Vector{Int64}
+    upper_bounds::Vector{Int64}
+    duration::Vector{Int64}
+    num_infections_during_bounds::Vector{Int64}
 end
 
 

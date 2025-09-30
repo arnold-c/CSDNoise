@@ -1,5 +1,4 @@
 using StructArrays: StructVector
-using FixedSizeArrays: FixedSizeVector
 using StaticArrays: SVector
 
 export filter_seir_results
@@ -24,30 +23,30 @@ filtered_results = filter_seir_results(seir_results, endpoints)
 """
 function filter_seir_results(
         seir_results::StructVector{SEIRRun},
-        enddates::FixedSizeVector{Int64}
+        enddates::Vector{Int64}
     )
 
     nsims = length(seir_results)
     @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
 
     # Pre-allocate vectors for filtered data
-    filtered_incidence = Vector{FixedSizeVector{Int64}}(undef, nsims)
-    filtered_states = Vector{FixedSizeVector{SVector{5, Int64}}}(undef, nsims)
-    filtered_Reff = Vector{FixedSizeVector{Float64}}(undef, nsims)
+    filtered_incidence = Vector{Vector{Int64}}(undef, nsims)
+    filtered_states = Vector{Vector{SVector{5, Int64}}}(undef, nsims)
+    filtered_Reff = Vector{Vector{Float64}}(undef, nsims)
 
     for (sim, enddate) in pairs(enddates)
         if enddate > 0 && enddate <= length(seir_results[sim].incidence)
             # Filter incidence up to endpoint
-            filtered_incidence[sim] = FixedSizeVector{Int64}(
+            filtered_incidence[sim] = Vector{Int64}(
                 seir_results[sim].incidence[1:enddate]
             )
 
             # Filter states up to endpoint
-            filtered_states[sim] = FixedSizeVector{SVector{5, Int64}}(
+            filtered_states[sim] = Vector{SVector{5, Int64}}(
                 seir_results[sim].states[1:enddate]
             )
 
-            filtered_Reff[sim] = FixedSizeVector{Float64}(
+            filtered_Reff[sim] = Vector{Float64}(
                 seir_results[sim].Reff[1:enddate]
             )
         else

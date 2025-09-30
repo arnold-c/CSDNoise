@@ -149,7 +149,7 @@ Calculate EWS endpoints for all simulations based on enddate type.
 - `ews_enddate_type`: Type of endpoint to calculate (Reff_start, Reff_end, Outbreak_start, etc.)
 
 # Returns
-- `FixedSizeVector{Int64}`: Vector of endpoints, one per simulation
+- `Vector{Int64}`: Vector of endpoints, one per simulation
 
 # Example
 ```julia
@@ -162,7 +162,7 @@ function calculate_all_ews_enddates(
     ) where {T <: AbstractThresholds}
 
     nsims = length(vec_of_thresholds)
-    enddates = FixedSizeVector{Int64}(undef, nsims)
+    enddates = Vector{Int64}(undef, nsims)
 
     for (sim, thresholds) in pairs(vec_of_thresholds)
         ews_enddate = calculate_ews_enddate(thresholds, ews_enddate_type)

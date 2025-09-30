@@ -1,5 +1,4 @@
 using UnPack: @unpack
-using FixedSizeArrays: FixedSizeVector
 using Try: Try
 using StatsBase: mean
 using StructArrays: StructVector

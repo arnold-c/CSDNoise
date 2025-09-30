@@ -26,10 +26,10 @@ function seir_mod(
     Random.seed!(seed)
 
     tlength = time_params.tlength
-    state_vec = FixedSizeVector{typeof(states)}(undef, tlength)
-    inc_vec = FixedSizeVector{Int64}(undef, tlength)
-    Reff_vec = FixedSizeVector{Float64}(undef, tlength)
-    beta_vec = FixedSizeVector{Float64}(undef, tlength)
+    state_vec = Vector{typeof(states)}(undef, tlength)
+    inc_vec = Vector{Int64}(undef, tlength)
+    Reff_vec = Vector{Float64}(undef, tlength)
+    beta_vec = Vector{Float64}(undef, tlength)
 
     for i in eachindex(beta_vec)
         beta_vec[i] = calculate_beta_amp(
@@ -67,9 +67,9 @@ function seir_mod(
     Random.seed!(seed)
 
     tlength = time_params.tlength
-    state_vec = FixedSizeVector{typeof(states)}(undef, tlength)
-    inc_vec = FixedSizeVector{Int64}(undef, tlength)
-    Reff_vec = FixedSizeVector{Float64}(undef, tlength)
+    state_vec = Vector{typeof(states)}(undef, tlength)
+    inc_vec = Vector{Int64}(undef, tlength)
+    Reff_vec = Vector{Float64}(undef, tlength)
 
     seir_mod!(
         state_vec,

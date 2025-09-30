@@ -9,7 +9,6 @@ using LightSumTypes: variant
 using StaticArrays: SVector
 using MultistartOptimization
 using NLopt
-using FixedSizeArrays: FixedSizeVector
 using StatsBase: mean
 using StructArrays: StructVector
 using Bumper: @no_escape, @alloc
@@ -20,7 +19,7 @@ using Distributions: Poisson
     create_noise_vecs(
         noise_specification::NoiseSpecification,
         ensemble_specification::EnsembleSpecification,
-        endpoints::FixedSizeVector{Int64};
+        endpoints::Vector{Int64};
         kwargs...
     )
 
@@ -62,7 +61,7 @@ end
 function create_noise_vecs(
         noise_specification::DynamicalNoise,
         ensemble_specification::EnsembleSpecification,
-        enddates::FixedSizeVector{Int64};
+        enddates::Vector{Int64};
         seed = 1234,
         kwargs...,
     )
@@ -134,7 +133,7 @@ function create_noise_vecs(
 
     # Generate a single long vec of beta values that will be trimmed
     # for each simulation as beta doesn't have any stochasticity itself
-    beta_vec = FixedSizeVector{Float64}(undef, tlength)
+    beta_vec = Vector{Float64}(undef, tlength)
     calculate_beta_amp!(
         beta_vec,
         dynamics_parameter_specification,
@@ -142,11 +141,11 @@ function create_noise_vecs(
     )
 
     # Initialize vectors for variable lengths
-    mean_poisson_noise_vec = FixedSizeVector{Float64}(undef, nsims)
-    mean_dynamical_noise_vec = FixedSizeVector{Float64}(undef, nsims)
+    mean_poisson_noise_vec = Vector{Float64}(undef, nsims)
+    mean_dynamical_noise_vec = Vector{Float64}(undef, nsims)
 
     # Create vector of variable-sized vectors for incidence data
-    incidence_vecs = Vector{FixedSizeVector{Int64}}(undef, nsims)
+    incidence_vecs = Vector{Vector{Int64}}(undef, nsims)
 
     for sim in eachindex(incidence_vecs)
         run_seed = seed + (sim - 1)
@@ -189,7 +188,7 @@ end
 function create_noise_vecs(
         noise_specification::PoissonNoise,
         ensemble_specification::EnsembleSpecification,
-        enddates::FixedSizeVector{Int64},
+        enddates::Vector{Int64},
         seir_results::StructVector{SEIRRun};
         seed = 1234,
         kwargs...,
@@ -201,8 +200,8 @@ function create_noise_vecs(
     @unpack noise_mean_scaling = noise_specification
 
     # Initialize vectors for variable lengths
-    incidence_vecs = Vector{FixedSizeVector{Int64}}(undef, nsims)
-    mean_poisson_noise_vec = FixedSizeVector{Float64}(undef, nsims)
+    incidence_vecs = Vector{Vector{Int64}}(undef, nsims)
+    mean_poisson_noise_vec = Vector{Float64}(undef, nsims)
 
     for sim in eachindex(mean_poisson_noise_vec)
         run_seed = seed + (sim - 1)
@@ -271,7 +270,7 @@ function _calculate_dynamic_noise_values!(
 
         mean_poisson_noise = mean(poisson_noise_worker_vec)
 
-        combined_noise_vec = FixedSizeVector{Int64}(undef, enddate)
+        combined_noise_vec = Vector{Int64}(undef, enddate)
         @inbounds for i in eachindex(combined_noise_vec)
             combined_noise_vec[i] = incidence_worker_vec[i] + poisson_noise_worker_vec[i]
         end
@@ -291,7 +290,7 @@ function _calculate_poisson_noise_values!(
         enddate,
         sim,
     )
-    poisson_noise_vec = FixedSizeVector{Int64}(undef, enddate)
+    poisson_noise_vec = Vector{Int64}(undef, enddate)
 
     _add_poisson_noise!(
         poisson_noise_vec,

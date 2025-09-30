@@ -5,7 +5,6 @@
 using ProgressMeter
 using StatsBase: rle
 using UnPack
-using FixedSizeArrays: FixedSizeVector
 using StructArrays: StructVector
 
 function calculate_outbreak_thresholds(
@@ -45,7 +44,7 @@ function calculate_outbreak_thresholds!(
         minoutbreakdur,
         minoutbreaksize,
     )
-    above_threshold_worker_vec = FixedSizeVector{Bool}(undef, length(incidence_vecs[1]))
+    above_threshold_worker_vec = Vector{Bool}(undef, length(incidence_vecs[1]))
     @inbounds for (sim, incidence_vec) in pairs(incidence_vecs)
         above_threshold_worker_vec .= incidence_vec .>= outbreakthreshold
 
@@ -69,7 +68,7 @@ function calculate_above_threshold_bounds(outbreakrle)
     outbreakaccum = accumulate(+, outbreakrle[2])
     upperbound_indices = findall(isequal(1), outbreakrle[1])
 
-    upper_bounds = FixedSizeVector{Int64}(undef, length(upperbound_indices))
+    upper_bounds = Vector{Int64}(undef, length(upperbound_indices))
     lower_bounds = similar(upper_bounds)
     duration = similar(upper_bounds)
 
@@ -121,10 +120,10 @@ function classify_all_outbreaks(
     num_outbreaks = length(outbreak_idx)
 
     return OutbreakThresholds(
-        FixedSizeVector{Int64}(incidence_thresholds.lower_bounds[outbreak_idx]),
-        FixedSizeVector{Int64}(incidence_thresholds.upper_bounds[outbreak_idx]),
-        FixedSizeVector{Int64}(incidence_thresholds.duration[outbreak_idx]),
-        FixedSizeVector{Int64}(ninf_during_bounds_vec[outbreak_idx])
+        Vector{Int64}(incidence_thresholds.lower_bounds[outbreak_idx]),
+        Vector{Int64}(incidence_thresholds.upper_bounds[outbreak_idx]),
+        Vector{Int64}(incidence_thresholds.duration[outbreak_idx]),
+        Vector{Int64}(ninf_during_bounds_vec[outbreak_idx])
     )
 end
 

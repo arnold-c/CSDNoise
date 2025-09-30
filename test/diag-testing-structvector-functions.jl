@@ -1,14 +1,13 @@
 using Test
 using CSDNoise
 using StructArrays: StructVector
-using FixedSizeArrays: FixedSizeVector
 using StaticArrays: SVector
 
 @testset "Diagnostic Testing StructVector Functions" begin
 
     @testset "calculate_tested_vec!" begin
         # Test basic functionality
-        invec = FixedSizeVector{Int64}([10, 20, 30, 40])
+        invec = Vector{Int64}([10, 20, 30, 40])
         outvec = Vector{Int64}(undef, 4)
 
         calculate_tested_vec!(outvec, invec, 0.1)
@@ -59,21 +58,21 @@ using StaticArrays: SVector
 
         # Create SEIR results
         seir_incidence = [
-            FixedSizeVector{Int64}([10, 15, 20, 25, 30]),  # sim 1: length 5
-            FixedSizeVector{Int64}([5, 10, 15, 20]),       # sim 2: length 4
-            FixedSizeVector{Int64}([8, 12, 16, 20, 24, 28]), # sim 3: length 6
+            Vector{Int64}([10, 15, 20, 25, 30]),  # sim 1: length 5
+            Vector{Int64}([5, 10, 15, 20]),       # sim 2: length 4
+            Vector{Int64}([8, 12, 16, 20, 24, 28]), # sim 3: length 6
         ]
 
         seir_states = [
-            FixedSizeVector{SVector{5, Int64}}([SVector(1000, 10, 5, 985, 1000) for _ in 1:5]),
-            FixedSizeVector{SVector{5, Int64}}([SVector(1000, 8, 4, 988, 1000) for _ in 1:4]),
-            FixedSizeVector{SVector{5, Int64}}([SVector(1000, 12, 6, 982, 1000) for _ in 1:6]),
+            Vector{SVector{5, Int64}}([SVector(1000, 10, 5, 985, 1000) for _ in 1:5]),
+            Vector{SVector{5, Int64}}([SVector(1000, 8, 4, 988, 1000) for _ in 1:4]),
+            Vector{SVector{5, Int64}}([SVector(1000, 12, 6, 982, 1000) for _ in 1:6]),
         ]
 
         seir_Reff = [
-            FixedSizeVector{Float64}([1.2, 1.1, 1.0, 0.9, 0.8]),
-            FixedSizeVector{Float64}([1.3, 1.2, 1.1, 1.0]),
-            FixedSizeVector{Float64}([1.1, 1.0, 0.9, 0.8, 0.7, 0.6]),
+            Vector{Float64}([1.2, 1.1, 1.0, 0.9, 0.8]),
+            Vector{Float64}([1.3, 1.2, 1.1, 1.0]),
+            Vector{Float64}([1.1, 1.0, 0.9, 0.8, 0.7, 0.6]),
         ]
 
         seir_results = StructVector{SEIRRun}(
@@ -84,9 +83,9 @@ using StaticArrays: SVector
 
         # Create noise results
         noise_incidence = [
-            FixedSizeVector{Int64}([2, 3, 4, 5, 6]),      # sim 1: length 5
-            FixedSizeVector{Int64}([1, 2, 3, 4]),         # sim 2: length 4
-            FixedSizeVector{Int64}([3, 4, 5, 6, 7, 8]),    # sim 3: length 6
+            Vector{Int64}([2, 3, 4, 5, 6]),      # sim 1: length 5
+            Vector{Int64}([1, 2, 3, 4]),         # sim 2: length 4
+            Vector{Int64}([3, 4, 5, 6, 7, 8]),    # sim 3: length 6
         ]
 
         noise_results = NoiseRun(
@@ -118,7 +117,7 @@ using StaticArrays: SVector
 
         # Test error conditions
         # Mismatched simulation counts
-        short_noise = NoiseRun([FixedSizeVector{Int64}([1, 2])], 1.0, 1.0, 0.0)
+        short_noise = NoiseRun([Vector{Int64}([1, 2])], 1.0, 1.0, 0.0)
         @test_throws AssertionError create_testing_vecs(seir_results, short_noise, perc_tested, test_spec)
 
         # Invalid percentage
@@ -134,9 +133,9 @@ using StaticArrays: SVector
 
         # Mismatched incidence lengths within simulation
         bad_noise_incidence = [
-            FixedSizeVector{Int64}([2, 3, 4]),  # Wrong length for sim 1
-            FixedSizeVector{Int64}([1, 2, 3, 4]),
-            FixedSizeVector{Int64}([3, 4, 5, 6, 7, 8]),
+            Vector{Int64}([2, 3, 4]),  # Wrong length for sim 1
+            Vector{Int64}([1, 2, 3, 4]),
+            Vector{Int64}([3, 4, 5, 6, 7, 8]),
         ]
         bad_noise_results = NoiseRun(bad_noise_incidence, 5.0, 3.0, 2.0)
         @test_throws AssertionError create_testing_vecs(seir_results, bad_noise_results, perc_tested, test_spec)
@@ -144,9 +143,9 @@ using StaticArrays: SVector
 
     @testset "Edge Cases" begin
         # Test with single time point
-        seir_incidence = [FixedSizeVector{Int64}([10])]
-        seir_states = [FixedSizeVector{SVector{5, Int64}}([SVector(1000, 10, 5, 985, 1000)])]
-        seir_Reff = [FixedSizeVector{Float64}([1.2])]
+        seir_incidence = [Vector{Int64}([10])]
+        seir_states = [Vector{SVector{5, Int64}}([SVector(1000, 10, 5, 985, 1000)])]
+        seir_Reff = [Vector{Float64}([1.2])]
 
         seir_results = StructVector{SEIRRun}(
             states = seir_states,
@@ -154,7 +153,7 @@ using StaticArrays: SVector
             Reff = seir_Reff
         )
 
-        noise_incidence = [FixedSizeVector{Int64}([2])]
+        noise_incidence = [Vector{Int64}([2])]
         noise_results = NoiseRun(noise_incidence, 2.0, 2.0, 0.0)
 
         test_spec = IndividualTestSpecification(1.0, 1.0, 0)  # Perfect test, no lag
@@ -165,9 +164,9 @@ using StaticArrays: SVector
         @test results[1][1] == 1  # round(10 * 0.1 * 1.0) + round(2 * 0.1 * 0.0) = 1 + 0 = 1
 
         # Test with zero incidence
-        zero_seir_incidence = [FixedSizeVector{Int64}([0, 0, 0])]
-        zero_seir_states = [FixedSizeVector{SVector{5, Int64}}([SVector(1000, 0, 0, 1000, 1000) for _ in 1:3])]
-        zero_seir_Reff = [FixedSizeVector{Float64}([0.0, 0.0, 0.0])]
+        zero_seir_incidence = [Vector{Int64}([0, 0, 0])]
+        zero_seir_states = [Vector{SVector{5, Int64}}([SVector(1000, 0, 0, 1000, 1000) for _ in 1:3])]
+        zero_seir_Reff = [Vector{Float64}([0.0, 0.0, 0.0])]
 
         zero_seir_results = StructVector{SEIRRun}(
             states = zero_seir_states,
@@ -175,7 +174,7 @@ using StaticArrays: SVector
             Reff = zero_seir_Reff
         )
 
-        zero_noise_incidence = [FixedSizeVector{Int64}([0, 0, 0])]
+        zero_noise_incidence = [Vector{Int64}([0, 0, 0])]
         zero_noise_results = NoiseRun(zero_noise_incidence, 0.0, 0.0, 0.0)
 
         zero_results = create_testing_vecs(zero_seir_results, zero_noise_results, 0.1, test_spec)

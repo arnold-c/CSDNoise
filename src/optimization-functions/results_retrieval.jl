@@ -1,3 +1,7 @@
+using Try: Try
+using JLD2: JLD2
+using Dates: Dates
+
 export load_most_recent_hyperparam_file,
     get_most_recent_hyperparam_filepath
 
@@ -14,7 +18,7 @@ function load_most_recent_hyperparam_file(
         return filepath
     end
 
-    return load(Try.unwrap(filepath))
+    return JLD2.load(Try.unwrap(filepath))
 end
 
 function get_most_recent_hyperparam_filepath(

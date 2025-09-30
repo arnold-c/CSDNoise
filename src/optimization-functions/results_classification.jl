@@ -1,41 +1,11 @@
 using UnPack: @unpack
 using Try: Try
 
-export EWSClassificationResults,
+export calculate_ews_classification_results,
     calculate_sensitivity,
     calculate_specificity,
     calculate_balanced_accuracy
 
-
-"""
-    EWSClassificationResults
-
-Stores binary classification results from Early Warning Signal (EWS) detection analysis.
-
-Contains the confusion matrix components and total counts for evaluating EWS performance
-across emergent (positive class) and null (negative class) simulations.
-
-# Fields
-- `true_positives::Float64`: Number of emergent simulations correctly identified by EWS metric
-- `true_negatives::Float64`: Number of null simulations correctly identified as by EWS metric
-- `false_positives::Float64`: Number of null simulations incorrectly identified by EWS metric
-- `false_negatives::Float64`: Number of emergent simulations incorrectly identified by EWS metric
-- `n_emergent_sims::Int64`: Total number of emergent (positive class) simulations
-- `n_null_sims::Int64`: Total number of null (negative class) simulations
-
-# Notes
-The classification counts are stored as Float64 to support weighted or fractional classifications,
-while the total simulation counts remain as integers. This struct serves as an intermediate
-representation for calculating performance metrics like sensitivity, specificity, and accuracy.
-"""
-struct EWSClassificationResults
-    true_positives::Float64
-    true_negatives::Float64
-    false_positives::Float64
-    false_negatives::Float64
-    n_emergent_sims::Int64
-    n_null_sims::Int64
-end
 
 function calculate_ews_classification_results(
         scenario,
@@ -114,7 +84,10 @@ Calculate the balanced accuracy from sensitivity and specificity values.
 
 Balanced accuracy is the arithmetic mean of sensitivity (true positive rate) and
 specificity (true negative rate), providing a single metric that accounts for
-performance on both positive and negative cases.
+performance on both positive and negative cases. It is balanced because emergent
+and null simulations are paired to ensure matching evaluation lengths, so there
+are equal numbers of emergent and null simulations, and therefore equal weighting
+in the accuracy calculation.
 
 # Arguments
 - `sensitivity`: The sensitivity (true positive rate) value, typically between 0 and 1

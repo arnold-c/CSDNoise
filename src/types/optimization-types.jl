@@ -3,6 +3,9 @@ using Dates: Dates
 export CachedSimulationData,
     OptimizationScenario,
     GridSearchScenario,
+    EWSClassificationResults,
+    OptimizationTracker,
+    OptimizedValues,
     OptimizationResult
 
 # TODO: See if this should be removed or updated
@@ -119,6 +122,62 @@ function GridSearchScenario(
         threshold_quantile,
         consecutive_thresholds
     )
+end
+
+
+"""
+    EWSClassificationResults
+
+Stores binary classification results from Early Warning Signal (EWS) detection analysis.
+
+Contains the confusion matrix components and total counts for evaluating EWS performance
+across emergent (positive class) and null (negative class) simulations.
+
+# Fields
+- `true_positives::Float64`: Number of emergent simulations correctly identified by EWS metric
+- `true_negatives::Float64`: Number of null simulations correctly identified as by EWS metric
+- `false_positives::Float64`: Number of null simulations incorrectly identified by EWS metric
+- `false_negatives::Float64`: Number of emergent simulations incorrectly identified by EWS metric
+- `n_emergent_sims::Int64`: Total number of emergent (positive class) simulations
+- `n_null_sims::Int64`: Total number of null (negative class) simulations
+
+# Notes
+The classification counts are stored as Float64 to support weighted or fractional classifications,
+while the total simulation counts remain as integers. This struct serves as an intermediate
+representation for calculating performance metrics like sensitivity, specificity, and accuracy.
+"""
+struct EWSClassificationResults
+    true_positives::Float64
+    true_negatives::Float64
+    false_positives::Float64
+    false_negatives::Float64
+    n_emergent_sims::Int64
+    n_null_sims::Int64
+end
+
+"""
+    OptimizationTracker
+
+Mutable struct to track the best solution and its metrics during optimization.
+"""
+mutable struct OptimizationTracker
+    best_loss::Float64
+    best_accuracy::Float64
+    best_sensitivity::Float64
+    best_specificity::Float64
+    best_params::Vector{Float64}
+
+    function OptimizationTracker()
+        return new(Inf, 0.0, 0.0, 0.0, Float64[])
+    end
+end
+
+struct OptimizedValues
+    threshold_quantile::Float64
+    consecutive_thresholds::Int64
+    accuracy::Float64
+    sensitivity::Float64
+    specificity::Float64
 end
 
 struct OptimizationResult

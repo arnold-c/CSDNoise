@@ -1,6 +1,5 @@
 """
-Note that each file is a module that defines the exported functions.
-They are just listed here for convenience of sourcing one file.
+Note that each file handles exporting its local function for the API.
 """
 module CSDNoise
 using DispatchDoctor
@@ -22,7 +21,7 @@ include("./types/noise-specifications.jl")
 include("./types/ews-specifications.jl")
 include("./types/scenario-specifications.jl")
 include("./types/simulation-results.jl")
-include("./types/optimization-specifications.jl")
+include("./types/optimization-types.jl")
 
 # Type descriptions
 include("./vaccination-rate-calculations.jl")
@@ -33,7 +32,6 @@ include("./transmission-functions.jl")
 
 # Constants that rely on transmisison function definitions
 include("./constants/dynamics-constants_calculated.jl")
-
 
 # EWS Metric functions
 include("./ews-metrics/ews-alerts.jl")
@@ -46,54 +44,51 @@ include("./ews-metrics/ews-thresholds.jl")
 include("./ews-metrics/ews-timeseries-aggregation.jl")
 include("./ews-metrics/ews-to-df.jl")
 
+# Optimization functions
+## Generic
+include("./optimization-functions/results_retrieval.jl")
+include("./optimization-functions/results_classification.jl")
+## Multistart
+include("./optimization-functions/multistart/checkpoint_cleanup.jl")
+include("./optimization-functions/multistart/checkpoint_save.jl")
+include("./optimization-functions/multistart/checkpoint_load.jl")
+include("./optimization-functions/multistart/helpers_ews-calculation.jl")
+include("./optimization-functions/multistart/objective-function.jl")
+include("./optimization-functions/multistart/optimization_cached-data.jl")
+include("./optimization-functions/multistart/optimization_batches.jl")
+include("./optimization-functions/multistart/optimization_wrapper.jl")
+include("./optimization-functions/multistart/optimization_single-scenario.jl")
+include("./optimization-functions/multistart/results_create-empty-df.jl")
+include("./optimization-functions/multistart/results_summary.jl")
+include("./optimization-functions/multistart/results_validation.jl")
+include("./optimization-functions/multistart/results_retrieval.jl")
+include("./optimization-functions/multistart/results_merge-dfs.jl")
+include("./optimization-functions/multistart/results_df-conversion.jl")
+include("./optimization-functions/multistart/results_save.jl")
+include("./optimization-functions/multistart/scenarios_creation.jl")
+include("./optimization-functions/multistart/scenarios_find-missing.jl")
+include("./optimization-functions/multistart/scenarios_confirmation.jl")
+include("./optimization-functions/multistart/scenarios_df-row-conversion.jl")
+include("./optimization-functions/multistart/scenarios_equality-check.jl")
+## Structvector
+### Grid search
+include("./optimization-functions/gridsearch/checkpoint_save.jl")
+include("./optimization-functions/gridsearch/gridsearch_wrapper.jl")
+include("./optimization-functions/gridsearch/helpers_ews-calculation.jl")
+include("./optimization-functions/gridsearch/results_retrieval.jl")
+include("./optimization-functions/gridsearch/results_save.jl")
+include("./optimization-functions/gridsearch/scenario_confirmation.jl")
+include("./optimization-functions/gridsearch/scenario_creation.jl")
+include("./optimization-functions/gridsearch/scenario_evaluation.jl")
+include("./optimization-functions/gridsearch/scenario_find-missing.jl")
 
-include("optimization-setup-functions.jl")
-include("optimization-checkpointing-functions.jl")
-include("optimization-functions.jl")
-
-include("ews-hyperparam-optimization.jl")
-export
-    load_most_recent_hyperparam_file,
-    get_most_recent_hyperparam_filepath,
-    optimal_ews_heatmap_df
-
-include("ews-multistart-optimization.jl")
-export ews_multistart_optimization,
-    optimize_single_scenario,
-    ews_objective_function_with_tracking,
-    map_continuous_to_ews_parameters,
-    create_optimization_scenarios,
-    OptimizationTracker,
-    OptimizedValues,
-    confirm_optimization_run_structvector,
-    optimize_scenarios_in_batches_structvector,
-    load_previous_multistart_results_structvector,
-    create_scenarios_structvector
-
-include("ews-hyperparam-gridsearch-structvector.jl")
-export ews_hyperparam_gridsearch_structvector,
-    create_gridsearch_scenarios_structvector,
-    evaluate_single_gridsearch_scenario,
-    evaluate_gridsearch_scenarios,
-    evaluate_gridsearch_scenarios2,
-    evaluate_gridsearch_scenarios_optimized,
-    evaluate_gridsearch_scenarios_bumper,
-    evaluate_gridsearch_scenarios_multistart,
-    optimize_quantile_threshold_multistart,
-    quantile_only_objective_function_with_tracking,
-    find_missing_scenarios,
-    load_previous_gridsearch_results_structvector,
-    confirm_gridsearch_run_structvector
 
 include("ews-survival.jl")
 export simulate_and_plot_ews_survival,
     simulate_ews_survival_data,
     create_ews_survival_data
 
-include("test-constants.jl")
-export CLINICAL_CASE_TEST_SPEC,
-    EPI_LINKED_CASE_TEST_SPEC,
-    CLINICAL_TEST_SPECS
+include("./constants/test-constants.jl")
 
 include("SEIR-model.jl")
 export seir_mod,

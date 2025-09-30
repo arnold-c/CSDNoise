@@ -73,9 +73,9 @@ using CSDNoise
     end
 end
 
-@testset "OptimizationParameters" begin
+@testset "NoiseVaccinationOptimizationParameters" begin
     @testset "Constructor with all parameters" begin
-        params = OptimizationParameters(
+        params = NoiseVaccinationOptimizationParameters(
             n_sobol_points = 50,
             local_algorithm = nothing,
             maxeval = 500,
@@ -95,7 +95,7 @@ end
     end
 
     @testset "Constructor with default parameters" begin
-        params = OptimizationParameters()
+        params = NoiseVaccinationOptimizationParameters()
 
         @test params.n_sobol_points == 100
         @test isnothing(params.local_algorithm)
@@ -107,7 +107,7 @@ end
     end
 
     @testset "Constructor with partial parameters" begin
-        params = OptimizationParameters(
+        params = NoiseVaccinationOptimizationParameters(
             n_sobol_points = 200,
             verbose = true
         )

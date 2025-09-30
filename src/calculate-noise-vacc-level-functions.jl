@@ -2,6 +2,7 @@ using UnPack: @unpack
 using Try: Try
 using StatsBase: mean
 using StructArrays: StructVector
+using MultistartOptimization: MultistartOptimization
 
 """
     calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
@@ -11,7 +12,7 @@ using StructArrays: StructVector
         ews_enddate_type::EWSEndDateType,
         dynamical_noise_spec::DynamicalNoiseSpecification,
         ensemble_specification::EnsembleSpecification,
-        optimization_params::OptimizationParameters = OptimizationParameters()
+        optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters()
     ) where {T<:AbstractThresholds}
 
 Wrapper function that calculates vaccination coverage using SEIR results and EWS endpoints.
@@ -26,7 +27,7 @@ original optimization function with the computed mean incidence value.
 - `ews_enddate_type`: Type of endpoint to calculate
 - `dynamical_noise_spec`: DynamicalNoiseSpecification containing noise model parameters
 - `ensemble_specification`: Ensemble simulation parameters
-- `optimization_params`: OptimizationParameters containing algorithm settings (optional)
+- `optimization_params`: NoiseVaccinationOptimizationParameters containing algorithm settings (optional)
 
 # Returns
 - Same as `calculate_dynamic_vaccination_coverage`
@@ -57,7 +58,8 @@ function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
         ews_enddate_type::EWSEndDateType,
         dynamical_noise_spec::DynamicalNoiseSpecification,
         ensemble_specification::EnsembleSpecification,
-        optimization_params::OptimizationParameters = OptimizationParameters()
+        optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters(),
+        verbose = false
     ) where {T <: AbstractThresholds}
 
     # Calculate endpoints for all simulations
@@ -75,7 +77,8 @@ function calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
         dynamical_noise_spec,
         ensemble_specification,
         enddates_vec,
-        optimization_params
+        optimization_params;
+        verbose = verbose
     )
 end
 
@@ -86,7 +89,7 @@ end
         dynamical_noise_spec::DynamicalNoiseSpecification,
         ensemble_specification::EnsembleSpecification,
         enddates_vec,
-        optimization_params::OptimizationParameters = OptimizationParameters()
+        optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters()
     )
 
 Optimize vaccination coverage and initial susceptible proportion using multistart optimization to achieve target noise scaling.
@@ -100,7 +103,8 @@ and initial susceptible proportion that produces mean noise equal to `target_sca
 - `dynamical_noise_spec`: DynamicalNoiseSpecification containing noise model parameters and search bounds
 - `ensemble_specification`: Ensemble simulation parameters
 - `enddates_vec`: A vector of all simulation enddates
-- `optimization_params`: OptimizationParameters containing algorithm settings (optional, uses defaults if not provided)
+- `optimization_params`: NoiseVaccinationOptimizationParameters containing algorithm settings (optional, uses defaults if not provided)
+- `verbose`: Describe steps being conducted
 
 # Returns
 - Named tuple with `optimal_vaccination`, `optimal_susceptible_proportion`, `mean_noise`, `target_noise`, and `difference`
@@ -129,24 +133,18 @@ function calculate_dynamic_vaccination_coverage(
         dynamical_noise_spec::DynamicalNoiseSpecification,
         ensemble_specification::EnsembleSpecification,
         enddates_vec,
-        optimization_params::OptimizationParameters = OptimizationParameters()
+        optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters();
+        verbose = false,
     )
-    @unpack R0,
-        latent_period,
-        duration_infection,
-        correlation,
-        poisson_component,
-        vaccination_bounds,
-        susceptible_bounds,
-        max_vaccination_range = dynamical_noise_spec
 
-    @unpack n_sobol_points,
-        local_algorithm,
-        maxeval,
+    @unpack vaccination_bounds,
+        susceptible_bounds = dynamical_noise_spec
+
+    @unpack n_sobol_points, local_algorithm,
         xtol_rel,
         xtol_abs,
-        ftol_rel,
-        verbose = optimization_params
+        maxeval,
+        atol = optimization_params
 
     target_noise = target_scaling * measles_daily_incidence
 
@@ -158,9 +156,7 @@ function calculate_dynamic_vaccination_coverage(
     end
 
     # Pre-extract ensemble specification components to avoid repeated unpacking
-    @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims, dirpath = ensemble_specification
-    @unpack init_states = state_parameters
-    @unpack N = init_states
+    N = ensemble_specification.state_parameters.init_states.N
 
     # Define objective function: minimize squared difference from target
     objective = let target_noise = target_noise,
@@ -222,6 +218,11 @@ function calculate_dynamic_vaccination_coverage(
         local_method,
         problem
     )
+
+    if !in(result.ret, [:SUCCESS, :XTOL_REACHED, :FTOL_REACHED, :STOPVAL_REACHED]) ||
+            sqrt(result.value) > atol
+        error("Unsuccessful optimization.\nReturn code: $(result.ret)\nAbsolute difference: $(sqrt(result.value))")
+    end
 
     return result
 end

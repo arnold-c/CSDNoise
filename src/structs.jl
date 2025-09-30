@@ -549,33 +549,50 @@ function DynamicalNoiseSpecification(;
     )
 end
 
-struct OptimizationParameters
+struct NoiseVaccinationOptimizationParameters
     n_sobol_points::Int64
     local_algorithm
     maxeval::Int64
     xtol_rel::Float64
     xtol_abs::Float64
-    ftol_rel::Float64
-    verbose::Bool
+    atol::Float64
 end
 
-function OptimizationParameters(;
+"""
+    NoiseVaccinationOptimizationParameters(;
         n_sobol_points::Int64 = 100,
         local_algorithm = NLopt.LN_BOBYQA,
         maxeval::Int64 = 1000,
         xtol_rel::Float64 = 1.0e-3,
         xtol_abs::Float64 = 1.0e-3,
-        ftol_rel::Float64 = 1.0e-4,
-        verbose::Bool = false
+        atol::Float64 = 1.0e-4
     )
-    return OptimizationParameters(
+
+Parameters for optimizing noise vaccination levels.
+
+# Arguments
+- `n_sobol_points::Int64`: Number of Sobol sequence points for global search
+- `local_algorithm`: NLopt algorithm for local optimization
+- `maxeval::Int64`: Maximum number of function evaluations for local optimization
+- `xtol_rel::Float64`: Relative tolerance on parameter changes for local optimization
+- `xtol_abs::Float64`: Absolute tolerance on parameter changes for local optimization
+- `atol::Float64`: Absolute difference tolerance threshold; program errors if not met
+"""
+function NoiseVaccinationOptimizationParameters(;
+        n_sobol_points::Int64 = 100,
+        local_algorithm = NLopt.LN_BOBYQA,
+        maxeval::Int64 = 1000,
+        xtol_rel::Float64 = 1.0e-3,
+        xtol_abs::Float64 = 1.0e-3,
+        atol::Float64 = 1.0e-3
+    )
+    return NoiseVaccinationOptimizationParameters(
         n_sobol_points,
         local_algorithm,
         maxeval,
         xtol_rel,
         xtol_abs,
-        ftol_rel,
-        verbose
+        atol
     )
 end
 

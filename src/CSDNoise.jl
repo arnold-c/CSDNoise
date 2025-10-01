@@ -37,7 +37,7 @@ include("./constants/dynamics-constants.jl")
 
 # Types
 include("./types/test-specifications.jl")
-include("./constants/test-constants.jl") # depends on test specifications
+include("./constants/test-constants.jl") # depends on test specifications, and some types depend on them
 include("./types/time-parameters.jl")
 include("./types/dynamics-parameters.jl")
 include("./types/state-parameters.jl")
@@ -90,7 +90,6 @@ include("./detection/shared_threshold-functions.jl")
 include("./ews-metrics/ews-alerts.jl")
 include("./ews-metrics/ews-bandwidths.jl")
 include("./ews-metrics/ews-enddates.jl")
-include("./ews-metrics/ews-lead-time.jl")
 include("./ews-metrics/ews-metrics.jl")
 include("./ews-metrics/ews-summaries.jl")
 include("./ews-metrics/ews-thresholds.jl")

@@ -26,7 +26,6 @@ include("./types/optimization-types.jl")
 # Type descriptions
 include("./vaccination-rate-calculations.jl")
 include("./test-description.jl")
-include("./noise-description.jl")
 
 # Simulation core
 include("./simulation/transmission-functions.jl")
@@ -125,10 +124,13 @@ export create_combinations_vec,
     run_jump_prob,
     get_ensemble_file
 
-include("noise-functions.jl")
-export create_noise_vecs
-
+# Shared utilities (used across multiple modules)
 include("filter-seir-results.jl")
+
+# Noise
+include("./noise/noise-description.jl")
+include("./noise/noise-generation.jl")
+include("./noise/noise-recreation.jl")
 
 include("calculate-noise-vacc-level-functions.jl")
 export calculate_dynamic_vaccination_coverage,

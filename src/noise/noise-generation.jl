@@ -1,19 +1,13 @@
-# module NoiseFunctions
-#
-# export create_noise_arr, create_noise_arr!
-
-# include("ensemble-functions.jl")
-# using .EnsembleFunctions
-using UnPack
+using UnPack: @unpack
 using LightSumTypes: variant
 using StaticArrays: SVector
-using MultistartOptimization
-using NLopt
 using StatsBase: mean
 using StructArrays: StructVector
 using Bumper: @no_escape, @alloc
 using Random: Random
 using Distributions: Poisson
+
+export create_noise_vecs
 
 """
     create_noise_vecs(
@@ -173,8 +167,8 @@ function create_noise_vecs(
 
     end
 
-    mean_dynamical_noise = mean(mean_dynamical_noise_vec)
-    mean_poisson_noise = mean(mean_poisson_noise_vec)
+    mean_dynamical_noise = StatsBase.mean(mean_dynamical_noise_vec)
+    mean_poisson_noise = StatsBase.mean(mean_poisson_noise_vec)
     mean_noise = mean_dynamical_noise + mean_poisson_noise
 
     return NoiseRun(
@@ -208,7 +202,7 @@ function create_noise_vecs(
         enddate = enddates[sim]
         Random.seed!(run_seed)
 
-        mean_dynamical_noise_incidence = mean(seir_results.incidence[sim])
+        mean_dynamical_noise_incidence = StatsBase.mean(seir_results.incidence[sim])
 
         _calculate_poisson_noise_values!(
             incidence_vecs,
@@ -221,7 +215,7 @@ function create_noise_vecs(
 
     end
 
-    mean_noise = mean(mean_poisson_noise_vec)
+    mean_noise = StatsBase.mean(mean_poisson_noise_vec)
 
     return NoiseRun(
         incidence_vecs,
@@ -258,7 +252,7 @@ function _calculate_dynamic_noise_values!(
             time_parameters,
         )
 
-        mean_dynamical_noise_incidence = mean(incidence_worker_vec)
+        mean_dynamical_noise_incidence = StatsBase.mean(incidence_worker_vec)
 
         poisson_noise_worker_vec = @alloc(Int64, enddate)
 
@@ -268,7 +262,7 @@ function _calculate_dynamic_noise_values!(
             noise_mean_scaling,
         )
 
-        mean_poisson_noise = mean(poisson_noise_worker_vec)
+        mean_poisson_noise = StatsBase.mean(poisson_noise_worker_vec)
 
         combined_noise_vec = Vector{Int64}(undef, enddate)
         @inbounds for i in eachindex(combined_noise_vec)
@@ -298,7 +292,7 @@ function _calculate_poisson_noise_values!(
         noise_mean_scaling,
     )
 
-    mean_poisson_noise = mean(poisson_noise_vec)
+    mean_poisson_noise = StatsBase.mean(poisson_noise_vec)
 
     incidence_vecs[sim] = poisson_noise_vec
     mean_poisson_noise_vec[sim] = mean_poisson_noise

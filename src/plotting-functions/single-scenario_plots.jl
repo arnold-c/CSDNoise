@@ -1,40 +1,42 @@
+export plot_all_single_scenarios
+
 using StructArrays
 
 function plot_all_single_scenarios(
-    noisevec,
-    noisedir,
-    incvec,
-    outbreak_status_vec,
-    testvec,
-    test_movingvg_vec,
-    Reff_vec,
-    Reff_thresholds,
-    outbreak_thresholds,
-    ewsvec,
-    exceeds_thresholds_vec,
-    detection_index_vec,
-    ewsdir,
-    ews_enddate,
-    test_specification,
-    percent_tested,
-    time_specification;
-    ews_metrics = [
-        "autocorrelation",
-        "autocovariance",
-        "coefficient_of_variation",
-        "index_of_dispersion",
-        "kurtosis",
-        "mean",
-        "skewness",
-        "variance",
-    ],
-    aggregation = 1,
-    sim = 1,
-    force = false,
-    base_plotpath = joinpath(
-        plotsdir(), "ensemble", "single-scenario", noisedir, "sim-$(sim)"
-    ),
-)
+        noisevec,
+        noisedir,
+        incvec,
+        outbreak_status_vec,
+        testvec,
+        test_movingvg_vec,
+        Reff_vec,
+        Reff_thresholds,
+        outbreak_thresholds,
+        ewsvec,
+        exceeds_thresholds_vec,
+        detection_index_vec,
+        ewsdir,
+        ews_enddate,
+        test_specification,
+        percent_tested,
+        time_specification;
+        ews_metrics = [
+            "autocorrelation",
+            "autocovariance",
+            "coefficient_of_variation",
+            "index_of_dispersion",
+            "kurtosis",
+            "mean",
+            "skewness",
+            "variance",
+        ],
+        aggregation = 1,
+        sim = 1,
+        force = false,
+        base_plotpath = joinpath(
+            plotsdir(), "ensemble", "single-scenario", noisedir, "sim-$(sim)"
+        ),
+    )
     mkpath(base_plotpath)
 
     noise_plottitle = "Sens: $(test_specification.sensitivity), Spec: $(test_specification.specificity), Lag: $(test_specification.test_result_lag),\nNoise: $(noisedir), Percent Tested: $(percent_tested)"

@@ -1,22 +1,27 @@
+export incidence_prevalence_plot,
+    Reff_plot,
+    incidence_testing_plot,
+    ensemble_incarr_Reff_plot
+
 using GLMakie
 using UnPack: @unpack
 
 function Reff_plot(
-    incidencearr,
-    Reffarr,
-    Reff_thresholds_vec,
-    thresholdsarr,
-    timeparams;
-    sim = 1,
-    outbreak_colormap = [
-        BASE_COLOR, OUTBREAK_COLOR
-    ],
-    Reff_colormap = [
-        BASE_COLOR, REFF_GT_ONE_COLOR
-    ],
-    threshold = 5,
-    kwargs...,
-)
+        incidencearr,
+        Reffarr,
+        Reff_thresholds_vec,
+        thresholdsarr,
+        timeparams;
+        sim = 1,
+        outbreak_colormap = [
+            BASE_COLOR, OUTBREAK_COLOR,
+        ],
+        Reff_colormap = [
+            BASE_COLOR, REFF_GT_ONE_COLOR,
+        ],
+        threshold = 5,
+        kwargs...,
+    )
     @unpack trange = timeparams
     times = collect(trange) ./ 365
     kwargs_dict = Dict(kwargs)
@@ -120,15 +125,15 @@ function Reff_plot(
 end
 
 function incidence_prevalence_plot(
-    incidencearr,
-    ensemblearr,
-    thresholdsarr,
-    timeparams;
-    sim = 1,
-    colormap = [BASE_COLOR, OUTBREAK_COLOR],
-    threshold = 5,
-    kwargs...,
-)
+        incidencearr,
+        ensemblearr,
+        thresholdsarr,
+        timeparams;
+        sim = 1,
+        colormap = [BASE_COLOR, OUTBREAK_COLOR],
+        threshold = 5,
+        kwargs...,
+    )
     @unpack trange = timeparams
     times = collect(trange) ./ 365
     kwargs_dict = Dict(kwargs)
@@ -206,19 +211,19 @@ function incidence_prevalence_plot(
 end
 
 function incidence_testing_plot(
-    incvec,
-    outbreak_status_vec,
-    noisevec,
-    testvec,
-    test_movingavg_vec,
-    timeparams;
-    aggregation = 1,
-    outbreakcolormap = [
-        BASE_COLOR, OUTBREAK_COLOR
-    ],
-    plottitle = "",
-    kwargs...,
-)
+        incvec,
+        outbreak_status_vec,
+        noisevec,
+        testvec,
+        test_movingavg_vec,
+        timeparams;
+        aggregation = 1,
+        outbreakcolormap = [
+            BASE_COLOR, OUTBREAK_COLOR,
+        ],
+        plottitle = "",
+        kwargs...,
+    )
     times = collect(timeparams.trange) ./ 365
     aggregated_vec_length = length(incvec)
     times = times[1:aggregation:(aggregation * aggregated_vec_length)]
@@ -300,24 +305,25 @@ function incidence_testing_plot(
 end
 
 function ensemble_incarr_Reff_plot(
-    incarr,
-    Reffarr,
-    Reff_thresholds_vec,
-    thresholdsarr;
-    aggregation = 1,
-    linewidth = 3,
-    hlinewidth = 2,
-    threshold = 5 * aggregation,
-    outbreak_alpha = 0.2,
-    Reff_alpha = 0.2,
-    outbreak_colormap = [
-        (BASE_COLOR, outbreak_alpha),
-        (OUTBREAK_COLOR, outbreak_alpha),
-    ],
-    Reff_colormap = [
-        (BASE_COLOR, Reff_alpha),
-        (REFF_GT_ONE_COLOR, Reff_alpha),
-    ])
+        incarr,
+        Reffarr,
+        Reff_thresholds_vec,
+        thresholdsarr;
+        aggregation = 1,
+        linewidth = 3,
+        hlinewidth = 2,
+        threshold = 5 * aggregation,
+        outbreak_alpha = 0.2,
+        Reff_alpha = 0.2,
+        outbreak_colormap = [
+            (BASE_COLOR, outbreak_alpha),
+            (OUTBREAK_COLOR, outbreak_alpha),
+        ],
+        Reff_colormap = [
+            (BASE_COLOR, Reff_alpha),
+            (REFF_GT_ONE_COLOR, Reff_alpha),
+        ]
+    )
     fig = Figure()
     times = collect(1:aggregation:size(incarr, 1)) ./ 365
 

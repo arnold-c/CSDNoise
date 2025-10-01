@@ -1,3 +1,5 @@
+export hyperparam_debugging_Reff_plot
+
 using UnPack: @unpack
 
 function hyperparam_debugging_Reff_plot(

@@ -1,3 +1,5 @@
+export create_optimal_ews_plots
+
 using DataFrames: DataFrames
 using ProgressMeter
 

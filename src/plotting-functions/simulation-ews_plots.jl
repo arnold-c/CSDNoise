@@ -1,3 +1,11 @@
+export Reff_ews_plot,
+    simulation_tau_distribution,
+    Reff_plot,
+    Reff_inc_plot,
+    Reff_noise_plot,
+    Reff_noise_inc_plot,
+    Reff_noise_inc_test_plot
+
 using GLMakie
 using UnPack: @unpack
 using NaNMath: NaNMath

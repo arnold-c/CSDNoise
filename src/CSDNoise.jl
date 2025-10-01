@@ -143,37 +143,14 @@ include("./vaccination/vaccination-range.jl")
 include("./plotting-functions/helpers_plots.jl")
 include("./plotting-functions/tau-heatmap_plots.jl")
 include("./plotting-functions/lead-time_plots.jl")
-
-
-include("plotting-functions/single-simulation_plots.jl")
-export incidence_prevalence_plot,
-    Reff_plot,
-    incidence_testing_plot,
-    ensemble_incarr_Reff_plot
-
-include("plotting-functions/simulation-ews_plots.jl")
-export Reff_ews_plot,
-    simulation_tau_distribution,
-    Reff_plot,
-    Reff_inc_plot,
-    Reff_noise_plot,
-    Reff_noise_inc_plot,
-    Reff_noise_inc_test_plot
-
-include("ensemble-sim_single-scenario_plots.jl")
-export plot_all_single_scenarios
-
-include("plotting-functions/simulation-optimal-ews_plots.jl")
-export create_optimal_ews_plots
-
-include("plotting-functions/hyperparam-debugging_plots.jl")
-export hyperparam_debugging_Reff_plot
-
-include("plotting-functions/accuracy-lines_plots.jl")
-export prepare_line_plot_df!,
-    line_plot
-
-include("plotting-functions/ews-heatmap_plots.jl")
+include("./plotting-functions/single-simulation_plots.jl")
+include("./plotting-functions/simulation-ews_plots.jl")
+include("./plotting-functions/single-scenario_plots.jl")
+include("./plotting-functions/simulation-optimal-ews_plots.jl")
+include("./plotting-functions/hyperparam-debugging_plots.jl")
+include("./plotting-functions/accuracy-lines_data-preparation.jl")
+include("./plotting-functions/accuracy-lines_plots.jl")
+include("./plotting-functions/ews-heatmap_plots.jl")
 
 @static if false
     include("../scripts/ensemble-sim.jl")

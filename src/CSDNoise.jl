@@ -103,11 +103,11 @@ include("./constants/test-constants.jl")
 
 include("./simulation/seir-model.jl")
 
-include("detection-thresholds.jl")
-export calculate_outbreak_thresholds,
-    calculate_outbreak_thresholds!,
-    calculate_above_threshold_bounds,
-    Reff_ge_than_one
+# Detection
+include("./detection/outbreak-thresholds.jl")
+include("./detection/Reff_thresholds.jl")
+include("./detection/shared_threshold-functions.jl")
+
 
 include("diag-testing-functions.jl")
 export create_testing_arrs,

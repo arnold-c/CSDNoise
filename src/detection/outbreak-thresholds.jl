@@ -1,11 +1,8 @@
-# module DetectionThresholds
-#
-# export create_inc_infec_arr, create_inc_infec_arr!, calculate_outbreak_thresholds
-
-using ProgressMeter
-using StatsBase: rle
-using UnPack
+using StatsBase: StatsBase
 using StructArrays: StructVector
+
+export calculate_outbreak_thresholds,
+    calculate_outbreak_thresholds!
 
 function calculate_outbreak_thresholds(
         seir_results::StructVector{SEIRRun},
@@ -48,7 +45,7 @@ function calculate_outbreak_thresholds!(
     @inbounds for (sim, incidence_vec) in pairs(incidence_vecs)
         above_threshold_worker_vec .= incidence_vec .>= outbreakthreshold
 
-        abovethresholdrle = rle(above_threshold_worker_vec)
+        abovethresholdrle = StatsBase.rle(above_threshold_worker_vec)
 
         threshold_bounds = calculate_above_threshold_bounds(abovethresholdrle)
 
@@ -61,28 +58,6 @@ function calculate_outbreak_thresholds!(
         emergent_outbreak_threshold_vecs[sim] = outbreak_thresholds
     end
     return nothing
-end
-
-function calculate_above_threshold_bounds(outbreakrle)
-    # Calculate upper and lower indices of consecutive days of infection
-    outbreakaccum = accumulate(+, outbreakrle[2])
-    upperbound_indices = findall(isequal(1), outbreakrle[1])
-
-    upper_bounds = Vector{Int64}(undef, length(upperbound_indices))
-    lower_bounds = similar(upper_bounds)
-    duration = similar(upper_bounds)
-
-    @inbounds upper_bounds .= @view(
-        outbreakaccum[upperbound_indices]
-    )
-    map!(
-        x -> x - 1 == 0 ? 1 : outbreakaccum[x - 1] + 1,
-        lower_bounds,
-        upperbound_indices,
-    )
-    duration .= upper_bounds .- lower_bounds .+ 1
-
-    return Thresholds(lower_bounds, upper_bounds, duration)
 end
 
 function classify_all_outbreaks(
@@ -138,10 +113,3 @@ function classify_outbreak(
     end
     return 0
 end
-
-function Reff_ge_than_one(Reff_vec)
-
-    Reff_rle = rle(Reff_vec .>= 1)
-    return calculate_above_threshold_bounds(Reff_rle)
-end
-# end

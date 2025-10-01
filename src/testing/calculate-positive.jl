@@ -34,7 +34,7 @@ function calculate_positives_vec!(
     @inbounds for day in eachindex(npos_vec)
         result_day = day + lag
         if result_day <= sim_length
-            npos_vec[result_day] = round(Int64, tested_vec[day] * tested_multiplier)
+            npos_vec[result_day] = rand(Distributions.Binomial(tested_vec[day], tested_multiplier))
         end
     end
 

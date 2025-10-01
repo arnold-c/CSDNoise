@@ -77,7 +77,6 @@ include("./vaccination/vaccination-emergent-level.jl")
 include("./vaccination/vaccination-range.jl")
 
 # Testing
-include("./testing/calculate-moving-average.jl")
 include("./testing/calculate-positive.jl")
 include("./testing/calculate-tested.jl")
 include("./testing/testing-vectors.jl")

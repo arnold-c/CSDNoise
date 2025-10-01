@@ -28,9 +28,10 @@ include("./vaccination-rate-calculations.jl")
 include("./test-description.jl")
 include("./noise-description.jl")
 
-include("./transmission-functions.jl")
+# Simulation core
+include("./simulation/transmission-functions.jl")
 
-# Constants that rely on transmisison function definitions
+# Constants that rely on transmission function definitions
 include("./constants/dynamics-constants_calculated.jl")
 
 # EWS Metric functions
@@ -100,7 +101,7 @@ include("./plotting-functions/survival/Reff_histogram_plot.jl")
 
 include("./constants/test-constants.jl")
 
-include("SEIR-model.jl")
+include("./simulation/seir-model.jl")
 
 include("detection-thresholds.jl")
 export calculate_outbreak_thresholds,
@@ -126,7 +127,7 @@ export create_testing_vecs,
     calculate_tested_vec!,
     calculate_positives_vec!
 
-include("ensemble-functions.jl")
+include("./simulation/ensemble-functions.jl")
 export create_combinations_vec,
     create_ensemble_spec_combinations,
     run_ensemble_jump_prob,

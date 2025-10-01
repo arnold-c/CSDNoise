@@ -7,10 +7,9 @@ This is a simulation of an SIR model that uses Tau-leaping, with commuter
 imports. All jumps are manually defined.
 """
 
-using StatsBase
 using Random: Random
 using Distributions: Poisson, Binomial
-using StaticArrays
+using StaticArrays: SVector
 
 export seir_mod,
     seir_mod!

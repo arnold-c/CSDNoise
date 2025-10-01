@@ -1,7 +1,5 @@
 export plot_all_single_scenarios
 
-using StructArrays
-
 function plot_all_single_scenarios(
         noisevec,
         noisedir,
@@ -63,7 +61,7 @@ function plot_all_single_scenarios(
             ensemble_single_scenario_incidence_testing_plot,
         )
 
-        Makie.empty!(ensemble_single_scenario_incidence_testing_plot)
+        empty!(ensemble_single_scenario_incidence_testing_plot)
     end
 
     for (i, ewsmetric) in pairs(ews_metrics)

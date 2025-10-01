@@ -1,5 +1,3 @@
-using DataFrames: DataFrame, nrow
-
 export merge_results_safely
 
 """
@@ -7,10 +5,10 @@ export merge_results_safely
 
 Safely merge two results DataFrames, removing duplicates based on scenario parameters.
 """
-function merge_results_safely(df1::DataFrame, df2::DataFrame)
-    if nrow(df1) == 0
+function merge_results_safely(df1::DF.DataFrame, df2::DF.DataFrame)
+    if DF.nrow(df1) == 0
         return df2
-    elseif nrow(df2) == 0
+    elseif DF.nrow(df2) == 0
         return df1
     end
 
@@ -27,7 +25,7 @@ function merge_results_safely(df1::DataFrame, df2::DataFrame)
     ]
 
     # Combine DataFrames
-    combined_df = vcat(df1, df2; cols = :union)
+    combined_df = DF.vcat(df1, df2; cols = :union)
 
     # Remove duplicates, keeping first occurrence
     # (assumes df1 contains more recent/authoritative results)

@@ -1,9 +1,7 @@
-using CSDNoise
-using DataFrames
-using Dates
-using Random
-using Printf
-using StyledStrings
+# Export functions for easy testing
+export benchmark_optimization_methods,
+    benchmark_multistart_scaling,
+    test_multistart_basic
 
 """
 Test script to compare multistart optimization vs grid search
@@ -25,15 +23,20 @@ function benchmark_optimization_methods()
         ],
         percent_tested_vec = [0.1, 0.3],
         ews_metric_specification_vec = [
-            EWSMetricSpecification(Gaussian, Day(7), Day(28), 1),
+            EWSMetricSpecification(
+                EWSMethod(Backward()),
+                Dates.Day(7),
+                Dates.Day(28),
+                1
+            ),
         ],
-        ews_enddate_type_vec = [Reff_start],
-        ews_threshold_window_vec = [ExpandingThresholdWindow],
+        ews_enddate_type_vec = [EWSEndDateType(Reff_start())],
+        ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())],
         ews_metric_vec = ["mean", "variance"],
         # Grid search specific parameters
         ews_threshold_quantile_vec = [0.5, 0.7, 0.9, 0.95],
         ews_consecutive_thresholds_vec = [1, 3, 5, 7, 10],
-        ews_threshold_burnin_vec = [Day(7), Day(30), Day(90), Day(180)],
+        ews_threshold_burnin_vec = [Dates.Day(7), Dates.Day(30), Dates.Day(90), Dates.Day(180)],
     )
 
     # Generate test data
@@ -52,10 +55,10 @@ function benchmark_optimization_methods()
             0.1,   # γ
             0.0,   # μ
         ),
-        TimeParameters(
-            Day(1),    # tstep
+        SimTimeParameters(
+            Dates.Day(1),    # tstep
             500,       # tlength
-            Date(2020, 1, 1):Day(1):Date(2021, 4, 15),  # trange
+            Dates.Date(2020, 1, 1):Dates.Day(1):Dates.Date(2021, 4, 15),  # trange
         ),
         50,  # nsims - small for testing
     )
@@ -170,7 +173,10 @@ Create test data arrays for benchmarking
 """
 function create_test_data_arrays(ensemble_specification)
     # Generate ensemble simulations
-    @unpack state_parameters, dynamics_parameters, time_parameters, nsims = ensemble_specification
+    @unpack state_parameters,
+        dynamics_parameters,
+        time_parameters,
+        nsims = ensemble_specification
     @unpack tstep, tlength, trange = time_parameters
 
     # Initialize arrays
@@ -225,9 +231,16 @@ function benchmark_multistart_scaling()
         noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
         test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
         percent_tested_vec = [0.2],
-        ews_metric_specification_vec = [EWSMetricSpecification(Gaussian, Day(7), Day(28), 1)],
-        ews_enddate_type_vec = [Reff_start],
-        ews_threshold_window_vec = [ExpandingThresholdWindow],
+        ews_metric_specification_vec = [
+            EWSMetricSpecification(
+                EWSMethod(Backward()),
+                Dates.Day(7),
+                Dates.Day(28),
+                1
+            ),
+        ],
+        ews_enddate_type_vec = [EWSEndDateType(Reff_start())],
+        ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())],
         ews_metric_vec = ["mean"],
     )
 
@@ -235,7 +248,11 @@ function benchmark_multistart_scaling()
     ensemble_spec = EnsembleSpecification(
         StateParameters(SVector(990, 10, 0, 0), 0.01),
         DynamicsParameters(0.4, 0.1, 0.1, 0.0),
-        TimeParameters(Day(1), 300, Date(2020, 1, 1):Day(1):Date(2020, 10, 27)),
+        SimTimeParameters(
+            Dates.Day(1),
+            300,
+            Dates.Date(2020, 1, 1):Dates.Day(1):Dates.Date(2020, 10, 27)
+        ),
         25,  # Very small for scaling test
     )
 
@@ -286,9 +303,16 @@ function test_multistart_basic()
         noise_specification_vec = [NoiseSpecification(PoissonNoise(1.0))],
         test_specification_vec = [IndividualTestSpecification(0.9, 0.9, 0)],
         percent_tested_vec = [0.2],
-        ews_metric_specification_vec = [EWSMetricSpecification(Gaussian, Day(7), Day(28), 1)],
-        ews_enddate_type_vec = [Reff_start],
-        ews_threshold_window_vec = [ExpandingThresholdWindow],
+        ews_metric_specification_vec = [
+            EWSMetricSpecification(
+                EWSMethod(Backward()),
+                Dates.Day(7),
+                Dates.Day(28),
+                1
+            ),
+        ],
+        ews_enddate_type_vec = [EWSEndDateType(Reff_start())],
+        ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())],
         ews_metric_vec = ["mean"],
     )
 
@@ -296,7 +320,11 @@ function test_multistart_basic()
     ensemble_spec = EnsembleSpecification(
         StateParameters(SVector(990, 10, 0, 0), 0.01),
         DynamicsParameters(0.4, 0.1, 0.1, 0.0),
-        TimeParameters(Day(1), 200, Date(2020, 1, 1):Day(1):Date(2020, 7, 19)),
+        SimTimeParameters(
+            Dates.Day(1),
+            200,
+            Dates.Date(2020, 1, 1):Dates.Day(1):Dates.Date(2020, 7, 19)
+        ),
         10,  # Very small ensemble
     )
 
@@ -316,7 +344,7 @@ function test_multistart_basic()
     )
 
     println("\nResults:")
-    println("  Scenarios optimized: $(nrow(results))")
+    println("  Scenarios optimized: $(DF.nrow(results))")
     println("  Best accuracy: $(round(maximum(results.accuracy), digits = 4))")
     println("  Best parameters:")
 
@@ -329,6 +357,3 @@ function test_multistart_basic()
 
     return results
 end
-
-# Export functions for easy testing
-export benchmark_optimization_methods, benchmark_multistart_scaling, test_multistart_basic

@@ -1,5 +1,3 @@
-using Try: Try
-
 export calculate_ews_trigger_index
 
 function calculate_ews_trigger_index(

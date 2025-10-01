@@ -1,6 +1,3 @@
-using Dates: Dates
-using StatsBase: StatsBase
-
 export aggregate_bandwidth,
     aggregate_thresholds_vec,
     aggregate_Reff_vec,

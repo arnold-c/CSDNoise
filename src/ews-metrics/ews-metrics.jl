@@ -1,10 +1,3 @@
-using StatsBase: StatsBase
-using LightSumTypes: variant
-using DataFrames: DataFrames
-using Bumper: @no_escape, @alloc
-using Printf: @sprintf
-using Dates: Dates
-
 export EWSMetrics
 
 """
@@ -184,7 +177,7 @@ function mean_func!(
         timeseries,
         bandwidth,
     )
-    mean_func!(mean_vec, variant(method), timeseries, bandwidth)
+    mean_func!(mean_vec, LightSumTypes.variant(method), timeseries, bandwidth)
     return nothing
 end
 

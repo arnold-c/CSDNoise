@@ -1,6 +1,3 @@
-using StatsBase: StatsBase
-using StructArrays: StructVector
-
 export calculate_outbreak_thresholds,
     calculate_outbreak_thresholds!
 

@@ -1,12 +1,3 @@
-using UnPack: @unpack
-using LightSumTypes: variant
-using StaticArrays: SVector
-using StatsBase: mean
-using StructArrays: StructVector
-using Bumper: @no_escape, @alloc
-using Random: Random
-using Distributions: Poisson
-
 export create_noise_vecs
 
 """
@@ -46,7 +37,7 @@ function create_noise_vecs(
         kwargs...
     )
     return create_noise_vecs(
-        variant(noise_specification),
+        LightSumTypes.variant(noise_specification),
         varargs...;
         kwargs...
     )
@@ -73,7 +64,7 @@ function create_noise_vecs(
     @unpack N = init_states
     @unpack noise_mean_scaling = noise_specification
 
-    init_states_sv = SVector(init_states)
+    init_states_sv = StaticArrays.SVector(init_states)
 
     noise_beta_force = if noise_specification.correlation == "none"
         0.0
@@ -82,9 +73,9 @@ function create_noise_vecs(
     end
 
     noise_seasonality = if noise_specification.correlation == "out-of-phase"
-        if variant(dynamics_parameter_specification.seasonality) isa CosineSeasonality
+        if LightSumTypes.variant(dynamics_parameter_specification.seasonality) isa CosineSeasonality
             SeasonalityFunction(SineSeasonality())
-        elseif variant(dynamics_parameter_specification.seasonality) isa SineSeasonality
+        elseif LightSumTypes.variant(dynamics_parameter_specification.seasonality) isa SineSeasonality
             SeasonalityFunction(CosineSeasonality())
         else
             dynamics_parameter_specification.seasonality
@@ -199,8 +190,9 @@ function create_noise_vecs(
 
     for sim in eachindex(mean_poisson_noise_vec)
         run_seed = seed + (sim - 1)
-        enddate = enddates[sim]
         Random.seed!(run_seed)
+
+        enddate = enddates[sim]
 
         mean_dynamical_noise_incidence = StatsBase.mean(seir_results.incidence[sim])
 
@@ -238,7 +230,7 @@ function _calculate_dynamic_noise_values!(
         sim,
     )
     @no_escape begin
-        seir_worker_vec = @alloc(SVector{5, Int64}, enddate)
+        seir_worker_vec = @alloc(StaticArrays.SVector{5, Int64}, enddate)
         incidence_worker_vec = @alloc(Int64, enddate)
         Reff_worker_vec = @alloc(Float64, enddate)
 
@@ -306,7 +298,7 @@ function _add_poisson_noise!(
     ) where {AIV <: AbstractVector{<:Integer}}
     poisson_rate = noise_mean_scaling * mean_dynamical_noise_incidence
     @inbounds @simd for i in eachindex(noise_vec)
-        noise_vec[i] = rand(Poisson(poisson_rate))
+        noise_vec[i] = rand(Distributions.Poisson(poisson_rate))
     end
 
     return nothing

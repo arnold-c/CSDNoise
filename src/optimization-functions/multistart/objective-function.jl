@@ -1,5 +1,3 @@
-using UnPack: @unpack
-
 export ews_objective_function_with_tracking,
     map_continuous_to_ews_parameters
 

@@ -9,7 +9,6 @@ using StructArrays
 using StatsBase: StatsBase
 using CSV: CSV
 using Printf: @sprintf
-using LightSumTypes: variant
 
 include(projectdir("manuscript", "scripts", "plotting-setup.jl"))
 
@@ -163,7 +162,7 @@ subset_optimal_df = subset(
 )
 
 #%%
-plot_noise_filename(noise_specification::NoiseSpecification) = plot_noise_filename(variant(noise_specification))
+plot_noise_filename(noise_specification::NoiseSpecification) = plot_noise_filename(LightSumTypes.variant(noise_specification))
 
 function plot_noise_filename(noise_specification::PoissonNoise)
     return "poisson_$(noise_specification.noise_mean_scaling)x"

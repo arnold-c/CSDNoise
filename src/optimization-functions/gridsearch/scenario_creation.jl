@@ -1,6 +1,3 @@
-using StructArrays: StructVector
-using UnPack: @unpack
-
 export create_gridsearch_scenarios_structvector
 
 """

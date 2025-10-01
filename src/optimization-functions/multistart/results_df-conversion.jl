@@ -1,6 +1,3 @@
-using DataFrames: DataFrame, eachrow
-using StructArrays: StructVector
-
 export df_to_structvector
 
 """
@@ -8,7 +5,7 @@ export df_to_structvector
 
 Convert DataFrame to StructVector{OptimizationResult} for migration from old format.
 """
-function df_to_structvector(df::DataFrame, ::Type{OptimizationResult})
+function df_to_structvector(df::DF.DataFrame, ::Type{OptimizationResult})
     return StructVector(
         map(eachrow(df)) do row
             OptimizationResult(

@@ -1,8 +1,3 @@
-using DrWatson: scriptsdir
-using DataFrames: DataFrame, subset, ByRow, nrow, eachrow
-using Dates: Dates
-using Try: Try
-
 export simulate_ews_survival_data
 
 function simulate_ews_survival_data(
@@ -13,14 +8,14 @@ function simulate_ews_survival_data(
         thresholds;
         ews_metric = "mean",
         logfilename = "ensemble-sim_ews-optimization.log.txt",
-        logfiledir = scriptsdir()
+        logfiledir = DrWatson.scriptsdir()
     )
     !isdir(logfiledir) && mkpath(logfiledir)
 
     logfilepath = joinpath(logfiledir, logfilename)
     logfile = open(logfilepath, "a")
 
-    survival_df = DataFrame(
+    survival_df = DF.DataFrame(
         (
             ews_metric_specification = EWSMetricSpecification[],
             ews_threshold_burnin = Union{<:Dates.Day, <:Dates.Year}[],
@@ -35,9 +30,9 @@ function simulate_ews_survival_data(
         )
     )
 
-    subset_optimal_ews_df = subset(
+    subset_optimal_ews_df = DF.subset(
         optimal_ews_df,
-        :ews_metric => ByRow(==(ews_metric)),
+        :ews_metric => DF.ByRow(==(ews_metric)),
     )
 
     for n in [
@@ -83,34 +78,34 @@ function simulate_ews_survival_data(
     failed_sims = sum(Try.iserr.(enddate_vec))
 
     vec_of_testarr = Vector{Array{Float64, 3}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_null_testarr = Vector{Array{Float64, 3}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_ews_vals_vec = Vector{Vector{Union{Missing, EWSMetrics}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_null_ews_vals_vec = Vector{Vector{Union{Missing, EWSMetrics}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_exceed_thresholds = Vector{Vector{Matrix{Bool}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_null_exceed_thresholds = Vector{Vector{Matrix{Bool}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_threshold_quantiles = Vector{Vector{Matrix{Float64}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_null_threshold_quantiles = Vector{Vector{Matrix{Float64}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_detection_index_vec = Vector{Vector{Union{Nothing, Int64}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
     vec_of_null_detection_index_vec = Vector{Vector{Union{Nothing, Int64}}}(
-        undef, nrow(subset_optimal_ews_df)
+        undef, DF.nrow(subset_optimal_ews_df)
     )
 
     for (i, df_row) in pairs(eachrow(subset_optimal_ews_df))

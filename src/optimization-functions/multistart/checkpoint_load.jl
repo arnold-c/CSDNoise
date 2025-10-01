@@ -1,6 +1,3 @@
-using DataFrames: DataFrame
-using DrWatson: @tagsave
-
 export load_checkpoint_results_structvector,
     load_checkpoint_results
 
@@ -71,7 +68,7 @@ function load_checkpoint_results(filedir::String)
     end
 
     # Load all checkpoint files and merge
-    all_results = DataFrame[]
+    all_results = DF.DataFrame[]
 
     for file in checkpoint_files
         filepath = joinpath(checkpoint_dir, file)

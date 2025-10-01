@@ -1,7 +1,3 @@
-using StructArrays: StructVector
-using StatsBase: StatsBase
-using Bumper: @no_escape, @alloc
-
 export calculate_mean_incidence
 
 """

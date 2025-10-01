@@ -1,10 +1,8 @@
-using LabelledArrays: SLArray, SLVector
-
 export StateParameters
 
 struct StateParameters
-    init_states::SLArray{Tuple{5}, Int64, 1, 5, (:S, :E, :I, :R, :N)}
-    init_state_props::SLArray{Tuple{4}, Float64, 1, 4, (:s_prop, :e_prop, :i_prop, :r_prop)}
+    init_states::LabelledArrays.SLArray{Tuple{5}, Int64, 1, 5, (:S, :E, :I, :R, :N)}
+    init_state_props::LabelledArrays.SLArray{Tuple{4}, Float64, 1, 4, (:s_prop, :e_prop, :i_prop, :r_prop)}
 end
 
 function StateParameters(N::Int64, init_state_props::Dict)

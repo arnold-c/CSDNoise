@@ -1,5 +1,3 @@
-using StructArrays: StructVector
-
 export find_missing_scenarios
 
 """

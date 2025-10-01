@@ -1,5 +1,3 @@
-using DataFrames: DataFrame, nrow, antijoin
-
 export find_missing_scenarios
 
 """
@@ -8,7 +6,10 @@ export find_missing_scenarios
 Find scenarios that haven't been computed yet using antijoin.
 Returns DataFrame of missing scenarios.
 """
-function find_missing_scenarios(all_scenarios_df::DataFrame, completed_results_df::DataFrame)
+function find_missing_scenarios(
+        all_scenarios_df::DF.DataFrame,
+        completed_results_df::DF.DataFrame
+    )
     if nrow(completed_results_df) == 0
         return all_scenarios_df
     end
@@ -26,7 +27,7 @@ function find_missing_scenarios(all_scenarios_df::DataFrame, completed_results_d
     ]
 
     # Find scenarios that are in all_scenarios but not in completed_results
-    missing_scenarios_df = antijoin(
+    missing_scenarios_df = DF.antijoin(
         all_scenarios_df,
         completed_results_df;
         on = scenario_cols

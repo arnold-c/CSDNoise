@@ -1,9 +1,3 @@
-using UnPack: @unpack
-using Try: Try
-using StatsBase: StatsBase
-using StructArrays: StructVector
-using MultistartOptimization: MultistartOptimization
-
 export optimize_dynamic_noise_params_wrapper,
     optimize_dynamic_noise_params
 

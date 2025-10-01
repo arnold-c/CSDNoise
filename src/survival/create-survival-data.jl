@@ -1,11 +1,9 @@
-using DataFrames: nrow
-
 export create_ews_survival_data
 
 function create_ews_survival_data(
         ews_optimal_simulation_df
     )
-    nsims = nrow(ews_optimal_simulation_df)
+    nsims = DF.nrow(ews_optimal_simulation_df)
     unique_detection_indices = sort(
         filter(
             !isnothing, unique(ews_optimal_simulation_df.detection_index)

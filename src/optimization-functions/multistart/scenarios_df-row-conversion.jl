@@ -1,5 +1,3 @@
-using DataFrames: DataFrame, nrow
-
 export dataframe_row_to_scenario
 
 """
@@ -7,7 +5,7 @@ export dataframe_row_to_scenario
 
 Convert a DataFrame row to an OptimizationScenario struct.
 """
-function dataframe_row_to_scenario(row::DataFrameRow)
+function dataframe_row_to_scenario(row::DF.DataFrameRow)
     return OptimizationScenario(
         row.ensemble_specification,
         row.null_specification,

@@ -1,6 +1,3 @@
-using LightSumTypes: @sumtype
-using NLopt: NLopt
-
 export NoiseSpecification,
     PoissonNoise,
     DynamicalNoise,
@@ -23,7 +20,7 @@ struct DynamicalNoise
     max_vaccination_coverage::Float64
 end
 
-@sumtype NoiseSpecification(PoissonNoise, DynamicalNoise) <: AbstractNoiseSpecification
+LightSumTypes.@sumtype NoiseSpecification(PoissonNoise, DynamicalNoise) <: AbstractNoiseSpecification
 
 
 struct DynamicalNoiseSpecification

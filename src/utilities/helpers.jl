@@ -1,9 +1,7 @@
-using DrWatson: projectdir
-
 export outdir,
     sentencecase
 
-outdir(args...) = projectdir("out", args...)
+outdir(args...) = DrWatson.projectdir("out", args...)
 
 function sentencecase(s)
     @assert length(s) >= 2

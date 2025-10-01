@@ -1,5 +1,3 @@
-using DataFrames: DataFrames
-
 export ews_as_df
 
 """
@@ -28,6 +26,6 @@ function ews_as_df(ews::EWSMetrics)
         hcat,
         map(metric -> getproperty(ews, metric), metrics),
     ) |>
-        array -> DataFrames.DataFrame(array, [metrics...])
+        array -> DF.DataFrame(array, [metrics...])
     return df
 end

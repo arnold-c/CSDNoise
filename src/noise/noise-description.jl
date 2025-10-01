@@ -1,11 +1,9 @@
-using LightSumTypes: variant
-
 export get_noise_description,
     get_noise_magnitude,
     get_noise_magnitude_description,
     getdirpath
 
-get_noise_description(noise_specification::NoiseSpecification) = get_noise_description(variant(noise_specification))
+get_noise_description(noise_specification::NoiseSpecification) = get_noise_description(LightSumTypes.variant(noise_specification))
 
 function get_noise_description(noise_specification::PoissonNoise)
     return "poisson"
@@ -15,19 +13,19 @@ function get_noise_description(noise_specification::DynamicalNoise)
     return string("dynamical, ", noise_specification.correlation)
 end
 
-get_noise_magnitude_description(noise_specification::NoiseSpecification) = get_noise_magnitude_description(variant(noise_specification))
+get_noise_magnitude_description(noise_specification::NoiseSpecification) = get_noise_magnitude_description(LightSumTypes.variant(noise_specification))
 
 function get_noise_magnitude_description(noise_specification::Union{PoissonNoise, DynamicalNoise})
     return string("Poisson scaling: ", noise_specification.noise_mean_scaling)
 end
 
-get_noise_magnitude(noise_specification::NoiseSpecification) = get_noise_magnitude(variant(noise_specification))
+get_noise_magnitude(noise_specification::NoiseSpecification) = get_noise_magnitude(LightSumTypes.variant(noise_specification))
 
 function get_noise_magnitude(noise_specification::Union{PoissonNoise, DynamicalNoise})
     return noise_specification.noise_mean_scaling
 end
 
-noise_table_description(noise_specification::NoiseSpecification) = noise_table_description(variant(noise_specification))
+noise_table_description(noise_specification::NoiseSpecification) = noise_table_description(LightSumTypes.variant(noise_specification))
 
 function noise_table_description(noise_specification::PoissonNoise)
     noise_scaling = if noise_specification.noise_mean_scaling == 7
@@ -61,7 +59,7 @@ function noise_table_description(noise_specification::DynamicalNoise)
 end
 
 function getdirpath(spec::NoiseSpecification)
-    return getdirpath(variant(spec))
+    return getdirpath(LightSumTypes.variant(spec))
 end
 
 function getdirpath(spec::Union{PoissonNoise, DynamicalNoise})

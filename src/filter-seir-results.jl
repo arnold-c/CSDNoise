@@ -1,6 +1,3 @@
-using StructArrays: StructVector
-using StaticArrays: SVector
-
 export filter_seir_results
 
 """
@@ -31,7 +28,7 @@ function filter_seir_results(
 
     # Pre-allocate vectors for filtered data
     filtered_incidence = Vector{Vector{Int64}}(undef, nsims)
-    filtered_states = Vector{Vector{SVector{5, Int64}}}(undef, nsims)
+    filtered_states = Vector{Vector{StaticArrays.SVector{5, Int64}}}(undef, nsims)
     filtered_Reff = Vector{Vector{Float64}}(undef, nsims)
 
     for (sim, enddate) in pairs(enddates)
@@ -42,7 +39,7 @@ function filter_seir_results(
             )
 
             # Filter states up to endpoint
-            filtered_states[sim] = Vector{SVector{5, Int64}}(
+            filtered_states[sim] = Vector{StaticArrays.SVector{5, Int64}}(
                 seir_results[sim].states[1:enddate]
             )
 

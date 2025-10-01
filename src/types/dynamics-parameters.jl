@@ -1,6 +1,3 @@
-using Random: Random
-using LightSumTypes: @sumtype
-
 export SeasonalityFunction,
     CosineSeasonality,
     SineSeasonality,
@@ -10,7 +7,10 @@ export SeasonalityFunction,
 abstract type AbstractSeasonalityFunction end
 struct CosineSeasonality end
 struct SineSeasonality end
-@sumtype SeasonalityFunction(CosineSeasonality, SineSeasonality) <: AbstractSeasonalityFunction
+LightSumTypes.@sumtype SeasonalityFunction(
+    CosineSeasonality,
+    SineSeasonality
+) <: AbstractSeasonalityFunction
 
 
 struct DynamicsParameterSpecification

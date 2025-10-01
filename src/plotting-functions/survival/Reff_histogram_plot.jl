@@ -1,6 +1,3 @@
-using GLMakie
-using DataFrames: DataFrame, ByRow, subset, groupby
-
 export ews_reff_histogram_plot
 
 function ews_reff_histogram_plot(
@@ -23,9 +20,9 @@ function ews_reff_histogram_plot(
         nbanks = 1,
         xlabel = "Time After Burn-In (Years)",
         ylabel = "Survival Numbers",
-        legend_rowsize = Makie.Relative(0.05),
-        xlabel_rowsize = Makie.Relative(0.03),
-        ylabel_rowsize = Makie.Relative(0.02),
+        legend_rowsize = GLMakie.Relative(0.05),
+        xlabel_rowsize = GLMakie.Relative(0.03),
+        ylabel_rowsize = GLMakie.Relative(0.02),
         facet_fontsize = 20,
         legendsize = 22,
         xlabelsize = 22,
@@ -33,7 +30,7 @@ function ews_reff_histogram_plot(
         xticklabelsize = 22,
         yticklabelsize = 22,
         kwargs...,
-    ) where {T1 <: DataFrames.DataFrame}
+    ) where {T1 <: DF.DataFrame}
     kwargs_dict = Dict{Symbol, Any}(kwargs)
     if sum(
             filter(
@@ -54,12 +51,12 @@ function ews_reff_histogram_plot(
     ews_aggregation = survival_df.ews_metric_specification[1].aggregation
     burnin = survival_df.ews_threshold_burnin[1]
 
-    subset_survival_df = subset(
+    subset_survival_df = DF.subset(
         survival_df,
-        :noise_specification => ByRow(in(noise_specification_vec)),
+        :noise_specification => DF.ByRow(in(noise_specification_vec)),
     )
 
-    noise_grouped_dfs = groupby(subset_survival_df, :noise_specification)
+    noise_grouped_dfs = DF.groupby(subset_survival_df, :noise_specification)
 
     num_noise = length(noise_specification_vec)
 
@@ -93,9 +90,9 @@ function ews_reff_histogram_plot(
         test_specification_vec = unique(noise_gdf.test_specification)
         for (i, test_specification) in pairs(test_specification_vec)
             detection_survival_vecs, null_survival_vecs = create_ews_survival_data(
-                subset(
+                DF.subset(
                     noise_gdf,
-                    :test_specification => ByRow(==(test_specification)),
+                    :test_specification => DF.ByRow(==(test_specification)),
                 ),
             )
 
@@ -201,7 +198,7 @@ function ews_reff_histogram_plot(
 
     rowsize!(fig.layout, 0, legend_rowsize)
     if num_noise == 1
-        colsize!(fig.layout, 1, Makie.Relative(1))
+        colsize!(fig.layout, 1, GLMakie.Relative(1))
     end
 
     Label(

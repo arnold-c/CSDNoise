@@ -1,7 +1,3 @@
-using StructArrays: StructVector
-using UnPack: @unpack
-using DataFrames: DataFrame
-
 export create_scenarios_structvector,
     create_scenarios_dataframe,
     create_optimization_scenarios
@@ -15,7 +11,7 @@ This replaces the nested loop approach with a DataFrame-based approach for bette
 """
 function create_scenarios_dataframe(specification_vecs)
     scenarios = create_scenarios_structvector(specification_vecs)
-    return DataFrame(scenarios)
+    return DF.DataFrame(scenarios)
 end
 
 function create_scenarios_structvector(specification_vecs)

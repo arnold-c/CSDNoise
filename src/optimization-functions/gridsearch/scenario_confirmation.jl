@@ -1,6 +1,3 @@
-using StructArrays: StructVector
-using StyledStrings
-
 export confirm_gridsearch_run_structvector
 
 """
@@ -27,7 +24,7 @@ function confirm_gridsearch_run_structvector(
     estimated_time = n_missing * 0.5  # ~0.5 seconds per grid point
 
     if estimated_time > 300  # 5 minutes
-        println(styled"{yellow:Warning:} Estimated grid search time: {red:$(round(estimated_time/60, digits=1))} minutes")
+        println(StyledStrings.styled"{yellow:Warning:} Estimated grid search time: {red:$(round(estimated_time/60, digits=1))} minutes")
         print("Continue? (y/N): ")
         response = readline()
         return lowercase(strip(response)) in ["y", "yes"]

@@ -2,7 +2,35 @@
 Note that each file handles exporting its local function for the API.
 """
 module CSDNoise
-using DispatchDoctor
+using DispatchDoctor: @unstable
+using DrWatson: DrWatson
+using Random: Random
+using Distributions: Distributions
+using LinearAlgebra: LinearAlgebra
+using StatsBase: StatsBase
+using StaticArrays: StaticArrays
+using StructArrays: StructVector
+using LabelledArrays: LabelledArrays
+import DataFrames as DF
+using Dates: Dates
+using LightSumTypes: LightSumTypes
+using UnPack: @unpack
+using Bumper: @no_escape, @alloc
+using Printf: @sprintf
+using Try: Try
+using TryExperimental: TryExperimental
+using MultistartOptimization: MultistartOptimization
+using NLopt: NLopt
+using FLoops: FLoops
+using ProgressMeter: ProgressMeter
+using BangBang: BangBang
+using JLD2: JLD2
+using StyledStrings: StyledStrings
+import REPL.TerminalMenus as RTM
+using Logging: Logging
+using LoggingExtras: LoggingExtras
+using GLMakie
+
 
 # Constants
 include("./constants/dynamics-constants.jl")
@@ -116,6 +144,7 @@ include("./survival/simulate-survival-data.jl")
 include("./survival/survival-detection-indices.jl")
 
 # Plotting Functions
+include("./plotting-functions/plotting-setup_makie.jl")
 include("./plotting-functions/helpers_plots.jl")
 include("./plotting-functions/tau-heatmap_plots.jl")
 include("./plotting-functions/lead-time_plots.jl")
@@ -135,14 +164,14 @@ include("./plotting-functions/survival/ews-survival_simulate-and-plot.jl")
 include("./plotting-functions/survival/ews-survival_survival-lines.jl")
 include("./plotting-functions/survival/Reff_histogram_plot.jl")
 
-@static if false
-    include("../scripts/ensemble-sim.jl")
-    include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")
-    include("../scripts/tycho-visualization.jl")
-    include("../scripts/ensemble-sim_ews-optimization.jl")
-    include("../scripts/ensemble-sim_ews-multistart-optimization.jl")
-    include("../scripts/benchmark_optimization_speed.jl")
-    include("../manuscript/scripts/optimal-thresholds.jl")
-end
+# @static if false
+#     include("../scripts/ensemble-sim.jl")
+#     include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")
+#     include("../scripts/tycho-visualization.jl")
+#     include("../scripts/ensemble-sim_ews-optimization.jl")
+#     include("../scripts/ensemble-sim_ews-multistart-optimization.jl")
+#     include("../scripts/benchmark_optimization_speed.jl")
+#     include("../manuscript/scripts/optimal-thresholds.jl")
+# end
 
 end

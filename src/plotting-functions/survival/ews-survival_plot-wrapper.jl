@@ -1,6 +1,3 @@
-using DataFrames: DataFrame, subset, ByRow, groupby
-using Dates: Dates
-
 export ews_survival_plot
 
 function ews_survival_plot(
@@ -27,9 +24,9 @@ function ews_survival_plot(
         nbanks = length(test_specification_vec) + length(linestyle_vec) + 1,
         xlabel = "Time After Burn-In (Years)",
         ylabel = "Survival Numbers",
-        legend_rowsize = Makie.Relative(0.05),
-        xlabel_rowsize = Makie.Relative(0.03),
-        ylabel_rowsize = Makie.Relative(0.02),
+        legend_rowsize = GLMakie.Relative(0.05),
+        xlabel_rowsize = GLMakie.Relative(0.03),
+        ylabel_rowsize = GLMakie.Relative(0.02),
         facet_fontsize = 20,
         legendsize = 22,
         xlabelsize = 22,
@@ -37,7 +34,7 @@ function ews_survival_plot(
         xticklabelsize = 22,
         yticklabelsize = 22,
         kwargs...,
-    ) where {T1 <: DataFrame}
+    ) where {T1 <: DF.DataFrame}
     kwargs_dict = Dict{Symbol, Any}(kwargs)
     if sum(
             filter(
@@ -78,13 +75,13 @@ function ews_survival_plot(
     ews_aggregation = survival_df.ews_metric_specification[1].aggregation
     burnin = survival_df.ews_threshold_burnin[1]
 
-    subset_survival_df = subset(
+    subset_survival_df = DF.subset(
         survival_df,
-        :test_specification => ByRow(in(test_specification_vec)),
-        :noise_specification => ByRow(in(noise_specification_vec)),
+        :test_specification => DF.ByRow(in(test_specification_vec)),
+        :noise_specification => DF.ByRow(in(noise_specification_vec)),
     )
 
-    noise_grouped_dfs = groupby(subset_survival_df, :noise_specification)
+    noise_grouped_dfs = DF.groupby(subset_survival_df, :noise_specification)
 
     num_noise = length(noise_specification_vec)
 
@@ -215,7 +212,7 @@ function ews_survival_plot(
 
     rowsize!(fig.layout, 0, legend_rowsize)
     if num_noise == 1
-        colsize!(fig.layout, 1, Makie.Relative(1))
+        colsize!(fig.layout, 1, GLMakie.Relative(1))
     end
 
     Label(
@@ -244,9 +241,9 @@ function ews_survival_plot(
         null_survival_vecs,
         enddate_vec;
         facet_title = "Survival",
-        ews_aggregation = Day(7),
+        ews_aggregation = Dates.Day(7),
         burnin = Year(5),
-        endpoint_aggregation = Day(30),
+        endpoint_aggregation = Dates.Day(30),
         alpha = 1.0,
         trim_burnin = true,
     )

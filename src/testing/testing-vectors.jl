@@ -1,9 +1,5 @@
 export create_testing_vecs
 
-using StructArrays: StructVector
-using Bumper: @no_escape, @alloc
-using Random: Random
-
 """
     create_testing_vecs(
         seir_results::StructVector{SEIRRun},

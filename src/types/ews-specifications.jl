@@ -1,6 +1,3 @@
-using Dates: Dates
-using LightSumTypes: @sumtype
-
 export EWSMethod,
     Backward,
     Centered,
@@ -19,7 +16,7 @@ export EWSMethod,
 abstract type AbstractEWSMethod end
 struct Backward end
 struct Centered end
-@sumtype EWSMethod(Backward, Centered) <: AbstractEWSMethod
+LightSumTypes.@sumtype EWSMethod(Backward, Centered) <: AbstractEWSMethod
 
 struct EWSMetricSpecification
     method::EWSMethod
@@ -117,7 +114,10 @@ end
 abstract type AbstractEWSThresholdWindowType end
 struct ExpandingThresholdWindow end
 struct RollingThresholdWindow end
-@sumtype EWSThresholdWindowType(ExpandingThresholdWindow, RollingThresholdWindow) <: AbstractEWSThresholdWindowType
+LightSumTypes.@sumtype EWSThresholdWindowType(
+    ExpandingThresholdWindow,
+    RollingThresholdWindow
+) <: AbstractEWSThresholdWindowType
 
 abstract type AbstractEWSEndDateType end
 
@@ -127,4 +127,10 @@ struct Outbreak_start end
 struct Outbreak_middle end
 struct Outbreak_end end
 
-@sumtype EWSEndDateType(Reff_start, Reff_end, Outbreak_start, Outbreak_middle, Outbreak_end) <: AbstractEWSEndDateType
+LightSumTypes.@sumtype EWSEndDateType(
+    Reff_start,
+    Reff_end,
+    Outbreak_start,
+    Outbreak_middle,
+    Outbreak_end
+) <: AbstractEWSEndDateType

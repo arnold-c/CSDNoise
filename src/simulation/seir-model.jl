@@ -7,10 +7,6 @@ This is a simulation of an SIR model that uses Tau-leaping, with commuter
 imports. All jumps are manually defined.
 """
 
-using Random: Random
-using Distributions: Poisson, Binomial
-using StaticArrays: SVector
-
 export seir_mod,
     seir_mod!
 
@@ -20,7 +16,7 @@ export seir_mod,
 The in-place function to run the SEIR model with a vaccinations going directly to the R compartment and produce the transmission rate array.
 """
 function seir_mod(
-        states::SVector{5, Int64},
+        states::StaticArrays.SVector{5, Int64},
         dynamics_params::DynamicsParameters,
         time_params::SimTimeParameters;
         seed::Int64 = 1234
@@ -60,7 +56,7 @@ function seir_mod(
 end
 
 function seir_mod(
-        states::SVector{5, Int64},
+        states::StaticArrays.SVector{5, Int64},
         dynamics_params::DynamicsParameters,
         beta_vec::Vector{Float64},
         time_params::SimTimeParameters;
@@ -101,11 +97,11 @@ function seir_mod!(
         inc_vec::AI,
         Reff_vec::AF1,
         beta_vec::AF2,
-        states::SVector{5, Int64},
+        states::StaticArrays.SVector{5, Int64},
         dynamics_params::DynamicsParameters,
         time_params::SimTimeParameters,
     ) where {
-        ASV <: AbstractVector{SVector{5, Int64}},
+        ASV <: AbstractVector{StaticArrays.SVector{5, Int64}},
         AI <: AbstractVector{Int64},
         AF1 <: AbstractVector{Float64},
         AF2 <: AbstractVector{Float64},
@@ -170,8 +166,8 @@ end
 
 The inner loop that is called by `seir_mod!()` function.
 """
-@noinline function seir_mod_loop(
-        state_vec::SVector{5, Int64},
+function seir_mod_loop(
+        state_vec::StaticArrays.SVector{5, Int64},
         beta_t::Float64,
         mu_timestep::Float64,
         epsilon_timestep::Float64,
@@ -179,7 +175,7 @@ The inner loop that is called by `seir_mod!()` function.
         gamma_timestep::Float64,
         vaccination_coverage::Float64,
         timestep::Float64,
-    )::Tuple{SVector{5, Int64}, Int64}
+    )::Tuple{StaticArrays.SVector{5, Int64}, Int64}
 
     @inbounds begin
         S = state_vec[1]
@@ -199,8 +195,8 @@ The inner loop that is called by `seir_mod!()` function.
         recovery_prob = convert_rate_to_prob(gamma_timestep)
 
         # Births (Poisson since external arrivals)
-        S_births = rand(Poisson(mu_N_timestep * (1 - vaccination_coverage)))
-        R_births = rand(Poisson(mu_N_timestep * vaccination_coverage))
+        S_births = rand(Distributions.Poisson(mu_N_timestep * (1 - vaccination_coverage)))
+        R_births = rand(Distributions.Poisson(mu_N_timestep * vaccination_coverage))
 
         # For S compartment: handle competing outflows sequentially
         remaining_S = S
@@ -254,7 +250,7 @@ The inner loop that is called by `seir_mod!()` function.
     end
 
     return (
-        SVector(S + dS, E + dE, I + dI, R + dR, N + dN),
+        StaticArrays.SVector(S + dS, E + dE, I + dI, R + dR, N + dN),
         contact_inf,
     )
 end
@@ -281,9 +277,9 @@ end
 
     if n > 30 && rate < 10.0
         # Use Poisson approximation for large n, small rate
-        return min(rand(Poisson(rate)), n)  # Cap at population size
+        return min(rand(Distributions.Poisson(rate)), n)  # Cap at population size
     else
         # Use exact Binomial for small n or large rate
-        return rand(Binomial(n, prob))
+        return rand(Distributions.Binomial(n, prob))
     end
 end

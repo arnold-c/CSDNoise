@@ -1,6 +1,3 @@
-using DataFrames: DataFrame, ByRow, subset
-using UnPack: @unpack
-
 export simulate_and_plot_ews_survival
 
 function simulate_and_plot_ews_survival(
@@ -19,13 +16,13 @@ function simulate_and_plot_ews_survival(
         plottitle = "Survival",
         subtitle = "",
     )
-    subset_df = subset(
+    subset_df = DF.subset(
         optimal_heatmap_df,
-        :ews_metric_specification => ByRow(==(ews_metric_specification)),
-        :ews_enddate_type => ByRow(==(ews_enddate_type)),
-        :ews_threshold_burnin => ByRow(==(ews_threshold_burnin)),
-        :ews_threshold_window => ByRow(==(ews_threshold_window)),
-        :noise_specification => ByRow(==(noise_specification)),
+        :ews_metric_specification => DF.ByRow(==(ews_metric_specification)),
+        :ews_enddate_type => DF.ByRow(==(ews_enddate_type)),
+        :ews_threshold_burnin => DF.ByRow(==(ews_threshold_burnin)),
+        :ews_threshold_window => DF.ByRow(==(ews_threshold_window)),
+        :noise_specification => DF.ByRow(==(noise_specification)),
     )
 
     return simulate_and_plot_ews_survival(
@@ -56,9 +53,9 @@ function simulate_and_plot_ews_survival(
         plottitle = "Survival",
         subtitle = "",
     )
-    test_subset_df = subset(
+    test_subset_df = DF.subset(
         subset_df,
-        :test_specification => ByRow(==(individual_test_specification)),
+        :test_specification => DF.ByRow(==(individual_test_specification)),
     )
 
     survival_df = simulate_ews_survival_data(

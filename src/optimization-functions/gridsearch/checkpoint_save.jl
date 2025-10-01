@@ -1,6 +1,3 @@
-using StructArrays: StructVector
-using JLD2: JLD2
-
 """
     save_checkpoint_structvector(results, checkpoint_dir, batch_idx)
 

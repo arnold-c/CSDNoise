@@ -1,25 +1,5 @@
 export create_testing_arrs,
-    create_testing_arrs!,
-    calculate_tested!,
-    calculate_positives!,
-    calculate_true_positives!,
-    calculate_noise_positives!,
-    infer_true_positives,
-    calculate_test_positivity_rate,
-    calculate_movingavg,
-    calculate_movingavg!,
-    calculate_test_positivity
-
-using DrWatson
-using StatsBase
-using FLoops
-using NaNMath: NaNMath
-
-# include("detection-thresholds.jl")
-# # using .DetectionThresholds
-#
-# include("structs.jl")
-# using .ODStructs
+    create_testing_arrs!
 
 function create_testing_arrs(
         incarr,

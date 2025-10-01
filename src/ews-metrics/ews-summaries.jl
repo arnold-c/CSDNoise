@@ -1,5 +1,3 @@
-using StatsBase: StatsBase
-
 export calculate_auc,
     get_tau
 

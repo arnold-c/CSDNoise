@@ -1,10 +1,8 @@
-using StaticArrays: SVector
-
 export SEIRRun,
     NoiseRun
 
 struct SEIRRun
-    states::Vector{SVector{5, Int64}}
+    states::Vector{StaticArrays.SVector{5, Int64}}
     incidence::Vector{Int64}
     Reff::Vector{Float64}
 end

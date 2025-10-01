@@ -1,6 +1,3 @@
-using Dates: Dates
-using UnPack: @unpack
-
 function prepare_survival_facet_params(
         detection_survival_vecs,
         null_survival_vecs,

@@ -1,6 +1,6 @@
-using GLMakie
-using DataFrames
-using Printf
+using GLMakie: GLMakie
+using DataFrames: DataFrames
+using Printf: @sprintf
 
 export optimal_ews_heatmap_df,
     optimal_ews_heatmap_plot

@@ -1,5 +1,3 @@
-using DataFrames: DataFrame, names
-
 export validate_results_integrity
 
 """
@@ -7,7 +5,7 @@ export validate_results_integrity
 
 Validate the integrity of results DataFrame.
 """
-function validate_results_integrity(results_df::DataFrame)
+function validate_results_integrity(results_df::DF.DataFrame)
     required_cols = [
         :noise_specification,
         :test_specification,
@@ -33,7 +31,7 @@ function validate_results_integrity(results_df::DataFrame)
 
     # Check for missing values in critical columns
     for col in [:accuracy, :sensitivity, :specificity]
-        if any(ismissing, results_df[!, col])
+        if any(DF.ismissing, results_df[!, col])
             @warn "Missing values found in column: $col"
             return false
         end

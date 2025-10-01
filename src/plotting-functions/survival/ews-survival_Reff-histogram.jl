@@ -1,6 +1,3 @@
-using GLMakie
-using Dates: Dates
-
 function survival_plot_histogram!(
         gl,
         enddate_times,

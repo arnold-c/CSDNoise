@@ -1,5 +1,3 @@
-using StructArrays: StructVector
-
 export load_previous_gridsearch_results_structvector
 
 """

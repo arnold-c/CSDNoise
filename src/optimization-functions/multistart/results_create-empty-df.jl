@@ -1,6 +1,3 @@
-using DataFrames: DataFrame
-using Dates: Dates
-
 export create_empty_results_dataframe
 
 """
@@ -9,7 +6,7 @@ export create_empty_results_dataframe
 Create an empty DataFrame with the correct structure for multistart optimization results.
 """
 function create_empty_results_dataframe()
-    return DataFrame(
+    return DF.DataFrame(
         noise_specification = NoiseSpecification[],
         test_specification = eltype(IndividualTestSpecification)[],
         percent_tested = Float64[],

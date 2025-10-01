@@ -1,5 +1,3 @@
-using MultistartOptimization: MultistartOptimization
-
 export optimize_single_scenario
 
 """

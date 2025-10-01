@@ -3,9 +3,6 @@ export incidence_prevalence_plot,
     incidence_testing_plot,
     ensemble_incarr_Reff_plot
 
-using GLMakie
-using UnPack: @unpack
-
 function Reff_plot(
         incidencearr,
         Reffarr,

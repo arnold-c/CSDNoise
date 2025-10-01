@@ -1,14 +1,16 @@
 # Common benchmarking functions that can be reused across scripts
 
-using CSV: CSV
-using StructArrays: StructVector
-
-export generate_ensemble_data, generate_single_ensemble,
-    calculate_scenarios, calculate_grid_points,
-    compare_optimization_results, display_benchmark_summary,
-    compare_all_scenarios, display_accuracy_comparison_summary,
-    generate_accuracy_verification_report, create_ensemble_specs,
-    save_benchmark_comparison_results, EnsembleSpecsParameters
+export generate_ensemble_data,
+    generate_single_ensemble,
+    calculate_scenarios,
+    calculate_grid_points,
+    compare_optimization_results,
+    display_benchmark_summary,
+    compare_all_scenarios,
+    display_accuracy_comparison_summary,
+    generate_accuracy_verification_report,
+    create_ensemble_specs,
+    save_benchmark_comparison_results
 
 """
     generate_ensemble_data(ensemble_specification, null_specification, ensemble_outbreak_specification)
@@ -22,19 +24,19 @@ function generate_ensemble_data(
         seed = 1234,
         verbose = false
     )
-    verbose && println(styled"  Generating ensemble dynamics...")
+    verbose && println(StyledStrings.styled"  Generating ensemble dynamics...")
 
     # Generate ensemble data by calling the core simulation function directly
     emergent_dynamic_parameters,
         emergent_seir_results,
         emergent_Reff_thresholds = generate_single_ensemble(ensemble_specification; seed = seed)
 
-    verbose && println(styled"  Generating null dynamics...")
+    verbose && println(StyledStrings.styled"  Generating null dynamics...")
 
     # Generate null data
     null_seir_results = generate_single_ensemble(null_specification; seed = seed)[2]
 
-    verbose && println(styled"  Processing outbreak data...")
+    verbose && println(StyledStrings.styled"  Processing outbreak data...")
 
     # Generate incidence arrays for the outbreak specification using the incidence vectors
     emergent_outbreak_thresholds = calculate_outbreak_thresholds(
@@ -175,26 +177,26 @@ end
 Display summary statistics for benchmark results.
 """
 function display_benchmark_summary(results, label)
-    println(styled"\n{bold:$label Summary}")
+    println(StyledStrings.styled"\n{bold:$label Summary}")
     println("-"^40)
 
     best_accuracy = maximum(results.accuracy)
-    mean_accuracy = mean(results.accuracy)
-    std_accuracy = std(results.accuracy)
+    mean_accuracy = StatsBase.mean(results.accuracy)
+    std_accuracy = StatsBase.std(results.accuracy)
 
-    println(styled"Best accuracy: {green:$(round(best_accuracy, digits=4))}")
-    println(styled"Mean accuracy: {yellow:$(round(mean_accuracy, digits=4))}")
-    println(styled"Std accuracy: {yellow:$(round(std_accuracy, digits=4))}")
+    println(StyledStrings.styled"Best accuracy: {green:$(round(best_accuracy, digits=4))}")
+    println(StyledStrings.styled"Mean accuracy: {yellow:$(round(mean_accuracy, digits=4))}")
+    println(StyledStrings.styled"Std accuracy: {yellow:$(round(std_accuracy, digits=4))}")
 
     # Find best parameters
     best_idx = argmax(results.accuracy)
     best_row = results[best_idx, :]
 
-    println(styled"Best parameters:")
-    println(styled"  Threshold quantile: {cyan:$(round(best_row.ews_threshold_quantile, digits=3))}")
-    println(styled"  Consecutive thresholds: {cyan:$(best_row.ews_consecutive_thresholds)}")
-    println(styled"  Sensitivity: {green:$(round(best_row.sensitivity, digits=4))}")
-    return println(styled"  Specificity: {green:$(round(best_row.specificity, digits=4))}")
+    println(StyledStrings.styled"Best parameters:")
+    println(StyledStrings.styled"  Threshold quantile: {cyan:$(round(best_row.ews_threshold_quantile, digits=3))}")
+    println(StyledStrings.styled"  Consecutive thresholds: {cyan:$(best_row.ews_consecutive_thresholds)}")
+    println(StyledStrings.styled"  Sensitivity: {green:$(round(best_row.sensitivity, digits=4))}")
+    return println(StyledStrings.styled"  Specificity: {green:$(round(best_row.specificity, digits=4))}")
 end
 
 """
@@ -217,7 +219,7 @@ function compare_all_scenarios(grid_results, multistart_results, specification_v
     ]
 
     # Group grid results by scenario
-    grid_grouped = groupby(grid_results, scenario_cols)
+    grid_grouped = DF.groupby(grid_results, scenario_cols)
 
     comparison_data = []
 
@@ -276,7 +278,7 @@ function compare_all_scenarios(grid_results, multistart_results, specification_v
         end
     end
 
-    return DataFrame(comparison_data)
+    return DF.DataFrame(comparison_data)
 end
 
 """
@@ -285,46 +287,46 @@ end
 Display summary statistics of accuracy comparison between grid search and multistart.
 """
 function display_accuracy_comparison_summary(comparison_df)
-    log_both(styled"\n{bold:Accuracy Comparison Summary}")
+    log_both(StyledStrings.styled"\n{bold:Accuracy Comparison Summary}")
     log_both("-"^40)
 
     # Group by n_sobol configuration
     for n_sobol in sort(unique(comparison_df.n_sobol))
         config_df = filter(row -> row.n_sobol == n_sobol, comparison_df)
 
-        n_scenarios = nrow(config_df)
+        n_scenarios = DF.nrow(config_df)
         n_matching = sum(config_df.matches)
         match_rate = n_matching / n_scenarios * 100
 
-        mean_diff = mean(config_df.accuracy_diff)
-        std_diff = std(config_df.accuracy_diff)
+        mean_diff = StatsBase.mean(config_df.accuracy_diff)
+        std_diff = StatsBase.std(config_df.accuracy_diff)
         max_diff = maximum(abs.(config_df.accuracy_diff))
-        mean_rel_diff = mean(config_df.relative_diff_pct)
+        mean_rel_diff = StatsBase.mean(config_df.relative_diff_pct)
 
-        log_both(styled"\n{cyan:$n_sobol Sobol points}:")
-        log_both(styled"  Scenarios compared: {yellow:$n_scenarios}")
-        log_both(styled"  Matching accuracy (±1e-4): {green:$n_matching} ({green:$(round(match_rate, digits=1))%})")
-        log_both(styled"  Mean accuracy difference: {yellow:$(round(mean_diff, digits=5))}")
-        log_both(styled"  Std accuracy difference: {yellow:$(round(std_diff, digits=5))}")
-        log_both(styled"  Max absolute difference: {yellow:$(round(max_diff, digits=5))}")
-        log_both(styled"  Mean relative difference: {yellow:$(round(mean_rel_diff, digits=2))%}")
+        log_both(StyledStrings.styled"\n{cyan:$n_sobol Sobol points}:")
+        log_both(StyledStrings.styled"  Scenarios compared: {yellow:$n_scenarios}")
+        log_both(StyledStrings.styled"  Matching accuracy (±1e-4): {green:$n_matching} ({green:$(round(match_rate, digits=1))%})")
+        log_both(StyledStrings.styled"  Mean accuracy difference: {yellow:$(round(mean_diff, digits=5))}")
+        log_both(StyledStrings.styled"  Std accuracy difference: {yellow:$(round(std_diff, digits=5))}")
+        log_both(StyledStrings.styled"  Max absolute difference: {yellow:$(round(max_diff, digits=5))}")
+        log_both(StyledStrings.styled"  Mean relative difference: {yellow:$(round(mean_rel_diff, digits=2))%}")
 
         # Identify scenarios with largest discrepancies
         if max_diff > 1.0e-3
-            worst_scenarios = sort(config_df, :accuracy_diff)[1:min(3, nrow(config_df)), :]
-            log_both(styled"  {red:Scenarios with largest negative differences}:")
+            worst_scenarios = sort(config_df, :accuracy_diff)[1:min(3, DF.nrow(config_df)), :]
+            log_both(StyledStrings.styled"  {red:Scenarios with largest negative differences}:")
             for row in eachrow(worst_scenarios)
                 metric = row.scenario_id.ews_metric
                 noise = get_noise_magnitude_description(row.scenario_id.noise_specification)
                 diff = round(row.accuracy_diff, digits = 4)
-                log_both(styled"    - $metric, $noise: {red:$diff}")
+                log_both(StyledStrings.styled"    - $metric, $noise: {red:$diff}")
             end
         end
 
         # Show scenarios where multistart performs better
         better_scenarios = filter(row -> row.accuracy_diff > 1.0e-4, config_df)
-        if nrow(better_scenarios) > 0
-            log_both(styled"  {green:Scenarios where multistart performs better}: {green:$(nrow(better_scenarios))}")
+        if DF.nrow(better_scenarios) > 0
+            log_both(StyledStrings.styled"  {green:Scenarios where multistart performs better}: {green:$(nrow(better_scenarios))}")
         end
     end
     return
@@ -340,39 +342,39 @@ function generate_accuracy_verification_report(
         grid_time,
         multistart_results
     )
-    log_both(styled"\n{bold blue:DETAILED VERIFICATION REPORT}")
+    log_both(StyledStrings.styled"\n{bold blue:DETAILED VERIFICATION REPORT}")
     log_both("="^60)
 
     # Performance summary
-    log_both(styled"\n{bold:Performance Summary}")
-    log_both(styled"Grid search time: {yellow:$(round(grid_time, digits=2))}s")
+    log_both(StyledStrings.styled"\n{bold:Performance Summary}")
+    log_both(StyledStrings.styled"Grid search time: {yellow:$(round(grid_time, digits=2))}s")
 
     for (n_sobol, ms_data) in sort(collect(multistart_results))
         ms_time = ms_data.time
         speedup = round(grid_time / ms_time, digits = 1)
-        log_both(styled"Multistart ($n_sobol points): {yellow:$(round(ms_time, digits=2))}s (speedup: {green:$(speedup)x})")
+        log_both(StyledStrings.styled"Multistart ($n_sobol points): {yellow:$(round(ms_time, digits=2))}s (speedup: {green:$(speedup)x})")
     end
 
     # Accuracy verification by metric
-    log_both(styled"\n{bold:Accuracy Verification by EWS Metric}")
+    log_both(StyledStrings.styled"\n{bold:Accuracy Verification by EWS Metric}")
     metrics = unique([row.scenario_id.ews_metric for row in eachrow(comparison_df)])
 
     for metric in metrics
         metric_df = filter(row -> row.scenario_id.ews_metric == metric, comparison_df)
 
-        log_both(styled"\n{cyan:$metric}:")
+        log_both(StyledStrings.styled"\n{cyan:$metric}:")
         for n_sobol in sort(unique(metric_df.n_sobol))
             sobol_df = filter(row -> row.n_sobol == n_sobol, metric_df)
             n_match = sum(sobol_df.matches)
-            n_total = nrow(sobol_df)
+            n_total = DF.nrow(sobol_df)
             match_pct = round(n_match / n_total * 100, digits = 1)
 
-            log_both(styled"  $n_sobol Sobol points: {yellow:$n_match/$n_total matching ($match_pct%)}")
+            log_both(StyledStrings.styled"  $n_sobol Sobol points: {yellow:$n_match/$n_total matching ($match_pct%)}")
         end
     end
 
     # Parameter convergence analysis
-    log_both(styled"\n{bold:Parameter Convergence Analysis}")
+    log_both(StyledStrings.styled"\n{bold:Parameter Convergence Analysis}")
 
     for n_sobol in sort(unique(comparison_df.n_sobol))
         config_df = filter(row -> row.n_sobol == n_sobol, comparison_df)
@@ -381,12 +383,12 @@ function generate_accuracy_verification_report(
         quantile_diffs = abs.(config_df.grid_quantile .- config_df.ms_quantile)
         consecutive_diffs = abs.(config_df.grid_consecutive .- config_df.ms_consecutive)
 
-        mean_perc_diff = mean(quantile_diffs)
-        mean_cons_diff = mean(consecutive_diffs)
+        mean_perc_diff = StatsBase.mean(quantile_diffs)
+        mean_cons_diff = StatsBase.mean(consecutive_diffs)
 
-        log_both(styled"\n{cyan:$n_sobol Sobol points}:")
-        log_both(styled"  Mean quantile difference: {yellow:$(round(mean_perc_diff, digits=4))}")
-        log_both(styled"  Mean consecutive threshold difference: {yellow:$(round(mean_cons_diff, digits=2))}")
+        log_both(StyledStrings.styled"\n{cyan:$n_sobol Sobol points}:")
+        log_both(StyledStrings.styled"  Mean quantile difference: {yellow:$(round(mean_perc_diff, digits=4))}")
+        log_both(StyledStrings.styled"  Mean consecutive threshold difference: {yellow:$(round(mean_cons_diff, digits=2))}")
     end
 
     # Save detailed comparison to CSV for further analysis
@@ -436,9 +438,9 @@ function generate_accuracy_verification_report(
         )
     end
 
-    export_df = DataFrame(export_data)
+    export_df = DF.DataFrame(export_data)
     CSV.write(output_file, export_df)
-    return log_both(styled"\n{green:Detailed comparison saved to: $output_file}")
+    return log_both(StyledStrings.styled"\n{green:Detailed comparison saved to: $output_file}")
 end
 
 """
@@ -537,7 +539,12 @@ end
 Save benchmark comparison results to CSV file. Generalized version that can handle
 different types of benchmark comparisons.
 """
-function save_benchmark_comparison_results(results_dict, filename_prefix; output_dir = outdir("benchmark"), full_filename = "")
+function save_benchmark_comparison_results(
+        results_dict,
+        filename_prefix;
+        output_dir = outdir("benchmark"),
+        full_filename = ""
+    )
     mkpath(output_dir)
 
     if isempty(full_filename)
@@ -580,7 +587,7 @@ function save_benchmark_comparison_results(results_dict, filename_prefix; output
         end
     end
 
-    summary_df = DataFrame(summary_data)
+    summary_df = DF.DataFrame(summary_data)
     CSV.write(joinpath(output_dir, filename), summary_df)
-    return println(styled"\n{green:Results saved to: $filename}")
+    return println(StyledStrings.styled"\n{green:Results saved to: $filename}")
 end

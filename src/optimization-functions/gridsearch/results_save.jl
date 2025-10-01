@@ -1,6 +1,3 @@
-using StructArrays: StructVector
-using JLD2: JLD2
-
 export save_results_structvector
 
 """

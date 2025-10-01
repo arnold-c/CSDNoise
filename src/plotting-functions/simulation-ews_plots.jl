@@ -6,12 +6,6 @@ export Reff_ews_plot,
     Reff_noise_inc_plot,
     Reff_noise_inc_test_plot
 
-using GLMakie
-using UnPack: @unpack
-using NaNMath: NaNMath
-using StructArrays: StructArray
-using DataFrames
-
 function Reff_ews_plot(
         Reffvec,
         null_Reffvec,
@@ -44,8 +38,8 @@ function Reff_ews_plot(
         Reff_color_labels = ["Reff < 1", "Reff >= 1"],
         outbreak_color_labels = ["Not Outbreak", "Outbreak"],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
-        rowsize = Makie.Relative(0.03),
+        metric_color = GLMakie.wong_colors()[1],
+        rowsize = GLMakie.Relative(0.03),
         kwargs...,
     ) where {S <: Symbol}
     kwargs_dict = Dict{Symbol, Any}(kwargs)
@@ -187,8 +181,8 @@ function Reff_ews_plot(
             BASE_COLOR, REFF_GT_ONE_COLOR,
         ],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
-        rowsize = Makie.Relative(0.03),
+        metric_color = GLMakie.wong_colors()[1],
+        rowsize = GLMakie.Relative(0.03),
         kwargs...,
     ) where {S <: Symbol}
     @unpack trange = timeparams
@@ -270,7 +264,7 @@ function Reff_ews_plot(
         detection_index,
         exceeds_thresholds_vec,
         times;
-        metric_color = Makie.wong_colors()[1],
+        metric_color = GLMakie.wong_colors()[1],
     )
 
     add_ews_lines!(
@@ -281,7 +275,7 @@ function Reff_ews_plot(
         null_detection_index,
         null_exceeds_thresholds_vec,
         times;
-        metric_color = Makie.wong_colors()[1],
+        metric_color = GLMakie.wong_colors()[1],
     )
 
     if haskey(kwargs_dict, :xlims)
@@ -338,7 +332,7 @@ function add_ews_lines!(
         ewsmetric,
         ewsmetric_endpoint,
         times;
-        metric_color = Makie.wong_colors()[1],
+        metric_color = GLMakie.wong_colors()[1],
         plot_tau = true,
         kwargs...,
     )
@@ -395,7 +389,7 @@ function add_ews_lines!(
         detection_index,
         exceeds_thresholds_vec,
         times;
-        metric_color = Makie.wong_colors()[1],
+        metric_color = GLMakie.wong_colors()[1],
         plot_tau = true,
         plot_detection_index = true,
         kwargs...,
@@ -484,8 +478,8 @@ function Reff_ews_plot(
         Reff_color_labels = ["Reff < 1", "Reff >= 1"],
         outbreak_color_labels = ["Not Outbreak", "Outbreak"],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
-        rowsize = Makie.Relative(0.03),
+        metric_color = GLMakie.wong_colors()[1],
+        rowsize = GLMakie.Relative(0.03),
         kwargs...,
     ) where {S <: Symbol}
     @unpack trange = timeparams
@@ -539,8 +533,8 @@ function Reff_ews_plot(
         Reff_color_labels = ["Reff < 1", "Reff >= 1"],
         outbreak_color_labels = ["Not Outbreak", "Outbreak"],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
-        rowsize = Makie.Relative(0.03),
+        metric_color = GLMakie.wong_colors()[1],
+        rowsize = GLMakie.Relative(0.03),
         kwargs...,
     ) where {S <: Symbol}
     @unpack trange = timeparams
@@ -590,8 +584,8 @@ function Reff_ews_plot(
         Reff_color_labels = ["Reff < 1", "Reff >= 1"],
         outbreak_color_labels = ["Not Outbreak", "Outbreak"],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
-        rowsize = Makie.Relative(0.03),
+        metric_color = GLMakie.wong_colors()[1],
+        rowsize = GLMakie.Relative(0.03),
         kwargs...,
     ) where {S <: Symbol}
     @unpack trange = timeparams
@@ -1214,7 +1208,7 @@ function Reff_ews_plot_facet!(
         Reff_color_labels = ["Reff < 1", "Reff >= 1"],
         outbreak_color_labels = ["Not Outbreak", "Outbreak"],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
+        metric_color = GLMakie.wong_colors()[1],
         test_positive_color = :black,
         legends = true,
         plot_tau = true,
@@ -1368,7 +1362,7 @@ function Reff_ews_plot_facet!(
             metric_ax,
             times[1:ewsmetric_endpoint],
             kwargs_dict[:thresholds_quantile_vec];
-            color = Makie.wong_colors()[2],
+            color = GLMakie.wong_colors()[2],
             linewidth = 3,
         )
     end
@@ -1422,7 +1416,7 @@ function Reff_ews_plot_facet!(
         Reff_color_labels = ["Reff < 1", "Reff >= 1"],
         outbreak_color_labels = ["Not Outbreak", "Outbreak"],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
+        metric_color = GLMakie.wong_colors()[1],
         legends = true,
         plot_tau = true,
         plot_detection_index = true,
@@ -1559,7 +1553,7 @@ function Reff_ews_plot_facet!(
             metric_ax,
             times[1:ewsmetric_endpoint],
             kwargs_dict[:thresholds_quantile_vec];
-            color = Makie.wong_colors()[2],
+            color = GLMakie.wong_colors()[2],
             linewidth = 3,
         )
     end
@@ -1617,7 +1611,7 @@ function Reff_ews_plot_facet!(
         Reff_color_labels = ["Reff < 1", "Reff >= 1"],
         outbreak_color_labels = ["Not Outbreak", "Outbreak"],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
+        metric_color = GLMakie.wong_colors()[1],
         test_positive_color = :black,
         legends = true,
         plot_tau = true,
@@ -1774,7 +1768,7 @@ function Reff_ews_plot_facet!(
             metric_ax,
             times[1:ewsmetric_endpoint],
             kwargs_dict[:thresholds_quantile_vec];
-            color = Makie.wong_colors()[2],
+            color = GLMakie.wong_colors()[2],
             linewidth = 3,
         )
     end
@@ -1827,13 +1821,13 @@ function Reff_ews_plot(
             BASE_COLOR, REFF_GT_ONE_COLOR,
         ],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
-        spaero_metric_color = Makie.wong_colors()[3],
+        metric_color = GLMakie.wong_colors()[1],
+        spaero_metric_color = GLMakie.wong_colors()[3],
         linewidth = 3,
         hlinewidth = 2,
-        rowsize = Makie.Relative(0.03),
+        rowsize = GLMakie.Relative(0.03),
         kwargs...,
-    ) where {T1 <: StructArray, T2 <: StructArray, S <: Symbol}
+    ) where {T1 <: StructVector, T2 <: StructVector, S <: Symbol}
     @unpack trange = timeparams
     times = collect(trange) ./ 365
 
@@ -1970,13 +1964,13 @@ function Reff_ews_plot(
             BASE_COLOR, REFF_GT_ONE_COLOR,
         ],
         threshold = 5,
-        metric_color = Makie.wong_colors()[1],
-        spaero_metric_color = Makie.wong_colors()[3],
+        metric_color = GLMakie.wong_colors()[1],
+        spaero_metric_color = GLMakie.wong_colors()[3],
         linewidth = 3,
         hlinewidth = 2,
         aggregation = 1,
         kwargs...,
-    ) where {T1 <: StructArray, T2 <: DataFrame, S <: Symbol}
+    ) where {T1 <: StructVector, T2 <: DF.DataFrame, S <: Symbol}
     @unpack trange = timeparams
     times = collect(trange) ./ 365
 
@@ -2126,8 +2120,8 @@ function simulation_tau_distribution(
         tau_metric;
         plottitle = string(tau_metric) * " Distribution",
     ) where {T1 <: Vector{<:EWSMetrics}}
-    tested_ews_sa = StructArray(tested_ews_vec)
-    actual_ews_sa = StructArray(actual_ews_vec)
+    tested_ews_sa = StructVector(tested_ews_vec)
+    actual_ews_sa = StructVector(actual_ews_vec)
 
     if split(tau_metric, "_")[end] != "tau"
         tau_metric *= "_tau"
@@ -2146,7 +2140,7 @@ function simulation_tau_distribution(
         actual_ews::T1,
         tau_metric;
         plottitle = string(tau_metric) * " Distribution",
-    ) where {T1 <: StructArray{EWSMetrics}}
+    ) where {T1 <: StructVector{EWSMetrics}}
     if split(tau_metric, "_")[end] != "tau"
         tau_metric *= "_tau"
     end
@@ -2165,7 +2159,7 @@ function simulation_tau_distribution(
     hist!(
         ax,
         tau;
-        color = (Makie.wong_colors()[1], 0.5),
+        color = (GLMakie.wong_colors()[1], 0.5),
         bins = 20,
         label = "Tested EWS",
     )
@@ -2173,7 +2167,7 @@ function simulation_tau_distribution(
     hist!(
         ax,
         actual_tau;
-        color = (Makie.wong_colors()[2], 0.5),
+        color = (GLMakie.wong_colors()[2], 0.5),
         bins = 20,
         label = "Actual EWS",
     )
@@ -2181,7 +2175,7 @@ function simulation_tau_distribution(
     vlines!(
         ax,
         mean(tau);
-        color = Makie.wong_colors()[1],
+        color = GLMakie.wong_colors()[1],
         linestyle = :dash,
         linewidth = 4,
     )
@@ -2201,7 +2195,7 @@ function simulation_tau_distribution(
         justification = :left,
     )
 
-    lplots = filter(Makie.get_plots(ax)) do plot
+    lplots = filter(GLMakie.get_plots(ax)) do plot
         haskey(plot.attributes, :label)
     end
 

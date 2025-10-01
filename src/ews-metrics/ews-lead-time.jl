@@ -1,5 +1,3 @@
-using Try: Try
-
 export calculate_ews_lead_time
 
 function calculate_ews_lead_time(

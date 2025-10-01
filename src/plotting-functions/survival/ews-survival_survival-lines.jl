@@ -1,6 +1,3 @@
-using GLMakie
-using Dates: Dates
-
 function survival_plot_lines!(
         gl::T1,
         times,
@@ -19,7 +16,7 @@ function survival_plot_lines!(
         facet_fontsize = 20,
         xlabelsize = 22,
         ylabelsize = 22,
-    ) where {T1 <: Makie.GridLayout}
+    ) where {T1 <: GLMakie.GridLayout}
     surv_ax = Axis(
         gl[2, 1];
         xlabel = "Time (Years)",
@@ -72,7 +69,7 @@ function survival_plot_lines!(
         nsims = 100,
         trim_burnin = true,
         burnin = Dates.Year(5),
-    ) where {T1 <: Makie.Axis}
+    ) where {T1 <: GLMakie.Axis}
     lines!(
         surv_ax,
         detection_survival_times,

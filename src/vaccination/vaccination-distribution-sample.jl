@@ -1,5 +1,3 @@
-using Distributions: Distributions
-
 export sample_vaccination_coverage
 
 function sample_vaccination_coverage(

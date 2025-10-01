@@ -1,10 +1,3 @@
-using Dates: Dates
-using DataFrames: DataFrame
-using NLopt: NLopt
-using FLoops: FLoops
-using StyledStrings
-using Try: Try
-
 export ews_multistart_optimization
 
 """
@@ -81,9 +74,9 @@ function ews_multistart_optimization(
 
     if verbose
         n_total_scenarios = length(all_scenarios)
-        println(styled"{green:Starting Multistart Optimization with Caching}")
-        println(styled"Total scenarios defined: {yellow:$n_total_scenarios}")
-        println(styled"Sobol points per scenario: {blue:$n_sobol_points}")
+        println(StyledStrings.styled"{green:Starting Multistart Optimization with Caching}")
+        println(StyledStrings.styled"Total scenarios defined: {yellow:$n_total_scenarios}")
+        println(StyledStrings.styled"Sobol points per scenario: {blue:$n_sobol_points}")
     end
 
     # Load existing results (including checkpoints)
@@ -95,7 +88,7 @@ function ews_multistart_optimization(
 
     n_existing = length(existing_results)
     if verbose && n_existing > 0
-        println(styled"Found {cyan:$n_existing} existing results")
+        println(StyledStrings.styled"Found {cyan:$n_existing} existing results")
     end
 
     # Find missing scenarios
@@ -103,7 +96,7 @@ function ews_multistart_optimization(
     n_missing = length(missing_scenarios)
 
     if verbose
-        println(styled"Missing scenarios to optimize: {yellow:$n_missing}")
+        println(StyledStrings.styled"Missing scenarios to optimize: {yellow:$n_missing}")
     end
 
     # Check with user if needed
@@ -114,11 +107,11 @@ function ews_multistart_optimization(
                 disable_time_check = disable_time_check
             )
             @info "Optimization cancelled by user"
-            return return_df ? DataFrame(existing_results) : existing_results
+            return return_df ? DF.DataFrame(existing_results) : existing_results
         end
     else
         @info "All scenarios already optimized"
-        return return_df ? DataFrame(existing_results) : existing_results
+        return return_df ? DF.DataFrame(existing_results) : existing_results
     end
 
     # Define parameter bounds (only quantile and consecutive thresholds)
@@ -167,8 +160,8 @@ function ews_multistart_optimization(
 
     if verbose
         n_final = length(final_results)
-        println(styled"{green:Optimization complete! Total results: {yellow:$n_final}}")
+        println(StyledStrings.styled"{green:Optimization complete! Total results: {yellow:$n_final}}")
     end
 
-    return return_df ? DataFrame(final_results) : final_results
+    return return_df ? DF.DataFrame(final_results) : final_results
 end

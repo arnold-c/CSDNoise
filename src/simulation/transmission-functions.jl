@@ -1,7 +1,3 @@
-using LinearAlgebra: LinearAlgebra
-using Bumper: @no_escape, @alloc
-using LightSumTypes: variant
-
 export calculate_beta,
     calculate_gamma,
     calculateReffective,
@@ -73,7 +69,7 @@ function calculate_beta(
 
         # For eigenvalues, we still need to allocate, but this is unavoidable
         eigenvals = LinearAlgebra.eigen(K_prime).values
-        R_0 / maximum(LinearAlgebra.real(eigenvals))
+        R_0 / maximum(real(eigenvals))
     end
 end
 
@@ -148,7 +144,7 @@ function calculate_gamma(
         # Rearranging: gamma = (beta * max_eigenvalue(Q) / R_0) - mu
 
         eigenvals_Q = LinearAlgebra.eigen(Q).values
-        max_eigenval_Q = maximum(LinearAlgebra.real(eigenvals_Q))
+        max_eigenval_Q = maximum(real(eigenvals_Q))
 
         gamma = (beta * max_eigenval_Q / R_0) - mu
     end
@@ -192,7 +188,7 @@ function calculate_beta_amp!(
             beta_mean,
             beta_force,
             trange[i],
-            variant(seasonality)
+            LightSumTypes.variant(seasonality)
         )
     end
     return nothing
@@ -206,7 +202,7 @@ Calculate the amplitude of the transmission rate beta as a function of time.
 `seasonality` should be a SeasonalityFunction sum type.
 """
 function calculate_beta_amp(beta_mean, beta_force, t; seasonality::SeasonalityFunction)
-    return _calculate_beta_amp(beta_mean, beta_force, t, variant(seasonality))
+    return _calculate_beta_amp(beta_mean, beta_force, t, LightSumTypes.variant(seasonality))
 end
 
 # Dispatch on the extracted variant
@@ -340,7 +336,7 @@ function calculateR0(
 
         # For eigenvalues, we still need to allocate, but this is unavoidable
         eigenvals = LinearAlgebra.eigen(FV⁻¹).values
-        maximum(LinearAlgebra.real(eigenvals))
+        maximum(real(eigenvals))
     end
 end
 

@@ -1,5 +1,3 @@
-using UnPack: @unpack
-
 export recreate_noise_vecs
 
 """
@@ -52,10 +50,19 @@ function recreate_noise_vecs(
         ensemble_specification::EnsembleSpecification,
         enddates_vec
     )
-    @unpack R0, latent_period, duration_infection, correlation, poisson_component, max_vaccination_range = dynamical_noise_spec
+    @unpack R0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        max_vaccination_range = dynamical_noise_spec
 
     # Create final EnsembleSpecification with optimal parameters for verification
-    @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims, dirpath = ensemble_specification
+    @unpack state_parameters,
+        dynamics_parameter_specification,
+        time_parameters,
+        nsims,
+        dirpath = ensemble_specification
     @unpack init_states = state_parameters
     @unpack N = init_states
 

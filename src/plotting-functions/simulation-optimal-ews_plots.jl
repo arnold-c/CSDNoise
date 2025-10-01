@@ -1,8 +1,5 @@
 export create_optimal_ews_plots
 
-using DataFrames: DataFrames
-using ProgressMeter
-
 function create_optimal_ews_plots(
         optimal_ews_df,
         ensemble_specification,
@@ -32,7 +29,7 @@ function create_optimal_ews_plots(
         ],
         force_heatmap = true,
         force_survival = false,
-        base_plotpath = joinpath(plotsdir(), "ensemble"),
+        base_plotpath = joinpath(DrWatson.plotsdir(), "ensemble"),
         output_format = "png",
         pt_per_unit = 0.75,
         px_per_unit = 2,
@@ -40,15 +37,15 @@ function create_optimal_ews_plots(
     )
     # if output_format in ["pdf", "svg"]
     #     include(srcdir("cairomakie-plotting-setup.jl"))
-    #     CairoMakie.activate!(; type = output_format, pt_per_unit = pt_per_unit)
+    #     CairoGLMakie.activate!(; type = output_format, pt_per_unit = pt_per_unit)
     # end
-    if output_format in ["png", "jpg", "jpeg"]
-        include(srcdir("makie-plotting-setup.jl"))
-        GLMakie.activate!(; px_per_unit = px_per_unit)
-    end
+    # if output_format in ["png", "jpg", "jpeg"]
+    #     include(srcdir("makie-plotting-setup.jl"))
+    #     GLGLMakie.activate!(; px_per_unit = px_per_unit)
+    # end
 
 
-    grouped_optimal_ews_df = DataFrames.groupby(
+    grouped_optimal_ews_df = DF.groupby(
         optimal_ews_df,
         [
             :noise_specification,
@@ -61,7 +58,7 @@ function create_optimal_ews_plots(
 
     ngroups = length(grouped_optimal_ews_df) * length(tiebreaker_preference_vec)
 
-    prog = Progress(ngroups)
+    prog = ProgressMeter.Progress(ngroups)
     for (gdf, tiebreaker_preference) in
         Iterators.product(
             grouped_optimal_ews_df, tiebreaker_preference_vec
@@ -74,7 +71,7 @@ function create_optimal_ews_plots(
 
         n_unique_tests = length(unique(optimal_heatmap_df.test_specification))
 
-        @assert nrow(optimal_heatmap_df) ==
+        @assert DF.nrow(optimal_heatmap_df) ==
             length(ews_metrics) * n_unique_tests
 
         burnin_time = ensemble_specification.time_parameters.burnin
@@ -196,7 +193,7 @@ function create_optimal_ews_plots(
                 end
             end
         end
-        next!(prog)
+        ProgressMeter.next!(prog)
     end
     return nothing
 end

@@ -1,7 +1,5 @@
 export hyperparam_debugging_Reff_plot
 
-using UnPack: @unpack
-
 function hyperparam_debugging_Reff_plot(
         inc_vec,
         null_inc_vec,
@@ -102,7 +100,7 @@ function hyperparam_debugging_Reff_plot(
         detection_index_vec,
         ensemble_time_specification;
         xlims = (0, 12),
-        rowsize = Makie.Relative(0.03),
+        rowsize = GLMakie.Relative(0.03),
         legends = true,
         kwargs...,
     )

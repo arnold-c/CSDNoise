@@ -1,6 +1,6 @@
 export line_plot
 
-using DataFrames
+using DataFrames: DataFrames
 
 function line_plot(
         df;
@@ -13,8 +13,8 @@ function line_plot(
         xticklabelsize = 22,
         yticklabelsize = 22,
         legend_rowsize = Relative(0.05),
-        xlabel_rowsize = Makie.Relative(0.03),
-        ylabel_rowsize = Makie.Relative(0.02),
+        xlabel_rowsize = GLMakie.Relative(0.03),
+        ylabel_rowsize = GLMakie.Relative(0.02),
         kwargs...,
     )
     kwargs_dict = Dict{Symbol, Any}(kwargs)
@@ -82,7 +82,7 @@ function line_plot(
         fig[0, :],
         [
             PolyElement(; color = col) for
-                col in Makie.wong_colors()[1:num_noise_descriptions]
+                col in GLMakie.wong_colors()[1:num_noise_descriptions]
         ],
         noise_descriptions,
         "";

@@ -1,6 +1,3 @@
-using DataFrames: DataFrame
-using DrWatson: @tagsave
-
 export save_results_atomically
 
 """
@@ -8,7 +5,7 @@ export save_results_atomically
 
 Save final results atomically to prevent corruption during write.
 """
-function save_results_atomically(results_df::DataFrame, filepath::String)
+function save_results_atomically(results_df::DF.DataFrame, filepath::String)
     # Ensure directory exists
     dir = dirname(filepath)
     !isdir(dir) && mkpath(dir)
@@ -18,7 +15,7 @@ function save_results_atomically(results_df::DataFrame, filepath::String)
 
     try
         # Save to temporary file
-        @tagsave(temp_filepath, Dict("multistart_optimization_df" => results_df))
+        DrWatson.@tagsave(temp_filepath, Dict("multistart_optimization_df" => results_df))
 
         # Atomic rename
         mv(temp_filepath, filepath; force = true)

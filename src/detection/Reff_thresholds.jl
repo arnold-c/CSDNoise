@@ -1,5 +1,3 @@
-using StatsBase: StatsBase
-
 export Reff_ge_than_one
 
 function Reff_ge_than_one(Reff_vec)

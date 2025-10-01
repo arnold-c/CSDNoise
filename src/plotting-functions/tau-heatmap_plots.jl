@@ -1,7 +1,3 @@
-using GLMakie
-using StatsBase: StatsBase
-using Printf: @sprintf
-
 export tycho_tau_heatmap_plot,
     simulation_tau_heatmap_df!
 
@@ -29,12 +25,12 @@ function tycho_tau_heatmap_plot(
     end
 
     ordered_df =
-        unstack(
-        select(df, [:ews_metric, :test_specification, :ews_metric_value]),
+        DF.unstack(
+        DF.select(df, [:ews_metric, :test_specification, :ews_metric_value]),
         :test_specification,
         :ews_metric_value,
     ) |>
-        df -> sort(df, order(2; rev = false))
+        df -> sort(df, DF.order(2; rev = false))
 
     default_test_metric_order = ordered_df.ews_metric
 
@@ -124,12 +120,12 @@ function tau_auc_heatmap(
     end
 
     text_ordered_df =
-        unstack(
-        select(df, [:ews_metric, :test_specification, textoutcome]),
+        DF.unstack(
+        DF.select(df, [:ews_metric, :test_specification, textoutcome]),
         :test_specification,
         textoutcome,
     ) |>
-        df -> sort(df, order(2; rev = false))
+        df -> sort(df, DF.order(2; rev = false))
 
     default_test_metric_order = text_ordered_df.ews_metric
     default_test_metric_order_labels = clean_ews_metric_names(
@@ -141,8 +137,8 @@ function tau_auc_heatmap(
         colormat = textmat
     else
         color_ordered_df =
-            unstack(
-            select(df, [:ews_metric, :test_specification, coloroutcome]),
+            DF.unstack(
+            DF.select(df, [:ews_metric, :test_specification, coloroutcome]),
             :test_specification,
             coloroutcome,
         ) |>
@@ -239,7 +235,7 @@ function simulation_tau_heatmap_df!(
         ews_metric;
         individual_test_specification = IndividualTestSpecification(1.0, 1.0, 0),
         ews_metric_specification = EWSMetricSpecification(Centered, 7, 52, 1),
-        ews_enddate_type = Reff_start::EWSEndDateType,
+        ews_enddate_type = EWSEndDateType(Reff_start()),
         statistic_function = StatsBase.mean,
     )
     @assert names(ews_df) == [

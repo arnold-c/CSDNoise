@@ -1,13 +1,8 @@
-using Dates: Dates
-using LightSumTypes: variant
-using UnPack: @unpack
-using StatsBase: StatsBase
-
 export get_enddate_thresholds,
     exceeds_ews_threshold,
     get_ews_metric_vec
 
-get_enddate_thresholds(data_arrs, enddate_type::EWSEndDateType) = get_enddate_thresholds(data_arrs, variant(enddate_type))
+get_enddate_thresholds(data_arrs, enddate_type::EWSEndDateType) = get_enddate_thresholds(data_arrs, LightSumTypes.variant(enddate_type))
 
 function get_enddate_thresholds(data_arrs, enddate_type::Union{Reff_start, Reff_end})
     return data_arrs.ensemble_single_Reff_thresholds_vec
@@ -27,7 +22,7 @@ function exceeds_ews_threshold(
     return exceeds_ews_threshold(
         ewsmetrics,
         metric,
-        variant(window_type),
+        LightSumTypes.variant(window_type),
         quantile,
         burn_in,
     )

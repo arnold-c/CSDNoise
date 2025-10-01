@@ -19,5 +19,5 @@ function calculate_bandwidth_and_return_ews_metric_spec(
 end
 
 function calculate_bandwidth(bandwidth_days, aggregation_days)
-    return bandwidth_days ÷ aggregation_days
+    return div(bandwidth_days, aggregation_days)
 end

@@ -1,6 +1,3 @@
-using DataFrames: DataFrame
-using DrWatson: @tagsave
-
 export save_checkpoint_atomic
 
 """
@@ -8,7 +5,7 @@ export save_checkpoint_atomic
 
 Save checkpoint file atomically to prevent corruption.
 """
-function save_checkpoint_atomic(df::DataFrame, checkpoint_dir::String, batch_idx::Int)
+function save_checkpoint_atomic(df::DF.DataFrame, checkpoint_dir::String, batch_idx::Int)
     if !isdir(checkpoint_dir)
         mkpath(checkpoint_dir)
     end
@@ -23,7 +20,7 @@ function save_checkpoint_atomic(df::DataFrame, checkpoint_dir::String, batch_idx
 
     # Save to temporary file
     return try
-        @tagsave(temp_file, Dict("partial_results" => df))
+        DrWatson.@tagsave(temp_file, Dict("partial_results" => df))
 
         # Atomic rename to final filename
         final_file = joinpath(

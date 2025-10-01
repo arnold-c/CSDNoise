@@ -1,7 +1,3 @@
-using StructArrays: StructVector
-using DataFrames: DataFrame
-using REPL.TerminalMenus: RadioMenu, request
-
 export confirm_optimization_run_structvector,
     estimate_optimization_time,
     confirm_optimization_run
@@ -28,11 +24,11 @@ function confirm_optimization_run_structvector(
     end
 
     # Estimate time (convert to DataFrame temporarily for existing function)
-    missing_df = DataFrame(missing_scenarios)
+    missing_df = DF.DataFrame(missing_scenarios)
     estimated_time = estimate_optimization_time(missing_df, n_sobol_points)
 
     if estimated_time > 300  # 5 minutes
-        println(styled"{yellow:Warning:} Estimated optimization time: {red:$(round(estimated_time/60, digits=1))} minutes")
+        println(StyledStrings.styled"{yellow:Warning:} Estimated optimization time: {red:$(round(estimated_time/60, digits=1))} minutes")
         print("Continue? (y/N): ")
         response = readline()
         return lowercase(strip(response)) in ["y", "yes"]
@@ -47,8 +43,11 @@ end
 
 Estimate total time needed for optimization based on number of scenarios and complexity.
 """
-function estimate_optimization_time(missing_scenarios_df::DataFrame, n_sobol_points::Int)
-    n_missing = nrow(missing_scenarios_df)
+function estimate_optimization_time(
+        missing_scenarios_df::DF.DataFrames.DataFrame,
+        n_sobol_points::Int
+    )
+    n_missing = DF.nrow(missing_scenarios_df)
 
     if n_missing == 0
         return 0.0
@@ -75,11 +74,11 @@ end
 Ask user for confirmation before running optimization, showing time estimate.
 """
 function confirm_optimization_run(
-        missing_scenarios_df::DataFrame,
+        missing_scenarios_df::DF.DataFrame,
         n_sobol_points::Int;
         disable_time_check::Bool = false
     )
-    n_missing = nrow(missing_scenarios_df)
+    n_missing = DF.nrow(missing_scenarios_df)
 
     if n_missing == 0
         @info "No missing scenarios to optimize"
@@ -105,14 +104,14 @@ function confirm_optimization_run(
         "approximately $(hours) hours and $(minutes) minutes"
     end
 
-    println(styled"{yellow:Found $(n_missing) missing scenarios to optimize}")
-    println(styled"Estimated time: {blue:$(time_message)}")
-    println(styled"Sobol points per scenario: {cyan:$(n_sobol_points)}")
+    println(StyledStrings.styled"{yellow:Found $(n_missing) missing scenarios to optimize}")
+    println(StyledStrings.styled"Estimated time: {blue:$(time_message)}")
+    println(StyledStrings.styled"Sobol points per scenario: {cyan:$(n_sobol_points)}")
 
     # Ask for confirmation using REPL menu
-    choice = request(
+    choice = RTM.request(
         "Do you want to continue with the optimization?",
-        RadioMenu(["No", "Yes"]; ctrl_c_interrupt = false)
+        RTM.RadioMenu(["No", "Yes"]; ctrl_c_interrupt = false)
     )
 
     return choice == 2

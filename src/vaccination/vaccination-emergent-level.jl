@@ -1,5 +1,3 @@
-using UnPack: @unpack
-
 export calculate_vaccination_rate_to_achieve_Reff
 
 """

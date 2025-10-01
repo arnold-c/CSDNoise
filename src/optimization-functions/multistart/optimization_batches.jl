@@ -1,9 +1,3 @@
-using StructArrays: StructVector
-using FLoops: FLoops
-using BangBang: BangBang
-using DataFrames: DataFrames
-using ProgressMeter: ProgressMeter
-
 export optimize_scenarios_in_batches_structvector
 
 """
@@ -109,7 +103,7 @@ function optimize_scenarios_in_batches_structvector(
         batch_scenarios = @view missing_scenarios[batch_indices]
         batch_size_actual = length(batch_indices)
 
-        verbose && println(styled"{green:Processing batch $batch_idx/$(length(scenario_batches)) ($(batch_size_actual) scenarios)}")
+        verbose && println(StyledStrings.styled"{green:Processing batch $batch_idx/$(length(scenario_batches)) ($(batch_size_actual) scenarios)}")
 
         FLoops.@floop executor for scenario in batch_scenarios
             # Direct struct access - no conversion needed!
@@ -146,7 +140,7 @@ end
 
 # Keep old function for backward compatibility
 function optimize_scenarios_in_batches(
-        missing_scenarios_df::DataFrame,
+        missing_scenarios_df::DF.DataFrame,
         data_arrs::T1,
         bounds::T2,
         optim_config::T3;
@@ -160,7 +154,7 @@ function optimize_scenarios_in_batches(
     n_missing = nrow(missing_scenarios_df)
 
     if n_missing == 0
-        return DataFrame()
+        return DF.DataFrame()
     end
 
     # Auto-configure batch size for threaded execution
@@ -175,11 +169,11 @@ function optimize_scenarios_in_batches(
     end
 
     # Initialize results storage
-    all_results = DataFrame[]
+    all_results = DF.DataFrame[]
 
     # Setup progress tracking
     if verbose
-        prog = Progress(n_missing; desc = "Optimizing scenarios: ", showspeed = true)
+        prog = ProgressMeter.Progress(n_missing; desc = "Optimizing scenarios: ", showspeed = true)
     end
 
     # Process scenarios in batches
@@ -189,7 +183,7 @@ function optimize_scenarios_in_batches(
         batch_scenarios = missing_scenarios_df[batch_indices, :]
         batch_size_actual = length(batch_indices)
 
-        verbose && println(styled"{green:Processing batch $batch_idx/$(length(scenario_batches)) ($(batch_size_actual) scenarios)}")
+        verbose && println(StyledStrings.styled"{green:Processing batch $batch_idx/$(length(scenario_batches)) ($(batch_size_actual) scenarios)}")
 
         # Process batch in parallel (thread-safe within batch)
         # THREAD SAFETY: Pre-allocate fixed-size array where each task writes to unique index
@@ -228,14 +222,14 @@ function optimize_scenarios_in_batches(
 
         # Save checkpoint periodically (single-threaded I/O)
         if batch_idx % save_every_n == 0 && !isempty(checkpoint_dir) && save_results
-            combined_df = vcat(all_results...; cols = :union)
+            combined_df = DF.vcat(all_results...; cols = :union)
             save_checkpoint_atomic(combined_df, checkpoint_dir, batch_idx)
         end
     end
 
     # Combine all results
     final_results_df = if !isempty(all_results)
-        vcat(all_results...; cols = :union)
+        DF.vcat(all_results...; cols = :union)
     else
         create_empty_results_dataframe()
     end

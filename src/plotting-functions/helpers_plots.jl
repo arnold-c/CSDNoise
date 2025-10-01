@@ -1,5 +1,3 @@
-using GLMakie
-
 export BASE_COLOR,
     OUTBREAK_COLOR,
     REFF_GT_ONE_COLOR

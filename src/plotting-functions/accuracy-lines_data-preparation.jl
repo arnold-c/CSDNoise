@@ -1,9 +1,8 @@
 export prepare_line_plot_df!
 
-using DataFrames
+using DataFrames: DataFrames
 using DrWatson: DrWatson
 using StatsBase: StatsBase
-using StructArrays
 
 function prepare_line_plot_df!(
         output_df,
@@ -21,7 +20,7 @@ function prepare_line_plot_df!(
             IndividualTestSpecification(1.0, 1.0, 0),
         ];
         tiebreaker_preference = "specificity",
-    ) where {T1 <: Union{<:DataFrame, <:SubDataFrame}}
+    ) where {T1 <: Union{<:DataFrames.DataFrame, <:DataFrames.DataFrames.SubDataFrame}}
     tiebreaker_args = if tiebreaker_preference == "speed"
         (:ews_consecutive_thresholds, false)
     elseif tiebreaker_preference == "specificity"

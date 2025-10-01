@@ -4,9 +4,9 @@ function ews_survival_facet!(
         null_survival_vecs,
         enddate_vec;
         facet_title = "Survival",
-        ews_aggregation = Day(7),
-        burnin = Year(5),
-        endpoint_aggregation = Day(30),
+        ews_aggregation = Dates.Day(7),
+        burnin = Dates.Year(5),
+        endpoint_aggregation = Dates.Day(30),
         emergent_color = "#C2192D",
         null_color = "#453948",
         alpha = 1.0,

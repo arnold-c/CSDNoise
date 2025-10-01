@@ -1,8 +1,3 @@
-using StructArrays: StructVector
-using StyledStrings
-using Dates: Dates
-using BangBang: BangBang
-
 export ews_hyperparam_gridsearch_structvector
 
 """
@@ -59,8 +54,8 @@ function ews_hyperparam_gridsearch_structvector(
 
     if verbose
         n_total_scenarios = length(all_scenarios)
-        println(styled"{green:Starting Grid Search with StructVector}")
-        println(styled"Total grid points: {yellow:$n_total_scenarios}")
+        println(StyledStrings.styled"{green:Starting Grid Search with StructVector}")
+        println(StyledStrings.styled"Total grid points: {yellow:$n_total_scenarios}")
     end
 
     # Load existing results (including checkpoints)
@@ -72,7 +67,7 @@ function ews_hyperparam_gridsearch_structvector(
 
     n_existing = length(existing_results)
     if verbose && n_existing > 0
-        println(styled"Found {cyan:$n_existing} existing results")
+        println(StyledStrings.styled"Found {cyan:$n_existing} existing results")
     end
 
     # Find missing scenarios - reuse function from multistart
@@ -80,7 +75,7 @@ function ews_hyperparam_gridsearch_structvector(
     n_missing = length(missing_scenarios)
 
     if verbose
-        println(styled"Missing grid points to evaluate: {yellow:$n_missing}")
+        println(StyledStrings.styled"Missing grid points to evaluate: {yellow:$n_missing}")
     end
 
     # Check with user if needed
@@ -123,7 +118,7 @@ function ews_hyperparam_gridsearch_structvector(
 
     if verbose
         n_final = length(existing_results)
-        println(styled"{green:Grid search complete! Total results: {yellow:$n_final}}")
+        println(StyledStrings.styled"{green:Grid search complete! Total results: {yellow:$n_final}}")
     end
 
     return return_results ? existing_results : nothing

@@ -1,12 +1,9 @@
-using GLMakie
-using DataFrames: DataFrames
-
 export ews_lead_time_plot
 
 function ews_lead_time_plot(
         lead_time_df;
         week_aggregation = 1,
-        ews_method = Main.Backward,
+        ews_method = EWSMethod(Backward()),
         lead_time_units = :days,
     )
     unique_tests = unique(lead_time_df.test_specification)
@@ -27,10 +24,10 @@ function ews_lead_time_plot(
     for (i, test) in pairs(unique_tests)
         filtered_df = subset(
             lead_time_df,
-            :test_specification => DataFrames.ByRow(==(test)),
-            :week_aggregation => DataFrames.ByRow(==(week_aggregation)),
-            :ews_method => DataFrames.ByRow(==(ews_method)),
-            :lead_time_units => DataFrames.ByRow(==(lead_time_units_string)),
+            :test_specification => DF.ByRow(==(test)),
+            :week_aggregation => DF.ByRow(==(week_aggregation)),
+            :ews_method => DF.ByRow(==(ews_method)),
+            :lead_time_units => DF.ByRow(==(lead_time_units_string)),
         )
 
         band!(
@@ -38,7 +35,7 @@ function ews_lead_time_plot(
             filtered_df.noise_magnitude,
             filtered_df.lead_time_lower,
             filtered_df.lead_time_upper;
-            color = (Makie.wong_colors()[i], 0.1),
+            color = (GLMakie.wong_colors()[i], 0.1),
             # label = get_test_description(test),
         )
 
@@ -46,7 +43,7 @@ function ews_lead_time_plot(
             ax,
             filtered_df.noise_magnitude,
             filtered_df.lead_time_median;
-            color = Makie.wong_colors()[i],
+            color = GLMakie.wong_colors()[i],
             label = get_test_description(test),
         )
     end

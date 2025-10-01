@@ -1,8 +1,3 @@
-using Try: Try
-using TryExperimental: TryExperimental
-using StructArrays: StructVector
-using LightSumTypes: variant
-
 export calculate_all_ews_enddates,
     calculate_ews_enddate
 
@@ -62,10 +57,17 @@ end
 _calculate_ews_enddate(
     thresholds::T,
     enddate_type::EWSEndDateType
-) where {T <: AbstractThresholds} = _calculate_ews_enddate(thresholds, variant(enddate_type))
+) where {T <: AbstractThresholds} = _calculate_ews_enddate(thresholds, LightSumTypes.variant(enddate_type))
 
-_calculate_ews_enddate(thresholds::Thresholds, enddate_type::Reff_start) = TryExperimental.trygetindex(thresholds.lower_bounds, 1)
-_calculate_ews_enddate(thresholds::Thresholds, enddate_type::Reff_end) = TryExperimental.trygetindex(thresholds.upper_bounds, 1)
+_calculate_ews_enddate(
+    thresholds::Thresholds,
+    enddate_type::Reff_start
+) = TryExperimental.trygetindex(thresholds.lower_bounds, 1)
+
+_calculate_ews_enddate(
+    thresholds::Thresholds,
+    enddate_type::Reff_end
+) = TryExperimental.trygetindex(thresholds.upper_bounds, 1)
 
 _calculate_ews_enddate(
     thresholds::OutbreakThresholds,
@@ -80,6 +82,6 @@ _calculate_ews_enddate(
 function _calculate_ews_enddate(thresholds::OutbreakThresholds, enddate_type::Outbreak_middle)
     return Try.Ok(
         TryExperimental.trygetindex(thresholds.lower_bounds, 1) +
-            (TryExperimental.trygetindex(thresholds.duration, 1) ÷ 2)
+            div((TryExperimental.trygetindex(thresholds.duration, 1), 2))
     )
 end

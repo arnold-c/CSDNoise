@@ -1,4 +1,3 @@
-using GLMakie
 function theme_adjustments()
     return Theme(;
         fontsize = 16,

@@ -1,16 +1,11 @@
 # Modern logging utilities for benchmarking scripts
 # Provides functions that output to both console (with styling) and markdown files
 
-using Dates
-using Logging
-using LoggingExtras
-using StyledStrings
-
 export styled_to_markdown, format_markdown_table, setup_dual_logging,
     cleanup_logging, log_both
 
 # Global variables for logging
-const ORIGINAL_LOGGER = Ref{AbstractLogger}()
+const ORIGINAL_LOGGER = Ref{Logging.AbstractLogger}()
 const MARKDOWN_FILE = Ref{IOStream}()
 
 """
@@ -78,14 +73,19 @@ end
 """
 Setup dual logging to console and markdown file
 """
-function setup_dual_logging(script_name::String = "benchmark"; title::String = "Benchmark Report", output_dir::String = ".", filename_base::String = "")
+function setup_dual_logging(
+        script_name::String = "benchmark";
+        title::String = "Benchmark Report",
+        output_dir::String = ".",
+        filename_base::String = ""
+    )
     # Store original logger
-    ORIGINAL_LOGGER[] = global_logger()
+    ORIGINAL_LOGGER[] = Logging.global_logger()
 
     # Create markdown filename
     if isempty(filename_base)
         # Use default timestamped naming
-        timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
+        timestamp = Dates.format(Dates.now(), "yyyy-mm-dd_HH-MM-SS")
         filename = "$(script_name)_$(timestamp).md"
     else
         # Use provided base name with _log.md suffix
@@ -99,18 +99,18 @@ function setup_dual_logging(script_name::String = "benchmark"; title::String = "
     MARKDOWN_FILE[] = open(full_path, "w")
 
     # Create FormatLogger for clean markdown output
-    markdown_logger = FormatLogger(MARKDOWN_FILE[]) do io, args
+    markdown_logger = LoggingExtras.FormatLogger(MARKDOWN_FILE[]) do io, args
         # Only output the message content, no metadata
         println(io, args.message)
     end
 
     # Set ONLY the markdown logger as global (not a TeeLogger)
-    global_logger(markdown_logger)
+    Logging.global_logger(markdown_logger)
 
     # Write markdown header
     @info "# $title"
     @info ""
-    @info "**Generated:** $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS"))"
+    @info "**Generated:** $(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))"
     @info "**Script:** $script_name"
     @info ""
 
@@ -123,7 +123,7 @@ Cleanup logging and close files
 function cleanup_logging()
     return try
         # Restore original logger
-        global_logger(ORIGINAL_LOGGER[])
+        Logging.global_logger(ORIGINAL_LOGGER[])
 
         # Close markdown file
         if isassigned(MARKDOWN_FILE) && isopen(MARKDOWN_FILE[])

@@ -1,7 +1,7 @@
-export create_testing_vecs
+export create_test_positive_vecs
 
 """
-    create_testing_vecs(
+    create_test_positive_vecs(
         seir_results::StructVector{SEIRRun},
         noise_results::NoiseRun,
         perc_tested::Float64,
@@ -36,7 +36,7 @@ Uses Bumper.jl for efficient temporary allocations to minimize heap usage.
 
 # Example
 ```julia
-test_results = create_testing_vecs(
+test_results = create_test_positive_vecs(
     seir_results,
     noise_results,
     0.1,  # 10% testing rate
@@ -44,7 +44,7 @@ test_results = create_testing_vecs(
 )
 ```
 """
-function create_testing_vecs(
+function create_test_positive_vecs(
         seir_results::StructVector{SEIRRun},
         noise_results::NoiseRun,
         perc_tested::Float64,

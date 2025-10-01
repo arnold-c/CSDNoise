@@ -1,4 +1,4 @@
-calculate_ews_metrics_for_simulation
+export calculate_ews_metrics_for_simulation
 
 # TODO: Remove as not needed with new structvector approach with filtering
 """

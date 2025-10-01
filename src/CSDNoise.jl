@@ -3,23 +3,17 @@ Note that each file handles exporting its local function for the API.
 """
 module CSDNoise
 using DispatchDoctor
-# @stable default_mode = "warn" default_union_limit = 2 begin
-
-# Utilities
-include("./utilities/helpers.jl")
-include("./utilities/test-description.jl")
-include("./utilities/benchmark-functions.jl")
-include("./utilities/logging-utilities.jl")
 
 # Constants
 include("./constants/dynamics-constants.jl")
 
 # Types
+include("./types/test-specifications.jl")
+include("./constants/test-constants.jl") # depends on test specifications
 include("./types/time-parameters.jl")
 include("./types/dynamics-parameters.jl")
 include("./types/state-parameters.jl")
 include("./types/ensemble-specifications.jl")
-include("./types/test-specifications.jl")
 include("./types/outbreak-specifications.jl")
 include("./types/noise-specifications.jl")
 include("./types/ews-specifications.jl")
@@ -29,11 +23,46 @@ include("./types/optimization-types.jl")
 
 # Simulation core
 include("./simulation/transmission-functions.jl")
+include("./constants/dynamics-constants_calculated.jl") # depends on transmission-functions
+include("./simulation/seir-model.jl")
+include("./simulation/seir-mean-incidence.jl")
 
-# Constants that rely on transmission function definitions
-include("./constants/dynamics-constants_calculated.jl")
+# Shared utilities (used across multiple modules)
+include("./utilities/benchmark-functions.jl")
+include("./utilities/create-combinations.jl")
+include("./utilities/helpers.jl")
+include("./utilities/logging-utilities.jl")
+include("./utilities/static-array-conversions.jl")
+include("./utilities/test-description.jl")
+include("./utilities/test_multistart_vs_gridsearch.jl")
 
-# EWS Metric functions
+# Noise
+include("./noise/noise-description.jl")
+include("./noise/noise-generation.jl")
+include("./noise/noise-mean-incidence.jl")
+include("./noise/noise-parameters-optimization.jl")
+include("./noise/noise-recreation.jl")
+
+# Vaccination
+include("./vaccination/vaccination-distribution-sample.jl")
+include("./vaccination/vaccination-emergent-level.jl")
+include("./vaccination/vaccination-range.jl")
+
+# Testing
+include("./testing/calculate-moving-average.jl")
+include("./testing/calculate-positive.jl")
+include("./testing/calculate-test-positivity.jl")
+include("./testing/calculate-tested.jl")
+include("./testing/infer-test-positive.jl")
+include("./testing/testing-arrays.jl")
+include("./testing/testing-vectors.jl")
+
+# Detection
+include("./detection/outbreak-thresholds.jl")
+include("./detection/Reff_thresholds.jl")
+include("./detection/shared_threshold-functions.jl")
+
+# EWS Metrics
 include("./ews-metrics/ews-alerts.jl")
 include("./ews-metrics/ews-bandwidths.jl")
 include("./ews-metrics/ews-enddates.jl")
@@ -70,8 +99,7 @@ include("./optimization-functions/multistart/scenarios_find-missing.jl")
 include("./optimization-functions/multistart/scenarios_confirmation.jl")
 include("./optimization-functions/multistart/scenarios_df-row-conversion.jl")
 include("./optimization-functions/multistart/scenarios_equality-check.jl")
-## Structvector
-### Grid search
+## Grid search
 include("./optimization-functions/gridsearch/checkpoint_save.jl")
 include("./optimization-functions/gridsearch/gridsearch_wrapper.jl")
 include("./optimization-functions/gridsearch/helpers_ews-calculation.jl")
@@ -82,62 +110,10 @@ include("./optimization-functions/gridsearch/scenario_creation.jl")
 include("./optimization-functions/gridsearch/scenario_evaluation.jl")
 include("./optimization-functions/gridsearch/scenario_find-missing.jl")
 
-
 # Survival
-## Data
 include("./survival/create-survival-data.jl")
 include("./survival/simulate-survival-data.jl")
 include("./survival/survival-detection-indices.jl")
-## Plots
-include("./plotting-functions/survival/ews-survival_facet-parameter-preparation.jl")
-include("./plotting-functions/survival/ews-survival_facet.jl")
-include("./plotting-functions/survival/ews-survival_plot-wrapper.jl")
-include("./plotting-functions/survival/ews-survival_Reff-histogram.jl")
-include("./plotting-functions/survival/ews-survival_simulate-and-plot.jl")
-include("./plotting-functions/survival/ews-survival_survival-lines.jl")
-include("./plotting-functions/survival/Reff_histogram_plot.jl")
-
-
-include("./constants/test-constants.jl")
-
-include("./simulation/seir-model.jl")
-
-# Detection
-include("./detection/outbreak-thresholds.jl")
-include("./detection/Reff_thresholds.jl")
-include("./detection/shared_threshold-functions.jl")
-
-
-# Testing
-include("./testing/calculate-moving-average.jl")
-include("./testing/calculate-positive.jl")
-include("./testing/calculate-test-positivity.jl")
-include("./testing/calculate-tested.jl")
-include("./testing/infer-test-positive.jl")
-include("./testing/testing-arrays.jl")
-include("./testing/testing-vectors.jl")
-
-include("./simulation/ensemble-functions.jl")
-export create_combinations_vec,
-    create_ensemble_spec_combinations,
-    run_ensemble_jump_prob,
-    run_jump_prob,
-    get_ensemble_file
-
-# Shared utilities (used across multiple modules)
-include("filter-seir-results.jl")
-
-# Noise
-include("./noise/noise-description.jl")
-include("./noise/noise-generation.jl")
-include("./noise/noise-mean-incidence.jl")
-include("./noise/noise-parameters-optimization.jl")
-include("./noise/noise-recreation.jl")
-
-# Vaccination
-include("./vaccination/vaccination-distribution-sample.jl")
-include("./vaccination/vaccination-emergent-level.jl")
-include("./vaccination/vaccination-range.jl")
 
 # Plotting Functions
 include("./plotting-functions/helpers_plots.jl")
@@ -151,6 +127,13 @@ include("./plotting-functions/hyperparam-debugging_plots.jl")
 include("./plotting-functions/accuracy-lines_data-preparation.jl")
 include("./plotting-functions/accuracy-lines_plots.jl")
 include("./plotting-functions/ews-heatmap_plots.jl")
+include("./plotting-functions/survival/ews-survival_facet-parameter-preparation.jl")
+include("./plotting-functions/survival/ews-survival_facet.jl")
+include("./plotting-functions/survival/ews-survival_plot-wrapper.jl")
+include("./plotting-functions/survival/ews-survival_Reff-histogram.jl")
+include("./plotting-functions/survival/ews-survival_simulate-and-plot.jl")
+include("./plotting-functions/survival/ews-survival_survival-lines.jl")
+include("./plotting-functions/survival/Reff_histogram_plot.jl")
 
 @static if false
     include("../scripts/ensemble-sim.jl")
@@ -162,5 +145,4 @@ include("./plotting-functions/ews-heatmap_plots.jl")
     include("../manuscript/scripts/optimal-thresholds.jl")
 end
 
-# end
 end

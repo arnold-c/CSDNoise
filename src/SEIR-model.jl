@@ -12,6 +12,9 @@ using Random: Random
 using Distributions: Poisson, Binomial
 using StaticArrays
 
+export seir_mod,
+    seir_mod!
+
 """
     seir_mod(states, dynamics_params, trange; tstep, type = "stoch")
 
@@ -206,42 +209,42 @@ The inner loop that is called by `seir_mod!()` function.
         # Contact infections: S -> E (use smart transition)
         contact_rate = remaining_S * contact_prob
         contact_inf = remaining_S > 0 ?
-            smart_transition(remaining_S, contact_prob, contact_rate) :
+            _smart_transition(remaining_S, contact_prob, contact_rate) :
             0
         remaining_S = max(0, remaining_S - contact_inf)
 
         # Import infections: S -> E (use smart transition)
         import_rate = remaining_S * import_prob
         import_inf = remaining_S > 0 ?
-            smart_transition(remaining_S, import_prob, import_rate) :
+            _smart_transition(remaining_S, import_prob, import_rate) :
             0
         remaining_S = max(0, remaining_S - import_inf)
 
         # S deaths (use smart transition with pre-computed death_prob)
         S_death_rate = remaining_S * death_prob
         S_death = remaining_S > 0 ?
-            smart_transition(remaining_S, death_prob, S_death_rate) :
+            _smart_transition(remaining_S, death_prob, S_death_rate) :
             0
 
         # E compartment transitions
         latent_rate = E * latent_prob
-        latent = smart_transition(E, latent_prob, latent_rate)
+        latent = _smart_transition(E, latent_prob, latent_rate)
 
         remaining_E = E - latent
         E_death_rate = remaining_E * death_prob  # Reuse death_prob
-        E_death = smart_transition(remaining_E, death_prob, E_death_rate)
+        E_death = _smart_transition(remaining_E, death_prob, E_death_rate)
 
         # I compartment transitions
         recovery_rate = I * recovery_prob
-        recovery = smart_transition(I, recovery_prob, recovery_rate)
+        recovery = _smart_transition(I, recovery_prob, recovery_rate)
 
         remaining_I = I - recovery
         I_death_rate = remaining_I * death_prob  # Reuse death_prob
-        I_death = smart_transition(remaining_I, death_prob, I_death_rate)
+        I_death = _smart_transition(remaining_I, death_prob, I_death_rate)
 
         # R deaths (use smart transition with pre-computed death_prob)
         R_death_rate = R * death_prob  # Reuse death_prob
-        R_death = smart_transition(R, death_prob, R_death_rate)
+        R_death = _smart_transition(R, death_prob, R_death_rate)
 
         # Calculate changes
         dS = S_births - (contact_inf + import_inf + S_death)
@@ -261,13 +264,13 @@ end
     return min(rate, 1.0)
 end
 
-@inline function smart_transition(n::Int64, prob::Float64)
+@inline function _smart_transition(n::Int64, prob::Float64)
     rate = n * prob
-    return smart_transition(n, prob, rate)
+    return _smart_transition(n, prob, rate)
 end
 
 # Smart transition function that chooses between Poisson and Binomial
-@inline function smart_transition(n::Int64, prob::Float64, rate::Float64)
+@inline function _smart_transition(n::Int64, prob::Float64, rate::Float64)
     # Use Poisson when:
     # - Population is large (n > 30)
     # - Expected value is small (rate < 10)
@@ -285,26 +288,3 @@ end
         return rand(Binomial(n, prob))
     end
 end
-
-
-function convert_svec_to_matrix(svec)
-    arr = Matrix{Int64}(undef, size(svec, 1), length(svec[1]))
-    convert_svec_to_matrix!(arr, svec)
-    return arr
-end
-function convert_svec_to_matrix!(arr, svec)
-    @inbounds for state in eachindex(svec[1]), time in axes(svec, 1)
-        arr[time, state] = svec[time][state]
-    end
-    return nothing
-end
-
-function convert_svec_to_array(svec)
-    arr = Array{Int64}(undef, size(svec, 1), length(svec[1]), size(svec, 2))
-    @inbounds for sim in axes(svec, 2)
-        convert_svec_to_matrix!(@view(arr[:, :, sim]), @view(svec[:, sim]))
-    end
-    return arr
-end
-
-# end

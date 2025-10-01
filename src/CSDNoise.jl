@@ -101,12 +101,6 @@ include("./plotting-functions/survival/Reff_histogram_plot.jl")
 include("./constants/test-constants.jl")
 
 include("SEIR-model.jl")
-export seir_mod,
-    seir_mod!,
-    seir_mod_loop,
-    convert_svec_to_matrix,
-    convert_svec_to_matrix!,
-    convert_svec_to_array
 
 include("detection-thresholds.jl")
 export calculate_outbreak_thresholds,

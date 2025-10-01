@@ -85,7 +85,6 @@ function _expanding_ews_thresholds(
         quantile::Float64,
         burn_in_index::Int64,
     )
-    # ) where {T1 <: Integer, F <: AbstractFloat}
     ews_vec_len = length(ews_vec)
     ews_distributions = fill(NaN, ews_vec_len)
     ews_worker_vec = fill(

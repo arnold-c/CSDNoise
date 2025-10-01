@@ -24,7 +24,6 @@ include("./types/simulation-results.jl")
 include("./types/optimization-types.jl")
 
 # Type descriptions
-include("./vaccination-rate-calculations.jl")
 include("./test-description.jl")
 
 # Simulation core
@@ -130,16 +129,14 @@ include("filter-seir-results.jl")
 # Noise
 include("./noise/noise-description.jl")
 include("./noise/noise-generation.jl")
+include("./noise/noise-mean-incidence.jl")
+include("./noise/noise-parameters-optimization.jl")
 include("./noise/noise-recreation.jl")
 
-include("calculate-noise-vacc-level-functions.jl")
-export calculate_dynamic_vaccination_coverage,
-    calculate_mean_dynamical_noise,
-    calculate_dynamic_vaccination_coverage,
-    calculate_ews_endpoints,
-    calculate_mean_incidence,
-    calculate_dynamic_vaccination_coverage_multistart_with_endpoints,
-    calculate_mean_dynamical_noise_variable_length
+# Vaccination
+include("./vaccination/vaccination-distribution-sample.jl")
+include("./vaccination/vaccination-emergent-level.jl")
+include("./vaccination/vaccination-range.jl")
 
 # Plotting Functions
 include("./plotting-functions/helpers_plots.jl")

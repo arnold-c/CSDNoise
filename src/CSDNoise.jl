@@ -77,9 +77,9 @@ include("./vaccination/vaccination-emergent-level.jl")
 include("./vaccination/vaccination-range.jl")
 
 # Testing
-include("./testing/calculate-positive.jl")
-include("./testing/calculate-tested.jl")
-include("./testing/testing-vectors.jl")
+include("./diagnostic-testing/calculate-num-positive.jl")
+include("./diagnostic-testing/calculate-num-tested.jl")
+include("./diagnostic-testing/create-test-positive-vectors.jl")
 
 # Detection
 include("./detection/outbreak-thresholds.jl")

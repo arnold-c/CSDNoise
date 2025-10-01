@@ -51,7 +51,7 @@ using StaticArrays: SVector
         @test npos_vec == [0, 0, 0, 0]
     end
 
-    @testset "create_testing_vecs" begin
+    @testset "create_test_positive_vecs" begin
         # Create test data
         nsims = 3
         sim_lengths = [5, 4, 6]  # Variable lengths
@@ -100,7 +100,7 @@ using StaticArrays: SVector
         perc_tested = 0.1  # 10% testing rate
 
         # Run function
-        results = create_testing_vecs(seir_results, noise_results, perc_tested, test_spec)
+        results = create_test_positive_vecs(seir_results, noise_results, perc_tested, test_spec)
 
         # Validate results structure
         @test length(results) == nsims
@@ -118,18 +118,18 @@ using StaticArrays: SVector
         # Test error conditions
         # Mismatched simulation counts
         short_noise = NoiseRun([Vector{Int64}([1, 2])], 1.0, 1.0, 0.0)
-        @test_throws AssertionError create_testing_vecs(seir_results, short_noise, perc_tested, test_spec)
+        @test_throws AssertionError create_test_positive_vecs(seir_results, short_noise, perc_tested, test_spec)
 
         # Invalid percentage
-        @test_throws AssertionError create_testing_vecs(seir_results, noise_results, 1.5, test_spec)
-        @test_throws AssertionError create_testing_vecs(seir_results, noise_results, -0.1, test_spec)
+        @test_throws AssertionError create_test_positive_vecs(seir_results, noise_results, 1.5, test_spec)
+        @test_throws AssertionError create_test_positive_vecs(seir_results, noise_results, -0.1, test_spec)
 
         # Invalid test specifications
         bad_test_spec = IndividualTestSpecification(1.5, 0.95, 1)  # Invalid sensitivity
-        @test_throws AssertionError create_testing_vecs(seir_results, noise_results, perc_tested, bad_test_spec)
+        @test_throws AssertionError create_test_positive_vecs(seir_results, noise_results, perc_tested, bad_test_spec)
 
         bad_test_spec2 = IndividualTestSpecification(0.9, -0.1, 1)  # Invalid specificity
-        @test_throws AssertionError create_testing_vecs(seir_results, noise_results, perc_tested, bad_test_spec2)
+        @test_throws AssertionError create_test_positive_vecs(seir_results, noise_results, perc_tested, bad_test_spec2)
 
         # Mismatched incidence lengths within simulation
         bad_noise_incidence = [
@@ -138,7 +138,7 @@ using StaticArrays: SVector
             Vector{Int64}([3, 4, 5, 6, 7, 8]),
         ]
         bad_noise_results = NoiseRun(bad_noise_incidence, 5.0, 3.0, 2.0)
-        @test_throws AssertionError create_testing_vecs(seir_results, bad_noise_results, perc_tested, test_spec)
+        @test_throws AssertionError create_test_positive_vecs(seir_results, bad_noise_results, perc_tested, test_spec)
     end
 
     @testset "Edge Cases" begin
@@ -157,7 +157,7 @@ using StaticArrays: SVector
         noise_results = NoiseRun(noise_incidence, 2.0, 2.0, 0.0)
 
         test_spec = IndividualTestSpecification(1.0, 1.0, 0)  # Perfect test, no lag
-        results = create_testing_vecs(seir_results, noise_results, 0.1, test_spec)
+        results = create_test_positive_vecs(seir_results, noise_results, 0.1, test_spec)
 
         @test length(results) == 1
         @test length(results[1]) == 1
@@ -177,7 +177,7 @@ using StaticArrays: SVector
         zero_noise_incidence = [Vector{Int64}([0, 0, 0])]
         zero_noise_results = NoiseRun(zero_noise_incidence, 0.0, 0.0, 0.0)
 
-        zero_results = create_testing_vecs(zero_seir_results, zero_noise_results, 0.1, test_spec)
+        zero_results = create_test_positive_vecs(zero_seir_results, zero_noise_results, 0.1, test_spec)
         @test all(x -> all(y -> y == 0, x), zero_results)  # All zeros
     end
 end

@@ -109,23 +109,14 @@ include("./detection/Reff_thresholds.jl")
 include("./detection/shared_threshold-functions.jl")
 
 
-include("diag-testing-functions.jl")
-export create_testing_arrs,
-    create_testing_arrs!,
-    calculate_tested!,
-    calculate_positives!,
-    calculate_true_positives!,
-    calculate_noise_positives!,
-    infer_true_positives,
-    calculate_test_positivity_rate,
-    calculate_movingavg,
-    calculate_movingavg!,
-    calculate_test_positivity
-
-include("diag-testing-structvector-functions.jl")
-export create_testing_vecs,
-    calculate_tested_vec!,
-    calculate_positives_vec!
+# Testing
+include("./testing/calculate-moving-average.jl")
+include("./testing/calculate-positive.jl")
+include("./testing/calculate-test-positivity.jl")
+include("./testing/calculate-tested.jl")
+include("./testing/infer-test-positive.jl")
+include("./testing/testing-arrays.jl")
+include("./testing/testing-vectors.jl")
 
 include("./simulation/ensemble-functions.jl")
 export create_combinations_vec,

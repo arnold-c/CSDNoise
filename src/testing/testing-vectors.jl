@@ -1,5 +1,6 @@
+export create_testing_vecs
+
 using StructArrays: StructVector
-using StatsBase: mean
 using Bumper: @no_escape, @alloc
 using Random: Random
 
@@ -106,73 +107,4 @@ function create_testing_vecs(
     end
 
     return test_results
-end
-
-"""
-    calculate_tested_vec!(
-        outvec::AbstractVector{Int64},
-        invec::Vector{Int64},
-        perc_tested::Float64
-    )
-
-Calculate the number of individuals tested from incidence data.
-
-Applies the testing percentage to each day's incidence, rounding to nearest integer.
-
-# Arguments
-- `outvec`: Output vector to store number tested (modified in-place)
-- `invec`: Input incidence vector
-- `perc_tested`: Percentage of individuals tested (0.0 to 1.0)
-"""
-function calculate_tested_vec!(
-        outvec::AbstractVector{Int64},
-        invec::Vector{Int64},
-        perc_tested::Float64
-    )
-    @inbounds for i in eachindex(invec)
-        outvec[i] = round(Int64, invec[i] * perc_tested)
-    end
-
-    return nothing
-end
-
-"""
-    calculate_positives_vec!(
-        npos_vec::AbstractVector{Int64},
-        tested_vec::AbstractVector{Int64},
-        sim_length::Int64,
-        lag::Int64,
-        tested_multiplier::Float64
-    )
-
-Calculate test-positive individuals accounting for test result lag.
-
-Applies the test performance multiplier (sensitivity or 1-specificity) to the number
-tested, with results appearing after the specified lag period.
-
-# Arguments
-- `npos_vec`: Output vector for positive test results (modified in-place)
-- `tested_vec`: Input vector of individuals tested
-- `sim_length`: Length of simulation
-- `lag`: Test result lag in days
-- `tested_multiplier`: Test performance multiplier (sensitivity or 1-specificity)
-"""
-function calculate_positives_vec!(
-        npos_vec::AbstractVector{Int64},
-        tested_vec::AbstractVector{Int64},
-        sim_length::Int64,
-        lag::Int64,
-        tested_multiplier::Float64
-    )
-    # Initialize to zero
-    fill!(npos_vec, 0)
-
-    @inbounds for day in eachindex(npos_vec)
-        result_day = day + lag
-        if result_day <= sim_length
-            npos_vec[result_day] = round(Int64, tested_vec[day] * tested_multiplier)
-        end
-    end
-
-    return nothing
 end

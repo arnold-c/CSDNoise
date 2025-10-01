@@ -79,9 +79,7 @@ include("./vaccination/vaccination-range.jl")
 # Testing
 include("./testing/calculate-moving-average.jl")
 include("./testing/calculate-positive.jl")
-include("./testing/calculate-test-positivity.jl")
 include("./testing/calculate-tested.jl")
-include("./testing/infer-test-positive.jl")
 include("./testing/testing-vectors.jl")
 
 # Detection

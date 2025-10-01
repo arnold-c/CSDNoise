@@ -28,7 +28,3 @@ function calculate_tested_vec!(
 
     return nothing
 end
-
-function calculate_tested!(outvec, invec, perc_tested)
-    return @. outvec = round(invec * perc_tested)
-end

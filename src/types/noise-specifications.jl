@@ -6,11 +6,11 @@ export NoiseSpecification,
 
 abstract type AbstractNoiseSpecification end
 
-struct PoissonNoise
+Base.@kwdef struct PoissonNoise
     noise_mean_scaling::Float64
 end
 
-struct DynamicalNoise
+Base.@kwdef struct DynamicalNoise
     R_0::Float64
     latent_period::Int64
     duration_infection::Int64
@@ -23,7 +23,7 @@ end
 LightSumTypes.@sumtype NoiseSpecification(PoissonNoise, DynamicalNoise) <: AbstractNoiseSpecification
 
 
-struct DynamicalNoiseSpecification
+Base.@kwdef struct DynamicalNoiseSpecification
     R0::Float64
     latent_period::Int64
     duration_infection::Int64
@@ -83,7 +83,7 @@ function DynamicalNoiseSpecification(;
     )
 end
 
-struct NoiseVaccinationOptimizationParameters
+Base.@kwdef struct NoiseVaccinationOptimizationParameters
     n_sobol_points::Int64
     local_algorithm
     maxeval::Int64

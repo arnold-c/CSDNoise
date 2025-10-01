@@ -1,7 +1,7 @@
 export ScenarioSpecification
 
 # TODO: Doesn't seem to be used
-struct ScenarioSpecification
+Base.@kwdef struct ScenarioSpecification
     ensemble_specification::EnsembleSpecification
     outbreak_specification::OutbreakSpecification
     noise_specification::NoiseSpecification

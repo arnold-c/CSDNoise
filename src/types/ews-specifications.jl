@@ -18,7 +18,7 @@ struct Backward end
 struct Centered end
 LightSumTypes.@sumtype EWSMethod(Backward, Centered) <: AbstractEWSMethod
 
-struct EWSMetricSpecification
+Base.@kwdef struct EWSMetricSpecification
     method::EWSMethod
     aggregation::Dates.Day
     bandwidth::Dates.Day
@@ -86,7 +86,7 @@ function _EWSMetricSpecification_path(
 end
 
 
-struct EWSMetrics
+Base.@kwdef struct EWSMetrics
     ews_specification::EWSMetricSpecification
     mean::Vector{Float64}
     variance::Vector{Float64}

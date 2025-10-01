@@ -5,7 +5,11 @@ module CSDNoise
 using DispatchDoctor
 # @stable default_mode = "warn" default_union_limit = 2 begin
 
-include("helpers.jl")
+# Utilities
+include("./utilities/helpers.jl")
+include("./utilities/test-description.jl")
+include("./utilities/benchmark-functions.jl")
+include("./utilities/logging-utilities.jl")
 
 # Constants
 include("./constants/dynamics-constants.jl")
@@ -22,9 +26,6 @@ include("./types/ews-specifications.jl")
 include("./types/scenario-specifications.jl")
 include("./types/simulation-results.jl")
 include("./types/optimization-types.jl")
-
-# Type descriptions
-include("./test-description.jl")
 
 # Simulation core
 include("./simulation/transmission-functions.jl")
@@ -173,10 +174,6 @@ export prepare_line_plot_df!,
     line_plot
 
 include("plotting-functions/ews-heatmap_plots.jl")
-
-include("benchmark-functions.jl")
-
-include("logging-utilities.jl")
 
 @static if false
     include("../scripts/ensemble-sim.jl")

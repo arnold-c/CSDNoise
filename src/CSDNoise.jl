@@ -3,6 +3,7 @@ Note that each file handles exporting its local function for the API.
 """
 module CSDNoise
 using DispatchDoctor: @unstable
+using Base: Base.@kwdef
 using DrWatson: DrWatson
 using Random: Random
 using Distributions: Distributions
@@ -30,7 +31,6 @@ import REPL.TerminalMenus as RTM
 using Logging: Logging
 using LoggingExtras: LoggingExtras
 using GLMakie
-
 
 # Constants
 include("./constants/dynamics-constants.jl")

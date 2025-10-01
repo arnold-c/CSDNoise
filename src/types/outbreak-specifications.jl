@@ -5,7 +5,7 @@ export OutbreakSpecification,
     Thresholds,
     OutbreakThresholds
 
-struct OutbreakSpecification
+Base.@kwdef struct OutbreakSpecification
     outbreak_threshold::Int64
     minimum_outbreak_duration::Int64
     minimum_outbreak_size::Int64
@@ -30,7 +30,7 @@ function OutbreakSpecification(
 end
 
 # TODO: Update to use sumtype and add implementation to testing vecs creation
-struct AlertMethod
+Base.@kwdef struct AlertMethod
     method_name::String
     function AlertMethod(method_name::String)
         available_test_methods = [
@@ -46,7 +46,7 @@ struct AlertMethod
     end
 end
 
-struct OutbreakDetectionSpecification
+Base.@kwdef struct OutbreakDetectionSpecification
     alert_threshold::Int64
     moving_average_lag::Int64
     percent_visit_clinic::Float64
@@ -97,13 +97,13 @@ end
 
 abstract type AbstractThresholds end
 
-struct Thresholds <: AbstractThresholds
+Base.@kwdef struct Thresholds <: AbstractThresholds
     lower_bounds::Vector{Int64}
     upper_bounds::Vector{Int64}
     duration::Vector{Int64}
 end
 
-struct OutbreakThresholds <: AbstractThresholds
+Base.@kwdef struct OutbreakThresholds <: AbstractThresholds
     lower_bounds::Vector{Int64}
     upper_bounds::Vector{Int64}
     duration::Vector{Int64}

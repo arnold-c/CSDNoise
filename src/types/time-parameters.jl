@@ -1,6 +1,6 @@
 export SimTimeParameters
 
-struct SimTimeParameters
+Base.@kwdef struct SimTimeParameters
     burnin::Float64
     tmin::Float64
     tmax::Float64

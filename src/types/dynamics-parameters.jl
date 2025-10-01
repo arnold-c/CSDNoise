@@ -13,7 +13,7 @@ LightSumTypes.@sumtype SeasonalityFunction(
 ) <: AbstractSeasonalityFunction
 
 
-struct DynamicsParameterSpecification
+Base.@kwdef struct DynamicsParameterSpecification
     contact_matrix::Matrix{Int64}
     beta_mean::Float64
     beta_force::Float64
@@ -64,7 +64,7 @@ function DynamicsParameterSpecification(
     )
 end
 
-struct DynamicsParameters
+Base.@kwdef struct DynamicsParameters
     contact_matrix::Matrix{Int64}
     beta_mean::Float64
     beta_force::Float64

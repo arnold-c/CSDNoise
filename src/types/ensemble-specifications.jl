@@ -1,7 +1,7 @@
 export EnsembleSpecification,
     EnsembleSpecsParameters
 
-struct EnsembleSpecification
+Base.@kwdef struct EnsembleSpecification
     state_parameters::StateParameters
     dynamics_parameter_specification::DynamicsParameterSpecification
     time_parameters::SimTimeParameters
@@ -46,7 +46,7 @@ function EnsembleSpecification(
 end
 
 # TODO: Figure out if this is actually needed
-struct EnsembleSpecsParameters
+Base.@kwdef struct EnsembleSpecsParameters
     burnin_years::Int64
     nyears::Int64
     annual_births_per_k::Int64

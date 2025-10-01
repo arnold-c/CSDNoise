@@ -13,7 +13,7 @@ export CachedSimulationData,
 Pre-computed simulation data that can be reused across parameter evaluations.
 This avoids expensive recomputation of noise arrays and test arrays.
 """
-struct CachedSimulationData
+Base.@kwdef struct CachedSimulationData
     testarr::Array{Int64, 3}
     null_testarr::Array{Int64, 3}
     thresholds::Vector{Matrix{Int64}}
@@ -27,7 +27,7 @@ end
 Struct representing a single optimization scenario with all necessary parameters
 for EWS hyperparameter optimization.
 """
-struct OptimizationScenario
+Base.@kwdef struct OptimizationScenario
     ensemble_specification::EnsembleSpecification
     null_specification::EnsembleSpecification
     noise_specification::NoiseSpecification
@@ -74,7 +74,7 @@ end
 
 Scenario for grid search including both base scenario and grid parameters.
 """
-struct GridSearchScenario
+Base.@kwdef struct GridSearchScenario
     ensemble_specification::EnsembleSpecification
     null_specification::EnsembleSpecification
     noise_specification::NoiseSpecification
@@ -144,7 +144,7 @@ The classification counts are stored as Float64 to support weighted or fractiona
 while the total simulation counts remain as integers. This struct serves as an intermediate
 representation for calculating performance metrics like sensitivity, specificity, and accuracy.
 """
-struct EWSClassificationResults
+Base.@kwdef struct EWSClassificationResults
     true_positives::Float64
     true_negatives::Float64
     false_positives::Float64
@@ -158,7 +158,7 @@ end
 
 Mutable struct to track the best solution and its metrics during optimization.
 """
-mutable struct OptimizationTracker
+Base.@kwdef mutable struct OptimizationTracker
     best_loss::Float64
     best_accuracy::Float64
     best_sensitivity::Float64
@@ -170,7 +170,7 @@ mutable struct OptimizationTracker
     end
 end
 
-struct OptimizedValues
+Base.@kwdef struct OptimizedValues
     threshold_quantile::Float64
     consecutive_thresholds::Int64
     accuracy::Float64
@@ -178,7 +178,7 @@ struct OptimizedValues
     specificity::Float64
 end
 
-struct OptimizationResult
+Base.@kwdef struct OptimizationResult
     ensemble_specification::EnsembleSpecification
     null_specification::EnsembleSpecification
     noise_specification::NoiseSpecification

@@ -83,17 +83,27 @@ include("./optimization-functions/gridsearch/scenario_evaluation.jl")
 include("./optimization-functions/gridsearch/scenario_find-missing.jl")
 
 
-include("ews-survival.jl")
-export simulate_and_plot_ews_survival,
-    simulate_ews_survival_data,
-    create_ews_survival_data
+# Survival
+## Data
+include("./survival/create-survival-data.jl")
+include("./survival/simulate-survival-data.jl")
+include("./survival/survival-detection-indices.jl")
+## Plots
+include("./plotting-functions/survival/ews-survival_facet-parameter-preparation.jl")
+include("./plotting-functions/survival/ews-survival_facet.jl")
+include("./plotting-functions/survival/ews-survival_plot-wrapper.jl")
+include("./plotting-functions/survival/ews-survival_Reff-histogram.jl")
+include("./plotting-functions/survival/ews-survival_simulate-and-plot.jl")
+include("./plotting-functions/survival/ews-survival_survival-lines.jl")
+include("./plotting-functions/survival/Reff_histogram_plot.jl")
+
 
 include("./constants/test-constants.jl")
 
 include("SEIR-model.jl")
 export seir_mod,
     seir_mod!,
-    seir_mod_loop!,
+    seir_mod_loop,
     convert_svec_to_matrix,
     convert_svec_to_matrix!,
     convert_svec_to_array
@@ -178,10 +188,6 @@ export prepare_line_plot_df!,
     line_plot
 
 include("plotting-functions/ews-heatmap_plots.jl")
-
-include("plotting-functions/survival_plots.jl")
-export ews_survival_plot,
-    ews_reff_histogram_plot
 
 include("benchmark-functions.jl")
 

@@ -46,9 +46,8 @@ function EnsembleSpecification(
 end
 
 # TODO: Figure out if this is actually needed
-Base.@kwdef struct EnsembleSpecsParameters
+struct EnsembleSpecsParameters
     burnin_years::Int64
-    nyears::Int64
     tmax::Int64
     annual_births_per_k::Int64
     ensemble_state_specification::StateParameters
@@ -60,11 +59,43 @@ Base.@kwdef struct EnsembleSpecsParameters
     min_vaccination_coverage::Float64
     max_vaccination_coverage::Float64
     nsims::Int64
+    function EnsembleSpecsParameters(
+            burnin_years,
+            tmax,
+            annual_births_per_k,
+            ensemble_state_specification,
+            R_0,
+            gamma,
+            sigma,
+            target_Reff,
+            target_years,
+            min_vaccination_coverage,
+            max_vaccination_coverage,
+            nsims,
+        )
+        @assert tmax >= target_years
+        @assert min_vaccination_coverage < max_vaccination_coverage
+
+        return new(
+            burnin_years,
+            tmax,
+            annual_births_per_k,
+            ensemble_state_specification,
+            R_0,
+            gamma,
+            sigma,
+            target_Reff,
+            target_years,
+            min_vaccination_coverage,
+            max_vaccination_coverage,
+            nsims
+        )
+    end
+
 end
 
 function EnsembleSpecsParameters(;
         burnin_years::Int,
-        nyears::Int,
         tmax::Int,
         annual_births_per_k::Int64 = ANNUAL_BIRTHS_PER_K,
         ensemble_state_specification::StateParameters = StateParameters(
@@ -80,12 +111,9 @@ function EnsembleSpecsParameters(;
         max_vaccination_coverage::Float64 = 0.8,
         nsims::Int = 1000
     )
-    @assert nyears >= target_years
-    @assert min_vaccination_coverage < max_vaccination_coverage
 
     return EnsembleSpecsParameters(
         burnin_years,
-        nyears,
         tmax,
         annual_births_per_k,
         ensemble_state_specification,

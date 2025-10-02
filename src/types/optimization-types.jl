@@ -159,15 +159,11 @@ end
 Mutable struct to track the best solution and its metrics during optimization.
 """
 Base.@kwdef mutable struct OptimizationTracker
-    best_loss::Float64
-    best_accuracy::Float64
-    best_sensitivity::Float64
-    best_specificity::Float64
-    best_params::Vector{Float64}
-
-    function OptimizationTracker()
-        return new(Inf, 0.0, 0.0, 0.0, Float64[])
-    end
+    best_loss::Float64 = Inf
+    best_accuracy::Float64 = 0.0
+    best_sensitivity::Float64 = 0.0
+    best_specificity::Float64 = 0.0
+    best_params::Vector{Float64} = Float64[]
 end
 
 Base.@kwdef struct OptimizedValues

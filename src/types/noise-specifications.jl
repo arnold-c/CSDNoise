@@ -23,7 +23,7 @@ end
 LightSumTypes.@sumtype NoiseSpecification(PoissonNoise, DynamicalNoise) <: AbstractNoiseSpecification
 
 
-Base.@kwdef struct DynamicalNoiseSpecification
+struct DynamicalNoiseSpecification
     R0::Float64
     latent_period::Int64
     duration_infection::Int64
@@ -83,7 +83,7 @@ function DynamicalNoiseSpecification(;
     )
 end
 
-Base.@kwdef struct NoiseVaccinationOptimizationParameters
+struct NoiseVaccinationOptimizationParameters
     n_sobol_points::Int64
     local_algorithm
     maxeval::Int64

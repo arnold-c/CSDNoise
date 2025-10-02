@@ -46,7 +46,7 @@ end
 function create_noise_vecs(
         noise_specification::DynamicalNoise,
         ensemble_specification::EnsembleSpecification,
-        enddates::Vector{Int64};
+        enddates_vec::Vector{Int64};
         seed = 1234,
         kwargs...,
     )
@@ -58,7 +58,7 @@ function create_noise_vecs(
         ensemble_specification
     @unpack tlength = time_parameters
 
-    @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
+    @assert nsims == length(enddates_vec) "Number of simulations must match number of endpoints"
 
     @unpack init_states = state_parameters
     @unpack N = init_states
@@ -134,7 +134,7 @@ function create_noise_vecs(
 
     for sim in eachindex(incidence_vecs)
         run_seed = seed + (sim - 1)
-        enddate = enddates[sim]
+        enddate = enddates_vec[sim]
         Random.seed!(run_seed)
 
         local noise_dynamics_parameters = DynamicsParameters(
@@ -173,13 +173,13 @@ end
 function create_noise_vecs(
         noise_specification::PoissonNoise,
         ensemble_specification::EnsembleSpecification,
-        enddates::Vector{Int64},
+        enddates_vec::Vector{Int64},
         seir_results::StructVector{SEIRRun};
         seed = 1234,
         kwargs...,
     )
     @unpack nsims = ensemble_specification
-    @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
+    @assert nsims == length(enddates_vec) "Number of simulations must match number of endpoints"
     @assert nsims == length(seir_results) "Number of simulations must match SEIR results"
 
     @unpack noise_mean_scaling = noise_specification
@@ -189,11 +189,14 @@ function create_noise_vecs(
     mean_poisson_noise_vec = Vector{Float64}(undef, nsims)
 
     mean_incidence = calculate_mean_incidence(seir_results)
-    for sim in eachindex(mean_poisson_noise_vec)
+
+    for sim in eachindex(incidence_vecs)
         run_seed = seed + (sim - 1)
         Random.seed!(run_seed)
 
-        enddate = enddates[sim]
+        enddate = enddates_vec[sim]
+
+        @assert length(seir_results.incidence[sim]) == enddate
 
         _calculate_poisson_noise_values!(
             incidence_vecs,
@@ -207,7 +210,7 @@ function create_noise_vecs(
     end
 
     mean_noise = StatsBase.mean(mean_poisson_noise_vec)
-    @assert isapprox(mean_incidence, mean_noise; atol = 1.0e-2)
+    @assert isapprox(mean_incidence, mean_noise; atol = 1.0e-3)
 
     return NoiseRun(
         incidence = incidence_vecs,
@@ -284,10 +287,8 @@ function _calculate_poisson_noise_values!(
         noise_mean_scaling,
     )
 
-    mean_poisson_noise = StatsBase.mean(poisson_noise_vec)
-
     incidence_vecs[sim] = poisson_noise_vec
-    mean_poisson_noise_vec[sim] = mean_poisson_noise
+    mean_poisson_noise_vec[sim] = StatsBase.mean(poisson_noise_vec)
     return nothing
 end
 

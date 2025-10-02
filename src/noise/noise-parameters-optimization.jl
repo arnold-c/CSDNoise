@@ -164,7 +164,7 @@ function optimize_dynamic_noise_params(
             N = N
         function (params)
             vaccination_coverage = params[1]
-            susceptible_proportion = params[2]
+            susceptible_proportion = 1 - vaccination_coverage
 
             # Ensure susceptible proportion is valid and will result in positive compartments
             # Use stricter bounds to prevent numerical issues with very small populations
@@ -191,8 +191,8 @@ function optimize_dynamic_noise_params(
     # Setup multistart optimization problem
     problem = MultistartOptimization.MinimizationProblem(
         objective,
-        [vaccination_bounds[1], susceptible_bounds[1]],  # lower bounds
-        [vaccination_bounds[2], susceptible_bounds[2]]   # upper bounds
+        [vaccination_bounds[1]], # lower bounds
+        [vaccination_bounds[2]]  # upper bounds
     )
 
     # Configure local optimization method
@@ -219,7 +219,26 @@ function optimize_dynamic_noise_params(
 
     if !in(result.ret, [:SUCCESS, :XTOL_REACHED, :FTOL_REACHED, :STOPVAL_REACHED]) ||
             sqrt(result.value) > atol
-        error("Unsuccessful optimization.\nReturn code: $(result.ret)\nAbsolute difference: $(sqrt(result.value))")
+
+        optimal_vaccination_coverage = result.location[1]
+        optimal_susceptible_proportion = 1 - optimal_vaccination_coverage
+
+        optimized_noise = calculate_mean_dynamical_noise(
+            dynamical_noise_spec,
+            optimal_vaccination_coverage,
+            optimal_susceptible_proportion,
+            ensemble_specification,
+            enddates_vec
+        )
+        error_msg = "Unsuccessful optimization." *
+            "\nReturn code: $(result.ret)" *
+            "\nAbsolute difference: $(sqrt(result.value))" *
+            "\nTarget value: $(target_noise)" *
+            "\nOptimized value: $(optimized_noise)" *
+            "\nOptimization parameters: Vax. prop = $(optimal_vaccination_coverage), Sus. prop = $(optimal_susceptible_proportion)"
+
+
+        error(error_msg)
     end
 
     return result

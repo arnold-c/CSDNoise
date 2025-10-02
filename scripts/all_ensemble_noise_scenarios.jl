@@ -97,7 +97,10 @@ optim_res = optimize_dynamic_noise_params_wrapper(
     measles_ensemble_data.Reff_thresholds,
     EWSEndDateType(ReffStart()),
     measles_dynamical_noise_spec,
-    measles_spec[1]
+    measles_spec[1],
+    NoiseVaccinationOptimizationParameters(;
+        atol = 0.1
+    )
 )
 
 
@@ -111,7 +114,7 @@ enddates_vec = calculate_all_ews_enddates(
 optim_noise_run = CSDNoise.recreate_noise_vecs(
     measles_dynamical_noise_spec,
     optim_res.location[1],
-    optim_res.location[2],
+    1 - optim_res.location[1],
     measles_spec[1],
     enddates_vec
 )

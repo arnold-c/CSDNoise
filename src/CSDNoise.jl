@@ -61,6 +61,7 @@ include("./simulation/trim-seir-results.jl")
 include("./utilities/benchmark-functions.jl")
 include("./utilities/create-combinations.jl")
 include("./utilities/helpers.jl")
+include("./utilities/create_emergent_null_specifications.jl")
 include("./utilities/logging-utilities.jl")
 include("./utilities/test-description.jl")
 include("./utilities/test_multistart_vs_gridsearch.jl")
@@ -160,14 +161,13 @@ include("./plotting-functions/survival/ews-survival_simulate-and-plot.jl")
 include("./plotting-functions/survival/ews-survival_survival-lines.jl")
 include("./plotting-functions/survival/Reff_histogram_plot.jl")
 
-# @static if false
-#     include("../scripts/ensemble-sim.jl")
-#     include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")
-#     include("../scripts/tycho-visualization.jl")
-#     include("../scripts/ensemble-sim_ews-optimization.jl")
-#     include("../scripts/ensemble-sim_ews-multistart-optimization.jl")
-#     include("../scripts/benchmark_optimization_speed.jl")
-#     include("../manuscript/scripts/optimal-thresholds.jl")
-# end
+@static if false
+    include("../scripts/gridsearch-optimization.jl")
+    include("../scripts/ensemble-sim_inferred-scenario-visualizations.jl")
+    include("../scripts/ensemble-sim_ews-optimization.jl")
+    include("../scripts/ensemble-sim_ews-multistart-optimization.jl")
+    include("../scripts/benchmark_optimization_speed.jl")
+    include("../manuscript/scripts/optimal-thresholds.jl")
+end
 
 end

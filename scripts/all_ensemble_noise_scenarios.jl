@@ -50,14 +50,13 @@
 
 #%%
 using CSDNoise
-using StatsBase
 
 #%%
 ## Measles + Rubella
 measles_spec = create_ensemble_specs(
     EnsembleSpecsParameters(
         burnin_years = 5,
-        nyears = 20,
+        tmax_years = 20,
         annual_births_per_k = ANNUAL_BIRTHS_PER_K,
         ensemble_state_specification = StateParameters(
             500_000,

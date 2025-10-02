@@ -48,7 +48,7 @@ end
 # TODO: Figure out if this is actually needed
 struct EnsembleSpecsParameters
     burnin_years::Int64
-    tmax::Int64
+    tmax_years::Int64
     annual_births_per_k::Int64
     ensemble_state_specification::StateParameters
     R_0::Float64
@@ -61,7 +61,7 @@ struct EnsembleSpecsParameters
     nsims::Int64
     function EnsembleSpecsParameters(
             burnin_years,
-            tmax,
+            tmax_years,
             annual_births_per_k,
             ensemble_state_specification,
             R_0,
@@ -73,12 +73,12 @@ struct EnsembleSpecsParameters
             max_vaccination_coverage,
             nsims,
         )
-        @assert tmax >= target_years
+        @assert tmax_years >= target_years
         @assert min_vaccination_coverage < max_vaccination_coverage
 
         return new(
             burnin_years,
-            tmax,
+            tmax_years,
             annual_births_per_k,
             ensemble_state_specification,
             R_0,
@@ -96,7 +96,7 @@ end
 
 function EnsembleSpecsParameters(;
         burnin_years::Int,
-        tmax::Int,
+        tmax_years::Int,
         annual_births_per_k::Int64 = ANNUAL_BIRTHS_PER_K,
         ensemble_state_specification::StateParameters = StateParameters(
             500_000,
@@ -114,7 +114,7 @@ function EnsembleSpecsParameters(;
 
     return EnsembleSpecsParameters(
         burnin_years,
-        tmax,
+        tmax_years,
         annual_births_per_k,
         ensemble_state_specification,
         R_0,

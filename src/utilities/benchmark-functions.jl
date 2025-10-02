@@ -454,7 +454,7 @@ function create_ensemble_specs(params::EnsembleSpecsParameters)
     ensemble_time_specification = SimTimeParameters(;
         burnin = 365.0 * params.burnin_years,
         tmin = 0.0,
-        tmax = 365.0 * params.nyears,
+        tmax = 365.0 * params.tmax_years,
         tstep = 1.0
     )
 

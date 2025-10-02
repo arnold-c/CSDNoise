@@ -163,10 +163,10 @@ function create_noise_vecs(
     mean_noise = mean_dynamical_noise + mean_poisson_noise
 
     return NoiseRun(
-        incidence_vecs,
-        mean_noise,
-        mean_poisson_noise,
-        mean_dynamical_noise
+        incidence = incidence_vecs,
+        mean_noise = mean_noise,
+        mean_poisson_noise = mean_poisson_noise,
+        mean_dynamic_noise = mean_dynamical_noise
     )
 end
 
@@ -210,10 +210,10 @@ function create_noise_vecs(
     mean_noise = StatsBase.mean(mean_poisson_noise_vec)
 
     return NoiseRun(
-        incidence_vecs,
-        mean_noise,
-        mean_noise,
-        0.0
+        incidence = incidence_vecs,
+        mean_noise = mean_noise,
+        mean_poisson_noise = mean_noise,
+        mean_dynamic_noise = 0.0
     )
 end
 

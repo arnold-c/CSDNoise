@@ -463,10 +463,10 @@ function create_ensemble_specs(params::EnsembleSpecsParameters)
     mu = calculate_mu(params.annual_births_per_k)
     beta_mean = calculate_beta(
         params.R_0,
+        params.sigma,
         params.gamma,
         mu,
-        contact_matrix,
-        Int64[params.ensemble_state_specification.init_states.N;]
+        params.ensemble_state_specification.init_states.N
     )
     epsilon = calculate_import_rate(
         mu,

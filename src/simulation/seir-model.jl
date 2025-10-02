@@ -123,7 +123,6 @@ function seir_mod!(
             beta_vec[1],
             dynamics_params,
             states[1],
-            states[5],
         )
     end
 
@@ -154,7 +153,6 @@ function seir_mod!(
             beta_vec[i],
             dynamics_params,
             state_vec[i][1],
-            state_vec[i][5],
         )
     end
 

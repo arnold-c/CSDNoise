@@ -89,9 +89,9 @@ function create_noise_vecs(
 
     noise_beta_mean = calculate_beta(
         noise_specification.R_0,
+        noise_sigma,
         noise_gamma,
         dynamics_parameter_specification.mu,
-        1,
         N
     )
 

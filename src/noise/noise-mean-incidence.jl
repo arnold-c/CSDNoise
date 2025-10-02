@@ -58,5 +58,5 @@ function calculate_mean_dynamical_noise(
         enddates_vec,
     )
 
-    return noise_result
+    return noise_result.mean_noise
 end

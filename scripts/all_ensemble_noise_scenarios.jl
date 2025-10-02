@@ -92,7 +92,7 @@ measles_dynamical_noise_spec = DynamicalNoiseSpecification(
 
 #%%
 # @report_opt target_modules = (CSDNoise,)
-optim_res = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
+optim_res = optimize_dynamic_noise_params_wrapper(
     8.0,
     measles_ensemble_data.seir_results,
     measles_ensemble_data.Reff_thresholds,

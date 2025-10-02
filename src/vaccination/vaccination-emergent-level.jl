@@ -11,24 +11,39 @@ Assuming that in the burnin period the rate of infections is negligible, the tim
 dS/dt = μ(N - Nρ - S)
 """
 function calculate_vaccination_rate_to_achieve_Reff(
-        target_Reff, target_years, initial_states, R_0, mu
+        time_parameters::SimTimeParameters,
+        state_parameters::StateParameters,
+        target_Reff,
+        R_0,
+        mu
     )
-    @unpack S, N = initial_states
+    @unpack S, N = state_parameters.init_states
+    @unpack burnin = time_parameters
 
     return calculate_vaccination_rate_to_achieve_Reff(
-        target_Reff, target_years, S, N, R_0, mu
+        burnin,
+        S,
+        N,
+        target_Reff,
+        R_0,
+        mu
     )
 end
 
 function calculate_vaccination_rate_to_achieve_Reff(
-        target_Reff, target_years, S, N, R_0, mu
+        target_days,
+        S,
+        N,
+        target_Reff,
+        R_0,
+        mu
     )
     @assert target_Reff > 0
     @assert target_Reff < 1.2
 
     vaccination_coverage =
         1 -
-        (((target_Reff * N) / R_0 - S) / (365 * target_years * mu) + S) / N
+        (((target_Reff * N) / R_0 - S) / (target_days * mu) + S) / N
 
     if vaccination_coverage > 1 || vaccination_coverage < 0
         return error(

@@ -61,7 +61,7 @@ function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::In
     @unpack state_parameters, dynamics_parameter_specification, time_parameters, nsims = ensemble_spec
     @unpack tstep, tlength, trange = time_parameters
 
-    init_states_sv = SVector(state_parameters.init_states)
+    init_states_sv = StaticArrays.SVector(state_parameters.init_states)
 
     # Get concrete type to avoid abstract element types
     seir_results = Vector{SEIRRun}(undef, nsims)

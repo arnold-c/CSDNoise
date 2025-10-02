@@ -19,14 +19,14 @@ function StateParameters(;
     )
     r_prop = 1 - (s_prop + e_prop + i_prop)
 
-    states = SLVector(;
+    states = LabelledArrays.SLVector(;
         S = Int64(round(s_prop * N)),
         E = Int64(round(e_prop * N)),
         I = Int64(round(i_prop * N)),
         R = Int64(round(r_prop * N)),
         N = N,
     )
-    state_props = SLVector(;
+    state_props = LabelledArrays.SLVector(;
         s_prop = s_prop,
         e_prop = e_prop,
         i_prop = i_prop,

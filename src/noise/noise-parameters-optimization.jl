@@ -63,7 +63,7 @@ function optimize_dynamic_noise_params_wrapper(
     # Calculate endpoints for all simulations
     enddates_vec = calculate_all_ews_enddates(thresholds, ews_enddate_type)
 
-    filtered_seir_results = filter_seir_results(seir_results, enddates_vec)
+    filtered_seir_results = trim_seir_results(seir_results, enddates_vec)
 
     # Calculate filtered mean incidence up to endpoints
     overall_mean = calculate_mean_incidence(filtered_seir_results)

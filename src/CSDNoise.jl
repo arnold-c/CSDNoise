@@ -54,6 +54,7 @@ include("./simulation/transmission-functions.jl")
 include("./constants/dynamics-constants_calculated.jl") # depends on transmission-functions
 include("./simulation/seir-model.jl")
 include("./simulation/seir-mean-incidence.jl")
+include("./simulation/trim-seir-results.jl")
 
 # Shared utilities (used across multiple modules)
 include("./utilities/benchmark-functions.jl")

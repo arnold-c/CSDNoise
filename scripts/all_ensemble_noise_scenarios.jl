@@ -117,7 +117,7 @@ optim_noise_run = CSDNoise.recreate_noise_vecs(
     enddates_vec
 )
 
-filtered_seir_results = filter_seir_results(
+filtered_seir_results = trim_seir_results(
     measles_ensemble_data.seir_results,
     enddates_vec
 )
@@ -128,7 +128,7 @@ mean_measles = calculate_mean_incidence(filtered_seir_results)
 mean_measles * 8.0 - optim_noise_run.mean_noise
 
 #%%
-@report_opt target_modules = (CSDNoise,) filter_seir_results(
+@report_opt target_modules = (CSDNoise,) trim_seir_results(
     measles_ensemble_data.seir_results,
     enddates_vec
 )
@@ -168,7 +168,7 @@ measles_noise_8x_vecs = create_noise_vecs(
     enddates_vec
 )
 
-inc = filter_seir_results(
+inc = trim_seir_results(
     generate_single_ensemble(measles_spec[1]).seir_results,
     enddates_vec,
 )

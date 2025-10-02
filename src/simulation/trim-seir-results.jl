@@ -1,7 +1,7 @@
-export filter_seir_results
+export trim_seir_results
 
 """
-    filter_seir_results(seir_results, enddates) -> StructVector{SEIRRun}
+    trim_seir_results(seir_results, enddates) -> StructVector{SEIRRun}
 
 Create a filtered version of SEIRRun results, keeping only data up to specified endpoints
 for incidence and states properties. The Reff property is preserved as-is.
@@ -15,10 +15,10 @@ for incidence and states properties. The Reff property is preserved as-is.
 
 # Example
 ```julia
-filtered_results = filter_seir_results(seir_results, endpoints)
+filtered_results = trim_seir_results(seir_results, endpoints)
 ```
 """
-function filter_seir_results(
+function trim_seir_results(
         seir_results::StructVector{SEIRRun},
         enddates::Vector{Int64}
     )
@@ -27,23 +27,23 @@ function filter_seir_results(
     @assert nsims == length(enddates) "Number of simulations must match number of endpoints"
 
     # Pre-allocate vectors for filtered data
-    filtered_incidence = Vector{Vector{Int64}}(undef, nsims)
-    filtered_states = Vector{Vector{StaticArrays.SVector{5, Int64}}}(undef, nsims)
-    filtered_Reff = Vector{Vector{Float64}}(undef, nsims)
+    trimmed_incidence = Vector{Vector{Int64}}(undef, nsims)
+    trimmed_states = Vector{Vector{StaticArrays.SVector{5, Int64}}}(undef, nsims)
+    trimmed_Reff = Vector{Vector{Float64}}(undef, nsims)
 
     for (sim, enddate) in pairs(enddates)
         if enddate > 0 && enddate <= length(seir_results[sim].incidence)
             # Filter incidence up to endpoint
-            filtered_incidence[sim] = Vector{Int64}(
+            trimmed_incidence[sim] = Vector{Int64}(
                 seir_results[sim].incidence[1:enddate]
             )
 
             # Filter states up to endpoint
-            filtered_states[sim] = Vector{StaticArrays.SVector{5, Int64}}(
+            trimmed_states[sim] = Vector{StaticArrays.SVector{5, Int64}}(
                 seir_results[sim].states[1:enddate]
             )
 
-            filtered_Reff[sim] = Vector{Float64}(
+            trimmed_Reff[sim] = Vector{Float64}(
                 seir_results[sim].Reff[1:enddate]
             )
         else
@@ -53,8 +53,8 @@ function filter_seir_results(
 
     # Create new StructVector with filtered data, preserving Reff as-is
     return StructVector{SEIRRun}(
-        states = filtered_states,
-        incidence = filtered_incidence,
-        Reff = filtered_Reff
+        states = trimmed_states,
+        incidence = trimmed_incidence,
+        Reff = trimmed_Reff
     )
 end

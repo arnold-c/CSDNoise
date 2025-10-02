@@ -43,7 +43,7 @@ result = optimize_dynamic_noise_params(
     7.0,  # target_scaling
     seir_results,
     thresholds,
-    EWSEndDateType(Reff_start()),
+    EWSEndDateType(ReffStart()),
     noise_spec,
     ensemble_spec
 )

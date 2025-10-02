@@ -166,7 +166,7 @@ function main()
             "variance",
         ]
 
-        ews_enddate_type_vec = [EWSEndDateType(Reff_start())]
+        ews_enddate_type_vec = [EWSEndDateType(ReffStart())]
         ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())]
         ews_threshold_quantile_vec = collect(0.5:0.01:0.99)
         ews_consecutive_thresholds_vec = collect(2:1:20)

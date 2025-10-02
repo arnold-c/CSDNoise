@@ -30,7 +30,7 @@ function benchmark_optimization_methods()
                 1
             ),
         ],
-        ews_enddate_type_vec = [EWSEndDateType(Reff_start())],
+        ews_enddate_type_vec = [EWSEndDateType(ReffStart())],
         ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())],
         ews_metric_vec = ["mean", "variance"],
         # Grid search specific parameters
@@ -239,7 +239,7 @@ function benchmark_multistart_scaling()
                 1
             ),
         ],
-        ews_enddate_type_vec = [EWSEndDateType(Reff_start())],
+        ews_enddate_type_vec = [EWSEndDateType(ReffStart())],
         ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())],
         ews_metric_vec = ["mean"],
     )
@@ -311,7 +311,7 @@ function test_multistart_basic()
                 1
             ),
         ],
-        ews_enddate_type_vec = [EWSEndDateType(Reff_start())],
+        ews_enddate_type_vec = [EWSEndDateType(ReffStart())],
         ews_threshold_window_vec = [EWSThresholdWindowType(ExpandingThresholdWindow())],
         ews_metric_vec = ["mean"],
     )

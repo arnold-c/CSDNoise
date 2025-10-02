@@ -4,11 +4,11 @@ export get_enddate_thresholds,
 
 get_enddate_thresholds(data_arrs, enddate_type::EWSEndDateType) = get_enddate_thresholds(data_arrs, LightSumTypes.variant(enddate_type))
 
-function get_enddate_thresholds(data_arrs, enddate_type::Union{Reff_start, Reff_end})
+function get_enddate_thresholds(data_arrs, enddate_type::Union{ReffStart, ReffEnd})
     return data_arrs.ensemble_single_Reff_thresholds_vec
 end
 
-function get_enddate_thresholds(data_arrs, enddate_type::Union{Outbreak_start, Outbreak_middle, Outbreak_end})
+function get_enddate_thresholds(data_arrs, enddate_type::Union{OutbreakStart, OutbreakMiddle, OutbreakEnd})
     return data_arrs.emergent_outbreak_threshold_vecs
 end
 

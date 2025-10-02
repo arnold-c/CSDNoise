@@ -96,7 +96,7 @@ optim_res = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
     8.0,
     measles_ensemble_data.seir_results,
     measles_ensemble_data.Reff_thresholds,
-    EWSEndDateType(Reff_start()),
+    EWSEndDateType(ReffStart()),
     measles_dynamical_noise_spec,
     measles_spec[1]
 )
@@ -105,7 +105,7 @@ optim_res = calculate_dynamic_vaccination_coverage_multistart_with_endpoints(
 #%%
 enddates_vec = calculate_all_ews_enddates(
     measles_ensemble_data.Reff_thresholds,
-    EWSEndDateType(Reff_start())
+    EWSEndDateType(ReffStart())
 )
 
 #%%

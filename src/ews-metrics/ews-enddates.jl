@@ -11,14 +11,14 @@ Calculate EWS endpoints for all simulations based on enddate type.
 
 # Arguments
 - `thresholds`: Vector of threshold objects (one per simulation)
-- `ews_enddate_type`: Type of endpoint to calculate (Reff_start, Reff_end, Outbreak_start, etc.)
+- `ews_enddate_type`: Type of endpoint to calculate (ReffStart, ReffEnd, OutbreakStart, etc.)
 
 # Returns
 - `Vector{Int64}`: Vector of endpoints, one per simulation
 
 # Example
 ```julia
-endpoints = calculate_ews_endpoints(thresholds, EWSEndDateType(Reff_start()))
+endpoints = calculate_ews_endpoints(thresholds, EWSEndDateType(ReffStart()))
 ```
 """
 function calculate_all_ews_enddates(
@@ -61,25 +61,25 @@ _calculate_ews_enddate(
 
 _calculate_ews_enddate(
     thresholds::Thresholds,
-    enddate_type::Reff_start
+    enddate_type::ReffStart
 ) = TryExperimental.trygetindex(thresholds.lower_bounds, 1)
 
 _calculate_ews_enddate(
     thresholds::Thresholds,
-    enddate_type::Reff_end
+    enddate_type::ReffEnd
 ) = TryExperimental.trygetindex(thresholds.upper_bounds, 1)
 
 _calculate_ews_enddate(
     thresholds::OutbreakThresholds,
-    enddate_type::Outbreak_start
+    enddate_type::OutbreakStart
 ) = TryExperimental.trygetindex(thresholds.lower_bounds, 1)
 
 _calculate_ews_enddate(
     thresholds::OutbreakThresholds,
-    enddate_type::Outbreak_end
+    enddate_type::OutbreakEnd
 ) = TryExperimental.trygetindex(thresholds.upper_bounds, 1)
 
-function _calculate_ews_enddate(thresholds::OutbreakThresholds, enddate_type::Outbreak_middle)
+function _calculate_ews_enddate(thresholds::OutbreakThresholds, enddate_type::OutbreakMiddle)
     return Try.Ok(
         TryExperimental.trygetindex(thresholds.lower_bounds, 1) +
             div((TryExperimental.trygetindex(thresholds.duration, 1), 2))

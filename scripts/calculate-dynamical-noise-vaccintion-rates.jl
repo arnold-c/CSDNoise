@@ -96,7 +96,7 @@ mean_measles = StatsBase.mean(emergent_incidence_arr[:, 1, :])
 #%%
 # Note: This call needs enddates_vec to be defined first
 # Example usage (uncomment and adjust as needed):
-# enddates_vec = calculate_all_ews_enddates(thresholds, EWSEndDateType(Reff_start()))
+# enddates_vec = calculate_all_ews_enddates(thresholds, EWSEndDateType(ReffStart()))
 #
 # opt_params = NoiseVaccinationOptimizationParameters(
 #     n_sobol_points = 100,

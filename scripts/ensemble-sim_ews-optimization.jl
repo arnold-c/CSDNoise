@@ -212,8 +212,8 @@ ews_metric_vec = [
 
 #%%
 ews_enddate_type_vec = [
-    Reff_start,
-    # Reff_end
+    ReffStart,
+    # ReffEnd
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
 ews_threshold_quantile_vec = collect(0.5:0.01:0.99)
@@ -324,7 +324,7 @@ if debug_Reff_plots
         # Backward, Day(7), Week(52), 1
         Backward, Day(28), Week(52), 1
     )
-    test_ews_enddate_type = Reff_start
+    test_ews_enddate_type = ReffStart
     test_ews_threshold_burnin = Dates.Year(5)
     test_ews_threshold_window = ExpandingThresholdWindow
     percent_tested = 1.0

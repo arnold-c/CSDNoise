@@ -214,8 +214,8 @@ ews_metric_vec = [
 
 #%%
 ews_enddate_type_vec = [
-    Reff_start,
-    # Reff_end
+    ReffStart,
+    # ReffEnd
 ]
 ews_threshold_window_vec = [ExpandingThresholdWindow]
 ews_threshold_burnin_vec = [

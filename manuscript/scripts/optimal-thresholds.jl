@@ -128,7 +128,7 @@ ews_metric_specification = EWSMetricSpecification(
     Backward, Day(28), Day(364), 1
 )
 ews_threshold_burnin = Year(5)
-ews_enddate_type = Reff_start
+ews_enddate_type = ReffStart
 ews_threshold_window = ExpandingThresholdWindow
 percent_tested = 1.0
 

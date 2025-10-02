@@ -247,9 +247,9 @@ ews_df = DataFrame(
 
     for ews_enddate_type in
         (
-            Main.Reff_start,
-            Main.Reff_end,
-            Main.Outbreak_start,
+            Main.ReffStart,
+            Main.ReffEnd,
+            Main.OutbreakStart,
         )
         ews_enddate_type_str = split(string(ews_enddate_type), "::")[1]
         println(
@@ -257,9 +257,9 @@ ews_df = DataFrame(
         )
 
         thresholds = SumTypes.@cases ews_enddate_type begin
-            [Reff_start, Reff_end] =>
+            [ReffStart, ReffEnd] =>
                 ensemble_single_Reff_thresholds_vec
-            [Outbreak_start, Outbreak_end, Outbreak_middle] =>
+            [OutbreakStart, OutbreakEnd, OutbreakMiddle] =>
                 emergent_outbreak_threshold_vecs
         end
 

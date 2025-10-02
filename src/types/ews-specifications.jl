@@ -7,11 +7,11 @@ export EWSMethod,
     ExpandingThresholdWindow,
     RollingThresholdWindow,
     EWSEndDateType,
-    Reff_start,
-    Reff_end,
-    Outbreak_start,
-    Outbreak_middle,
-    Outbreak_end
+    ReffStart,
+    ReffEnd,
+    OutbreakStart,
+    OutbreakMiddle,
+    OutbreakEnd
 
 abstract type AbstractEWSMethod end
 struct Backward end
@@ -116,16 +116,16 @@ LightSumTypes.@sumtype EWSThresholdWindowType(
 
 abstract type AbstractEWSEndDateType end
 
-struct Reff_start end
-struct Reff_end end
-struct Outbreak_start end
-struct Outbreak_middle end
-struct Outbreak_end end
+struct ReffStart end
+struct ReffEnd end
+struct OutbreakStart end
+struct OutbreakMiddle end
+struct OutbreakEnd end
 
 LightSumTypes.@sumtype EWSEndDateType(
-    Reff_start,
-    Reff_end,
-    Outbreak_start,
-    Outbreak_middle,
-    Outbreak_end
+    ReffStart,
+    ReffEnd,
+    OutbreakStart,
+    OutbreakMiddle,
+    OutbreakEnd
 ) <: AbstractEWSEndDateType

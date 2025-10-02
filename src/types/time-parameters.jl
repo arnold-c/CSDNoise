@@ -1,5 +1,25 @@
 export SimTimeParameters
 
+"""
+    SimTimeParameters
+
+Parameters defining the temporal structure of a simulation.
+
+# Fields
+- `burnin::Float64`: Duration of the burn-in period in days (must be ≤ tmax and > 0)
+- `tmin::Float64`: Start time of the simulation
+- `tmax::Float64`: End time of the simulation in days (must be > tmin + tstep)
+- `tstep::Float64`: Time step size in days (must be > 0)
+- `trange::StepRangeLen{Float64, Float64, Float64, Int64}`: Range from tmin to tmax by tstep
+- `tspan::Tuple{Float64, Float64}`: Tuple of (tmin, tmax)
+- `tlength::Int64`: Number of time steps in trange
+
+# Constructor
+    SimTimeParameters(; burnin=365.0*5, tmin=0.0, tmax=365.0*20.0, tstep=1.0)
+
+Creates a `SimTimeParameters` instance with default values suitable for a 20-year simulation
+with a 5-year burn-in period and daily time steps.
+"""
 struct SimTimeParameters
     burnin::Float64
     tmin::Float64
@@ -18,6 +38,10 @@ struct SimTimeParameters
             tlength
         )
         @assert burnin <= tmax
+        @assert tmax > tmin + tstep
+        for var in (burnin, tstep)
+            @assert var > 0.0
+        end
         return new(
             burnin,
             tmin,
@@ -31,9 +55,9 @@ struct SimTimeParameters
 end
 
 function SimTimeParameters(;
-        burnin = 0.0,
+        burnin = 365.0 * 5,
         tmin = 0.0,
-        tmax = 365.0 * 100.0,
+        tmax = 365.0 * 20.0,
         tstep = 1.0
     )
     return SimTimeParameters(

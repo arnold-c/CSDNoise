@@ -10,9 +10,7 @@ Create all grid search scenarios including parameter combinations.
 Returns StructVector{GridSearchScenario} with all combinations.
 """
 function create_gridsearch_scenarios_structvector(specification_vecs)
-    @unpack ensemble_specification_vec,
-        null_specification_vec,
-        noise_specification_vec,
+    @unpack ensemble_noise_spec_pairs_vec,
         test_specification_vec,
         percent_tested_vec,
         ews_metric_specification_vec,
@@ -24,9 +22,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs)
         ews_consecutive_thresholds_vec = specification_vecs
 
     combinations = Iterators.product(
-        ensemble_specification_vec,
-        null_specification_vec,
-        noise_specification_vec,
+        ensemble_noise_spec_pairs_vec,
         test_specification_vec,
         percent_tested_vec,
         ews_metric_specification_vec,

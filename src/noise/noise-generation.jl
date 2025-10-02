@@ -188,18 +188,17 @@ function create_noise_vecs(
     incidence_vecs = Vector{Vector{Int64}}(undef, nsims)
     mean_poisson_noise_vec = Vector{Float64}(undef, nsims)
 
+    mean_incidence = calculate_mean_incidence(seir_results)
     for sim in eachindex(mean_poisson_noise_vec)
         run_seed = seed + (sim - 1)
         Random.seed!(run_seed)
 
         enddate = enddates[sim]
 
-        mean_dynamical_noise_incidence = StatsBase.mean(seir_results.incidence[sim])
-
         _calculate_poisson_noise_values!(
             incidence_vecs,
             mean_poisson_noise_vec,
-            mean_dynamical_noise_incidence,
+            mean_incidence,
             noise_mean_scaling,
             enddate,
             sim,
@@ -208,6 +207,7 @@ function create_noise_vecs(
     end
 
     mean_noise = StatsBase.mean(mean_poisson_noise_vec)
+    @assert isapprox(mean_incidence, mean_noise; atol = 1.0e-2)
 
     return NoiseRun(
         incidence = incidence_vecs,
@@ -271,7 +271,7 @@ end
 function _calculate_poisson_noise_values!(
         incidence_vecs,
         mean_poisson_noise_vec,
-        mean_dynamical_noise_incidence,
+        mean_incidence,
         noise_mean_scaling,
         enddate,
         sim,
@@ -280,7 +280,7 @@ function _calculate_poisson_noise_values!(
 
     _add_poisson_noise!(
         poisson_noise_vec,
-        mean_dynamical_noise_incidence,
+        mean_incidence,
         noise_mean_scaling,
     )
 
@@ -293,10 +293,10 @@ end
 
 function _add_poisson_noise!(
         noise_vec::AIV,
-        mean_dynamical_noise_incidence::Float64,
+        mean_incidence::Float64,
         noise_mean_scaling::Float64,
     ) where {AIV <: AbstractVector{<:Integer}}
-    poisson_rate = noise_mean_scaling * mean_dynamical_noise_incidence
+    poisson_rate = noise_mean_scaling * mean_incidence
     @inbounds @simd for i in eachindex(noise_vec)
         noise_vec[i] = rand(Distributions.Poisson(poisson_rate))
     end

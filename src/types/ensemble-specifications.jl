@@ -49,6 +49,7 @@ end
 Base.@kwdef struct EnsembleSpecsParameters
     burnin_years::Int64
     nyears::Int64
+    tmax::Int64
     annual_births_per_k::Int64
     ensemble_state_specification::StateParameters
     R_0::Float64
@@ -64,6 +65,7 @@ end
 function EnsembleSpecsParameters(;
         burnin_years::Int,
         nyears::Int,
+        tmax::Int,
         annual_births_per_k::Int64 = ANNUAL_BIRTHS_PER_K,
         ensemble_state_specification::StateParameters = StateParameters(
             500_000,
@@ -84,6 +86,7 @@ function EnsembleSpecsParameters(;
     return EnsembleSpecsParameters(
         burnin_years,
         nyears,
+        tmax,
         annual_births_per_k,
         ensemble_state_specification,
         R_0,

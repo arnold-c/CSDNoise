@@ -50,6 +50,7 @@
 
 #%%
 using CSDNoise
+using GLMakie
 
 #%%
 ## Measles + Rubella
@@ -79,9 +80,20 @@ measles_ensemble_data = generate_single_ensemble(
     seed = 1234
 )
 
+enddates_vec = calculate_all_ews_enddates(
+    measles_ensemble_data.Reff_thresholds,
+    EWSEndDateType(ReffStart())
+)
+
+inc = trim_seir_results(
+    measles_ensemble_data.seir_results,
+    enddates_vec,
+)
+
+
 #%%
 measles_dynamical_noise_spec = DynamicalNoiseSpecification(
-    R0 = 5.0,
+    R_0 = 5.0,
     latent_period = 7,
     duration_infection = 14,
     correlation = "in-phase",
@@ -90,9 +102,10 @@ measles_dynamical_noise_spec = DynamicalNoiseSpecification(
 
 
 #%%
-# @report_opt target_modules = (CSDNoise,)
+target_noise_scaling = 1.0
+
 optim_res = optimize_dynamic_noise_params_wrapper(
-    8.0,
+    target_noise_scaling,
     measles_ensemble_data.seir_results,
     measles_ensemble_data.Reff_thresholds,
     EWSEndDateType(ReffStart()),
@@ -100,8 +113,45 @@ optim_res = optimize_dynamic_noise_params_wrapper(
     measles_spec[1],
     NoiseVaccinationOptimizationParameters(;
         atol = 0.1
-    )
+    );
+    verbose = false
 )
+
+#%%
+optim_noise_run = CSDNoise.recreate_noise_vecs(
+    measles_dynamical_noise_spec,
+    optim_res.location[1],
+    measles_spec[1],
+    enddates_vec
+);
+
+fig = Figure()
+ax = Axis(fig[1, 1]; title = "Rubella Noise Incidence ($(target_noise_scaling)x)")
+for res in optim_noise_run.incidence[1:end]
+    lines!(ax, res)
+end
+ax2 = Axis(fig[2, 1]; title = "Measles Incidence")
+for res in inc.incidence[1:end]
+    lines!(ax2, res)
+end
+ax3 = Axis(fig[3, 1]; title = "Measles Reff")
+for res in inc.Reff[1:end]
+    lines!(ax3, res)
+end
+ax4 = Axis(fig[4, 1]; title = "Noise Reff")
+for res in optim_noise_run.Reff[1:end]
+    lines!(ax4, res)
+end
+linkxaxes!(ax, ax2, ax3, ax4)
+linkyaxes!(ax, ax2)
+display(fig)
+
+#%%
+optim_res.location[1]
+
+target_noise_scaling * mean_measles - optim_noise_run.mean_noise
+
+(target_noise_scaling * mean_measles - optim_noise_run.mean_noise)^2 == optim_res[1]
 
 
 #%%
@@ -114,11 +164,11 @@ enddates_vec = calculate_all_ews_enddates(
 optim_noise_run = CSDNoise.recreate_noise_vecs(
     measles_dynamical_noise_spec,
     optim_res.location[1],
-    1 - optim_res.location[1],
     measles_spec[1],
     enddates_vec
 )
 
+#%%
 filtered_seir_results = trim_seir_results(
     measles_ensemble_data.seir_results,
     enddates_vec
@@ -180,7 +230,7 @@ using GLMakie
 #%%
 fig = Figure()
 ax = Axis(fig[1, 1]; title = "Rubella Noise Incidence (8x)")
-for res in measles_noise_8x_vecs.incidence
+for res in optim_noise_run.incidence
     lines!(ax, res)
 end
 ax2 = Axis(fig[2, 1]; title = "Measles Incidence")

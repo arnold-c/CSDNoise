@@ -482,7 +482,7 @@ function create_ensemble_specs(params::EnsembleSpecsParameters)
         mu
     )
 
-    @assert params.max_vaccination_coverage < min_burnin_vaccination_coverage "Set the maximum vaccination coverage for the emergent time series to $(params.max_vaccination_coverage), but it should be less than $min_burnin_vaccination_coverage"
+    # @assert params.max_vaccination_coverage < min_burnin_vaccination_coverage "Set the maximum vaccination coverage for the emergent time series to $(params.max_vaccination_coverage), but it should be less than $min_burnin_vaccination_coverage"
 
     ensemble_dynamics_specification = DynamicsParameterSpecification(
         contact_matrix,

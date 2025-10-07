@@ -52,6 +52,7 @@ include("./types/optimization-types.jl")
 # Simulation core
 include("./simulation/transmission-functions.jl")
 include("./constants/dynamics-constants_calculated.jl") # depends on transmission-functions
+include("./simulation/endemic-equilibrium.jl")
 include("./simulation/seir-model.jl")
 include("./simulation/seir-mean-incidence.jl")
 include("./simulation/trim-seir-results.jl")

@@ -71,6 +71,7 @@ include("./noise/noise-generation.jl")
 include("./noise/noise-mean-incidence.jl")
 include("./noise/noise-parameters-optimization.jl")
 include("./noise/noise-recreation.jl")
+include("./noise/noise_dynamics_parameters-creation.jl")
 
 # Vaccination
 include("./vaccination/vaccination-distribution-sample.jl")

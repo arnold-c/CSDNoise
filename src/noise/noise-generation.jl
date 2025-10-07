@@ -46,6 +46,8 @@ end
 function create_noise_vecs(
         noise_specification::DynamicalNoise,
         ensemble_specification::EnsembleSpecification,
+        noise_dynamics_parameter_specification::DynamicsParameterSpecification,
+        endemic_props_result::Union{Try.Ok, Try.Err},
         enddates_vec::Vector{Int64};
         seed = 1234,
         kwargs...,
@@ -53,75 +55,25 @@ function create_noise_vecs(
     seed *= 10
 
     @unpack state_parameters,
-        dynamics_parameter_specification, time_parameters,
-        nsims =
-        ensemble_specification
+        time_parameters,
+        nsims = ensemble_specification
     @unpack tlength = time_parameters
+    @unpack init_states = state_parameters
+    @unpack N = init_states
 
     @assert nsims == length(enddates_vec) "Number of simulations must match number of endpoints"
 
-    @unpack init_states = state_parameters
-    @unpack N = init_states
     @unpack noise_mean_scaling = noise_specification
 
     init_states_sv = StaticArrays.SVector(init_states)
 
-    noise_beta_force = if noise_specification.correlation == "none"
-        0.0
-    else
-        dynamics_parameter_specification.beta_force
-    end
-
-    noise_seasonality = if noise_specification.correlation == "out-of-phase"
-        if LightSumTypes.variant(dynamics_parameter_specification.seasonality) isa CosineSeasonality
-            SeasonalityFunction(SineSeasonality())
-        elseif LightSumTypes.variant(dynamics_parameter_specification.seasonality) isa SineSeasonality
-            SeasonalityFunction(CosineSeasonality())
-        else
-            dynamics_parameter_specification.seasonality
-        end
-    else
-        dynamics_parameter_specification.seasonality
-    end
-
-    noise_gamma = 1 / noise_specification.duration_infection
-    noise_sigma = 1 / noise_specification.latent_period
-
-    noise_beta_mean = calculate_beta(
-        noise_specification.R_0,
-        noise_sigma,
-        noise_gamma,
-        dynamics_parameter_specification.mu,
-        N
-    )
-
-    noise_dynamics_parameter_specification = DynamicsParameterSpecification(
-        dynamics_parameter_specification.contact_matrix,
-        noise_beta_mean,
-        noise_beta_force,
-        noise_seasonality,
-        noise_sigma,
-        noise_gamma,
-        dynamics_parameter_specification.mu,
-        dynamics_parameter_specification.annual_births_per_k,
-        calculate_import_rate(
-            dynamics_parameter_specification.mu,
-            noise_specification.R_0,
-            N
-        ),
-        noise_specification.R_0,
-        noise_specification.min_vaccination_coverage,
-        noise_specification.max_vaccination_coverage,
-        noise_specification.min_vaccination_coverage,
-        noise_specification.max_vaccination_coverage,
-    )
 
     # Generate a single long vec of beta values that will be trimmed
     # for each simulation as beta doesn't have any stochasticity itself
     beta_vec = Vector{Float64}(undef, tlength)
     calculate_beta_amp!(
         beta_vec,
-        dynamics_parameter_specification,
+        noise_dynamics_parameter_specification,
         time_parameters
     )
 

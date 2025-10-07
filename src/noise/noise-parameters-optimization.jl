@@ -56,7 +56,7 @@ function optimize_dynamic_noise_params_wrapper(
         ews_enddate_type::EWSEndDateType,
         dynamical_noise_spec::DynamicalNoiseSpecification,
         ensemble_specification::EnsembleSpecification,
-        optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters(),
+        optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters();
         verbose = false
     ) where {T <: AbstractThresholds}
 
@@ -135,8 +135,7 @@ function optimize_dynamic_noise_params(
         verbose = false,
     )
 
-    @unpack vaccination_bounds,
-        susceptible_bounds = dynamical_noise_spec
+    @unpack vaccination_bounds = dynamical_noise_spec
 
     @unpack n_sobol_points, local_algorithm,
         xtol_rel,
@@ -149,38 +148,41 @@ function optimize_dynamic_noise_params(
     if verbose
         println("Target noise level: $target_noise")
         println("Vaccination bounds: $vaccination_bounds")
-        println("Susceptible proportion bounds: $susceptible_bounds")
         println("Starting multistart optimization with $n_sobol_points points...")
     end
 
     # Pre-extract ensemble specification components to avoid repeated unpacking
     N = ensemble_specification.state_parameters.init_states.N
+    dynamics_param_spec = ensemble_specification.dynamics_parameter_specification
 
     # Define objective function: minimize squared difference from target
     objective = let target_noise = target_noise,
             dynamical_noise_spec = dynamical_noise_spec,
             ensemble_specification = ensemble_specification,
             enddates_vec = enddates_vec,
-            N = N
+            N = N,
+            dynamics_param_spec = dynamics_param_spec,
+            verbose = verbose
         function (params)
             vaccination_coverage = params[1]
-            susceptible_proportion = 1 - vaccination_coverage
 
             # Ensure susceptible proportion is valid and will result in positive compartments
             # Use stricter bounds to prevent numerical issues with very small populations
             min_safe_prop = max(1.0 / N, 0.001)  # At least 1 person or 0.1%, whichever is larger
             max_safe_prop = min(1.0 - 1.0 / N, 0.999)  # At most N-1 people or 99.9%, whichever is smaller
 
-            if susceptible_proportion <= min_safe_prop || susceptible_proportion >= max_safe_prop
-                return 1.0e10  # Large penalty for unsafe proportions
+            # Check if endemic equilibrium exists (R_eff > 1)
+            R_eff = dynamics_param_spec.R_0 * (1.0 - vaccination_coverage)
+            if R_eff <= 1.0
+                return 1.0e10  # Large penalty for vaccination coverage that eliminates endemic equilibrium
             end
 
             noise_level = calculate_mean_dynamical_noise(
                 dynamical_noise_spec,
                 vaccination_coverage,
-                susceptible_proportion,
                 ensemble_specification,
-                enddates_vec
+                enddates_vec;
+                verbose = verbose
             )
 
             # Return squared error from target
@@ -226,16 +228,16 @@ function optimize_dynamic_noise_params(
         optimized_noise = calculate_mean_dynamical_noise(
             dynamical_noise_spec,
             optimal_vaccination_coverage,
-            optimal_susceptible_proportion,
             ensemble_specification,
-            enddates_vec
+            enddates_vec,
         )
+
         error_msg = "Unsuccessful optimization." *
             "\nReturn code: $(result.ret)" *
             "\nAbsolute difference: $(sqrt(result.value))" *
             "\nTarget value: $(target_noise)" *
             "\nOptimized value: $(optimized_noise)" *
-            "\nOptimization parameters: Vax. prop = $(optimal_vaccination_coverage), Sus. prop = $(optimal_susceptible_proportion)"
+            "\nOptimization parameters: Vax. prop = $(optimal_vaccination_coverage)"
 
 
         error(error_msg)

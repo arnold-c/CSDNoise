@@ -70,9 +70,8 @@ function calculate_endemic_equilibrium_proportions(
     R_eff = R_0 * (1.0 - vaccination_coverage)
 
     if R_eff <= 1.0
-        error(
-            "Effective R₀ must be > 1 for endemic equilibrium. Got R_eff = R₀(1 - ρ) = $R_eff. " *
-                "Either increase R₀ or decrease vaccination coverage ρ."
+        return Try.Err(
+            "Effective R₀ must be > 1 for endemic equilibrium. Got R_eff = R₀(1 - ρ) = $R_eff. "
         )
     end
 
@@ -88,10 +87,12 @@ function calculate_endemic_equilibrium_proportions(
         error("Calculated negative recovered proportion. Check parameter consistency.")
     end
 
-    return (
-        s_prop = s_prop,
-        e_prop = e_prop,
-        i_prop = i_prop,
-        r_prop = r_prop,
+    return Try.Ok(
+        (
+            s_prop = s_prop,
+            e_prop = e_prop,
+            i_prop = i_prop,
+            r_prop = r_prop,
+        )
     )
 end

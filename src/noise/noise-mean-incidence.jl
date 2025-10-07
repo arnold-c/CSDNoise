@@ -45,17 +45,17 @@ mean_noise = calculate_mean_dynamical_noise(
 function calculate_mean_dynamical_noise(
         dynamical_noise_spec::DynamicalNoiseSpecification,
         mean_vaccination_coverage,
-        susceptible_proportion,
         ensemble_specification::EnsembleSpecification,
-        enddates_vec
+        enddates_vec;
+        verbose = false
     )
 
     noise_result = recreate_noise_vecs(
         dynamical_noise_spec,
         mean_vaccination_coverage,
-        susceptible_proportion,
         ensemble_specification,
-        enddates_vec,
+        enddates_vec;
+        verbose = verbose
     )
 
     return noise_result.mean_noise

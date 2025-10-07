@@ -466,7 +466,6 @@ function create_ensemble_specs(params::EnsembleSpecsParameters)
         params.sigma,
         params.gamma,
         mu,
-        params.ensemble_state_specification.init_states.N
     )
     epsilon = calculate_import_rate(
         mu,

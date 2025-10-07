@@ -6,59 +6,55 @@ export calculate_beta,
     calculate_import_rate
 
 """
-    calculate_beta(R_0, sigma, gamma, mu, N)
+    calculate_beta(R_0, sigma, gamma, mu)
 
 Calculate the transmission rate beta for an SEIR model given R_0 and other parameters.
 
 For an SEIR model with a single population:
-R_0 = (β * σ * N) / ((σ + μ) * (γ + μ))
+R_0 = (β * σ) / ((σ + μ) * (γ + μ))
 
 Solving for β:
-β = R_0 * (σ + μ) * (γ + μ) / (σ * N)
+β = R_0 * (σ + μ) * (γ + μ) / σ
 
 # Arguments
 - `R_0`: Basic reproduction number
 - `sigma`: Rate of progression from E to I (1/latent_period)
 - `gamma`: Recovery rate (1/infectious_period)
 - `mu`: Death rate
-- `N`: Population size
 """
 function calculate_beta(
         R_0::Float64,
         sigma::Float64,
         gamma::Float64,
-        mu::Float64,
-        N::Int64
+        mu::Float64
     )::Float64
-    return R_0 * (sigma + mu) * (gamma + mu) / (sigma * N)
+    return R_0 * (sigma + mu) * (gamma + mu) / sigma
 end
 
 """
-    calculate_gamma(R_0, beta, sigma, mu, N)
+    calculate_gamma(R_0, beta, sigma, mu)
 
 Calculate the recovery rate gamma for an SEIR model given R_0, beta, and other parameters.
 
 For an SEIR model with a single population:
-R_0 = (β * σ * N) / ((σ + μ) * (γ + μ))
+R_0 = (β * σ) / ((σ + μ) * (γ + μ))
 
 Solving for γ:
-γ = (β * σ * N) / (R_0 * (σ + μ)) - μ
+γ = (β * σ) / (R_0 * (σ + μ)) - μ
 
 # Arguments
 - `R_0`: Basic reproduction number
 - `beta`: Transmission rate
 - `sigma`: Rate of progression from E to I (1/latent_period)
 - `mu`: Death rate
-- `N`: Population size
 """
 function calculate_gamma(
         R_0::Float64,
         beta::Float64,
         sigma::Float64,
-        mu::Float64,
-        N::Int64
+        mu::Float64
     )::Float64
-    gamma = (beta * sigma * N) / (R_0 * (sigma + mu)) - mu
+    gamma = (beta * sigma) / (R_0 * (sigma + mu)) - mu
 
     if gamma <= 0
         error("Calculated gamma is non-positive. Check parameter consistency.")
@@ -160,24 +156,43 @@ function calculateReffective_t!(
 end
 
 """
-    calculateReffective(beta_t, dynamics_params, S)
+    calculateReffective(beta_t, dynamics_params, S, N)
 
 Calculate the effective reproduction number, R_eff, for a given set of parameters.
-By passing S instead of N to calculateR0 it is essentially the same as multiply R0 by
-the proportion of the population susceptible.
+R_eff = R_0 * (S / N), where R_0 is calculated from beta and other parameters.
 """
 function calculateReffective(
         beta_t::Float64,
-        dynamics_params::DynamicsParameters,
+        dynamics_params::Union{DynamicsParameters, DynamicsParameterSpecification},
         S::Int64,
+        N::Int64
     )::Float64
-    Reff = calculateR0(beta_t, dynamics_params, S)
+    R_0 = calculateR0(beta_t, dynamics_params)
+    Reff = R_0 * (S / N)
 
     return Reff
 end
 
 """
-    calculateR0(beta, dynamics_params, N)
+    calculateReffective(beta_t, dynamics_params, vaccination_coverage)
+
+Calculate the effective reproduction number, R_eff, for a given set of parameters.
+R_eff = R_0 * (1 - vaccination_coverage), where R_0 is calculated from beta and other parameters.
+"""
+function calculateReffective(
+        beta_t::Float64,
+        dynamics_params::Union{DynamicsParameters, DynamicsParameterSpecification},
+        vaccination_coverage::Float64,
+    )::Float64
+    R_0 = calculateR0(beta_t, dynamics_params)
+    Reff = R_0 * (1 - vaccination_coverage)
+
+    return Reff
+end
+
+
+"""
+    calculateR0(beta, dynamics_params)
 
 Calculate the basic reproduction number R_0 for an SEIR model using a DynamicsParameters struct.
 
@@ -187,37 +202,34 @@ and calls the main calculateR0 function.
 # Arguments
 - `beta`: Transmission rate
 - `dynamics_params`: DynamicsParameters struct containing sigma, gamma, and mu
-- `N`: Population size
 
 # Returns
 - `Float64`: The basic reproduction number R_0
 """
 function calculateR0(
         beta::Float64,
-        dynamics_params::DynamicsParameters,
-        N::Int64
+        dynamics_params::Union{DynamicsParameters, DynamicsParameterSpecification}
     )
     sigma = dynamics_params.sigma
     gamma = dynamics_params.gamma
     mu = dynamics_params.mu
-    R_0 = calculateR0(beta, sigma, gamma, mu, N)
+    R_0 = calculateR0(beta, sigma, gamma, mu)
     return R_0
 end
 
 """
-    calculateR0(beta, sigma, gamma, mu, N)
+    calculateR0(beta, sigma, gamma, mu)
 
 Calculate the basic reproduction number R_0 for an SEIR model.
 
 For an SEIR model with a single population:
-R_0 = (β * σ * N) / ((σ + μ) * (γ + μ))
+R_0 = (β * σ) / ((σ + μ) * (γ + μ))
 
 # Arguments
 - `beta`: Transmission rate
 - `sigma`: Rate of progression from E to I (1/latent_period)
 - `gamma`: Recovery rate (1/infectious_period)
 - `mu`: Death rate
-- `N`: Population size
 
 # Returns
 - `Float64`: The basic reproduction number R_0
@@ -226,10 +238,9 @@ R_0 = (β * σ * N) / ((σ + μ) * (γ + μ))
         beta::Float64,
         sigma::Float64,
         gamma::Float64,
-        mu::Float64,
-        N::Int64
+        mu::Float64
     )::Float64
-    return (beta * sigma * N) / ((sigma + mu) * (gamma + mu))
+    return (beta * sigma) / ((sigma + mu) * (gamma + mu))
 end
 
 """

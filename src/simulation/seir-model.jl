@@ -112,7 +112,6 @@ function seir_mod!(
         epsilon = dynamics_params.epsilon
         sigma = dynamics_params.sigma
         gamma = dynamics_params.gamma
-        R_0 = dynamics_params.R_0
         timestep = time_params.tstep
         tlength = length(inc_vec)
         burnin_days = time_params.burnin
@@ -123,6 +122,7 @@ function seir_mod!(
             beta_vec[1],
             dynamics_params,
             states[1],
+            states[5],
         )
     end
 
@@ -153,6 +153,7 @@ function seir_mod!(
             beta_vec[i],
             dynamics_params,
             state_vec[i][1],
+            state_vec[i][5],
         )
     end
 
@@ -186,7 +187,7 @@ function seir_mod_loop(
         mu_N_timestep = mu_timestep * N
 
         # Pre-compute all probabilities once
-        contact_prob = convert_rate_to_prob(beta_t * I * timestep)
+        contact_prob = convert_rate_to_prob(beta_t * I * timestep / N)
         import_prob = convert_rate_to_prob(epsilon_timestep)
         death_prob = convert_rate_to_prob(mu_timestep)  # Reuse for all death processes
         latent_prob = convert_rate_to_prob(sigma_timestep)

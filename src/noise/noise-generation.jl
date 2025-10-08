@@ -95,12 +95,14 @@ function create_noise_vecs(
         )
 
         local beta_worker_vec = @view(beta_vec[1:enddate])
+        local Reff_worker_vec = Vector{Float64}(undef, enddate)
 
         _calculate_dynamic_noise_values!(
             incidence_vecs,
             Reff_vecs,
             mean_dynamical_noise_vec,
             mean_poisson_noise_vec,
+            Reff_worker_vec,
             beta_worker_vec,
             init_states_sv,
             noise_dynamics_parameters,
@@ -116,14 +118,14 @@ function create_noise_vecs(
     mean_poisson_noise = StatsBase.mean(mean_poisson_noise_vec)
     mean_noise = mean_dynamical_noise + mean_poisson_noise
 
-    return (
-        NoiseRun(
+    return NoiseRun(
+        DynamicalNoiseRun(
             incidence = incidence_vecs,
+            Reff = Reff_vecs,
             mean_noise = mean_noise,
             mean_poisson_noise = mean_poisson_noise,
             mean_dynamic_noise = mean_dynamical_noise
-        ),
-        Reff_vecs,
+        )
     )
 end
 
@@ -170,10 +172,10 @@ function create_noise_vecs(
     @assert isapprox(mean_incidence, mean_noise; atol = 1.0e-3)
 
     return NoiseRun(
-        incidence = incidence_vecs,
-        mean_noise = mean_noise,
-        mean_poisson_noise = mean_noise,
-        mean_dynamic_noise = 0.0
+        PoissonNoiseRun(
+            incidence = incidence_vecs,
+            mean_noise = mean_noise,
+        )
     )
 end
 
@@ -182,6 +184,7 @@ function _calculate_dynamic_noise_values!(
         Reff_vecs,
         mean_dynamical_noise_vec,
         mean_poisson_noise_vec,
+        Reff_worker_vec,
         beta_worker_vec,
         init_states_sv,
         noise_dynamics_parameters,
@@ -193,7 +196,6 @@ function _calculate_dynamic_noise_values!(
     @no_escape begin
         seir_worker_vec = @alloc(StaticArrays.SVector{5, Int64}, enddate)
         incidence_worker_vec = @alloc(Int64, enddate)
-        Reff_worker_vec = @alloc(Float64, enddate)
 
         seir_mod!(
             seir_worker_vec,
@@ -225,7 +227,7 @@ function _calculate_dynamic_noise_values!(
         incidence_vecs[sim] = combined_noise_vec
         mean_dynamical_noise_vec[sim] = mean_dynamical_noise_incidence
         mean_poisson_noise_vec[sim] = mean_poisson_noise
-        Reff_vecs[sim] = copy(Reff_worker_vec)
+        Reff_vecs[sim] = Reff_worker_vec
     end
     return nothing
 end

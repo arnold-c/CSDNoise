@@ -52,18 +52,11 @@ noise_result = recreate_noise_vecs(
 """
 function recreate_noise_vecs(
         dynamical_noise_spec::DynamicalNoiseSpecification,
-        mean_vaccination_coverage,
+        vaccination_coverage,
         ensemble_specification::EnsembleSpecification,
         enddates_vec;
         verbose = false
     )
-    @unpack R0,
-        latent_period,
-        duration_infection,
-        correlation,
-        poisson_component,
-        max_vaccination_range = dynamical_noise_spec
-
     # Create final EnsembleSpecification with optimal parameters for verification
     @unpack state_parameters,
         dynamics_parameter_specification,
@@ -73,19 +66,9 @@ function recreate_noise_vecs(
     @unpack init_states, init_state_props = state_parameters
     @unpack N = init_states
 
-    min_vaccination_coverage, max_vaccination_coverage = calculate_min_max_vaccination_range(
-        mean_vaccination_coverage,
-        max_vaccination_range,
-    )
-
     updated_dynamical_noise_spec = DynamicalNoise(
-        R0,
-        latent_period,
-        duration_infection,
-        correlation,
-        poisson_component,
-        min_vaccination_coverage,
-        max_vaccination_coverage,
+        dynamical_noise_spec,
+        vaccination_coverage
     )
 
     updated_dynamics_parameter_specification = recreate_noise_dynamics_spec(
@@ -96,13 +79,13 @@ function recreate_noise_vecs(
     # Calculate endemic equilibrium proportions if dynamics_parameter_specification is provided
     endemic_props_result = calculate_endemic_equilibrium_proportions(
         updated_dynamics_parameter_specification,
-        mean_vaccination_coverage
+        vaccination_coverage
     )
 
     updated_state_parameters = if Try.isok(endemic_props_result)
         endemic_props = Try.unwrap(endemic_props_result)
-        StateParameters(
-            ; N = N,
+        StateParameters(;
+            N = N,
             s_prop = endemic_props.s_prop,
             e_prop = endemic_props.e_prop,
             i_prop = endemic_props.i_prop,
@@ -115,7 +98,7 @@ function recreate_noise_vecs(
 
         StateParameters(
             ; N = N,
-            s_prop = 1 - mean_vaccination_coverage,
+            s_prop = 1 - vaccination_coverage,
             e_prop = 0.0,
             i_prop = 0.0
         )
@@ -130,10 +113,30 @@ function recreate_noise_vecs(
         dirpath
     )
 
+    updated_dynamics_parameters = DynamicsParameters(
+        updated_dynamics_parameter_specification.contact_matrix,
+        updated_dynamics_parameter_specification.beta_mean,
+        updated_dynamics_parameter_specification.beta_force,
+        updated_dynamics_parameter_specification.seasonality,
+        updated_dynamics_parameter_specification.sigma,
+        updated_dynamics_parameter_specification.gamma,
+        updated_dynamics_parameter_specification.mu,
+        updated_dynamics_parameter_specification.annual_births_per_k,
+        updated_dynamics_parameter_specification.epsilon,
+        updated_dynamics_parameter_specification.R_0,
+        vaccination_coverage,
+        vaccination_coverage,
+        vaccination_coverage,
+        vaccination_coverage,
+        vaccination_coverage,
+        vaccination_coverage
+    )
+
+
     noise_result = create_noise_vecs(
         updated_dynamical_noise_spec,
         updated_ensemble_specification,
-        updated_dynamics_parameter_specification,
+        updated_dynamics_parameters,
         endemic_props_result,
         enddates_vec,
     )

@@ -4,6 +4,53 @@ export NoiseSpecification,
     DynamicalNoiseSpecification,
     NoiseVaccinationOptimizationParameters
 
+struct DynamicalNoiseSpecification
+    R_0::Float64
+    latent_period::Int64
+    duration_infection::Int64
+    correlation::String
+    poisson_component::Float64
+    vaccination_bounds::Vector{Float64}
+    function DynamicalNoiseSpecification(
+            R_0::Float64,
+            latent_period::Int64,
+            duration_infection::Int64,
+            correlation::String,
+            poisson_component::Float64,
+            vaccination_bounds::Vector{Float64},
+        )
+
+        @assert length(vaccination_bounds) == 2
+        @assert vaccination_bounds[1] < vaccination_bounds[2]
+        return new(
+            R_0,
+            latent_period,
+            duration_infection,
+            correlation,
+            poisson_component,
+            vaccination_bounds,
+        )
+    end
+end
+
+function DynamicalNoiseSpecification(;
+        R_0::Float64,
+        latent_period::Int64,
+        duration_infection::Int64,
+        correlation::String,
+        poisson_component::Float64,
+        vaccination_bounds::Vector{Float64} = [0.0, 1.0],
+    )
+    return DynamicalNoiseSpecification(
+        R_0,
+        latent_period,
+        duration_infection,
+        correlation,
+        poisson_component,
+        vaccination_bounds,
+    )
+end
+
 abstract type AbstractNoiseSpecification end
 
 Base.@kwdef struct PoissonNoise
@@ -16,72 +63,26 @@ Base.@kwdef struct DynamicalNoise
     duration_infection::Int64
     correlation::String
     noise_mean_scaling::Float64
-    min_vaccination_coverage::Float64
-    max_vaccination_coverage::Float64
+    vaccination_coverage::Float64
+end
+
+function DynamicalNoise(
+        dynamical_noise_specification::DynamicalNoiseSpecification,
+        vaccination_coverage
+    )
+    @assert vaccination_coverage >= 0.0 && vaccination_coverage <= 1.0
+    return DynamicalNoise(
+        R_0 = dynamical_noise_specification.R_0,
+        latent_period = dynamical_noise_specification.latent_period,
+        duration_infection = dynamical_noise_specification.duration_infection,
+        correlation = dynamical_noise_specification.correlation,
+        noise_mean_scaling = dynamical_noise_specification.poisson_component,
+        vaccination_coverage = vaccination_coverage
+    )
 end
 
 LightSumTypes.@sumtype NoiseSpecification(PoissonNoise, DynamicalNoise) <: AbstractNoiseSpecification
 
-
-struct DynamicalNoiseSpecification
-    R0::Float64
-    latent_period::Int64
-    duration_infection::Int64
-    correlation::String
-    poisson_component::Float64
-    vaccination_bounds::Vector{Float64}
-    susceptible_bounds::Vector{Float64}
-    max_vaccination_range::Float64
-    function DynamicalNoiseSpecification(
-            R0::Float64,
-            latent_period::Int64,
-            duration_infection::Int64,
-            correlation::String,
-            poisson_component::Float64,
-            vaccination_bounds::Vector{Float64},
-            susceptible_bounds::Vector{Float64},
-            max_vaccination_range::Float64,
-        )
-
-        @assert length(vaccination_bounds) == 2
-        @assert vaccination_bounds[1] < vaccination_bounds[2]
-        @assert length(susceptible_bounds) == 2
-        @assert susceptible_bounds[1] < susceptible_bounds[2]
-        return new(
-            R0,
-            latent_period,
-            duration_infection,
-            correlation,
-            poisson_component,
-            vaccination_bounds,
-            susceptible_bounds,
-            max_vaccination_range
-
-        )
-    end
-end
-
-function DynamicalNoiseSpecification(;
-        R0::Float64,
-        latent_period::Int64,
-        duration_infection::Int64,
-        correlation::String,
-        poisson_component::Float64,
-        vaccination_bounds::Vector{Float64} = [0.0, 1.0],
-        susceptible_bounds::Vector{Float64} = [0.01, 0.99],
-        max_vaccination_range::Float64 = 0.2
-    )
-    return DynamicalNoiseSpecification(
-        R0,
-        latent_period,
-        duration_infection,
-        correlation,
-        poisson_component,
-        vaccination_bounds,
-        susceptible_bounds,
-        max_vaccination_range
-    )
-end
 
 struct NoiseVaccinationOptimizationParameters
     n_sobol_points::Int64

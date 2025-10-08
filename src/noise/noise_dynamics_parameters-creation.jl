@@ -50,10 +50,10 @@ function recreate_noise_dynamics_spec(
             N
         ),
         noise_specification.R_0,
-        noise_specification.min_vaccination_coverage,
-        noise_specification.max_vaccination_coverage,
-        noise_specification.min_vaccination_coverage,
-        noise_specification.max_vaccination_coverage,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
+        noise_specification.vaccination_coverage,
     )
 
     return noise_dynamics_parameter_specification

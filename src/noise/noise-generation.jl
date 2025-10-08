@@ -46,7 +46,7 @@ end
 function create_noise_vecs(
         noise_specification::DynamicalNoise,
         ensemble_specification::EnsembleSpecification,
-        noise_dynamics_parameter_specification::DynamicsParameterSpecification,
+        noise_dynamics_parameters::DynamicsParameters,
         endemic_props_result::Union{Try.Ok, Try.Err},
         enddates_vec::Vector{Int64};
         seed = 1234,
@@ -73,7 +73,7 @@ function create_noise_vecs(
     beta_vec = Vector{Float64}(undef, tlength)
     calculate_beta_amp!(
         beta_vec,
-        noise_dynamics_parameter_specification,
+        noise_dynamics_parameters,
         time_parameters
     )
 
@@ -89,10 +89,6 @@ function create_noise_vecs(
         run_seed = seed + (sim - 1)
         enddate = enddates_vec[sim]
         Random.seed!(run_seed)
-
-        local noise_dynamics_parameters = DynamicsParameters(
-            noise_dynamics_parameter_specification; seed = run_seed
-        )
 
         local beta_worker_vec = @view(beta_vec[1:enddate])
         local Reff_worker_vec = Vector{Float64}(undef, enddate)

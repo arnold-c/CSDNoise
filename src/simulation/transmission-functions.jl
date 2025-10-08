@@ -149,6 +149,7 @@ function calculateReffective_t!(
             beta_vec[i],
             dynamics_params,
             seir_arr[i][1],
+            seir_arr[i][5],
         )
     end
 

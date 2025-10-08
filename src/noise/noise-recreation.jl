@@ -131,9 +131,7 @@ function recreate_noise_vecs(
     )
 
     noise_result = create_noise_vecs(
-        NoiseSpecification(
-            updated_dynamical_noise_spec,
-        ),
+        updated_dynamical_noise_spec,
         updated_ensemble_specification,
         updated_dynamics_parameter_specification,
         endemic_props_result,

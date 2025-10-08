@@ -15,7 +15,7 @@ function StateParameters(N::Int64, init_state_props::Dict)
 end
 
 function StateParameters(;
-        N = 500_00,
+        N = 500_000,
         s_prop = 0.1,
         e_prop = 0.01,
         i_prop = 0.01

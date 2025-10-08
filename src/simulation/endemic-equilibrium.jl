@@ -41,7 +41,7 @@ Calculate endemic equilibrium proportions for an SEIR model with vaccination usi
 - `sigma::Float64`: Rate of progression from exposed to infectious (1/latent period)
 - `gamma::Float64`: Recovery rate (1/infectious period)
 - `mu::Float64`: Birth/death rate
-- `vaccination_coverage::Float64`: Proportion of population vaccinated (must be in [0, 1))
+- `vaccination_coverage::Float64`: Proportion of population vaccinated (must be in [0, 1])
 
 # Returns
 A named tuple containing:
@@ -51,7 +51,7 @@ A named tuple containing:
 - `r_prop`: Proportion recovered at equilibrium
 
 # Errors
-- Throws error if `vaccination_coverage` is not in [0, 1)
+- Throws error if `vaccination_coverage` is not in [0, 1]
 - Throws error if effective R₀ ≤ 1 (no endemic equilibrium exists)
 - Throws error if calculated recovered proportion is negative (parameter inconsistency)
 """
@@ -63,15 +63,15 @@ function calculate_endemic_equilibrium_proportions(
         mu::Float64,
         vaccination_coverage::Float64
     )
-    if vaccination_coverage < 0.0 || vaccination_coverage >= 1.0
-        error("Vaccination coverage rho must be in [0, 1). Got rho = $vaccination_coverage")
+    if vaccination_coverage < 0.0 || vaccination_coverage > 1.0
+        error("Vaccination coverage rho must be in [0, 1]. Got rho = $vaccination_coverage")
     end
 
     R_eff = R_0 * (1.0 - vaccination_coverage)
 
     if R_eff <= 1.0
         return Try.Err(
-            "Effective R₀ must be > 1 for endemic equilibrium. Got R_eff = R₀(1 - ρ) = $R_eff. "
+            "Effective R₀ must be > 1 for endemic equilibrium. Got R_eff = R₀(1 - ρ) = $(round(R_eff; digits = 2)). "
         )
     end
 

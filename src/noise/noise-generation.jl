@@ -83,6 +83,7 @@ function create_noise_vecs(
 
     # Create vector of variable-sized vectors for incidence data
     incidence_vecs = Vector{Vector{Int64}}(undef, nsims)
+    Reff_vecs = Vector{Vector{Float64}}(undef, nsims)
 
     for sim in eachindex(incidence_vecs)
         run_seed = seed + (sim - 1)
@@ -97,6 +98,7 @@ function create_noise_vecs(
 
         _calculate_dynamic_noise_values!(
             incidence_vecs,
+            Reff_vecs,
             mean_dynamical_noise_vec,
             mean_poisson_noise_vec,
             beta_worker_vec,
@@ -114,11 +116,14 @@ function create_noise_vecs(
     mean_poisson_noise = StatsBase.mean(mean_poisson_noise_vec)
     mean_noise = mean_dynamical_noise + mean_poisson_noise
 
-    return NoiseRun(
-        incidence = incidence_vecs,
-        mean_noise = mean_noise,
-        mean_poisson_noise = mean_poisson_noise,
-        mean_dynamic_noise = mean_dynamical_noise
+    return (
+        NoiseRun(
+            incidence = incidence_vecs,
+            mean_noise = mean_noise,
+            mean_poisson_noise = mean_poisson_noise,
+            mean_dynamic_noise = mean_dynamical_noise
+        ),
+        Reff_vecs,
     )
 end
 
@@ -174,6 +179,7 @@ end
 
 function _calculate_dynamic_noise_values!(
         incidence_vecs,
+        Reff_vecs,
         mean_dynamical_noise_vec,
         mean_poisson_noise_vec,
         beta_worker_vec,
@@ -219,6 +225,7 @@ function _calculate_dynamic_noise_values!(
         incidence_vecs[sim] = combined_noise_vec
         mean_dynamical_noise_vec[sim] = mean_dynamical_noise_incidence
         mean_poisson_noise_vec[sim] = mean_poisson_noise
+        Reff_vecs[sim] = copy(Reff_worker_vec)
     end
     return nothing
 end

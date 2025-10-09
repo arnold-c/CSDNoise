@@ -1,43 +1,11 @@
 export create_ensemble_specifications
 
-# struct EnsembleSpecsParameters
-#     burnin_years::Int64
-#     nyears::Int64
-#     annual_births_per_k::Int64
-#     ensemble_state_specification::StateParameters
-#     R_0::Float64
-#     gamma::Float64
-#     sigma::Float64
-#     target_Reff::Float64
-#     target_years::Int64
-#     min_vaccination_coverage::Float64
-#     max_vaccination_coverage::Float64
-#     nsims::Int64
-# end
-# create_ensemble_specs(
-#     EnsembleSpecsParameters(
-#         burnin_years = 5,
-#         tmax_years = 20,
-#         annual_births_per_k = ANNUAL_BIRTHS_PER_K,
-#         ensemble_state_specification = StateParameters(
-#             500_000,
-#             Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95)
-#         ),
-#         R_0 = R0,
-#         gamma = GAMMA,
-#         sigma = SIGMA,
-#         target_Reff = 0.9,
-#         target_years = 10,
-#         min_vaccination_coverage = 0.6,
-#         max_vaccination_coverage = 0.8,
-#         nsims = 100
-#     )
-# )
 function create_ensemble_specifications(
         time_specification,
         state_specification,
         target_disease_dynamics_params::TargetDiseaseDynamicsParameters,
         common_disease_dynamics_params::CommonDiseaseDynamicsParameters,
+        dynamical_noise_specification::DynamicalNoiseSpecification
     )
 
     mu = calculate_mu(common_disease_dynamics_params.births_per_k_pop)
@@ -101,6 +69,7 @@ function create_ensemble_specifications(
         time_specification,
         emergent_dynamics_specification,
         null_dynamics_specification,
+        dynamical_noise_specification,
         common_disease_dynamics_params.nsims,
     )
 

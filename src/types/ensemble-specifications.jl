@@ -6,6 +6,7 @@ Base.@kwdef struct EnsembleSpecification
     time_parameters::SimTimeParameters
     emergent_dynamics_parameter_specification::DynamicsParameterSpecification
     null_dynamics_parameter_specification::DynamicsParameterSpecification
+    dynamical_noise_specification::DynamicalNoiseSpecification
     nsims::Int64
     dirpath::String
 end
@@ -15,6 +16,7 @@ function EnsembleSpecification(
         time_parameters::SimTimeParameters,
         emergent_dynamics_parameter_specification::DynamicsParameterSpecification,
         null_dynamics_parameter_specification::DynamicsParameterSpecification,
+        dynamical_noise_specification::DynamicalNoiseSpecification,
         nsims::Int64,
     )
     dirpath = outdir(
@@ -27,6 +29,9 @@ function EnsembleSpecification(
         "R0_$(emergent_dynamics_parameter_specification.R_0)",
         "latent_period_$(round(1 / emergent_dynamics_parameter_specification.sigma; digits = 2))",
         "infectious_period_$(round(1 / emergent_dynamics_parameter_specification.gamma; digits = 2))",
+        "noise_R0_$(dynamical_noise_specification.R_0)",
+        "noise_latent_period_$(round(dynamical_noise_specification.latent_period; digits = 2))",
+        "noise_infectious_period_$(round(dynamical_noise_specification.duration_infection; digits = 2))",
         "min_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.min_burnin_vaccination_coverage)",
         "max_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.max_burnin_vaccination_coverage)",
         "min_post_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.min_post_burnin_vaccination_coverage)",
@@ -43,6 +48,7 @@ function EnsembleSpecification(
         time_parameters,
         emergent_dynamics_parameter_specification,
         null_dynamics_parameter_specification,
+        dynamical_noise_specification,
         nsims,
         dirpath,
     )

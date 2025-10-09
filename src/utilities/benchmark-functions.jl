@@ -1,7 +1,6 @@
 # Common benchmarking functions that can be reused across scripts
 
 export generate_ensemble_data,
-    generate_single_ensemble,
     calculate_scenarios,
     calculate_grid_points,
     compare_optimization_results,

@@ -1,4 +1,5 @@
 export SEIRRun,
+    EnsembleSEIRRun,
     NoiseRun
 
 
@@ -6,6 +7,11 @@ Base.@kwdef struct SEIRRun
     states::Vector{StaticArrays.SVector{5, Int64}}
     incidence::Vector{Int64}
     Reff::Vector{Float64}
+end
+
+Base.@kwdef struct EnsembleSEIRRun
+    emergent_seir_run::StructVector{SEIRRun}
+    null_seir_run::StructVector{SEIRRun}
 end
 
 abstract type AbstractNoiseRun end

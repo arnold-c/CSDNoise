@@ -55,6 +55,7 @@ include("./constants/dynamics-constants_calculated.jl") # depends on transmissio
 include("./simulation/endemic-equilibrium.jl")
 include("./simulation/seir-model.jl")
 include("./simulation/seir-mean-incidence.jl")
+include("./simulation/simulate-ensemble-seir-results.jl")
 include("./simulation/trim-seir-results.jl")
 
 # Shared utilities (used across multiple modules)

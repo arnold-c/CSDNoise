@@ -76,7 +76,7 @@ measles_spec = create_ensemble_specs(
 
 #%%
 measles_ensemble_data = generate_single_ensemble(
-    measles_spec[1];
+    measles_spec;
     seed = 1234
 )
 

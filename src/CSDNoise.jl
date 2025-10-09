@@ -90,6 +90,7 @@ include("./detection/Reff_thresholds.jl")
 include("./detection/shared_threshold-functions.jl")
 
 # EWS Metrics
+include("./ews-metrics/ews-descriptions.jl")
 include("./ews-metrics/ews-alerts.jl")
 include("./ews-metrics/ews-bandwidths.jl")
 include("./ews-metrics/ews-enddates.jl")

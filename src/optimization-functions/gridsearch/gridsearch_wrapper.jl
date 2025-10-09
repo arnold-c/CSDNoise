@@ -94,6 +94,7 @@ function ews_hyperparam_gridsearch_structvector(
     end
 
     # Run grid search for missing scenarios in batches
+    start_time = Dates.now()
     new_results = evaluate_gridsearch_scenarios(
         missing_scenarios,
         data_arrs;
@@ -103,6 +104,16 @@ function ews_hyperparam_gridsearch_structvector(
         checkpoint_dir = checkpoint_dir,
         verbose = verbose
     )
+    end_time = Dates.now()
+
+    # Wrap in try block just in case the datetime arithmetic fails so it doesn't prevent
+    # results being saved and returned
+    try
+        time_taken = Dates.seconds(end_time - start_time)
+        println(StyledStrings.styled"Took {yellow:$time_taken} seconds to complete {blue:$n_missing} missing scenarios: {green:$(time_taken/n_missing)} seconds per scenario")
+    catch e
+    end
+
 
     # Combine existing and new results
     if !isempty(existing_results)

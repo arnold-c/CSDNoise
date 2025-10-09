@@ -39,6 +39,7 @@ function ews_hyperparam_gridsearch_structvector(
         save_checkpoints = false,
         verbose = true,
         disable_time_check = false,
+        seconds_per_scenario = 0.5
     )
     if !isdir(filedir)
         mkpath(filedir)
@@ -81,7 +82,8 @@ function ews_hyperparam_gridsearch_structvector(
     if n_missing > 0
         if !confirm_gridsearch_run_structvector(
                 missing_scenarios;
-                disable_time_check = disable_time_check
+                disable_time_check = disable_time_check,
+                seconds_per_scenario = seconds_per_scenario
             )
             @info "Grid search cancelled by user"
             return return_results ? existing_results : nothing

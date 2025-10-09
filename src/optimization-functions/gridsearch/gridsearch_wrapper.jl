@@ -30,9 +30,8 @@ function ews_hyperparam_gridsearch_structvector(
             filedir,
             string(Dates.now()) * "_" * gridsearch_filename_base,
         ),
-        # Execution configuration
-        executor = FLoops.ThreadedEx(),
         # Control options
+        use_threads = false,
         force = false,
         return_results = true,
         save_results = true,
@@ -96,12 +95,11 @@ function ews_hyperparam_gridsearch_structvector(
     # Run grid search for missing scenarios in batches
     start_time = Dates.now()
     new_results = evaluate_gridsearch_scenarios(
-        missing_scenarios,
-        data_arrs;
-        executor = executor,
+        missing_scenarios;
         save_results = save_results,
         save_checkpoints = save_checkpoints,
         checkpoint_dir = checkpoint_dir,
+        use_threads = use_threads,
         verbose = verbose
     )
     end_time = Dates.now()

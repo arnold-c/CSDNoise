@@ -3,16 +3,18 @@ export EnsembleSpecification,
 
 Base.@kwdef struct EnsembleSpecification
     state_parameters::StateParameters
-    dynamics_parameter_specification::DynamicsParameterSpecification
     time_parameters::SimTimeParameters
+    emergent_dynamics_parameter_specification::DynamicsParameterSpecification
+    null_dynamics_parameter_specification::DynamicsParameterSpecification
     nsims::Int64
     dirpath::String
 end
 
 function EnsembleSpecification(
         state_parameters::StateParameters,
-        dynamics_parameter_specification::DynamicsParameterSpecification,
         time_parameters::SimTimeParameters,
+        emergent_dynamics_parameter_specification::DynamicsParameterSpecification,
+        null_dynamics_parameter_specification::DynamicsParameterSpecification,
         nsims::Int64,
     )
     dirpath = outdir(
@@ -22,15 +24,15 @@ function EnsembleSpecification(
         "N_$(state_parameters.init_states.N)",
         "r_$(state_parameters.init_state_props.r_prop)",
         "nsims_$(nsims)",
-        "R0_$(dynamics_parameter_specification.R_0)",
-        "latent_period_$(round(1 / dynamics_parameter_specification.sigma; digits = 2))",
-        "infectious_period_$(round(1 / dynamics_parameter_specification.gamma; digits = 2))",
-        "min_burnin_vaccination_coverage_$(dynamics_parameter_specification.min_burnin_vaccination_coverage)",
-        "max_burnin_vaccination_coverage_$(dynamics_parameter_specification.max_burnin_vaccination_coverage)",
-        "min_post_burnin_vaccination_coverage_$(dynamics_parameter_specification.min_post_burnin_vaccination_coverage)",
-        "max_post_burnin_vaccination_coverage_$(dynamics_parameter_specification.max_post_burnin_vaccination_coverage)",
-        "births_per_k_$(dynamics_parameter_specification.annual_births_per_k)",
-        "beta_force_$(dynamics_parameter_specification.beta_force)",
+        "R0_$(emergent_dynamics_parameter_specification.R_0)",
+        "latent_period_$(round(1 / emergent_dynamics_parameter_specification.sigma; digits = 2))",
+        "infectious_period_$(round(1 / emergent_dynamics_parameter_specification.gamma; digits = 2))",
+        "min_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.min_burnin_vaccination_coverage)",
+        "max_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.max_burnin_vaccination_coverage)",
+        "min_post_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.min_post_burnin_vaccination_coverage)",
+        "max_post_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.max_post_burnin_vaccination_coverage)",
+        "births_per_k_$(emergent_dynamics_parameter_specification.annual_births_per_k)",
+        "beta_force_$(emergent_dynamics_parameter_specification.beta_force)",
         "burnin_$(time_parameters.burnin)",
         "tmax_$(time_parameters.tmax)",
         "tstep_$(time_parameters.tstep)",
@@ -38,8 +40,9 @@ function EnsembleSpecification(
 
     return EnsembleSpecification(
         state_parameters,
-        dynamics_parameter_specification,
         time_parameters,
+        emergent_dynamics_parameter_specification,
+        null_dynamics_parameter_specification,
         nsims,
         dirpath,
     )

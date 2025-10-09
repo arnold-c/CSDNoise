@@ -96,22 +96,13 @@ function create_ensemble_specifications(
         nothing,
     )
 
-    emergent_specification = EnsembleSpecification(
+    ensemble_specification = EnsembleSpecification(
         state_specification,
+        time_specification,
         emergent_dynamics_specification,
-        time_specification,
-        common_disease_dynamics_params.nsims,
-    )
-
-    null_specification = EnsembleSpecification(
-        state_specification,
         null_dynamics_specification,
-        time_specification,
         common_disease_dynamics_params.nsims,
     )
 
-    return (;
-        emergent_specification,
-        null_specification,
-    )
+    return ensemble_specification
 end

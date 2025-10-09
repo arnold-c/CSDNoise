@@ -1,5 +1,6 @@
 export CachedSimulationData,
     OptimizationScenario,
+    GridSearchSpecificationVecs,
     GridSearchScenario,
     EWSClassificationResults,
     OptimizationTracker,
@@ -29,44 +30,26 @@ for EWS hyperparameter optimization.
 """
 Base.@kwdef struct OptimizationScenario
     ensemble_specification::EnsembleSpecification
-    null_specification::EnsembleSpecification
-    noise_specification::NoiseSpecification
+    noise_level::Float64
     test_specification::IndividualTestSpecification
     percent_tested::Float64
     ews_metric_specification::EWSMetricSpecification
     ews_enddate_type::EWSEndDateType
     ews_threshold_window::EWSThresholdWindowType
-    ews_threshold_burnin::Dates.Day
     ews_metric::String
 end
 
-function OptimizationScenario(
-        ensemble_specification::EnsembleSpecification,
-        null_specification::EnsembleSpecification,
-        noise_specification::NoiseSpecification,
-        test_specification::IndividualTestSpecification,
-        percent_tested::Float64,
-        ews_metric_specification::EWSMetricSpecification,
-        ews_enddate_type::EWSEndDateType,
-        ews_threshold_window::EWSThresholdWindowType,
-        threshold_burnin::P,
-        ews_metric::String,
-    ) where {P <: Dates.Period}
-
-    ews_threshold_burnin = Dates.Day(round(Dates.days(threshold_burnin)))
-
-    return OptimizationScenario(
-        ensemble_specification,
-        null_specification,
-        noise_specification,
-        test_specification,
-        percent_tested,
-        ews_metric_specification,
-        ews_enddate_type,
-        ews_threshold_window,
-        ews_threshold_burnin,
-        ews_metric,
-    )
+Base.@kwdef struct GridSearchSpecificationVecs
+    ensemble_specification_vec::Vector{EnsembleSpecification}
+    noise_level_vec::Vector{Float64}
+    test_specification_vec::Vector{IndividualTestSpecification}
+    percent_tested_vec::Vector{Float64}
+    ews_metric_specification_vec::Vector{EWSMetricSpecification}
+    ews_enddate_type_vec::Vector{EWSEndDateType}
+    ews_threshold_window_vec::Vector{EWSThresholdWindowType}
+    ews_metric_vec::Vector{String}
+    ews_threshold_quantile_vec::Vector{Float64}
+    ews_consecutive_thresholds_vec::Vector{Int64}
 end
 
 """
@@ -76,52 +59,16 @@ Scenario for grid search including both base scenario and grid parameters.
 """
 Base.@kwdef struct GridSearchScenario
     ensemble_specification::EnsembleSpecification
-    null_specification::EnsembleSpecification
-    noise_specification::NoiseSpecification
+    noise_level::Float64
     test_specification::IndividualTestSpecification
     percent_tested::Float64
     ews_metric_specification::EWSMetricSpecification
     ews_enddate_type::EWSEndDateType
     ews_threshold_window::EWSThresholdWindowType
-    ews_threshold_burnin::Dates.Day
     ews_metric::String
     threshold_quantile::Float64
     consecutive_thresholds::Int64
 end
-
-function GridSearchScenario(
-        ensemble_specification::EnsembleSpecification,
-        null_specification::EnsembleSpecification,
-        noise_specification::NoiseSpecification,
-        test_specification::IndividualTestSpecification,
-        percent_tested::Float64,
-        ews_metric_specification::EWSMetricSpecification,
-        ews_enddate_type::EWSEndDateType,
-        ews_threshold_window::EWSThresholdWindowType,
-        threshold_burnin::P,
-        ews_metric::String,
-        threshold_quantile::Float64,
-        consecutive_thresholds::Int64
-    ) where {P <: Dates.Period}
-
-    ews_threshold_burnin = Dates.Day(round(Dates.days(threshold_burnin)))
-
-    return GridSearchScenario(
-        ensemble_specification,
-        null_specification,
-        noise_specification,
-        test_specification,
-        percent_tested,
-        ews_metric_specification,
-        ews_enddate_type,
-        ews_threshold_window,
-        ews_threshold_burnin,
-        ews_metric,
-        threshold_quantile,
-        consecutive_thresholds
-    )
-end
-
 
 """
     EWSClassificationResults

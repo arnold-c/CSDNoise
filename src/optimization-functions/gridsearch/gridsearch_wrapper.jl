@@ -22,8 +22,7 @@ Reuses functions from multistart optimization where possible.
 - `disable_time_check`: Skip time estimation confirmation (default: false)
 """
 function ews_hyperparam_gridsearch_structvector(
-        specification_vecs,
-        data_arrs;
+        specification_vecs::GridSearchSpecificationVecs;
         # File management
         filedir = outdir("ensemble", "ews-hyperparam-gridsearch"),
         gridsearch_filename_base = "ews-hyperparam-gridsearch-structvector.jld2",

@@ -45,14 +45,12 @@ function scenario_equals_optimization_result(
         result::OptimizationResult
     )::Bool
     return scenario.ensemble_specification == result.ensemble_specification &&
-        scenario.null_specification == result.null_specification &&
-        scenario.noise_specification == result.noise_specification &&
+        scenario.noise_level == result.noise_level &&
         scenario.test_specification == result.test_specification &&
         scenario.percent_tested == result.percent_tested &&
         scenario.ews_metric_specification == result.ews_metric_specification &&
         scenario.ews_enddate_type == result.ews_enddate_type &&
         scenario.ews_threshold_window == result.ews_threshold_window &&
-        scenario.ews_threshold_burnin == result.ews_threshold_burnin &&
         scenario.ews_metric == result.ews_metric &&
         scenario.threshold_quantile == result.threshold_quantile &&
         scenario.consecutive_thresholds == result.consecutive_thresholds
@@ -63,13 +61,11 @@ function scenario_equals_optimization_result(
         result::OptimizationResult
     )::Bool
     return scenario.ensemble_specification == result.ensemble_specification &&
-        scenario.null_specification == result.null_specification &&
-        scenario.noise_specification == result.noise_specification &&
+        scenario.noise_level == result.noise_level &&
         scenario.test_specification == result.test_specification &&
         scenario.percent_tested == result.percent_tested &&
         scenario.ews_metric_specification == result.ews_metric_specification &&
         scenario.ews_enddate_type == result.ews_enddate_type &&
         scenario.ews_threshold_window == result.ews_threshold_window &&
-        scenario.ews_threshold_burnin == result.ews_threshold_burnin &&
         scenario.ews_metric == result.ews_metric
 end

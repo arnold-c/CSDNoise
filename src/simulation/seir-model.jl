@@ -136,7 +136,7 @@ function seir_mod!(
         vaccination_coverage = if i < burnin_days
             dynamics_params.burnin_vaccination_coverage
         else
-            dynamics_params.vaccination_coverage
+            dynamics_params.post_burnin_vaccination_coverage
         end
 
         state_vec[i], inc_vec[i] = seir_mod_loop(

@@ -38,7 +38,7 @@ function EnsembleSpecification(
         "max_post_burnin_vaccination_coverage_$(emergent_dynamics_parameter_specification.max_post_burnin_vaccination_coverage)",
         "births_per_k_$(emergent_dynamics_parameter_specification.annual_births_per_k)",
         "beta_force_$(emergent_dynamics_parameter_specification.beta_force)",
-        "burnin_$(time_parameters.burnin)",
+        "burnin_$(Float64(Dates.days(time_parameters.burnin)))",
         "tmax_$(time_parameters.tmax)",
         "tstep_$(time_parameters.tstep)",
     )

@@ -16,7 +16,9 @@ function ews_objective_function_with_tracking(
     )
     @unpack ews_metric_specification,
         ews_enddate_type,
-        ews_threshold_window, ews_threshold_burnin, ews_metric = scenario
+        ews_threshold_window, ensemble_specification, ews_metric = scenario
+
+    @unpack burnin = ensemble_specification.time_parameters
 
     @unpack testarr,
         null_testarr,
@@ -51,7 +53,7 @@ function ews_objective_function_with_tracking(
             ews_metric_symbol,
             ews_threshold_window,
             threshold_quantile,
-            ews_threshold_burnin,
+            burnin,
         )
 
         detection_index = calculate_ews_trigger_index(
@@ -64,7 +66,7 @@ function ews_objective_function_with_tracking(
             ews_metric_symbol,
             ews_threshold_window,
             threshold_quantile,
-            ews_threshold_burnin,
+            burnin,
         )
 
         null_detection_index = calculate_ews_trigger_index(

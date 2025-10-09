@@ -21,7 +21,7 @@ function calculate_vaccination_rate_to_achieve_Reff(
     @unpack burnin = time_parameters
 
     return calculate_vaccination_rate_to_achieve_Reff(
-        burnin,
+        Float64(Dates.days(burnin)),
         S,
         N,
         target_Reff,
@@ -31,7 +31,7 @@ function calculate_vaccination_rate_to_achieve_Reff(
 end
 
 function calculate_vaccination_rate_to_achieve_Reff(
-        target_days,
+        target_days::Float64,
         S,
         N,
         target_Reff,

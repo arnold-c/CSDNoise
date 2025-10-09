@@ -21,7 +21,7 @@ Creates a `SimTimeParameters` instance with default values suitable for a 20-yea
 with a 5-year burn-in period and daily time steps.
 """
 struct SimTimeParameters
-    burnin::Float64
+    burnin::Dates.Day
     tmin::Float64
     tmax::Float64
     tstep::Float64
@@ -37,9 +37,9 @@ struct SimTimeParameters
             tspan,
             tlength
         )
-        @assert burnin <= tmax
+        @assert Dates.days(burnin) <= tmax
         @assert tmax > tmin + tstep
-        for var in (burnin, tstep)
+        for var in (Dates.days(burnin), tstep)
             @assert var > 0.0
         end
         return new(
@@ -61,7 +61,7 @@ function SimTimeParameters(;
         tstep = 1.0
     )
     return SimTimeParameters(
-        burnin,
+        Dates.Day(burnin),
         tmin,
         tmax,
         tstep,

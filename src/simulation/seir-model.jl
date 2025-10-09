@@ -114,7 +114,7 @@ function seir_mod!(
         gamma = dynamics_params.gamma
         timestep = time_params.tstep
         tlength = length(inc_vec)
-        burnin_days = time_params.burnin
+        burnin_days = Dates.days(time_params.burnin)
 
         state_vec[1] = states
         inc_vec[1] = 0

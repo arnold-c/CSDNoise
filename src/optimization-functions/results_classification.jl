@@ -14,9 +14,10 @@ function calculate_ews_classification_results(
     )
     @unpack ews_metric,
         ews_threshold_window,
-        ews_threshold_burnin,
+        ensemble_specification,
         threshold_quantile,
         consecutive_thresholds = scenario
+    @unpack burnin = ensemble_specification.time_parameters
 
     ews_metric_symbol = Symbol(ews_metric)
 
@@ -37,7 +38,7 @@ function calculate_ews_classification_results(
             ews_metric_symbol,
             ews_threshold_window,
             threshold_quantile,
-            ews_threshold_burnin,
+            burnin,
         )
 
         detection_index = calculate_ews_trigger_index(
@@ -50,7 +51,7 @@ function calculate_ews_classification_results(
             ews_metric_symbol,
             ews_threshold_window,
             threshold_quantile,
-            ews_threshold_burnin,
+            burnin,
         )
 
         null_detection_index = calculate_ews_trigger_index(

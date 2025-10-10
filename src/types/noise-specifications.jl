@@ -50,15 +50,15 @@ LightSumTypes.@sumtype NoiseType(PoissonNoiseType, DynamicalNoiseType) <: Abstra
 
 struct DynamicalNoiseSpecification
     R_0::Float64
-    latent_period::Int64
-    duration_infection::Int64
+    latent_period::Float64
+    duration_infection::Float64
     correlation::String
     poisson_component::Float64
     vaccination_bounds::Vector{Float64}
     function DynamicalNoiseSpecification(
             R_0::Float64,
-            latent_period::Int64,
-            duration_infection::Int64,
+            latent_period::Float64,
+            duration_infection::Float64,
             correlation::String,
             poisson_component::Float64,
             vaccination_bounds::Vector{Float64},
@@ -108,8 +108,8 @@ spec = DynamicalNoiseSpecification(
 """
 function DynamicalNoiseSpecification(;
         R_0::Float64,
-        latent_period::Int64,
-        duration_infection::Int64,
+        latent_period::Float64,
+        duration_infection::Float64,
         correlation::String,
         poisson_component::Float64,
         vaccination_bounds::Vector{Float64} = [0.0, 1.0],
@@ -193,10 +193,10 @@ dyn_noise = DynamicalNoise(
 """
 Base.@kwdef struct DynamicalNoise
     R_0::Float64
-    latent_period::Int64
-    duration_infection::Int64
+    latent_period::Float64
+    duration_infection::Float64
     correlation::String
-    noise_mean_scaling::Float64
+    poisson_component::Float64
     vaccination_coverage::Float64
 end
 
@@ -239,7 +239,7 @@ function DynamicalNoise(
         latent_period = dynamical_noise_specification.latent_period,
         duration_infection = dynamical_noise_specification.duration_infection,
         correlation = dynamical_noise_specification.correlation,
-        noise_mean_scaling = dynamical_noise_specification.poisson_component,
+        poisson_component = dynamical_noise_specification.poisson_component,
         vaccination_coverage = vaccination_coverage
     )
 end

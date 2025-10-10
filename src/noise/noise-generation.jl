@@ -47,7 +47,6 @@ function create_noise_vecs(
         noise_specification::DynamicalNoise,
         ensemble_specification::EnsembleSpecification,
         noise_dynamics_parameters::DynamicsParameters,
-        endemic_props_result::Union{Try.Ok, Try.Err},
         enddates_vec::Vector{Int64};
         seed = 1234,
         kwargs...,
@@ -63,7 +62,7 @@ function create_noise_vecs(
 
     @assert nsims == length(enddates_vec) "Number of simulations must match number of endpoints"
 
-    @unpack noise_mean_scaling = noise_specification
+    @unpack poisson_component = noise_specification
 
     init_states_sv = StaticArrays.SVector(init_states)
 
@@ -102,7 +101,7 @@ function create_noise_vecs(
             beta_worker_vec,
             init_states_sv,
             noise_dynamics_parameters,
-            noise_mean_scaling,
+            poisson_component,
             time_parameters,
             enddate,
             sim,
@@ -151,7 +150,7 @@ function create_noise_vecs(
 
         enddate = enddates_vec[sim]
 
-        @assert length(seir_results.incidence[sim]) == enddate
+        @assert length(seir_results.incidence[sim]) == enddate "The length of the incidence vector ($(length(seir_results.incidence[sim]))) does not match the enddate for noise generation ($enddate). Did you pass in the trimmed seir_results?"
 
         _calculate_poisson_noise_values!(
             incidence_vecs,
@@ -184,7 +183,7 @@ function _calculate_dynamic_noise_values!(
         beta_worker_vec,
         init_states_sv,
         noise_dynamics_parameters,
-        noise_mean_scaling,
+        poisson_component,
         time_parameters,
         enddate,
         sim,
@@ -210,7 +209,7 @@ function _calculate_dynamic_noise_values!(
         _add_poisson_noise!(
             poisson_noise_worker_vec,
             mean_dynamical_noise_incidence,
-            noise_mean_scaling,
+            poisson_component,
         )
 
         mean_poisson_noise = StatsBase.mean(poisson_noise_worker_vec)

@@ -341,7 +341,7 @@ function NoiseVaccinationOptimizationParameters(;
         maxeval::Int64 = 1000,
         xtol_rel::Float64 = 1.0e-3,
         xtol_abs::Float64 = 1.0e-3,
-        atol::Float64 = 1.0e-3
+        atol::Float64 = 1.0e-2
     )
     return NoiseVaccinationOptimizationParameters(
         n_sobol_points,

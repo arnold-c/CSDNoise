@@ -25,6 +25,8 @@ using NLopt: NLopt
 using FLoops: FLoops
 using ProgressMeter: ProgressMeter
 using BangBang: BangBang
+using OhMyThreads: OhMyThreads
+using ChunkSplitters: ChunkSplitters
 using JLD2: JLD2
 using StyledStrings: StyledStrings
 import REPL.TerminalMenus as RTM

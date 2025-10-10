@@ -49,6 +49,7 @@ include("./types/outbreak-specifications.jl")
 include("./types/ews-specifications.jl")
 include("./types/scenario-specifications.jl")
 include("./types/simulation-results.jl")
+include("./types/test-positive-results.jl")
 include("./types/optimization-types.jl")
 
 # Simulation core

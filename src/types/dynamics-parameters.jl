@@ -14,7 +14,29 @@ LightSumTypes.@sumtype SeasonalityFunction(
     SineSeasonality
 ) <: AbstractSeasonalityFunction
 
+"""
+    TargetDiseaseDynamicsParameters
 
+High-level disease dynamics parameters specified by the user for a target disease.
+
+These parameters define the epidemiological characteristics of the disease being modeled
+and the vaccination coverage ranges to explore. They are used to construct a
+`DynamicsParameterSpecification` which contains the derived parameters needed for simulation.
+To calculate the values for the burnin and post-burnin vaccination coverage, you can use the
+`calculate_vaccination_rate_to_achieve_Reff()` function. During the burnin, the max vaccination
+coverage should be above this (it will be set as the lower bound later). After the burnin
+the max vaccination coverage should be less than the calculated value.
+
+# Fields
+- `R_0::Float64`: Basic reproduction number
+- `latent_period_days::Float64`: Duration of latent period in days
+- `infectious_duration_days::Float64`: Duration of infectious period in days
+- `beta_force::Float64`: Forcing amplitude for seasonal transmission
+- `seasonality::SeasonalityFunction`: Type of seasonal forcing function. When `beta_force=0` this has no effect
+- `max_burnin_vaccination_coverage::Float64`: Maximum vaccination coverage during burnin
+- `min_post_burnin_vaccination_coverage::Float64`: Minimum vaccination coverage post-burnin
+- `max_post_burnin_vaccination_coverage::Float64`: Maximum vaccination coverage post-burnin
+"""
 Base.@kwdef struct TargetDiseaseDynamicsParameters
     R_0::Float64
     latent_period_days::Float64

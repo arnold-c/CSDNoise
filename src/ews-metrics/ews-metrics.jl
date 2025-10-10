@@ -30,7 +30,8 @@ metrics = EWSMetrics(spec, my_timeseries)
 ```
 """
 function EWSMetrics(
-        ews_spec::EWSMetricSpecification, timeseries
+        ews_spec::EWSMetricSpecification,
+        timeseries
     )
     aggregated_timeseries = aggregate_timeseries(
         timeseries, ews_spec.aggregation
@@ -46,20 +47,31 @@ function EWSMetrics(
     end
 
     mean_vec = ews_mean(
-        ews_spec.method, aggregated_timeseries, aggregated_bandwidth
+        ews_spec.method,
+        aggregated_timeseries,
+        aggregated_bandwidth
     )
     var_vec = ews_var(
-        ews_spec.method, mean_vec, aggregated_timeseries, aggregated_bandwidth
+        ews_spec.method,
+        mean_vec,
+        aggregated_timeseries,
+        aggregated_bandwidth
     )
     var2_vec = var_vec .^ 2
     sd_vec = sqrt.(var_vec)
     sd3_vec = sd_vec .^ 3
     m3_vec = _ews_moment(
-        ews_spec.method, mean_vec, aggregated_timeseries, 3,
+        ews_spec.method,
+        mean_vec,
+        aggregated_timeseries,
+        3,
         aggregated_bandwidth,
     )
     m4_vec = _ews_moment(
-        ews_spec.method, mean_vec, aggregated_timeseries, 4,
+        ews_spec.method,
+        mean_vec,
+        aggregated_timeseries,
+        4,
         aggregated_bandwidth,
     )
     autocov_vec = ews_autocov(
@@ -214,13 +226,13 @@ function mean_func!(
     tlength = length(timeseries)
     @inbounds for i in eachindex(timeseries)
         if i < bandwidth && i + bandwidth <= tlength
-            mean_vec[i] = mean(@view(timeseries[begin:(i + bandwidth - 1)]))
+            mean_vec[i] = StatsBase.mean(@view(timeseries[begin:(i + bandwidth - 1)]))
         elseif i < bandwidth
-            mean_vec[i] = mean(@view(timeseries[begin:end]))
+            mean_vec[i] = StatsBase.mean(@view(timeseries[begin:end]))
         elseif i + bandwidth > tlength
-            mean_vec[i] = mean(@view(timeseries[(i - bandwidth + 1):end]))
+            mean_vec[i] = StatsBase.mean(@view(timeseries[(i - bandwidth + 1):end]))
         else
-            mean_vec[i] = mean(@view(timeseries[(i - bandwidth + 1):(i + bandwidth - 1)]))
+            mean_vec[i] = StatsBase.mean(@view(timeseries[(i - bandwidth + 1):(i + bandwidth - 1)]))
         end
     end
     return nothing
@@ -259,9 +271,9 @@ function mean_func!(
     )
     @inbounds for i in eachindex(timeseries)
         if i < bandwidth
-            mean_vec[i] = mean(@view(timeseries[begin:i]))
+            mean_vec[i] = StatsBase.mean(@view(timeseries[begin:i]))
         else
-            mean_vec[i] = mean(@view(timeseries[(i - bandwidth + 1):i]))
+            mean_vec[i] = StatsBase.mean(@view(timeseries[(i - bandwidth + 1):i]))
         end
     end
     return nothing

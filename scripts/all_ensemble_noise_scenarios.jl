@@ -50,48 +50,44 @@
 
 #%%
 using CSDNoise
+using Dates
 using GLMakie
 
 #%%
-## Measles + Rubella
-measles_spec = create_ensemble_specs(
-    EnsembleSpecsParameters(
-        burnin_years = 5,
-        tmax_years = 20,
-        annual_births_per_k = ANNUAL_BIRTHS_PER_K,
-        ensemble_state_specification = StateParameters(
-            500_000,
-            Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95)
-        ),
-        R_0 = R0,
-        gamma = GAMMA,
-        sigma = SIGMA,
-        target_Reff = 0.9,
-        target_years = 10,
-        min_vaccination_coverage = 0.6,
-        max_vaccination_coverage = 0.8,
-        nsims = 100
+time_parameters = SimTimeParameters(
+    burnin = Day(5.0 * 365.0),
+    tmin = 0.0,
+    tmax = 365.0 * 20.0,
+    tstep = 1.0
+)
+
+population_state_parameters = StateParameters(
+    500_000,
+    Dict(
+        :s_prop => 0.05,
+        :e_prop => 0.0,
+        :i_prop => 0.0,
+        :r_prop => 0.95
     )
 )
 
-#%%
-measles_ensemble_data = generate_single_ensemble(
-    measles_spec;
-    seed = 1234
+measles_dynamics_parameters = TargetDiseaseDynamicsParameters(;
+    R_0 = 16.0,
+    latent_period_days = 10.0,
+    infectious_duration_days = 8.0,
+    beta_force = 0.0,
+    seasonality = SeasonalityFunction(CosineSeasonality()),
+    min_post_burnin_vaccination_coverage = 0.6,
+    max_post_burnin_vaccination_coverage = 0.8,
+    max_burnin_vaccination_coverage = 1.0
 )
 
-enddates_vec = calculate_all_ews_enddates(
-    measles_ensemble_data.Reff_thresholds,
-    EWSEndDateType(ReffStart())
+common_disease_dynamics_parameters = CommonDiseaseDynamicsParameters(
+    births_per_k_pop = 27.0,
+    nsims = 100,
+    burnin_target_Reff = 0.9
 )
 
-inc = trim_seir_results(
-    measles_ensemble_data.seir_results,
-    enddates_vec,
-)
-
-
-#%%
 measles_dynamical_noise_spec = DynamicalNoiseSpecification(
     R_0 = 5.0,
     latent_period = 7,
@@ -100,17 +96,50 @@ measles_dynamical_noise_spec = DynamicalNoiseSpecification(
     poisson_component = 0.15,
 )
 
+measles_ensemble_specification = create_ensemble_specifications(
+    time_parameters,
+    population_state_parameters,
+    measles_dynamics_parameters,
+    common_disease_dynamics_parameters,
+    measles_dynamical_noise_spec
+)
 
 #%%
-target_noise_scaling = 1.0
+calculate_vaccination_rate_to_achieve_Reff(
+    time_parameters,
+    population_state_parameters,
+    1.0,
+    16.0,
+    calculate_mu(27)
+)
+
+#%%
+measles_ensemble_data = generate_single_ensemble(
+    measles_ensemble_specification;
+    seed = 1234
+)
+
+#%%
+measles_Reff_thresholds = calculate_all_Reff_thresholds(measles_ensemble_data)
+
+enddates_vec = calculate_all_ews_enddates(
+    measles_Reff_thresholds,
+    EWSEndDateType(ReffStart())
+)
+
+inc = trim_seir_results(
+    measles_ensemble_data.emergent_seir_run,
+    enddates_vec,
+)
+
+#%%
+target_noise_scaling = 8.0
 
 optim_res = optimize_dynamic_noise_params_wrapper(
+    measles_ensemble_specification,
+    inc,
+    enddates_vec,
     target_noise_scaling,
-    measles_ensemble_data.seir_results,
-    measles_ensemble_data.Reff_thresholds,
-    EWSEndDateType(ReffStart()),
-    measles_dynamical_noise_spec,
-    measles_spec[1],
     NoiseVaccinationOptimizationParameters(;
         atol = 0.1
     );
@@ -119,11 +148,10 @@ optim_res = optimize_dynamic_noise_params_wrapper(
 
 #%%
 optim_noise_run = CSDNoise.recreate_noise_vecs(
-    measles_dynamical_noise_spec,
+    measles_ensemble_specification,
+    enddates_vec,
     optim_res.location[1],
-    measles_spec[1],
-    enddates_vec
-);
+)
 
 fig = Figure()
 ax = Axis(fig[1, 1]; title = "Rubella Noise Incidence ($(target_noise_scaling)x)")

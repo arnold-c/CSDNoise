@@ -1,4 +1,7 @@
-export NoiseSpecification,
+export NoiseType,
+    PoissonNoiseType,
+    DynamicalNoiseType,
+    NoiseSpecification,
     PoissonNoise,
     DynamicalNoise,
     DynamicalNoiseSpecification,
@@ -39,6 +42,12 @@ spec = DynamicalNoiseSpecification(
 )
 ```
 """
+abstract type AbstractNoiseType end
+struct PoissonNoiseType end
+struct DynamicalNoiseType end
+
+LightSumTypes.@sumtype NoiseType(PoissonNoiseType, DynamicalNoiseType) <: AbstractNoiseType
+
 struct DynamicalNoiseSpecification
     R_0::Float64
     latent_period::Int64

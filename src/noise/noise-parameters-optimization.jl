@@ -50,33 +50,27 @@ result = optimize_dynamic_noise_params(
 ```
 """
 function optimize_dynamic_noise_params_wrapper(
-        target_scaling,
-        seir_results::StructVector{SEIRRun},
-        thresholds::StructVector{T},
-        ews_enddate_type::EWSEndDateType,
-        dynamical_noise_spec::DynamicalNoiseSpecification,
         ensemble_specification::EnsembleSpecification,
+        trimmed_seir_results::StructVector{SEIRRun},
+        enddates_vec::Vector{Int64},
+        target_scaling::Float64,
         optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters();
-        verbose = false
-    ) where {T <: AbstractThresholds}
+        verbose = false,
+        seed = 1234
+    )
 
-    # Calculate endpoints for all simulations
-    enddates_vec = calculate_all_ews_enddates(thresholds, ews_enddate_type)
-
-    filtered_seir_results = trim_seir_results(seir_results, enddates_vec)
-
-    # Calculate filtered mean incidence up to endpoints
-    overall_mean = calculate_mean_incidence(filtered_seir_results)
+    # Calculate trimmed mean incidence up to endpoints
+    overall_mean = calculate_mean_incidence(trimmed_seir_results)
 
     # Call the original optimization function with the computed mean
     return optimize_dynamic_noise_params(
-        target_scaling,
-        overall_mean,
-        dynamical_noise_spec,
         ensemble_specification,
         enddates_vec,
+        overall_mean,
+        target_scaling,
         optimization_params;
-        verbose = verbose
+        verbose = verbose,
+        seed = seed
     )
 end
 
@@ -111,8 +105,8 @@ and initial susceptible proportion that produces mean noise equal to `target_sca
 ```julia
 noise_spec = DynamicalNoiseSpecification(
     R0 = 5.0,
-    latent_period = 7,
-    duration_infection = 14,
+    latent_period = 7.0,
+    duration_infection = 14.0,
     correlation = "in-phase",
     poisson_component = 1.0
 )
@@ -126,16 +120,16 @@ result = calculate_dynamic_vaccination_coverage(
 ```
 """
 function optimize_dynamic_noise_params(
-        target_scaling,
-        measles_daily_incidence,
-        dynamical_noise_spec::DynamicalNoiseSpecification,
         ensemble_specification::EnsembleSpecification,
-        enddates_vec,
+        enddates_vec::Vector{Int64},
+        measles_daily_incidence::Float64,
+        target_scaling::Float64,
         optimization_params::NoiseVaccinationOptimizationParameters = NoiseVaccinationOptimizationParameters();
         verbose = false,
+        seed = 1234
     )
 
-    @unpack vaccination_bounds = dynamical_noise_spec
+    @unpack vaccination_bounds = ensemble_specification.dynamical_noise_specification
 
     @unpack n_sobol_points, local_algorithm,
         xtol_rel,
@@ -153,15 +147,12 @@ function optimize_dynamic_noise_params(
 
     # Pre-extract ensemble specification components to avoid repeated unpacking
     N = ensemble_specification.state_parameters.init_states.N
-    dynamics_param_spec = ensemble_specification.dynamics_parameter_specification
 
     # Define objective function: minimize squared difference from target
     objective = let target_noise = target_noise,
-            dynamical_noise_spec = dynamical_noise_spec,
             ensemble_specification = ensemble_specification,
             enddates_vec = enddates_vec,
             N = N,
-            dynamics_param_spec = dynamics_param_spec,
             verbose = verbose
         function (params)
             vaccination_coverage = params[1]
@@ -171,18 +162,12 @@ function optimize_dynamic_noise_params(
             min_safe_prop = max(1.0 / N, 0.001)  # At least 1 person or 0.1%, whichever is larger
             max_safe_prop = min(1.0 - 1.0 / N, 0.999)  # At most N-1 people or 99.9%, whichever is smaller
 
-            # Check if endemic equilibrium exists (R_eff > 1)
-            R_eff = dynamics_param_spec.R_0 * (1.0 - vaccination_coverage)
-            if R_eff <= 1.0
-                return 1.0e10  # Large penalty for vaccination coverage that eliminates endemic equilibrium
-            end
-
             noise_level = calculate_mean_dynamical_noise(
-                dynamical_noise_spec,
-                vaccination_coverage,
                 ensemble_specification,
-                enddates_vec;
-                verbose = verbose
+                enddates_vec,
+                vaccination_coverage;
+                verbose = verbose,
+                seed = seed
             )
 
             # Return squared error from target
@@ -229,7 +214,9 @@ function optimize_dynamic_noise_params(
             dynamical_noise_spec,
             optimal_vaccination_coverage,
             ensemble_specification,
-            enddates_vec,
+            enddates_vec;
+            verbose = false,
+            seed = seed
         )
 
         error_msg = "Unsuccessful optimization." *

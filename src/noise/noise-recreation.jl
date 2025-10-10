@@ -35,8 +35,8 @@ ensemble specification's initial state proportions.
 ```julia
 noise_spec = DynamicalNoiseSpecification(
     R0 = 12.0,
-    latent_period = 8,
-    duration_infection = 7,
+    latent_period = 8.0,
+    duration_infection = 7.0,
     correlation = "in-phase",
     poisson_component = 1.0
 )
@@ -51,15 +51,14 @@ noise_result = recreate_noise_vecs(
 ```
 """
 function recreate_noise_vecs(
-        dynamical_noise_spec::DynamicalNoiseSpecification,
-        vaccination_coverage,
         ensemble_specification::EnsembleSpecification,
-        enddates_vec;
-        verbose = false
+        enddates_vec::Vector{Int64},
+        vaccination_coverage::Float64;
+        verbose = false,
+        seed = 1234,
     )
     # Create final EnsembleSpecification with optimal parameters for verification
     @unpack state_parameters,
-        dynamics_parameter_specification,
         time_parameters,
         nsims,
         dirpath = ensemble_specification
@@ -67,7 +66,7 @@ function recreate_noise_vecs(
     @unpack N = init_states
 
     updated_dynamical_noise_spec = DynamicalNoise(
-        dynamical_noise_spec,
+        ensemble_specification.dynamical_noise_specification,
         vaccination_coverage
     )
 
@@ -82,63 +81,62 @@ function recreate_noise_vecs(
         vaccination_coverage
     )
 
-    updated_state_parameters = if Try.isok(endemic_props_result)
-        endemic_props = Try.unwrap(endemic_props_result)
-        StateParameters(;
-            N = N,
-            s_prop = endemic_props.s_prop,
-            e_prop = endemic_props.e_prop,
-            i_prop = endemic_props.i_prop,
-        )
+    endemic_props = if Try.isok(endemic_props_result)
+        Try.unwrap(endemic_props_result)
     else
         if verbose
             @warn Try.unwrap_err(endemic_props_result) *
                 "\nDefaulting to no initial infections and proportion susceptible = 1 - vaccination coverage"
         end
-
-        StateParameters(
-            ; N = N,
+        (
             s_prop = 1 - vaccination_coverage,
             e_prop = 0.0,
-            i_prop = 0.0
+            i_prop = 0.0,
+            r_prop = vaccination_coverage,
         )
-
     end
+
+    updated_state_parameters = StateParameters(;
+        N = N,
+        s_prop = endemic_props.s_prop,
+        e_prop = endemic_props.e_prop,
+        i_prop = endemic_props.i_prop,
+    )
 
     updated_ensemble_specification = EnsembleSpecification(
         updated_state_parameters,
-        updated_dynamics_parameter_specification,
         time_parameters,
+        updated_dynamics_parameter_specification,
+        updated_dynamics_parameter_specification,
+        ensemble_specification.dynamical_noise_specification,
         nsims,
         dirpath
     )
 
-    updated_dynamics_parameters = DynamicsParameters(
-        updated_dynamics_parameter_specification.contact_matrix,
-        updated_dynamics_parameter_specification.beta_mean,
-        updated_dynamics_parameter_specification.beta_force,
-        updated_dynamics_parameter_specification.seasonality,
-        updated_dynamics_parameter_specification.sigma,
-        updated_dynamics_parameter_specification.gamma,
-        updated_dynamics_parameter_specification.mu,
-        updated_dynamics_parameter_specification.annual_births_per_k,
-        updated_dynamics_parameter_specification.epsilon,
-        updated_dynamics_parameter_specification.R_0,
-        vaccination_coverage,
-        vaccination_coverage,
-        vaccination_coverage,
-        vaccination_coverage,
-        vaccination_coverage,
-        vaccination_coverage
+    updated_dynamics_parameters = DynamicsParameters(;
+        beta_mean = updated_dynamics_parameter_specification.beta_mean,
+        beta_force = updated_dynamics_parameter_specification.beta_force,
+        seasonality = updated_dynamics_parameter_specification.seasonality,
+        sigma = updated_dynamics_parameter_specification.sigma,
+        gamma = updated_dynamics_parameter_specification.gamma,
+        mu = updated_dynamics_parameter_specification.mu,
+        annual_births_per_k = updated_dynamics_parameter_specification.annual_births_per_k,
+        epsilon = updated_dynamics_parameter_specification.epsilon,
+        R_0 = updated_dynamics_parameter_specification.R_0,
+        min_burnin_vaccination_coverage = vaccination_coverage,
+        max_burnin_vaccination_coverage = vaccination_coverage,
+        min_post_burnin_vaccination_coverage = vaccination_coverage,
+        max_post_burnin_vaccination_coverage = vaccination_coverage,
+        burnin_vaccination_coverage = vaccination_coverage,
+        post_burnin_vaccination_coverage = vaccination_coverage
     )
-
 
     noise_result = create_noise_vecs(
         updated_dynamical_noise_spec,
         updated_ensemble_specification,
         updated_dynamics_parameters,
-        endemic_props_result,
-        enddates_vec,
+        enddates_vec;
+        seed = seed
     )
 
     return noise_result

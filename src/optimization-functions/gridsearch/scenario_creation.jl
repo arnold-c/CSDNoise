@@ -12,6 +12,7 @@ Returns StructVector{GridSearchScenario} with all combinations.
 function create_gridsearch_scenarios_structvector(specification_vecs::GridSearchSpecificationVecs)
     @unpack ensemble_specification_vec,
         noise_level_vec,
+        noise_type_description_vec,
         test_specification_vec,
         percent_tested_vec,
         ews_metric_specification_vec,
@@ -24,6 +25,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs::GridSearch
     combinations = Iterators.product(
         ensemble_specification_vec,
         noise_level_vec,
+        noise_type_description_vec,
         test_specification_vec,
         percent_tested_vec,
         ews_metric_specification_vec,
@@ -41,6 +43,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs::GridSearch
             i, (
                 ensemble_spec,
                 noise_level,
+                noise_type_description,
                 test_spec,
                 percent_tested,
                 ews_metric_spec,
@@ -55,6 +58,7 @@ function create_gridsearch_scenarios_structvector(specification_vecs::GridSearch
         scenarios_vec[i] = GridSearchScenario(
             ensemble_specification = ensemble_spec,
             noise_level = noise_level,
+            noise_type_description = noise_type_description,
             test_specification = test_spec,
             percent_tested = percent_tested,
             ews_metric_specification = ews_metric_spec,

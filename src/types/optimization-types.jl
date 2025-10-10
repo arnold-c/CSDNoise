@@ -31,12 +31,37 @@ for EWS hyperparameter optimization.
 Base.@kwdef struct OptimizationScenario
     ensemble_specification::EnsembleSpecification
     noise_level::Float64
+    noise_type_description::Symbol
     test_specification::IndividualTestSpecification
     percent_tested::Float64
     ews_metric_specification::EWSMetricSpecification
     ews_enddate_type::EWSEndDateType
     ews_threshold_window::EWSThresholdWindowType
     ews_metric::String
+    function OptimizationScenario(
+            ensemble_specification,
+            noise_level,
+            noise_type_description,
+            test_specification,
+            percent_tested,
+            ews_metric_specification,
+            ews_enddate_type,
+            ews_threshold_window,
+            ews_metric,
+        )
+        @assert noise_type_description in [:static, :dynamic] "The noise type must be either :static or :dynamic. Received $noise_type_description"
+        return new(
+            ensemble_specification,
+            noise_level,
+            noise_type_description,
+            test_specification,
+            percent_tested,
+            ews_metric_specification,
+            ews_enddate_type,
+            ews_threshold_window,
+            ews_metric,
+        )
+    end
 end
 
 """
@@ -90,6 +115,7 @@ grid_specs = GridSearchSpecificationVecs(
 Base.@kwdef struct GridSearchSpecificationVecs
     ensemble_specification_vec::Vector{EnsembleSpecification}
     noise_level_vec::Vector{Float64}
+    noise_type_description_vec::Vector{Symbol}
     test_specification_vec::Vector{IndividualTestSpecification}
     percent_tested_vec::Vector{Float64}
     ews_metric_specification_vec::Vector{EWSMetricSpecification}
@@ -108,6 +134,7 @@ Scenario for grid search including both base scenario and grid parameters.
 Base.@kwdef struct GridSearchScenario
     ensemble_specification::EnsembleSpecification
     noise_level::Float64
+    noise_type_description::Symbol
     test_specification::IndividualTestSpecification
     percent_tested::Float64
     ews_metric_specification::EWSMetricSpecification
@@ -116,6 +143,35 @@ Base.@kwdef struct GridSearchScenario
     ews_metric::String
     threshold_quantile::Float64
     consecutive_thresholds::Int64
+    function GridSearchScenario(
+            ensemble_specification,
+            noise_level,
+            noise_type_description,
+            test_specification,
+            percent_tested,
+            ews_metric_specification,
+            ews_enddate_type,
+            ews_threshold_window,
+            ews_metric,
+            threshold_quantile,
+            consecutive_thresholds,
+        )
+        @assert noise_type_description in [:static, :dynamic] "The noise type must be either :static or :dynamic. Received $noise_type_description"
+        return new(
+            ensemble_specification,
+            noise_level,
+            noise_type_description,
+            test_specification,
+            percent_tested,
+            ews_metric_specification,
+            ews_enddate_type,
+            ews_threshold_window,
+            ews_metric,
+            threshold_quantile,
+            consecutive_thresholds,
+
+        )
+    end
 end
 
 """
@@ -279,14 +335,13 @@ println("Optimal parameters: \$(result.threshold_quantile) quantile, \$(result.c
 """
 Base.@kwdef struct OptimizationResult
     ensemble_specification::EnsembleSpecification
-    null_specification::EnsembleSpecification
-    noise_specification::NoiseSpecification
+    noise_level::Float64
+    noise_type_description::Symbol
     test_specification::IndividualTestSpecification
     percent_tested::Float64
     ews_metric_specification::EWSMetricSpecification
     ews_enddate_type::EWSEndDateType
     ews_threshold_window::EWSThresholdWindowType
-    ews_threshold_burnin::Dates.Day
     ews_metric::String
     threshold_quantile::Float64
     consecutive_thresholds::Int64

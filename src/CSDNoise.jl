@@ -139,6 +139,7 @@ include("./optimization-functions/gridsearch/results_save.jl")
 include("./optimization-functions/gridsearch/scenario_confirmation.jl")
 include("./optimization-functions/gridsearch/scenario_creation.jl")
 include("./optimization-functions/gridsearch/scenario_evaluation.jl")
+include("./optimization-functions/gridsearch/scenario_evaluation_refactored.jl")
 include("./optimization-functions/gridsearch/calculate_optimization.jl")
 include("./optimization-functions/gridsearch/scenario_find-missing.jl")
 

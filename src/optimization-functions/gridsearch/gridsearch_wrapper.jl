@@ -31,18 +31,21 @@ function ews_hyperparam_gridsearch_structvector(
             string(Dates.now()) * "_" * gridsearch_filename_base,
         ),
         # Control options
-        use_threads = false,
+        scheduler = :dynamic, #:serial, :greedy, :static, :dynamic
         force = false,
         return_results = true,
         save_results = true,
         save_checkpoints = false,
+        save_checkpoint_num = 5,
         verbose = true,
         disable_time_check = false,
-        seconds_per_scenario = 0.5
+        seconds_per_scenario = 0.025
     )
     if !isdir(filedir)
         mkpath(filedir)
     end
+    @assert scheduler in [:dynamic, :static, :greedy, :serial]
+
 
     # Setup checkpoint directory
     checkpoint_dir = joinpath(filedir, "checkpoints")
@@ -94,12 +97,13 @@ function ews_hyperparam_gridsearch_structvector(
 
     # Run grid search for missing scenarios in batches
     start_time = Dates.now()
-    new_results = evaluate_gridsearch_scenarios(
+    new_results = evaluate_gridsearch_scenarios_refactored(
         missing_scenarios;
         save_results = save_results,
         save_checkpoints = save_checkpoints,
+        save_checkpoint_num = save_checkpoint_num,
         checkpoint_dir = checkpoint_dir,
-        use_threads = use_threads,
+        scheduler = scheduler,
         verbose = verbose
     )
     end_time = Dates.now()
@@ -114,9 +118,7 @@ function ews_hyperparam_gridsearch_structvector(
 
 
     # Combine existing and new results
-    if !isempty(existing_results)
-        BangBang.append!!(existing_results, new_results)
-    end
+    BangBang.append!!(existing_results, new_results)
 
     # Save final results - reuse function from multistart
     if save_results

@@ -8,7 +8,7 @@ Confirm with user before running grid search on StructVector of scenarios.
 function confirm_gridsearch_run_structvector(
         missing_scenarios::StructVector{GridSearchScenario};
         disable_time_check::Bool = false,
-        sec_per_scenario = 0.5
+        seconds_per_scenario = 0.025
     )
     n_missing = length(missing_scenarios)
 
@@ -22,7 +22,7 @@ function confirm_gridsearch_run_structvector(
     end
 
     # Estimate time (simpler than multistart since no optimization)
-    estimated_time = n_missing * sec_per_scenario
+    estimated_time = n_missing * seconds_per_scenario
 
     if estimated_time > 300  # 5 minutes
         println(StyledStrings.styled"{yellow:Warning:} Estimated grid search time: {red:$(round(estimated_time/60, digits=1))} minutes")

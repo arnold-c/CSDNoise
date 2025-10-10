@@ -51,55 +51,6 @@ function generate_ensemble_data(
     )
 end
 
-"""
-    generate_single_ensemble(ensemble_spec; seed)
-
-Generate a single ensemble simulation with the given specification and seed.
-"""
-function generate_single_ensemble(ensemble_spec::EnsembleSpecification; seed::Int64 = 1234)
-    @unpack state_parameters, emergent_dynamics_parameter_specification, time_parameters, nsims = ensemble_spec
-    @unpack tstep, tlength, trange = time_parameters
-
-    init_states_sv = StaticArrays.SVector(state_parameters.init_states)
-
-    # Get concrete type to avoid abstract element types
-    seir_results = Vector{SEIRRun}(undef, nsims)
-    Reff_thresholds = Vector{Thresholds}(undef, nsims)
-
-    beta_vec = zeros(Float64, tlength)
-    calculate_beta_amp!(
-        beta_vec,
-        emergent_dynamics_parameter_specification,
-        time_parameters
-    )
-
-    dynamics_parameters = Vector{DynamicsParameters}(undef, nsims)
-
-    for sim in eachindex(seir_results)
-        run_seed = seed + (sim - 1)
-
-        local dynp = DynamicsParameters(
-            emergent_dynamics_parameter_specification; seed = run_seed
-        )
-        dynamics_parameters[sim] = dynp
-
-        local seir_res = seir_mod(
-            init_states_sv,
-            dynp,
-            beta_vec,
-            time_parameters;
-            seed = run_seed,
-        )
-        seir_results[sim] = seir_res
-        Reff_thresholds[sim] = Reff_ge_than_one(seir_res.Reff)
-    end
-
-    return (;
-        dynamics_parameters,
-        seir_results = StructVector(seir_results),
-        Reff_thresholds = StructVector(Reff_thresholds),
-    )
-end
 
 """
     calculate_scenarios(spec_vecs)

@@ -6,30 +6,41 @@ export calculate_ews_classification_results,
     calculate_specificity,
     calculate_balanced_accuracy
 
+function calculate_ews_classification_results(
+        gridsearch_scenario::GridSearchScenario,
+        ensemble_ews_metrics::EnsembleEWSMetrics
+    )
+    return calculate_ews_classification_results(
+        gridsearch_scenario,
+        ensemble_ews_metrics.emergent_ews_metrics,
+        ensemble_ews_metrics.null_ews_metrics
+    )
+end
+
 
 function calculate_ews_classification_results(
-        scenario,
-        ews_metrics,
-        null_ews_metrics,
+        gridsearch_scenario::GridSearchScenario,
+        emergent_ews_metrics::StructVector{EWSMetrics},
+        null_ews_metrics::StructVector{EWSMetrics},
     )
     @unpack ews_metric,
         ews_threshold_window,
         ensemble_specification,
         threshold_quantile,
-        consecutive_thresholds = scenario
+        consecutive_thresholds = gridsearch_scenario
     @unpack burnin = ensemble_specification.time_parameters
 
     ews_metric_symbol = Symbol(ews_metric)
 
-    n_emergent_sims = length(ews_metrics)
+    n_emergent_sims = length(emergent_ews_metrics)
     n_null_sims = length(null_ews_metrics)
 
     true_positives = 0
     true_negatives = 0
 
-    for sim in eachindex(ews_metrics)
+    for sim in eachindex(emergent_ews_metrics)
         # Use pre-computed EWS metrics
-        ews_vals = ews_metrics[sim]
+        ews_vals = emergent_ews_metrics[sim]
         null_ews_vals = null_ews_metrics[sim]
 
         # Check threshold exceedances

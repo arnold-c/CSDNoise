@@ -3,6 +3,7 @@ export EWSMethod,
     Centered,
     EWSMetricSpecification,
     EWSMetrics,
+    EnsembleEWSMetrics,
     EWSThresholdWindowType,
     ExpandingThresholdWindow,
     RollingThresholdWindow,
@@ -338,6 +339,11 @@ Abstract base type for Early Warning Signal threshold window strategies.
 This type serves as the parent for different approaches to defining the baseline
 period used for calculating EWS alert thresholds.
 """
+Base.@kwdef struct EnsembleEWSMetrics
+    emergent_ews_metrics::StructVector{EWSMetrics}
+    null_ews_metrics::StructVector{EWSMetrics}
+end
+
 abstract type AbstractEWSThresholdWindowType end
 
 """

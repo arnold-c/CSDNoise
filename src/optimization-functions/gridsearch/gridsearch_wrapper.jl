@@ -68,7 +68,7 @@ function ews_hyperparam_gridsearch_structvector(
     end
 
     n_existing = length(existing_results)
-    if verbose && n_existing > 0
+    if verbose
         println(StyledStrings.styled"Found {cyan:$n_existing} existing results")
     end
 

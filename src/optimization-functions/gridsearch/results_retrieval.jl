@@ -23,8 +23,8 @@ function load_previous_gridsearch_results_structvector(filedir::String, filename
         data = JLD2.load(Try.unwrap(load_filepath))
 
         # Try to load as StructVector first (new format)
-        if haskey(data, "gridsearch_results")
-            return data["gridsearch_results"]::StructVector{OptimizationResult}
+        if haskey(data, "optimization_results")
+            return data["optimization_results"]
         end
 
         # Fall back to DataFrame format (old format) and convert

@@ -15,7 +15,7 @@ function save_results_structvector(results::StructVector{OptimizationResult}, fi
 
     return try
         # Save StructVector directly to JLD2
-        JLD2.jldsave(temp_filepath; multistart_optimization_results = results)
+        JLD2.jldsave(temp_filepath; optimization_results = results)
 
         # Atomic rename
         mv(temp_filepath, filepath; force = true)

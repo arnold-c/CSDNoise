@@ -48,7 +48,7 @@ struct DynamicalNoiseType end
 
 LightSumTypes.@sumtype NoiseType(PoissonNoiseType, DynamicalNoiseType) <: AbstractNoiseType
 
-struct DynamicalNoiseSpecification
+AutoHashEquals.@auto_hash_equals struct DynamicalNoiseSpecification
     R_0::Float64
     latent_period::Float64
     duration_infection::Float64

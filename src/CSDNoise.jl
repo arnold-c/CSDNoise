@@ -5,6 +5,7 @@ module CSDNoise
 using DispatchDoctor: @unstable
 using Base: Base.@kwdef
 using DrWatson: DrWatson
+using AutoHashEquals: AutoHashEquals
 using Random: Random
 using Distributions: Distributions
 using LinearAlgebra: LinearAlgebra

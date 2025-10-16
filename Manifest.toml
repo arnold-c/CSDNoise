@@ -2,7 +2,7 @@
 
 julia_version = "1.11.7"
 manifest_format = "2.0"
-project_hash = "9e3ec8c116e2e08eecbac8be8d2c0e948e59826c"
+project_hash = "733677c78c2a672e43cdcc44eb6427c16b590301"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -118,6 +118,11 @@ version = "7.20.0"
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 version = "1.11.0"
+
+[[deps.AutoHashEquals]]
+git-tree-sha1 = "4ec6b48702dacc5994a835c1189831755e4e76ef"
+uuid = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
+version = "2.2.0"
 
 [[deps.Automa]]
 deps = ["PrecompileTools", "SIMD", "TranscodingStreams"]

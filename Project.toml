@@ -3,6 +3,7 @@ uuid = "8cb15dc8-b3ab-4164-9f0c-296b8d5139d2"
 authors = ["Callum Arnold"]
 
 [deps]
+AutoHashEquals = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
 BangBang = "198e06fe-97b7-11e9-32a5-e1d131e6ad66"
 Bumper = "8ce10254-0962-460f-a3d8-1f77fea1446e"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -43,6 +44,7 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 VimBindings = "51b3953f-5e5d-4a6b-bd62-c64b6fa1518a"
 
 [compat]
+AutoHashEquals = "2.2.0"
 BangBang = "0.4.4"
 ChunkSplitters = "3.1.2"
 DispatchDoctor = "0.4.26"

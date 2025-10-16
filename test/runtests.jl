@@ -19,4 +19,5 @@ using JET
     include("ews-multistart-optimization.jl")
     include("diag-testing-functions.jl")
     include("test_type_stability.jl")
+    include("scenario-find-missing.jl")
 end

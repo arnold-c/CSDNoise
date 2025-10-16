@@ -53,7 +53,7 @@ println("Results stored in: \$(ensemble_spec.dirpath)")
 - [`DynamicalNoiseSpecification`](@ref): Dynamical noise parameters
 - [`simulate_ensemble_seir_results`](@ref): Function that uses EnsembleSpecification for simulation
 """
-Base.@kwdef struct EnsembleSpecification
+AutoHashEquals.@auto_hash_equals Base.@kwdef struct EnsembleSpecification
     state_parameters::StateParameters
     time_parameters::SimTimeParameters
     emergent_dynamics_parameter_specification::DynamicsParameterSpecification

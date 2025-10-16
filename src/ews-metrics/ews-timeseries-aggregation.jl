@@ -1,6 +1,4 @@
 export aggregate_bandwidth,
-    aggregate_thresholds_vec,
-    aggregate_Reff_vec,
     aggregate_timeseries
 
 """
@@ -23,41 +21,6 @@ function aggregate_bandwidth(ews_spec::EWSMetricSpecification)
     @assert isinteger(aggregate_bandwidth)
 
     return aggregate_bandwidth
-end
-
-"""
-    aggregate_thresholds_vec(thresholdsvec, aggregation)
-
-Aggregate a vector of threshold indicators over time periods.
-
-Uses a binary aggregation function where any threshold crossing within the aggregation
-period results in a positive indicator for that period.
-
-# Arguments
-- `thresholdsvec`: Vector of threshold indicators (typically binary)
-- `aggregation`: Temporal aggregation period
-
-# Returns
-- Aggregated threshold vector where each element indicates if any threshold was crossed in that period
-"""
-function aggregate_thresholds_vec(thresholdsvec, aggregation)
-    return aggregate_timeseries(thresholdsvec, aggregation, x -> sum(x) >= 1)
-end
-
-"""
-    aggregate_Reff_vec(Reff_vec, aggregation)
-
-Aggregate effective reproduction number (Reff) values over time periods using mean aggregation.
-
-# Arguments
-- `Reff_vec`: Vector of effective reproduction numbers
-- `aggregation`: Temporal aggregation period
-
-# Returns
-- Aggregated Reff vector with mean values for each aggregation period
-"""
-function aggregate_Reff_vec(Reff_vec, aggregation)
-    return aggregate_timeseries(Reff_vec, aggregation, StatsBase.mean)
 end
 
 

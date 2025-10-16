@@ -6,6 +6,40 @@ export calculate_ews_classification_results,
     calculate_specificity,
     calculate_balanced_accuracy
 
+"""
+    calculate_ews_classification_results(gridsearch_scenario, ensemble_ews_metrics)
+
+Calculate EWS classification performance metrics from ensemble EWS metrics.
+
+This function evaluates the classification performance of early warning signals
+by computing true positives, true negatives, false positives, and false negatives
+based on threshold exceedances and trigger detection. It serves as a convenience
+wrapper that extracts emergent and null metrics from an ensemble object.
+
+# Arguments
+- `gridsearch_scenario::GridSearchScenario`: Configuration specifying EWS parameters and thresholds
+- `ensemble_ews_metrics::EnsembleEWSMetrics`: Container with both emergent and null EWS metrics
+
+# Returns
+- `EWSClassificationResults`: Object containing classification counts and totals
+
+# Implementation
+This method extracts the emergent and null EWS metrics from the ensemble object
+and delegates to the main implementation method.
+
+# Example
+```julia
+# Evaluate classification performance for a scenario
+results = calculate_ews_classification_results(scenario, ensemble_metrics)
+sensitivity = calculate_sensitivity(results)
+specificity = calculate_specificity(results)
+```
+
+# See Also
+- [`calculate_ews_classification_results`](@ref): Main implementation method
+- [`EnsembleEWSMetrics`](@ref): Container type for ensemble metrics
+- [`GridSearchScenario`](@ref): Configuration type for scenarios
+"""
 function calculate_ews_classification_results(
         gridsearch_scenario::GridSearchScenario,
         ensemble_ews_metrics::EnsembleEWSMetrics
@@ -18,6 +52,81 @@ function calculate_ews_classification_results(
 end
 
 
+"""
+    calculate_ews_classification_results(gridsearch_scenario, emergent_ews_metrics, null_ews_metrics)
+
+Calculate EWS classification performance metrics from separate emergent and null EWS metrics.
+
+This function implements the core algorithm for evaluating early warning signal
+classification performance. It processes paired emergent and null simulations,
+applies threshold detection logic, and computes classification metrics including
+true positives, true negatives, false positives, and false negatives.
+
+# Arguments
+- `gridsearch_scenario::GridSearchScenario`: Configuration containing:
+  - `ews_metric`: The EWS metric to evaluate (e.g., "variance", "autocovariance")
+  - `ews_threshold_window`: Window type for threshold calculation
+  - `threshold_quantile`: Quantile level for threshold determination
+  - `consecutive_thresholds`: Number of consecutive exceedances required for trigger
+  - `ensemble_specification`: Contains burn-in period and other parameters
+- `emergent_ews_metrics::StructVector{EWSMetrics}`: EWS metrics from emergent simulations
+- `null_ews_metrics::StructVector{EWSMetrics}`: EWS metrics from null simulations
+
+# Returns
+- `EWSClassificationResults`: Object containing:
+  - `true_positives`: Emergent simulations correctly detected
+  - `true_negatives`: Null simulations correctly not detected
+  - `false_positives`: Null simulations incorrectly detected
+  - `false_negatives`: Emergent simulations incorrectly not detected
+  - `n_emergent_sims`: Total number of emergent simulations
+  - `n_null_sims`: Total number of null simulations
+
+# Algorithm
+For each paired simulation:
+1. Extract the specified EWS metric from both emergent and null scenarios
+2. Apply threshold detection using the configured window and quantile
+3. Check for trigger using consecutive threshold exceedances
+4. Update classification counts:
+   - True positive: Emergent simulation triggers detection
+   - True negative: Null simulation does not trigger detection
+   - False positive: Null simulation triggers detection
+   - False negative: Emergent simulation does not trigger detection
+
+# Performance Considerations
+- Processes simulations in pairs to ensure matched evaluation
+- Uses pre-computed EWS metrics for efficiency
+- Leverages Try.jl for robust error handling in trigger detection
+
+# Example
+```julia
+# Configure scenario parameters
+scenario = GridSearchScenario(
+    ews_metric="variance",
+    ews_threshold_window=EWSThresholdWindowType(ExpandingThresholdWindow()),
+    threshold_quantile=0.95,
+    consecutive_thresholds=2,
+    ensemble_specification=ensemble_spec
+)
+
+# Calculate classification results
+results = calculate_ews_classification_results(
+    scenario,
+    emergent_metrics,
+    null_metrics
+)
+
+# Extract performance metrics
+sensitivity = calculate_sensitivity(results)
+specificity = calculate_specificity(results)
+balanced_accuracy = calculate_balanced_accuracy(sensitivity, specificity)
+```
+
+# See Also
+- [`exceeds_ews_threshold`](@ref): Determines threshold exceedances
+- [`calculate_ews_trigger_index`](@ref): Detects consecutive exceedances
+- [`EWSClassificationResults`](@ref): Result container type
+- [`calculate_sensitivity`](@ref), [`calculate_specificity`](@ref): Performance metrics
+"""
 function calculate_ews_classification_results(
         gridsearch_scenario::GridSearchScenario,
         emergent_ews_metrics::StructVector{EWSMetrics},

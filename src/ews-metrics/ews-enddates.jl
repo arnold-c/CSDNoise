@@ -39,6 +39,55 @@ function calculate_all_ews_enddates(
 end
 
 
+"""
+    calculate_ews_enddate(thresholds, enddate_type)
+
+Calculate a single EWS endpoint for a given threshold object and enddate type.
+
+This function computes the endpoint for early warning signal analysis based on
+the specified enddate type and threshold data. It serves as a wrapper around
+the internal `_calculate_ews_enddate` function, providing error handling and
+meaningful error messages when endpoint calculation fails.
+
+# Arguments
+- `thresholds::AbstractThresholds`: Threshold object containing boundary information
+- `enddate_type::EWSEndDateType`: Type of endpoint to calculate
+
+# Supported Enddate Types
+- `ReffStart`: Start of effective reproduction number threshold period
+- `ReffEnd`: End of effective reproduction number threshold period
+- `OutbreakStart`: Start of outbreak threshold period
+- `OutbreakEnd`: End of outbreak threshold period
+- `OutbreakMiddle`: Middle point of outbreak threshold period
+
+# Returns
+- `Try.Ok{Int64}`: Successfully calculated endpoint index
+- `Try.Err{String}`: Error with descriptive message if calculation fails
+
+# Error Conditions
+Returns an error if:
+- The threshold object doesn't contain the required boundary data
+- The enddate type is incompatible with the threshold type
+- Vaccination rate post burn-in is too high
+- Simulation length is insufficient
+
+# Example
+```julia
+# Calculate outbreak start endpoint
+result = calculate_ews_enddate(outbreak_thresholds, EWSEndDateType(OutbreakStart()))
+if Try.isok(result)
+    endpoint = Try.unwrap(result)
+    println("Outbreak starts at index: $endpoint")
+else
+    println("Error: $(Try.unwrap_err(result))")
+end
+```
+
+# See Also
+- [`calculate_all_ews_enddates`](@ref): Batch calculation for multiple simulations
+- [`_calculate_ews_enddate`](@ref): Internal implementation functions
+- [`AbstractThresholds`](@ref): Base type for threshold objects
+"""
 function calculate_ews_enddate(
         thresholds::T,
         enddate_type::EWSEndDateType,

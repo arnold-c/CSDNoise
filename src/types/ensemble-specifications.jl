@@ -283,11 +283,11 @@ common epidemiological scenarios and project constants.
 # Keyword Arguments
 - `burnin_years::Int`: Number of years for simulation burnin (required)
 - `tmax_years::Int`: Total simulation duration in years (required)
-- `annual_births_per_k::Int64`: Annual births per 1000 population (default: `ANNUAL_BIRTHS_PER_K`)
+- `annual_births_per_k::Int64`: Annual births per 1000 population
 - `ensemble_state_specification::StateParameters`: Initial state (default: 500k population, 5% susceptible, 95% recovered)
-- `R_0::Float64`: Basic reproduction number (default: `R0` constant)
-- `gamma::Float64`: Recovery rate (default: `GAMMA` constant)
-- `sigma::Float64`: Progression rate (default: `SIGMA` constant)
+- `R_0::Float64`: Basic reproduction number
+- `gamma::Float64`: Recovery rate
+- `sigma::Float64`: Progression rate
 - `target_Reff::Float64`: Target effective reproduction number (default: 0.9)
 - `target_years::Int`: Years to achieve target Reff (default: 2 × burnin_years)
 - `min_vaccination_coverage::Float64`: Minimum vaccination coverage (default: 0.6)
@@ -324,9 +324,9 @@ function EnsembleSpecsParameters(;
             500_000,
             Dict(:s_prop => 0.05, :e_prop => 0.0, :i_prop => 0.0, :r_prop => 0.95)
         ),
-        R_0::Float64 = R0,
-        gamma::Float64 = GAMMA,
-        sigma::Float64 = SIGMA,
+        R_0::Float64,
+        gamma::Float64,
+        sigma::Float64,
         target_Reff::Float64 = 0.9,
         target_years::Int = 2 * burnin_years,
         min_vaccination_coverage::Float64 = 0.6,

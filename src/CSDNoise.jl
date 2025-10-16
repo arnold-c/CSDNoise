@@ -35,12 +35,9 @@ using Logging: Logging
 using LoggingExtras: LoggingExtras
 using GLMakie
 
-# Constants
-include("./constants/dynamics-constants.jl")
 
 # Types
 include("./types/test-specifications.jl")
-include("./constants/test-constants.jl") # depends on test specifications, and some types depend on them
 include("./types/time-parameters.jl")
 include("./types/dynamics-parameters.jl")
 include("./types/state-parameters.jl")
@@ -53,9 +50,11 @@ include("./types/simulation-results.jl")
 include("./types/test-positive-results.jl")
 include("./types/optimization-types.jl")
 
+# Constants
+include("./constants/test-constants.jl") # depends on test specifications, and some types depend on them
+
 # Simulation core
 include("./simulation/transmission-functions.jl")
-include("./constants/dynamics-constants_calculated.jl") # depends on transmission-functions
 include("./simulation/endemic-equilibrium.jl")
 include("./simulation/seir-model.jl")
 include("./simulation/seir-mean-incidence.jl")

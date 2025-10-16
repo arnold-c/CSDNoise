@@ -47,7 +47,7 @@ function calculate_vaccination_rate_to_achieve_Reff(
 
     if vaccination_coverage > 1 || vaccination_coverage < 0
         return error(
-            "Target Reff cannot be reached in the burn-in period. Initial Reff = $(R_0 * S / N). Try a longer burn-in period or a smaller target Reff."
+            "Target Reff cannot be reached in the burn-in period. Initial Reff = $(R_0 * S / N) with values R0 = $R_0, S = $S, N = $N. Try a longer burn-in period or a smaller target Reff."
         )
     end
     return round(vaccination_coverage; digits = 4)

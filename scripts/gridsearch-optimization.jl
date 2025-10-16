@@ -43,24 +43,17 @@ measles_population_state_parameters = StateParameters(
 # 3 quarters of the simulation time after the end of the burnin to ensure the tipping
 # point is reached (assuming the evaluation period is ReffStart and the value of Reff
 # at the end of the burnin is a bit less than the maximum target Reff - burnin_target_Reff).
-max_measles_post_burnin_vaccination = calculate_vaccination_rate_to_achieve_Reff(
-    0.75 * (time_parameters.tlength - Dates.days(time_parameters.burnin)),
-    measles_population_state_parameters.init_states.N * (burnin_target_Reff - 0.1) / measles_R0,
-    measles_population_state_parameters.init_states.N,
-    1.0,
-    measles_R0,
-    calculate_mu(births_per_k_pop)
-)
-measles_max_post_burnin_vaccination_coverage = round(
-    clamp(floor(max_measles_post_burnin_vaccination; digits = 1) - 0.1, 0.0, 1.0);
-    digits = 1
-)
-measles_min_post_burnin_vaccination_coverage = round(
-    clamp(
-        measles_max_post_burnin_vaccination_coverage - 0.2,
-        0.0,
-        1.0
-    );
+measles_min_post_burnin_vaccination_coverage,
+    measles_max_post_burnin_vaccination_coverage = calculate_post_burnin_vaccination_range(
+    time_parameters,
+    measles_population_state_parameters,
+    measles_R0;
+    births_per_k_pop = births_per_k_pop,
+    target_Reff = 1.0,
+    estimated_post_burnin_Reff = initial_Reff,
+    adjust_vaccination_coverage = -0.1,
+    vaccination_bounds_spread = 0.2,
+    reach_target_prop_of_remaining_simulation = 0.75,
     digits = 1
 )
 
@@ -111,25 +104,18 @@ covid_population_state_parameters = StateParameters(
     )
 )
 
-max_covid_post_burnin_vaccination = calculate_vaccination_rate_to_achieve_Reff(
-    0.75 * (time_parameters.tlength - Dates.days(time_parameters.burnin)),
-    covid_population_state_parameters.init_states.N * (burnin_target_Reff - 0.2) / covid_R0,
-    covid_population_state_parameters.init_states.N,
-    1.0,
-    covid_R0,
-    calculate_mu(births_per_k_pop)
-)
-covid_max_post_burnin_vaccination_coverage = round(
-    clamp(floor(max_covid_post_burnin_vaccination; digits = 1) - 0.1, 0.0, 1.0)
-    ; digits = 1
-)
-
-covid_min_post_burnin_vaccination_coverage = round(
-    clamp(
-        covid_max_post_burnin_vaccination_coverage - 0.2,
-        0.0,
-        1.0
-    ); digits = 1
+covid_min_post_burnin_vaccination_coverage,
+    covid_max_post_burnin_vaccination_coverage = calculate_post_burnin_vaccination_range(
+    time_parameters,
+    covid_population_state_parameters,
+    covid_R0;
+    births_per_k_pop = births_per_k_pop,
+    target_Reff = 1.0,
+    estimated_post_burnin_Reff = initial_Reff,
+    adjust_vaccination_coverage = -0.1,
+    vaccination_bounds_spread = 0.2,
+    reach_target_prop_of_remaining_simulation = 0.75,
+    digits = 1
 )
 
 # R0 = 3.3 (https://pmc.ncbi.nlm.nih.gov/articles/PMC7280807/)
@@ -187,28 +173,17 @@ moderate_disease_population_state_parameters = StateParameters(
     )
 )
 
-max_moderate_disease_post_burnin_vaccination = calculate_vaccination_rate_to_achieve_Reff(
-    0.75 * (time_parameters.tlength - Dates.days(time_parameters.burnin)),
-    moderate_disease_population_state_parameters.init_states.N * (burnin_target_Reff - 0.2) / moderate_disease_R0,
-    moderate_disease_population_state_parameters.init_states.N,
-    1.0,
-    moderate_disease_R0,
-    calculate_mu(births_per_k_pop)
-)
-mod_disease_max_post_burnin_vaccination_coverage = round(
-    clamp(
-        floor(max_moderate_disease_post_burnin_vaccination; digits = 1) - 0.1,
-        0.0,
-        1.0
-    );
-    digits = 1
-)
-mod_disease_min_post_burnin_vaccination_coverage = round(
-    clamp(
-        mod_disease_max_post_burnin_vaccination_coverage - 0.2,
-        0.0,
-        1.0
-    );
+moderate_disease_min_post_burnin_vaccination_coverage,
+    moderate_disease_max_post_burnin_vaccination_coverage = calculate_post_burnin_vaccination_range(
+    time_parameters,
+    moderate_disease_population_state_parameters,
+    moderate_disease_R0;
+    births_per_k_pop = births_per_k_pop,
+    target_Reff = 1.0,
+    estimated_post_burnin_Reff = initial_Reff,
+    adjust_vaccination_coverage = -0.1,
+    vaccination_bounds_spread = 0.2,
+    reach_target_prop_of_remaining_simulation = 0.75,
     digits = 1
 )
 

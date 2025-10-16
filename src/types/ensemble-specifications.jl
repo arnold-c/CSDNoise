@@ -16,6 +16,7 @@ create a unique filesystem path for storing ensemble simulation results, incorpo
 all relevant parameter values in a hierarchical directory structure.
 
 # Fields
+- `label::String`: The disease name
 - `state_parameters::StateParameters`: Initial population state configuration (S, E, I, R compartments)
 - `time_parameters::SimTimeParameters`: Simulation time configuration including burnin, duration, and timestep
 - `emergent_dynamics_parameter_specification::DynamicsParameterSpecification`: Disease dynamics for outbreak scenarios
@@ -25,7 +26,7 @@ all relevant parameter values in a hierarchical directory structure.
 - `dirpath::String`: Automatically generated directory path for storing ensemble results
 
 # Constructor
-    EnsembleSpecification(; state_parameters, time_parameters, emergent_dynamics_parameter_specification,
+    EnsembleSpecification(; label, state_parameters, time_parameters, emergent_dynamics_parameter_specification,
                          null_dynamics_parameter_specification, dynamical_noise_specification, nsims, dirpath)
 
 # Example
@@ -54,6 +55,7 @@ println("Results stored in: \$(ensemble_spec.dirpath)")
 - [`simulate_ensemble_seir_results`](@ref): Function that uses EnsembleSpecification for simulation
 """
 AutoHashEquals.@auto_hash_equals Base.@kwdef struct EnsembleSpecification
+    label::String
     state_parameters::StateParameters
     time_parameters::SimTimeParameters
     emergent_dynamics_parameter_specification::DynamicsParameterSpecification
@@ -64,7 +66,7 @@ AutoHashEquals.@auto_hash_equals Base.@kwdef struct EnsembleSpecification
 end
 
 """
-    EnsembleSpecification(state_parameters, time_parameters, emergent_dynamics_parameter_specification,
+    EnsembleSpecification(label, state_parameters, time_parameters, emergent_dynamics_parameter_specification,
                          null_dynamics_parameter_specification, dynamical_noise_specification, nsims)
 
 Construct an EnsembleSpecification with automatic directory path generation.
@@ -84,6 +86,7 @@ The generated directory structure follows this hierarchy:
 - Birth rate and transmission parameters
 
 # Arguments
+- `label::String`: The disease name
 - `state_parameters::StateParameters`: Initial population state configuration
 - `time_parameters::SimTimeParameters`: Simulation time configuration
 - `emergent_dynamics_parameter_specification::DynamicsParameterSpecification`: Disease dynamics for outbreak scenarios
@@ -98,6 +101,7 @@ The generated directory structure follows this hierarchy:
 ```julia
 # Create ensemble specification with automatic path generation
 ensemble_spec = EnsembleSpecification(
+	label,
     state_params,
     time_params,
     emergent_dynamics,
@@ -112,6 +116,7 @@ println(ensemble_spec.dirpath)
 ```
 """
 function EnsembleSpecification(
+        label::String,
         state_parameters::StateParameters,
         time_parameters::SimTimeParameters,
         emergent_dynamics_parameter_specification::DynamicsParameterSpecification,
@@ -123,6 +128,7 @@ function EnsembleSpecification(
         "ensemble",
         "seasonal-infectivity-import",
         "tau-leaping",
+        "$label",
         "N_$(state_parameters.init_states.N)",
         "r_$(state_parameters.init_state_props.r_prop)",
         "nsims_$(nsims)",
@@ -144,6 +150,7 @@ function EnsembleSpecification(
     )
 
     return EnsembleSpecification(
+        label,
         state_parameters,
         time_parameters,
         emergent_dynamics_parameter_specification,

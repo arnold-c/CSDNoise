@@ -1,11 +1,12 @@
 export create_ensemble_specifications
 
 function create_ensemble_specifications(
+        label,
         time_specification,
         state_specification,
         target_disease_dynamics_params::TargetDiseaseDynamicsParameters,
         common_disease_dynamics_params::CommonDiseaseDynamicsParameters,
-        dynamical_noise_specification::DynamicalNoiseSpecification
+        dynamical_noise_specification::DynamicalNoiseSpecification,
     )
 
     mu = calculate_mu(common_disease_dynamics_params.births_per_k_pop)
@@ -65,6 +66,7 @@ function create_ensemble_specifications(
     )
 
     ensemble_specification = EnsembleSpecification(
+        label,
         state_specification,
         time_specification,
         emergent_dynamics_specification,

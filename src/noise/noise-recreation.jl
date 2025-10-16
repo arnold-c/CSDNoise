@@ -104,6 +104,7 @@ function recreate_noise_vecs(
     )
 
     updated_ensemble_specification = EnsembleSpecification(
+        ensemble_specification.label,
         updated_state_parameters,
         time_parameters,
         updated_dynamics_parameter_specification,

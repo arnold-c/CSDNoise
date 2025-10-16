@@ -87,6 +87,7 @@ rubella_dynamical_noise_spec = DynamicalNoiseSpecification(
 )
 
 measles_ensemble_specification = create_ensemble_specifications(
+    "measles",
     time_parameters,
     measles_population_state_parameters,
     measles_dynamics_parameters,
@@ -159,6 +160,7 @@ influenza_dynamical_noise_spec = DynamicalNoiseSpecification(
 )
 
 covid_ensemble_specification = create_ensemble_specifications(
+    "covid-19",
     time_parameters,
     covid_population_state_parameters,
     covid_dynamics_parameters,
@@ -232,6 +234,7 @@ moderate_disease_measles_like_dynamics_parameters = TargetDiseaseDynamicsParamet
 
 
 moderate_disease_measles_like_ensemble_specification = create_ensemble_specifications(
+    "moderate-disease-measles-beta",
     time_parameters,
     moderate_disease_population_state_parameters,
     moderate_disease_measles_like_dynamics_parameters,
@@ -261,6 +264,7 @@ moderate_disease_covid_like_dynamics_parameters = TargetDiseaseDynamicsParameter
 
 
 moderate_disease_covid_like_ensemble_specification = create_ensemble_specifications(
+    "moderate-disease-covid-beta",
     time_parameters,
     moderate_disease_population_state_parameters,
     moderate_disease_covid_like_dynamics_parameters,

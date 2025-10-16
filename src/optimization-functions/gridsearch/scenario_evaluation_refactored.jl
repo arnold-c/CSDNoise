@@ -31,6 +31,8 @@ function evaluate_gridsearch_scenarios_refactored(
     ensemble_groups = group_structvector(missing_scenarios, :ensemble_specification)
 
     for (ensemble_key, ensemble_scenarios) in ensemble_groups
+        verbose && println("Ensemble specification: $(ensemble_key.ensemble_specification.label)")
+
         ensemble_simulation = generate_single_ensemble(
             ensemble_key.ensemble_specification;
             seed = seed
@@ -44,8 +46,8 @@ function evaluate_gridsearch_scenarios_refactored(
         )
 
         for (noise_trim_key, noise_trim_scenarios) in noise_trim_groups
+            verbose && println("\tEWS enddate type: $(noise_trim_key.ews_enddate_type)\n\tNoise level: $(noise_trim_key.noise_level)\n\tNoise type: $(noise_trim_key.noise_type_description)")
 
-            enddates_vec = calculate_all_ews_enddates(
             enddates_vec_result = calculate_all_ews_enddates(
                 Reff_thresholds_vec,
                 noise_trim_key.ews_enddate_type
@@ -110,6 +112,8 @@ function evaluate_gridsearch_scenarios_refactored(
             )
 
             for (test_key, test_scenarios) in test_groups
+                verbose && println("\t\tTest Specification: $(test_key.test_specification)\n\t\tTest Percentage: $(test_key.percent_tested)")
+
                 ensemble_test_positives = create_test_positive_vecs(
                     trimmed_ensemble,
                     noise_vecs,
@@ -123,6 +127,7 @@ function evaluate_gridsearch_scenarios_refactored(
                 )
 
                 for (ews_spec_key, ews_spec_scenarios) in ews_spec_groups
+                    verbose && println("\t\t\tEWS specification: $(ews_spec_key.ews_metric_specification)")
                     ensemble_ews_metrics = generate_ensemble_ews_metrics(
                         ews_spec_key.ews_metric_specification,
                         ensemble_test_positives,

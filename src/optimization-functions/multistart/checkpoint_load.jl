@@ -22,9 +22,17 @@ function load_checkpoint_results_structvector(filedir::String)
         return StructVector(OptimizationResult[])
     end
 
-    all_results = OptimizationResult[]
+    # Sort checkpoint files by modification time (most recent first)
+    sorted_files = sort(
+        checkpoint_files,
+        by = f -> mtime(joinpath(checkpoint_dir, f)),
+        rev = true
+    )
 
-    for file in checkpoint_files
+    all_results = OptimizationResult[]
+    loaded_file = nothing
+
+    for file in sorted_files
         filepath = joinpath(checkpoint_dir, file)
         try
             data = JLD2.load(filepath)
@@ -37,10 +45,25 @@ function load_checkpoint_results_structvector(filedir::String)
                     sv = df_to_structvector(results, OptimizationResult)
                     append!(all_results, sv)
                 end
+                if isnothing(loaded_file)
+                    loaded_file = file
+                end
             end
         catch e
-            @warn "Failed to load checkpoint file $file: $e"
+            if isnothing(loaded_file)
+                @warn "Failed to load checkpoint file $file: $e. Trying next checkpoint..."
+            else
+                @warn "Failed to load checkpoint file $file: $e"
+            end
         end
+    end
+
+    if isempty(all_results)
+        error("All checkpoint files failed to load")
+    end
+
+    if loaded_file != sorted_files[1]
+        @info "Loaded checkpoint from $loaded_file (most recent checkpoint failed)"
     end
 
     return StructVector(all_results)
@@ -67,25 +90,47 @@ function load_checkpoint_results(filedir::String)
         return nothing
     end
 
+    # Sort checkpoint files by modification time (most recent first)
+    sorted_files = sort(
+        checkpoint_files,
+        by = f -> mtime(joinpath(checkpoint_dir, f)),
+        rev = true
+    )
+
     # Load all checkpoint files and merge
     all_results = DF.DataFrame[]
+    loaded_file = nothing
 
-    for file in checkpoint_files
+    for file in sorted_files
         filepath = joinpath(checkpoint_dir, file)
         try
             data = JLD2.load(filepath)
             if haskey(data, "partial_results")
                 push!(all_results, data["partial_results"])
+                if isnothing(loaded_file)
+                    loaded_file = file
+                end
             elseif haskey(data, "multistart_optimization_df")
                 push!(all_results, data["multistart_optimization_df"])
+                if isnothing(loaded_file)
+                    loaded_file = file
+                end
             end
         catch e
-            @warn "Failed to load checkpoint file $file: $e"
+            if isnothing(loaded_file)
+                @warn "Failed to load checkpoint file $file: $e. Trying next checkpoint..."
+            else
+                @warn "Failed to load checkpoint file $file: $e"
+            end
         end
     end
 
     if isempty(all_results)
-        return nothing
+        error("All checkpoint files failed to load")
+    end
+
+    if loaded_file != sorted_files[1]
+        @info "Loaded checkpoint from $loaded_file (most recent checkpoint failed)"
     end
 
     # Merge all checkpoint results

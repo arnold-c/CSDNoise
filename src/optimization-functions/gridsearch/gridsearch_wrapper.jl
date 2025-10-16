@@ -36,7 +36,7 @@ function ews_hyperparam_gridsearch_structvector(
         return_results = true,
         save_results = true,
         save_checkpoints = false,
-        save_checkpoint_num = 5,
+        save_checkpoint_num = 2,
         verbose = true,
         disable_time_check = false,
         seconds_per_scenario = 0.025

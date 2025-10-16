@@ -112,7 +112,7 @@ covid_population_state_parameters = StateParameters(
 
 max_covid_post_burnin_vaccination = calculate_vaccination_rate_to_achieve_Reff(
     0.75 * (time_parameters.tlength - Dates.days(time_parameters.burnin)),
-    covid_population_state_parameters.init_states.N * (burnin_target_Reff - 0.1) / covid_R0,
+    covid_population_state_parameters.init_states.N * (burnin_target_Reff - 0.2) / covid_R0,
     covid_population_state_parameters.init_states.N,
     1.0,
     covid_R0,
@@ -187,7 +187,7 @@ moderate_disease_population_state_parameters = StateParameters(
 
 max_moderate_disease_post_burnin_vaccination = calculate_vaccination_rate_to_achieve_Reff(
     0.75 * (time_parameters.tlength - Dates.days(time_parameters.burnin)),
-    moderate_disease_population_state_parameters.init_states.N * (burnin_target_Reff - 0.1) / moderate_disease_R0,
+    moderate_disease_population_state_parameters.init_states.N * (burnin_target_Reff - 0.2) / moderate_disease_R0,
     moderate_disease_population_state_parameters.init_states.N,
     1.0,
     moderate_disease_R0,

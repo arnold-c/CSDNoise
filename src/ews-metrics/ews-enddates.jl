@@ -31,7 +31,8 @@ function calculate_all_ews_enddates(
 
     for (sim, thresholds) in pairs(vec_of_thresholds)
         ews_enddate = calculate_ews_enddate(thresholds, ews_enddate_type)
-        enddates[sim] = Try.@? ews_enddate
+        Try.iserr(ews_enddate) && error(Try.unwrap_err(ews_enddate))
+        enddates[sim] = Try.unwrap(ews_enddate)
     end
 
     return enddates
@@ -50,7 +51,7 @@ function calculate_ews_enddate(
     end
 
     return Try.Err(
-        "Failed to calculate ews_enddate for $enddate_type"
+        "Failed to calculate ews_enddate for $enddate_type. The vaccination rate post burnin may need to be lowered, or increase the simulation length"
     )
 end
 

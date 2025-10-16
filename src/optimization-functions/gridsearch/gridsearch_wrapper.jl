@@ -30,6 +30,11 @@ function ews_hyperparam_gridsearch_structvector(
             filedir,
             string(Dates.now()) * "_" * gridsearch_filename_base,
         ),
+        checkpoint_dir = outdir("ensemble", "ews-hyperparam-gridsearch", "checkpoints"),
+        checkpoint_output_filename_base = joinpath(
+            filedir,
+            string(Dates.now()) * "_" * "checkpoint_batch_",
+        ),
         # Control options
         scheduler = :dynamic, #:serial, :greedy, :static, :dynamic
         force = false,
@@ -46,9 +51,6 @@ function ews_hyperparam_gridsearch_structvector(
     end
     @assert scheduler in [:dynamic, :static, :greedy, :serial]
 
-
-    # Setup checkpoint directory
-    checkpoint_dir = joinpath(filedir, "checkpoints")
 
     # Create all grid search scenarios as StructVector
     # This includes all combinations with grid parameters
@@ -103,6 +105,7 @@ function ews_hyperparam_gridsearch_structvector(
         save_checkpoints = save_checkpoints,
         save_checkpoint_num = save_checkpoint_num,
         checkpoint_dir = checkpoint_dir,
+        checkpoint_output_filename_base = checkpoint_output_filename_base,
         scheduler = scheduler,
         verbose = verbose
     )

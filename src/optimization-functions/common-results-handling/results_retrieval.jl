@@ -2,24 +2,8 @@ using Try: Try
 using JLD2: JLD2
 using Dates: Dates
 
-export load_most_recent_hyperparam_file,
-    get_most_recent_hyperparam_filepath
+export get_most_recent_hyperparam_filepath
 
-function load_most_recent_hyperparam_file(
-        filename_base,
-        filedir,
-    )
-    filepath = get_most_recent_hyperparam_filepath(
-        filename_base,
-        filedir,
-    )
-
-    if Try.iserr(filepath)
-        return filepath
-    end
-
-    return JLD2.load(Try.unwrap(filepath))
-end
 
 function get_most_recent_hyperparam_filepath(
         filename_base,

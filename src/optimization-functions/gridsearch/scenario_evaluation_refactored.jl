@@ -7,6 +7,10 @@ function evaluate_gridsearch_scenarios_refactored(
         save_checkpoints = false,
         save_checkpoint_num = 5,
         checkpoint_dir::String = "",
+        checkpoint_output_filename_base = joinpath(
+            filedir,
+            string(Dates.now()) * "_" * "checkpoint_batch_",
+        ),
         verbose::Bool = true,
         verbose_noise_optimization = false,
         seed = 1234,
@@ -163,6 +167,7 @@ function evaluate_gridsearch_scenarios_refactored(
                         save_checkpoint_structvector(
                             StructVector(all_results),
                             checkpoint_dir,
+                            checkpoint_output_filename_base,
                             checkpoint_num
                         )
                         verbose && @info "Saved checkpoint $checkpoint_num"

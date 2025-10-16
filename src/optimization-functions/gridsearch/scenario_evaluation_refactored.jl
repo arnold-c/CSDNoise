@@ -46,9 +46,31 @@ function evaluate_gridsearch_scenarios_refactored(
         for (noise_trim_key, noise_trim_scenarios) in noise_trim_groups
 
             enddates_vec = calculate_all_ews_enddates(
+            enddates_vec_result = calculate_all_ews_enddates(
                 Reff_thresholds_vec,
                 noise_trim_key.ews_enddate_type
             )
+            if Try.iserr(enddates_vec_result)
+                error_message =
+                """
+                Failed to calculate EWS enddates for ensemble with parameters:
+                  Ensemble specification: $(ensemble_key.ensemble_specification.label)
+                  EWS enddate type: $(noise_trim_key.ews_enddate_type)
+                  Noise level: $(noise_trim_key.noise_level)
+                  Noise type: $(noise_trim_key.noise_type_description)
+                  Reff thresholds type: $(typeof(Reff_thresholds_vec))
+
+                Original error: $(Try.unwrap_err(enddates_vec_result))
+
+                This typically occurs when Reff doesn't cross 1.0 within the simulation time.
+                Consider:
+                  - Lowering the vaccination rate post-burnin
+                  - Increasing the simulation length
+                  - Adjusting the dynamics parameters
+                """
+                error(error_message)
+            end
+            enddates_vec = Try.unwrap(enddates_vec_result)
 
             trimmed_ensemble = trim_ensemble_simulations(
                 ensemble_simulation,

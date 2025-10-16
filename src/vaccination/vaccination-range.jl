@@ -1,47 +1,4 @@
-export calculate_min_max_vaccination_range,
-    calculate_post_burnin_vaccination_range
-
-"""
-    calculate_min_max_vaccination_range(mean_vaccination_coverage, max_vaccination_range = 0.2)
-
-Calculate the minimum and maximum vaccination coverage range around a mean value.
-
-This function determines a symmetric range around the mean vaccination coverage,
-constrained by the maximum allowed range and the bounds [0, 1]. The actual range
-used is the minimum of:
-- The specified max_vaccination_range
-- The distance to the upper bound (1.0 - mean_vaccination_coverage)
-- The distance to the lower bound (mean_vaccination_coverage)
-
-# Arguments
-- `mean_vaccination_coverage`: Mean vaccination coverage (must be ≤ 1.0)
-- `max_vaccination_range`: Maximum allowed range around the mean (default: 0.2)
-
-# Returns
-- `Tuple{Float64, Float64}`: (min_vaccination_coverage, max_vaccination_coverage)
-"""
-function calculate_min_max_vaccination_range(
-        mean_vaccination_coverage,
-        max_vaccination_range = 0.2,
-    )
-    @assert mean_vaccination_coverage <= 1.0
-
-    min_vaccination_range = minimum(
-        [
-            max_vaccination_range,
-            1.0 - mean_vaccination_coverage,
-            mean_vaccination_coverage,
-        ]
-    )
-
-    min_vaccination_coverage = round(
-        mean_vaccination_coverage - min_vaccination_range; digits = 4
-    )
-    max_vaccination_coverage = round(
-        mean_vaccination_coverage + min_vaccination_range; digits = 4
-    )
-    return min_vaccination_coverage, max_vaccination_coverage
-end
+export calculate_post_burnin_vaccination_range
 
 """
     calculate_post_burnin_vaccination_range(

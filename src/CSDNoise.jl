@@ -62,14 +62,12 @@ include("./simulation/simulate-ensemble-seir-results.jl")
 include("./simulation/trim-seir-results.jl")
 
 # Shared utilities (used across multiple modules)
-include("./utilities/benchmark-functions.jl")
 include("./utilities/create-combinations.jl")
 include("./utilities/helpers.jl")
 include("./utilities/group-structvectors.jl")
 include("./utilities/create_emergent_null_specifications.jl")
 include("./utilities/logging-utilities.jl")
 include("./utilities/test-description.jl")
-include("./utilities/test_multistart_vs_gridsearch.jl")
 
 # Noise
 include("./noise/noise-description.jl")

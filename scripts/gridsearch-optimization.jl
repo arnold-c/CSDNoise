@@ -214,7 +214,7 @@ mod_disease_min_post_burnin_vaccination_coverage = round(
 
 #%%
 ## Medium R0 with measles beta
-moderate_disease_measles_like_gamma = calculate_gamma(
+moderate_disease_measles_like_infectious_duration = calculate_infectious_duration(
     moderate_disease_R0,
     measles_ensemble_specification.emergent_dynamics_parameter_specification.beta_mean,
     moderate_disease_latent_period,
@@ -224,7 +224,7 @@ moderate_disease_measles_like_gamma = calculate_gamma(
 moderate_disease_measles_like_dynamics_parameters = TargetDiseaseDynamicsParameters(;
     R_0 = moderate_disease_R0,
     latent_period_days = moderate_disease_latent_period,
-    infectious_duration_days = moderate_disease_measles_like_gamma,
+    infectious_duration_days = moderate_disease_measles_like_infectious_duration,
     beta_force = 0.0,
     seasonality = SeasonalityFunction(CosineSeasonality()),
     min_post_burnin_vaccination_coverage = mod_disease_min_post_burnin_vaccination_coverage,
@@ -244,7 +244,7 @@ moderate_disease_measles_like_ensemble_specification = create_ensemble_specifica
 
 #%%
 ## Medium R0 with COVID beta
-moderate_disease_covid_like_gamma = calculate_gamma(
+moderate_disease_covid_like_infectious_duration = calculate_infectious_duration(
     moderate_disease_R0,
     covid_ensemble_specification.emergent_dynamics_parameter_specification.beta_mean,
     moderate_disease_latent_period,
@@ -254,7 +254,7 @@ moderate_disease_covid_like_gamma = calculate_gamma(
 moderate_disease_covid_like_dynamics_parameters = TargetDiseaseDynamicsParameters(;
     R_0 = moderate_disease_R0,
     latent_period_days = moderate_disease_latent_period,
-    infectious_duration_days = moderate_disease_covid_like_gamma,
+    infectious_duration_days = moderate_disease_covid_like_infectious_duration,
     beta_force = 0.0,
     seasonality = SeasonalityFunction(CosineSeasonality()),
     min_post_burnin_vaccination_coverage = mod_disease_min_post_burnin_vaccination_coverage,

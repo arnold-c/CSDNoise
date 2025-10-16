@@ -1,5 +1,6 @@
 export calculate_beta,
     calculate_gamma,
+    calculate_infectious_duration,
     calculateReffective,
     calculateR0,
     calculate_mu,
@@ -29,6 +30,35 @@ function calculate_beta(
         mu::Float64
     )::Float64
     return R_0 * (sigma + mu) * (gamma + mu) / sigma
+end
+
+"""
+    calculate_infectious_duration(R_0, beta, sigma, mu)
+
+Calculate the infectious duration for an SEIR model given R_0, beta, and other parameters.
+
+The infectious duration is the reciprocal of the recovery rate gamma:
+infectious_duration = 1 / γ
+
+where γ is calculated from the SEIR model relationship:
+γ = (β * σ) / (R_0 * (σ + μ)) - μ
+
+# Arguments
+- `R_0`: Basic reproduction number
+- `beta`: Transmission rate
+- `sigma`: Rate of progression from E to I (1/latent_period)
+- `mu`: Death rate
+
+# Returns
+- `Float64`: The infectious duration (1/gamma)
+"""
+function calculate_infectious_duration(
+        R_0::Float64,
+        beta::Float64,
+        sigma::Float64,
+        mu::Float64
+    )::Float64
+    return 1 / calculate_gamma(R_0, beta, sigma, mu)
 end
 
 """

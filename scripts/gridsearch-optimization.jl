@@ -337,12 +337,9 @@ specification_vecs = GridSearchSpecificationVecs(
 )
 
 #%%
-scenarios = create_gridsearch_scenarios_structvector(specification_vecs);
-
-#%%
 gridsearch_scenarios = ews_hyperparam_gridsearch_structvector(
     specification_vecs;
-    force = false,
+    force = true,
     save_results = true,
     save_checkpoints = true
 )

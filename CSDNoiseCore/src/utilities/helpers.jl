@@ -1,5 +1,4 @@
-export outdir,
-    sentencecase
+export sentencecase
 
 outdir(args...) = DrWatson.projectdir("out", args...)
 

@@ -1,14 +1,8 @@
-export prepare_line_plot_df!
+export prepare_line_plot_data
 
-using DataFrames: DataFrames
-using DrWatson: DrWatson
-using StatsBase: StatsBase
-
-function prepare_line_plot_df!(
-        output_df,
-        gdf::T1,
+function prepare_line_plot_data(
+        results::StructVector{OptimizationResult},
         ewsmetric = "mean",
-        outcome = :accuracy,
         tests = [
             IndividualTestSpecification(0.8, 0.8, 0),
             IndividualTestSpecification(0.9, 0.9, 0),
@@ -20,44 +14,51 @@ function prepare_line_plot_df!(
             IndividualTestSpecification(1.0, 1.0, 0),
         ];
         tiebreaker_preference = "specificity",
-    ) where {T1 <: Union{<:DataFrames.DataFrame, <:DataFrames.DataFrames.SubDataFrame}}
-    tiebreaker_args = if tiebreaker_preference == "speed"
-        (:ews_consecutive_thresholds, false)
+    )
+    tiebreaker_field = if tiebreaker_preference == "speed"
+        :consecutive_thresholds
     elseif tiebreaker_preference == "specificity"
-        (:specificity, true)
+        :specificity
     else
         error(
             "Invalid preference: $tiebreaker_preference. Please choose either \"speed\" or \"specificity\"."
         )
     end
+    tiebreaker_rev = tiebreaker_preference == "specificity"
 
-    metric_df = subset(
-        gdf,
-        :ews_metric => ByRow(==(ewsmetric)),
-        :test_specification => ByRow(in(tests)),
+    metric_mask = results.ews_metric .== ewsmetric
+    test_mask = [t in tests for t in results.test_specification]
+    combined_mask = metric_mask .& test_mask
+    filtered_results = results[combined_mask]
+
+    groups = group_structvector(
+        filtered_results,
+        :noise_level,
+        :noise_type_description,
+        :test_specification
     )
 
-    filtered_test_df =
-        map(collect(groupby(metric_df, :test_specification))) do df
-        sort(df, order(tiebreaker_args[1]; rev = tiebreaker_args[2]))[
-            1, :,
-        ]
-    end |>
-        x -> vcat(DataFrame.(x)...; cols = :union)
+    selected_results_vec = OptimizationResult[]
+    for (key, group) in groups
+        tiebreaker_values = getproperty(group, tiebreaker_field)
+        if tiebreaker_rev
+            best_idx = argmax(tiebreaker_values)
+        else
+            best_idx = argmin(tiebreaker_values)
+        end
+        push!(selected_results_vec, group[best_idx])
+    end
 
-    filtered_test_df[!, :test_sens] =
-        getproperty.(filtered_test_df.test_specification, :sensitivity)
-    filtered_test_df[!, :test_spec] =
-        getproperty.(filtered_test_df.test_specification, :sensitivity)
-    filtered_test_df[!, :test_result_lag] =
-        getproperty.(filtered_test_df.test_specification, :test_result_lag)
-    sort!(
-        filtered_test_df,
-        [:test_sens, :test_spec, :test_result_lag];
-        rev = [true, true, false],
+    selected_results = StructVector(selected_results_vec)
+
+    sort_order = sortperm(
+        selected_results;
+        by = r -> (
+            -r.test_specification.sensitivity,
+            -r.test_specification.specificity,
+            r.test_specification.test_result_lag,
+        )
     )
 
-    append!(output_df, filtered_test_df; cols = :union)
-
-    return nothing
+    return selected_results[sort_order]
 end

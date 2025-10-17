@@ -1,9 +1,7 @@
 export line_plot
 
-using DataFrames: DataFrames
-
 function line_plot(
-        df;
+        results::StructVector{OptimizationResult};
         xlabel = "Test Sensitivity & Specificity",
         ylabel = "Alert Accuracy",
         facet_fontsize = 20,
@@ -13,23 +11,45 @@ function line_plot(
         xticklabelsize = 22,
         yticklabelsize = 22,
         legend_rowsize = Relative(0.05),
-        xlabel_rowsize = GLMakie.Relative(0.03),
-        ylabel_rowsize = GLMakie.Relative(0.02),
+        xlabel_rowsize = Relative(0.03),
+        ylabel_rowsize = Relative(0.02),
         kwargs...,
     )
     kwargs_dict = Dict{Symbol, Any}(kwargs)
 
     if !haskey(kwargs_dict, :ylims)
         ylims = (
-            maximum([0, minimum(df.accuracy) - 0.05]),
-            minimum([1, maximum(df.accuracy) + 0.05]),
+            maximum([0, minimum(results.accuracy) - 0.05]),
+            minimum([1, maximum(results.accuracy) + 0.05]),
         )
     else
         ylims = kwargs_dict[:ylims]
     end
 
-    noise_descriptions =
-        noise_table_description.(unique(df.noise_specification))
+    unique_noise_combos = unique(
+        collect(zip(results.noise_level, results.noise_type_description))
+    )
+    noise_descriptions = map(unique_noise_combos) do (level, type_desc)
+        if type_desc == :static
+            noise_scaling = if level == 7.0
+                "High"
+            elseif level == 1.0
+                "Low"
+            else
+                "Uncharacterized"
+            end
+            "$(noise_scaling) Static Noise"
+        else
+            noise_scaling = if level ≈ 0.102
+                "High"
+            elseif level ≈ 0.8734
+                "Low"
+            else
+                "Uncharacterized"
+            end
+            "$(noise_scaling) Dynamical Noise"
+        end
+    end
     num_noise_descriptions = length(noise_descriptions)
 
     if !haskey(kwargs_dict, :nbanks)
@@ -38,39 +58,40 @@ function line_plot(
         nbanks = kwargs_dict[:nbanks]
     end
 
-    ewsmetric_grouped_dfs = groupby(df, :ews_metric)
-
-    num_metrics = length(ewsmetric_grouped_dfs)
+    unique_metrics = unique(results.ews_metric)
+    num_metrics = length(unique_metrics)
     if num_metrics > 4
         error(
-            "Trying to plot too many metric facets $(length(ewsmetric_grouped_dfs)). Max allowed is 4"
+            "Trying to plot too many metric facets $(num_metrics). Max allowed is 4"
         )
     end
 
     fig = Figure()
 
-    for (metric_num, metric_gdf) in enumerate(ewsmetric_grouped_dfs)
+    for (metric_num, metric) in enumerate(unique_metrics)
         ax_position = if metric_num == 1
             (1, 1)
-        elseif noise_num == 2
+        elseif metric_num == 2
             (1, 2)
-        elseif noise_num == 3
+        elseif metric_num == 3
             (2, 1)
-        elseif noise_num == 4
+        elseif metric_num == 4
             (2, 2)
         else
             @error "Too many metric types"
         end
 
+        metric_mask = results.ews_metric .== metric
+        metric_results = results[metric_mask]
+
         gl = fig[ax_position...] = GridLayout()
         line_plot_facet!(
             gl,
-            metric_gdf;
+            metric_results,
+            unique_noise_combos;
             ax_position = ax_position,
             num_metrics = num_metrics,
-            facet_title = sentencecase(
-                replace(metric_gdf[1, :ews_metric], "_" => " ")
-            ),
+            facet_title = sentencecase(replace(metric, "_" => " ")),
             ylims = ylims,
             facet_fontsize = facet_fontsize,
             xticklabelsize = xticklabelsize,
@@ -82,7 +103,7 @@ function line_plot(
         fig[0, :],
         [
             PolyElement(; color = col) for
-                col in GLMakie.wong_colors()[1:num_noise_descriptions]
+                col in Makie.wong_colors()[1:num_noise_descriptions]
         ],
         noise_descriptions,
         "";
@@ -115,7 +136,8 @@ end
 
 function line_plot_facet!(
         gl,
-        df;
+        results::StructVector{OptimizationResult},
+        unique_noise_combos;
         ax_position = (1, 1),
         num_metrics = 1,
         facet_title = "",
@@ -130,11 +152,9 @@ function line_plot_facet!(
         yticklabelsize = 22,
         kwargs...,
     )
-    grouped_dfs = groupby(df, :noise_specification)
-    unique_tests = unique(df[!, :test_specification])
+    unique_tests = unique(results.test_specification)
     test_labels = map(
-        test ->
-        "$(Int64(round(test.sensitivity * 100; digits = 0)))%",
+        test -> "$(Int64(round(test.sensitivity * 100; digits = 0)))%",
         unique_tests,
     )
 
@@ -161,12 +181,14 @@ function line_plot_facet!(
     )
     rowsize!(gl, 2, Relative(0.9))
 
-    for gdf in grouped_dfs
-        lines!(
-            ax,
-            1:nrow(gdf),
-            gdf.accuracy,
-        )
+    for (noise_level, noise_type) in unique_noise_combos
+        noise_mask = (results.noise_level .== noise_level) .&
+            (results.noise_type_description .== noise_type)
+        noise_results = results[noise_mask]
+
+        if length(noise_results) > 0
+            lines!(ax, 1:length(noise_results), noise_results.accuracy)
+        end
     end
 
     if !(isnothing(ylims))

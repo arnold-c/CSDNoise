@@ -77,9 +77,9 @@ Returns an error if:
 result = calculate_ews_enddate(outbreak_thresholds, EWSEndDateType(OutbreakStart()))
 if Try.isok(result)
     endpoint = Try.unwrap(result)
-    println("Outbreak starts at index: $endpoint")
+    println("Outbreak starts at index: \$endpoint")
 else
-    println("Error: $(Try.unwrap_err(result))")
+    println("Error: \$(Try.unwrap_err(result))")
 end
 ```
 

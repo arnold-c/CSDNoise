@@ -1,4 +1,7 @@
-default: tests manuscript
+default: optimizations
+
+optimizations:
+	julia --threads=auto --startup-file=no --history-file=no --project=. ./scripts/gridsearch-optimization.jl
 
 manuscript:
 	julia ./manuscript/scripts/optimal-thresholds.jl

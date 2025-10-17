@@ -202,8 +202,8 @@ moderate_disease_measles_like_dynamics_parameters = TargetDiseaseDynamicsParamet
     infectious_duration_days = moderate_disease_measles_like_infectious_duration,
     beta_force = 0.0,
     seasonality = SeasonalityFunction(CosineSeasonality()),
-    min_post_burnin_vaccination_coverage = mod_disease_min_post_burnin_vaccination_coverage,
-    max_post_burnin_vaccination_coverage = mod_disease_max_post_burnin_vaccination_coverage,
+    min_post_burnin_vaccination_coverage = moderate_disease_min_post_burnin_vaccination_coverage,
+    max_post_burnin_vaccination_coverage = moderate_disease_max_post_burnin_vaccination_coverage,
     max_burnin_vaccination_coverage = 1.0
 )
 
@@ -232,8 +232,8 @@ moderate_disease_covid_like_dynamics_parameters = TargetDiseaseDynamicsParameter
     infectious_duration_days = moderate_disease_covid_like_infectious_duration,
     beta_force = 0.0,
     seasonality = SeasonalityFunction(CosineSeasonality()),
-    min_post_burnin_vaccination_coverage = mod_disease_min_post_burnin_vaccination_coverage,
-    max_post_burnin_vaccination_coverage = mod_disease_max_post_burnin_vaccination_coverage,
+    min_post_burnin_vaccination_coverage = moderate_disease_min_post_burnin_vaccination_coverage,
+    max_post_burnin_vaccination_coverage = moderate_disease_max_post_burnin_vaccination_coverage,
     max_burnin_vaccination_coverage = 1.0
 )
 
@@ -316,5 +316,6 @@ gridsearch_scenarios = ews_hyperparam_gridsearch_structvector(
     specification_vecs;
     force = true,
     save_results = true,
-    save_checkpoints = true
+    save_checkpoints = true,
+    disable_time_check = true
 )

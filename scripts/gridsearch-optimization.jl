@@ -257,7 +257,7 @@ ensemble_specification_vec = [
 ]
 
 #%%
-noise_level_vec = [1.0]
+noise_level_vec = [1.0, 4.0, 8.0, 12.0]
 noise_type_description_vec = [:static, :dynamic]
 
 test_specification_vec = [

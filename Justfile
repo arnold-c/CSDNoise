@@ -1,7 +1,7 @@
 default: optimizations
 
 optimizations:
-	julia --threads=auto --startup-file=no --history-file=no --project=. ./scripts/gridsearch-optimization.jl
+	julia --threads=auto --startup-file=no --history-file=no --project=CSDNoiseCore ./scripts/gridsearch-optimization.jl
 
 manuscript:
 	julia ./manuscript/scripts/optimal-thresholds.jl

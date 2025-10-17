@@ -33,7 +33,7 @@ fi
 
 echo "Julia version check passed. Starting optimization..."
 
-julia --threads=$SLURM_CPUS_PER_TASK --startup-file=no --history-file=no --project=. ./scripts/gridsearch-optimization.jl
+julia --threads=$SLURM_CPUS_PER_TASK --startup-file=no --history-file=no --project=CSDNoiseCore ./scripts/gridsearch-optimization.jl
 
 echo "Job completed on $(date)"
 

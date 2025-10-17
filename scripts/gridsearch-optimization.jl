@@ -1,5 +1,5 @@
 #%%
-using CSDNoise
+using CSDNoiseCore
 using Dates
 using StructArrays
 

@@ -86,10 +86,8 @@ Base.@kwdef struct DynamicsParameterSpecification
     annual_births_per_k::Float64
     epsilon::Float64
     R_0::Float64
-    min_burnin_vaccination_coverage::Float64
-    max_burnin_vaccination_coverage::Float64
-    min_post_burnin_vaccination_coverage::Float64
-    max_post_burnin_vaccination_coverage::Float64
+    min_vaccination_coverage::Float64
+    max_vaccination_coverage::Float64
 end
 
 function DynamicsParameterSpecification(
@@ -102,10 +100,8 @@ function DynamicsParameterSpecification(
         annual_births_per_k,
         epsilon,
         R_0,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_post_burnin_vaccination_coverage::Nothing,
-        max_post_burnin_vaccination_coverage::Nothing,
+        min_vaccination_coverage,
+        max_vaccination_coverage,
     )
     return DynamicsParameterSpecification(
         beta_mean,
@@ -117,10 +113,8 @@ function DynamicsParameterSpecification(
         annual_births_per_k,
         epsilon,
         R_0,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
-        min_burnin_vaccination_coverage,
-        max_burnin_vaccination_coverage,
+        min_vaccination_coverage,
+        max_vaccination_coverage,
     )
 end
 

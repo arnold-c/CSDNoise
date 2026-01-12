@@ -15,8 +15,8 @@ Pre-computed simulation data that can be reused across parameter evaluations.
 This avoids expensive recomputation of noise arrays and test arrays.
 """
 Base.@kwdef struct CachedSimulationData
-    testarr::Array{Int64, 3}
-    null_testarr::Array{Int64, 3}
+    testarr::Array{Int64,3}
+    null_testarr::Array{Int64,3}
     thresholds::Vector{Matrix{Int64}}
     ews_metrics::Vector{EWSMetrics}
     null_ews_metrics::Vector{EWSMetrics}
@@ -39,16 +39,16 @@ Base.@kwdef struct OptimizationScenario
     ews_threshold_window::EWSThresholdWindowType
     ews_metric::String
     function OptimizationScenario(
-            ensemble_specification,
-            noise_level,
-            noise_type_description,
-            test_specification,
-            percent_tested,
-            ews_metric_specification,
-            ews_enddate_type,
-            ews_threshold_window,
-            ews_metric,
-        )
+        ensemble_specification,
+        noise_level,
+        noise_type_description,
+        test_specification,
+        percent_tested,
+        ews_metric_specification,
+        ews_enddate_type,
+        ews_threshold_window,
+        ews_metric,
+    )
         @assert noise_type_description in [:static, :dynamic] "The noise type must be either :static or :dynamic. Received $noise_type_description"
         return new(
             ensemble_specification,
@@ -144,18 +144,18 @@ Base.@kwdef struct GridSearchScenario
     threshold_quantile::Float64
     consecutive_thresholds::Int64
     function GridSearchScenario(
-            ensemble_specification,
-            noise_level,
-            noise_type_description,
-            test_specification,
-            percent_tested,
-            ews_metric_specification,
-            ews_enddate_type,
-            ews_threshold_window,
-            ews_metric,
-            threshold_quantile,
-            consecutive_thresholds,
-        )
+        ensemble_specification,
+        noise_level,
+        noise_type_description,
+        test_specification,
+        percent_tested,
+        ews_metric_specification,
+        ews_enddate_type,
+        ews_threshold_window,
+        ews_metric,
+        threshold_quantile,
+        consecutive_thresholds,
+    )
         @assert noise_type_description in [:static, :dynamic] "The noise type must be either :static or :dynamic. Received $noise_type_description"
         return new(
             ensemble_specification,
@@ -168,9 +168,7 @@ Base.@kwdef struct GridSearchScenario
             ews_threshold_window,
             ews_metric,
             threshold_quantile,
-            consecutive_thresholds,
-
-        )
+            consecutive_thresholds,)
     end
 end
 
